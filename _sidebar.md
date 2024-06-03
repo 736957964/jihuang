@@ -1,20 +1,15 @@
-#1
-- 入门
-  * [Mod相关信息](/intro)
-#2
-- 进阶
-
-  * [饥荒源码目录结构](/folder-struct)
-
-- 高级
-
-  * [Class](class)
-
-- 技巧
-
+- 前言
+  * [Mod相关信息](/README)
+- 公用部分
+  * [公用components](/components/index)
+  * [actions动作](/actions/index)
+  * [tag标签](/tag)
+  * [客机代码](/tag)
+- UI模块
   * [节点(地图)](room)
-
-
+- Lua通用
+  * [通用写法](/lua/index)
+- 自定义通用函数
+  * [添加食谱](/sample-foodrecipe)
 - 案例
-
   * [添加食谱](/sample-foodrecipe)
