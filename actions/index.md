@@ -1,4 +1,4 @@
->  坎普斯随笔,如有错误可指出
+>   随笔,如有错误可指出
 ## 动作
 ```lua 
 ACTIONS.PICK 采集  ACTIONS.ATTACK 攻击 ACTIONS.LIGHT 烧  ACTIONS.HAMMER 砸 ACTIONS.EAT 吃  ACTIONS.BUILD 制作  
