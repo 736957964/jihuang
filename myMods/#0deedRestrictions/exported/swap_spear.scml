@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spriter_data scml_version="1.0" generator="BrashMonkey Spriter" generator_version="b5">
+	<folder id="0" name="swap_spear">
+		<file id="0" name="swap_spear/swap_spear-0.png" width="76" height="312" pivot_x="0.378283" pivot_y="0.345194" />
+		<file id="1" name="swap_spear/swap_spear-5.png" width="64" height="240" pivot_x="0.39218" pivot_y="0.266773" />
+		<file id="2" name="swap_spear/swap_spear-6.png" width="88" height="268" pivot_x="0.306528" pivot_y="0.297203" />
+		<file id="3" name="swap_spear/swap_spear-7.png" width="108" height="264" pivot_x="0.332171" pivot_y="0.297824" />
+		<file id="4" name="swap_spear/swap_spear-8.png" width="116" height="292" pivot_x="0.439004" pivot_y="0.050601" />
+	</folder>
+	<entity id="0" name="spear">
+		<animation id="0" name="idle" length="200">
+			<mainline>
+				<key id="0" time="0">
+					<object_ref id="0" name="swap_spear" abs_x="0" abs_y="0" abs_pivot_x="0.439004" abs_pivot_y="0.050601" abs_angle="0" abs_scale_x="1" abs_scale_y="1" abs_a="1" timeline="0" key="0" z_index="1" />
+				</key>
+				<key id="1" time="34">
+					<object_ref id="0" name="swap_spear" abs_x="0" abs_y="0" abs_pivot_x="0.439004" abs_pivot_y="0.050601" abs_angle="0" abs_scale_x="1" abs_scale_y="1" abs_a="1" timeline="0" key="1" z_index="1" />
+				</key>
+				<key id="2" time="67">
+					<object_ref id="0" name="swap_spear" abs_x="0" abs_y="0" abs_pivot_x="0.439004" abs_pivot_y="0.050601" abs_angle="0" abs_scale_x="1" abs_scale_y="1" abs_a="1" timeline="0" key="2" z_index="1" />
+				</key>
+				<key id="3" time="100">
+					<object_ref id="0" name="swap_spear" abs_x="0" abs_y="0" abs_pivot_x="0.439004" abs_pivot_y="0.050601" abs_angle="0" abs_scale_x="1" abs_scale_y="1" abs_a="1" timeline="0" key="3" z_index="1" />
+				</key>
+				<key id="4" time="134">
+					<object_ref id="0" name="swap_spear" abs_x="0" abs_y="0" abs_pivot_x="0.439004" abs_pivot_y="0.050601" abs_angle="0" abs_scale_x="1" abs_scale_y="1" abs_a="1" timeline="0" key="4" z_index="1" />
+				</key>
+				<key id="5" time="167">
+					<object_ref id="0" name="swap_spear" abs_x="0" abs_y="0" abs_pivot_x="0.439004" abs_pivot_y="0.050601" abs_angle="0" abs_scale_x="1" abs_scale_y="1" abs_a="1" timeline="0" key="5" z_index="1" />
+				</key>
+				<key id="6" time="200">
+					<object_ref id="0" name="swap_spear" abs_x="0" abs_y="0" abs_pivot_x="0.439004" abs_pivot_y="0.050601" abs_angle="0" abs_scale_x="1" abs_scale_y="1" abs_a="1" timeline="0" key="6" z_index="1" />
+				</key>
+			</mainline>
+			<timeline id="0" name="swap_spear">
+				<key id="0" time="0" spin="1">
+					<object folder="0" file="4" x="0" y="-0" scale_x="0.999512" scale_y="1.00018" angle="0" />
+				</key>
+				<key id="1" time="34" spin="1">
+					<object folder="0" file="4" x="0" y="-0" scale_x="0.999512" scale_y="1.00018" angle="0" />
+				</key>
+				<key id="2" time="67" spin="1">
+					<object folder="0" file="4" x="0" y="-0" scale_x="0.999512" scale_y="1.00018" angle="0" />
+				</key>
+				<key id="3" time="100" spin="1">
+					<object folder="0" file="4" x="0" y="-0" scale_x="0.999512" scale_y="1.00018" angle="0" />
+				</key>
+				<key id="4" time="134" spin="1">
+					<object folder="0" file="4" x="0" y="-0" scale_x="0.999512" scale_y="1.00018" angle="0" />
+				</key>
+				<key id="5" time="167" spin="1">
+					<object folder="0" file="4" x="0" y="-0" scale_x="0.999512" scale_y="1.00018" angle="0" />
+				</key>
+				<key id="6" time="200" spin="1">
+					<object folder="0" file="4" x="0" y="-0" scale_x="0.999512" scale_y="1.00018" angle="0" />
+				</key>
+			</timeline>
+		</animation>
+	</entity>
+</spriter_data>

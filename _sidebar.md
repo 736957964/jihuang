@@ -6,9 +6,7 @@
   * [tag标签](/lins/tag)
   * [UI模块](/lins/ui)
   * [监听](/lins/jianting)
-  * [network](/lins/network)
-  * [theNet](/lins/theNet)
-  * [theInput](/lins/theInput)
+  * [全局](/lins/quanju)
   * [杂物](/lins/zawu)
 - SG
   * [人物动作](sg/rwdz)

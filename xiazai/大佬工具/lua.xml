@@ -1,0 +1,1332 @@
+<?xml version="1.0" encoding="UTF8" ?>
+<NotepadPlus>
+    <Environment ignoreCase="yes" startFunc="(" stopFunc=")" paramSeparator="," terminal=";" additionalWordChar=".:" />
+    <AutoComplete language="LUA">
+        <KeyWord name="and" func="no" />
+        <KeyWord name="assert" func="yes"/>
+        <KeyWord name="break" func="no" />
+        <KeyWord name="collectgarbage" func="yes"/>
+        <KeyWord name="coroutine.create" func="yes"/>
+        <KeyWord name="coroutine.resume" func="yes"/>
+        <KeyWord name="coroutine.running" func="yes"/>
+        <KeyWord name="coroutine.status" func="yes"/>
+        <KeyWord name="coroutine.wrap" func="yes"/>
+        <KeyWord name="coroutine.yield" func="yes"/>
+        <KeyWord name="debug.debug" func="yes"/>
+        <KeyWord name="debug.getfenv" func="yes"/>
+        <KeyWord name="debug.gethook" func="yes"/>
+        <KeyWord name="debug.getinfo" func="yes"/>
+        <KeyWord name="debug.getlocal" func="yes"/>
+        <KeyWord name="debug.getmetatable" func="yes"/>
+        <KeyWord name="debug.getregistry" func="yes"/>
+        <KeyWord name="debug.getupvalue" func="yes"/>
+        <KeyWord name="debug.setfenv" func="yes"/>
+        <KeyWord name="debug.sethook" func="yes"/>
+        <KeyWord name="debug.setlocal" func="yes"/>
+        <KeyWord name="debug.setmetatable" func="yes"/>
+        <KeyWord name="debug.setupvalue" func="yes"/>
+        <KeyWord name="debug.traceback" func="yes"/>
+        <KeyWord name="do" func="no" />
+        <KeyWord name="dofile" func="yes"/>
+        <KeyWord name="else" func="no" />
+        <KeyWord name="elseif" func="no" />
+        <KeyWord name="end" func="no" />
+        <KeyWord name="error" func="yes"/>
+        <KeyWord name="false" func="no" />
+        <KeyWord name="file:close" func="yes"/>
+        <KeyWord name="file:flush" func="yes"/>
+        <KeyWord name="file:lines" func="yes"/>
+        <KeyWord name="file:read" func="yes"/>
+        <KeyWord name="file:seek" func="yes"/>
+        <KeyWord name="file:setvbuf" func="yes"/>
+        <KeyWord name="file:write" func="yes"/>
+        <KeyWord name="for" func="no" />
+        <KeyWord name="function" func="no" />
+        <KeyWord name="getfenv" func="yes"/>
+        <KeyWord name="getmetatable" func="yes"/>
+        <KeyWord name="if" func="no" />
+        <KeyWord name="in" func="no" />
+        <KeyWord name="io.close" func="yes"/>
+        <KeyWord name="io.flush" func="yes"/>
+        <KeyWord name="io.input" func="yes"/>
+        <KeyWord name="io.lines" func="yes"/>
+        <KeyWord name="io.open" func="yes"/>
+        <KeyWord name="io.output" func="yes"/>
+        <KeyWord name="io.popen" func="yes"/>
+        <KeyWord name="io.read" func="yes"/>
+        <KeyWord name="io.tmpfile" func="yes"/>
+        <KeyWord name="io.type" func="yes"/>
+        <KeyWord name="io.write" func="yes"/>
+        <KeyWord name="ipairs" func="yes"/>
+        <KeyWord name="load" func="yes"/>
+        <KeyWord name="loadfile" func="yes"/>
+        <KeyWord name="loadstring" func="yes"/>
+        <KeyWord name="local" func="no" />
+        <KeyWord name="math.abs" func="yes"/>
+        <KeyWord name="math.acos" func="yes"/>
+        <KeyWord name="math.asin" func="yes"/>
+        <KeyWord name="math.atan" func="yes"/>
+        <KeyWord name="math.atan2" func="yes"/>
+        <KeyWord name="math.ceil" func="yes"/>
+        <KeyWord name="math.cos" func="yes"/>
+        <KeyWord name="math.cosh" func="yes"/>
+        <KeyWord name="math.deg" func="yes"/>
+        <KeyWord name="math.exp" func="yes"/>
+        <KeyWord name="math.floor" func="yes"/>
+        <KeyWord name="math.fmod" func="yes"/>
+        <KeyWord name="math.frexp" func="yes"/>
+        <KeyWord name="math.huge" func="no" />
+        <KeyWord name="math.ldexp" func="yes"/>
+        <KeyWord name="math.log" func="yes"/>
+        <KeyWord name="math.log10" func="yes"/>
+        <KeyWord name="math.max" func="yes"/>
+        <KeyWord name="math.min" func="yes"/>
+        <KeyWord name="math.modf" func="yes"/>
+        <KeyWord name="math.pi" func="no" />
+        <KeyWord name="math.pow" func="yes"/>
+        <KeyWord name="math.rad" func="yes"/>
+        <KeyWord name="math.random" func="yes"/>
+        <KeyWord name="math.randomseed" func="yes"/>
+        <KeyWord name="math.sin" func="yes"/>
+        <KeyWord name="math.sinh" func="yes"/>
+        <KeyWord name="math.sqrt" func="yes"/>
+        <KeyWord name="math.tan" func="yes"/>
+        <KeyWord name="math.tanh" func="yes"/>
+        <KeyWord name="module" func="yes"/>
+        <KeyWord name="next" func="yes"/>
+        <KeyWord name="nil" func="no" />
+        <KeyWord name="not" func="no" />
+        <KeyWord name="or" func="no" />
+        <KeyWord name="os.clock" func="yes"/>
+        <KeyWord name="os.date" func="yes"/>
+        <KeyWord name="os.difftime" func="yes"/>
+        <KeyWord name="os.execute" func="yes"/>
+        <KeyWord name="os.exit" func="yes"/>
+        <KeyWord name="os.getenv" func="yes"/>
+        <KeyWord name="os.remove" func="yes"/>
+        <KeyWord name="os.rename" func="yes"/>
+        <KeyWord name="os.setlocale" func="yes"/>
+        <KeyWord name="os.time" func="yes"/>
+        <KeyWord name="os.tmpname" func="yes"/>
+        <KeyWord name="package.cpath" func="no" />
+        <KeyWord name="package.loaded" func="no" />
+        <KeyWord name="package.loaders" func="no" />
+        <KeyWord name="package.loadlib" func="yes" />
+        <KeyWord name="package.path" func="no" />
+        <KeyWord name="package.preload" func="no" />
+        <KeyWord name="package.seeall" func="yes" />
+        <KeyWord name="pairs" func="yes"/>
+        <KeyWord name="pcall" func="yes"/>
+        <KeyWord name="print" func="yes"/>
+        <KeyWord name="rawequal" func="yes"/>
+        <KeyWord name="rawget" func="yes"/>
+        <KeyWord name="rawset" func="yes"/>
+        <KeyWord name="repeat" func="no" />
+        <KeyWord name="require" func="yes"/>
+        <KeyWord name="return" func="no" />
+        <KeyWord name="select" func="yes"/>
+        <KeyWord name="setfenv" func="yes"/>
+        <KeyWord name="setmetatable" func="yes"/>
+        <KeyWord name="string.byte" func="yes"/>
+        <KeyWord name="string.char" func="yes"/>
+        <KeyWord name="string.dump" func="yes"/>
+        <KeyWord name="string.find" func="yes"/>
+        <KeyWord name="string.format" func="yes"/>
+        <KeyWord name="string.gmatch" func="yes"/>
+        <KeyWord name="string.gsub" func="yes"/>
+        <KeyWord name="string.len" func="yes"/>
+        <KeyWord name="string.lower" func="yes"/>
+        <KeyWord name="string.match" func="yes"/>
+        <KeyWord name="string.rep" func="yes"/>
+        <KeyWord name="string.reverse" func="yes"/>
+        <KeyWord name="string.sub" func="yes"/>
+        <KeyWord name="string.upper" func="yes"/>
+        <KeyWord name="table.concat" func="yes"/>
+        <KeyWord name="table.insert" func="yes"/>
+        <KeyWord name="table.maxn" func="yes"/>
+        <KeyWord name="table.remove" func="yes"/>
+        <KeyWord name="table.sort" func="yes"/>
+        <KeyWord name="then" func="no" />
+        <KeyWord name="tonumber" func="yes"/>
+        <KeyWord name="tostring" func="yes"/>
+        <KeyWord name="true" func="no" />
+        <KeyWord name="type" func="yes"/>
+        <KeyWord name="unpack" func="yes"/>
+        <KeyWord name="until" func="no" />
+        <KeyWord name="while" func="no" />
+        <KeyWord name="xpcall" func="yes"/>
+        <KeyWord name="_G" />
+        <KeyWord name="assert()" />
+        <KeyWord name="error()" />
+        <KeyWord name="file:close()" />
+        <KeyWord name="file:flush()" />
+        <KeyWord name="file:lines()" />
+        <KeyWord name="file:read()" />
+        <KeyWord name="file:seek()" />
+        <KeyWord name="file:setvbuf()" />
+        <KeyWord name="file:write()" />
+        <KeyWord name="getfenv()" />
+        <KeyWord name="getmetatable()" />
+        <KeyWord name="io.close()" />
+        <KeyWord name="io.flush()" />
+        <KeyWord name="io.input()" />
+        <KeyWord name="io.lines()" />
+        <KeyWord name="io.open()" />
+        <KeyWord name="io.output()" />
+        <KeyWord name="io.read()" />
+        <KeyWord name="io.tmpfile()" />
+        <KeyWord name="io.type()" />
+        <KeyWord name="io.write()" />
+        <KeyWord name="ipairs()" />
+        <KeyWord name="json.decode()" />
+        <KeyWord name="json.encode()" />
+        <KeyWord name="json.null()" />
+        <KeyWord name="math.abs()" />
+        <KeyWord name="math.acos()" />
+        <KeyWord name="math.asin()" />
+        <KeyWord name="math.atan()" />
+        <KeyWord name="math.atan2()" />
+        <KeyWord name="math.ceil()" />
+        <KeyWord name="math.cos()" />
+        <KeyWord name="math.cosh()" />
+        <KeyWord name="math.deg()" />
+        <KeyWord name="math.exp()" />
+        <KeyWord name="math.floor()" />
+        <KeyWord name="math.fmod()" />
+        <KeyWord name="math.frexp()" />
+        <KeyWord name="math.inf" />
+        <KeyWord name="math.ldexp()" />
+        <KeyWord name="math.log()" />
+        <KeyWord name="math.log10()" />
+        <KeyWord name="math.max()" />
+        <KeyWord name="math.min()" />
+        <KeyWord name="math.modf()" />
+        <KeyWord name="math.pi" />
+        <KeyWord name="math.pow()" />
+        <KeyWord name="math.rad()" />
+        <KeyWord name="math.random()" />
+        <KeyWord name="math.randomseed()" />
+        <KeyWord name="math.round()" />
+        <KeyWord name="math.sin()" />
+        <KeyWord name="math.sinh()" />
+        <KeyWord name="math.sqrt()" />
+        <KeyWord name="math.tan()" />
+        <KeyWord name="math.tanh()" />
+        <KeyWord name="module()" />
+        <KeyWord name="next()" />
+        <KeyWord name="os.clock()" />
+        <KeyWord name="os.date()" />
+        <KeyWord name="os.difftime()" />
+        <KeyWord name="os.execute()" />
+        <KeyWord name="os.exit()" />
+        <KeyWord name="os.remove()" />
+        <KeyWord name="os.rename()" />
+        <KeyWord name="os.time()" />
+        <KeyWord name="package.loaded" />
+        <KeyWord name="package.loaders" />
+        <KeyWord name="package.seeall" />
+        <KeyWord name="pairs()" />
+        <KeyWord name="pcall()" />
+        <KeyWord name="print()" />
+        <KeyWord name="rawequal()" />
+        <KeyWord name="rawget()" />
+        <KeyWord name="rawset()" />
+        <KeyWord name="require()" />
+        <KeyWord name="select()" />
+        <KeyWord name="setfenv()" />
+        <KeyWord name="setmetatable()" />
+        <KeyWord name="string.byte()" />
+        <KeyWord name="string.char()" />
+        <KeyWord name="string.find()" />
+        <KeyWord name="string.format()" />
+        <KeyWord name="string.gmatch()" />
+        <KeyWord name="string.gsub()" />
+        <KeyWord name="string.len()" />
+        <KeyWord name="string.lower()" />
+        <KeyWord name="string.match()" />
+        <KeyWord name="string.rep()" />
+        <KeyWord name="string.reverse()" />
+        <KeyWord name="string.sub()" />
+        <KeyWord name="string.upper()" />
+        <KeyWord name="table.concat()" />
+        <KeyWord name="table.copy()" />
+        <KeyWord name="table.indexOf()" />
+        <KeyWord name="table.insert()" />
+        <KeyWord name="table.maxn()" />
+        <KeyWord name="table.remove()" />
+        <KeyWord name="table.sort()" />
+        <KeyWord name="tonumber()" />
+        <KeyWord name="tostring()" />
+        <KeyWord name="type()" />
+        <KeyWord name="unpack()" />
+<!--         DST组件 -->
+        <KeyWord name="age" />
+        <KeyWord name="ambientlighting" />
+        <KeyWord name="ambientsound" />
+        <KeyWord name="amorphous" />
+        <KeyWord name="amphibiouscreature" />
+        <KeyWord name="anchor" />
+        <KeyWord name="aoetargeting" />
+        <KeyWord name="areaaware" />
+        <KeyWord name="area_trigger" />
+        <KeyWord name="area_unlock" />
+        <KeyWord name="armor" />
+        <KeyWord name="attunable" />
+        <KeyWord name="attuner" />
+        <KeyWord name="aura" />
+        <KeyWord name="autosaver" />
+        <KeyWord name="bait" />
+        <KeyWord name="balloonmaker" />
+        <KeyWord name="bathbomb" />
+        <KeyWord name="bathbombable" />
+        <KeyWord name="batspawner" />
+        <KeyWord name="beard" />
+        <KeyWord name="beargerspawner" />
+        <KeyWord name="beaverness" />
+        <KeyWord name="beefalometrics" />
+        <KeyWord name="birdattractor" />
+        <KeyWord name="birdspawner" />
+        <KeyWord name="blinkstaff" />
+        <KeyWord name="bloomer" />
+        <KeyWord name="blowinwind" />
+        <KeyWord name="boatai" />
+        <KeyWord name="boatdrag" />
+        <KeyWord name="boatleak" />
+        <KeyWord name="boatpatch" />
+        <KeyWord name="boatphysics" />
+        <KeyWord name="boattrail" />
+        <KeyWord name="boattrailmover" />
+        <KeyWord name="book" />
+        <KeyWord name="bosstargeter" />
+        <KeyWord name="brightmarespawner" />
+        <KeyWord name="brush" />
+        <KeyWord name="brushable" />
+        <KeyWord name="builder" />
+        <KeyWord name="builder_replica" />
+        <KeyWord name="bundlemaker" />
+        <KeyWord name="bundler" />
+        <KeyWord name="burnable" />
+        <KeyWord name="butterflyspawner" />
+        <KeyWord name="carefulwalker" />
+        <KeyWord name="catcher" />
+        <KeyWord name="caveins" />
+        <KeyWord name="caveweather" />
+        <KeyWord name="channelable" />
+        <KeyWord name="chessunlocks" />
+        <KeyWord name="childspawner" />
+        <KeyWord name="circler" />
+        <KeyWord name="circuitnode" />
+        <KeyWord name="clock" />
+        <KeyWord name="colouradder" />
+        <KeyWord name="colourcube" />
+        <KeyWord name="colourtweener" />
+        <KeyWord name="combat" />
+        <KeyWord name="combat_replica" />
+        <KeyWord name="commander" />
+        <KeyWord name="complexprojectile" />
+        <KeyWord name="constructionbuilder" />
+        <KeyWord name="constructionbuilderuidata" />
+        <KeyWord name="constructionplans" />
+        <KeyWord name="constructionsite" />
+        <KeyWord name="constructionsite_replica" />
+        <KeyWord name="container" />
+        <KeyWord name="container_replica" />
+        <KeyWord name="cookable" />
+        <KeyWord name="cooker" />
+        <KeyWord name="cookiecutterdrill" />
+        <KeyWord name="cooldown" />
+        <KeyWord name="crabkingspawner" />
+        <KeyWord name="craftingstation" />
+        <KeyWord name="crittertraits" />
+        <KeyWord name="crop" />
+        <KeyWord name="cyclable" />
+        <KeyWord name="damagereflect" />
+        <KeyWord name="damagetracker" />
+        <KeyWord name="debuff" />
+        <KeyWord name="debuffable" />
+        <KeyWord name="debugger" />
+        <KeyWord name="decay" />
+        <KeyWord name="deciduoustreeupdater" />
+        <KeyWord name="deerclopsspawner" />
+        <KeyWord name="deerherding" />
+        <KeyWord name="deerherdspawner" />
+        <KeyWord name="deployable" />
+        <KeyWord name="deployhelper" />
+        <KeyWord name="desolationspawner" />
+        <KeyWord name="digester" />
+        <KeyWord name="disappears" />
+        <KeyWord name="discoverable" />
+        <KeyWord name="diseaseable" />
+        <KeyWord name="distancetracker" />
+        <KeyWord name="domesticatable" />
+        <KeyWord name="drawable" />
+        <KeyWord name="drawingtool" />
+        <KeyWord name="drownable" />
+        <KeyWord name="dryable" />
+        <KeyWord name="dryer" />
+        <KeyWord name="dsp" />
+        <KeyWord name="dynamicmusic" />
+        <KeyWord name="eater" />
+        <KeyWord name="edible" />
+        <KeyWord name="electricattacks" />
+        <KeyWord name="embarker" />
+        <KeyWord name="emitter" />
+        <KeyWord name="entitytracker" />
+        <KeyWord name="epicscare" />
+        <KeyWord name="equippable" />
+        <KeyWord name="equippable_replica" />
+        <KeyWord name="explosive" />
+        <KeyWord name="explosiveresist" />
+        <KeyWord name="fader" />
+        <KeyWord name="fan" />
+        <KeyWord name="feasts" />
+        <KeyWord name="fertilizer" />
+        <KeyWord name="fillable" />
+        <KeyWord name="finiteuses" />
+        <KeyWord name="firebug" />
+        <KeyWord name="firedetector" />
+        <KeyWord name="firefx" />
+        <KeyWord name="fishable" />
+        <KeyWord name="fishingnet" />
+        <KeyWord name="fishingnetvisualizer" />
+        <KeyWord name="fishingrod" />
+        <KeyWord name="fishingrod_replica" />
+        <KeyWord name="fishschool" />
+        <KeyWord name="floater" />
+        <KeyWord name="flotsamgenerator" />
+        <KeyWord name="focalpoint" />
+        <KeyWord name="follower" />
+        <KeyWord name="follower_replica" />
+        <KeyWord name="foodaffinity" />
+        <KeyWord name="foodmemory" />
+        <KeyWord name="forestpetrification" />
+        <KeyWord name="forestresourcespawner" />
+        <KeyWord name="freezable" />
+        <KeyWord name="freezefx" />
+        <KeyWord name="friendlevels" />
+        <KeyWord name="frograin" />
+        <KeyWord name="frostybreather" />
+        <KeyWord name="fuel" />
+        <KeyWord name="fueled" />
+        <KeyWord name="fuelmaster" />
+        <KeyWord name="ghostlybond" />
+        <KeyWord name="ghostlyelixir" />
+        <KeyWord name="ghostlyelixirable" />
+        <KeyWord name="giftreceiver" />
+        <KeyWord name="gingerbreadhunter" />
+        <KeyWord name="grogginess" />
+        <KeyWord name="groundcreep" />
+        <KeyWord name="groundpounder" />
+        <KeyWord name="groundshadowhandler" />
+        <KeyWord name="grouptargeter" />
+        <KeyWord name="growable" />
+        <KeyWord name="grower" />
+        <KeyWord name="grue" />
+        <KeyWord name="guardian" />
+        <KeyWord name="gym" />
+        <KeyWord name="halloweenmoonmutable" />
+        <KeyWord name="halloweenpotionmoon" />
+        <KeyWord name="hallucinations" />
+        <KeyWord name="harvestable" />
+        <KeyWord name="hatchable" />
+        <KeyWord name="hauntable" />
+        <KeyWord name="healer" />
+        <KeyWord name="health" />
+        <KeyWord name="healthbar" />
+        <KeyWord name="healthsyncer" />
+        <KeyWord name="healthtrigger" />
+        <KeyWord name="health_replica" />
+        <KeyWord name="heater" />
+        <KeyWord name="heavyobstaclephysics" />
+        <KeyWord name="herd" />
+        <KeyWord name="herdmember" />
+        <KeyWord name="hideout" />
+        <KeyWord name="highlight" />
+        <KeyWord name="homeseeker" />
+        <KeyWord name="hounded" />
+        <KeyWord name="hull" />
+        <KeyWord name="hullhealth" />
+        <KeyWord name="hunger" />
+        <KeyWord name="hunger_replica" />
+        <KeyWord name="hunter" />
+        <KeyWord name="incrementalproducer" />
+        <KeyWord name="inkable" />
+        <KeyWord name="inspectable" />
+        <KeyWord name="instrument" />
+        <KeyWord name="insulator" />
+        <KeyWord name="inventory" />
+        <KeyWord name="inventoryitem" />
+        <KeyWord name="inventoryitemmoisture" />
+        <KeyWord name="inventoryitem_replica" />
+        <KeyWord name="inventory_replica" />
+        <KeyWord name="itemaffinity" />
+        <KeyWord name="itemweigher" />
+        <KeyWord name="key" />
+        <KeyWord name="klaussackkey" />
+        <KeyWord name="klaussacklock" />
+        <KeyWord name="klaussackspawner" />
+        <KeyWord name="knownlocations" />
+        <KeyWord name="kramped" />
+        <KeyWord name="lavaarenaeventstate" />
+        <KeyWord name="lavaarenamobtracker" />
+        <KeyWord name="lavaarenamusic" />
+        <KeyWord name="leader" />
+        <KeyWord name="lighter" />
+        <KeyWord name="lighttweener" />
+        <KeyWord name="lock" />
+        <KeyWord name="locomotor" />
+        <KeyWord name="lootdropper" />
+        <KeyWord name="lureplantspawner" />
+        <KeyWord name="machine" />
+        <KeyWord name="madsciencelab" />
+        <KeyWord name="malbatrossspawner" />
+        <KeyWord name="map" />
+        <KeyWord name="maprecorder" />
+        <KeyWord name="maprevealable" />
+        <KeyWord name="maprevealer" />
+        <KeyWord name="mapspotrevealer" />
+        <KeyWord name="mast" />
+        <KeyWord name="maxhealer" />
+        <KeyWord name="maxlightspawner" />
+        <KeyWord name="maxwelltalker" />
+        <KeyWord name="mermcandidate" />
+        <KeyWord name="mermkingmanager" />
+        <KeyWord name="messagebottlemanager" />
+        <KeyWord name="meteorshower" />
+        <KeyWord name="mine" />
+        <KeyWord name="minigame" />
+        <KeyWord name="minigame_participator" />
+        <KeyWord name="minigame_spectator" />
+        <KeyWord name="minionspawner" />
+        <KeyWord name="moisture" />
+        <KeyWord name="moisture_replica" />
+        <KeyWord name="mood" />
+        <KeyWord name="moonbeastspawner" />
+        <KeyWord name="moonrelic" />
+        <KeyWord name="moontrader" />
+        <KeyWord name="moosespawner" />
+        <KeyWord name="murderable" />
+        <KeyWord name="named" />
+        <KeyWord name="named_replica" />
+        <KeyWord name="nightmareclock" />
+        <KeyWord name="nis" />
+        <KeyWord name="npc_talker" />
+        <KeyWord name="oar" />
+        <KeyWord name="oasis" />
+        <KeyWord name="objectspawner" />
+        <KeyWord name="occupiable" />
+        <KeyWord name="occupier" />
+        <KeyWord name="ocean" />
+        <KeyWord name="oceancolor" />
+        <KeyWord name="oceanfishable" />
+        <KeyWord name="oceanfishinghook" />
+        <KeyWord name="oceanfishingrod" />
+        <KeyWord name="oceanfishingrod_replica" />
+        <KeyWord name="oceanfishingtackle" />
+        <KeyWord name="oceanthrowable" />
+        <KeyWord name="penguinspawner" />
+        <KeyWord name="periodicspawner" />
+        <KeyWord name="perishable" />
+        <KeyWord name="pethealthbar" />
+        <KeyWord name="petleash" />
+        <KeyWord name="petrifiable" />
+        <KeyWord name="pickable" />
+        <KeyWord name="pinnable" />
+        <KeyWord name="placer" />
+        <KeyWord name="plantable" />
+        <KeyWord name="plantregrowth" />
+        <KeyWord name="playeractionpicker" />
+        <KeyWord name="playeravatardata" />
+        <KeyWord name="playercontroller" />
+        <KeyWord name="playerhearing" />
+        <KeyWord name="playerinspectable" />
+        <KeyWord name="playerlightningtarget" />
+        <KeyWord name="playermetrics" />
+        <KeyWord name="playerprox" />
+        <KeyWord name="playerspawner" />
+        <KeyWord name="playertargetindicator" />
+        <KeyWord name="playervision" />
+        <KeyWord name="playervoter" />
+        <KeyWord name="pollinator" />
+        <KeyWord name="portablecookware" />
+        <KeyWord name="possessedaxe" />
+        <KeyWord name="preservative" />
+        <KeyWord name="preserver" />
+        <KeyWord name="projectile" />
+        <KeyWord name="propagator" />
+        <KeyWord name="prototyper" />
+        <KeyWord name="quagmire_hangriness" />
+        <KeyWord name="quagmire_map" />
+        <KeyWord name="quagmire_music" />
+        <KeyWord name="quagmire_recipebook" />
+        <KeyWord name="quagmire_recipeprices" />
+        <KeyWord name="quaker" />
+        <KeyWord name="questowner" />
+        <KeyWord name="rampingspawner" />
+        <KeyWord name="reader" />
+        <KeyWord name="recipestockpile" />
+        <KeyWord name="regrowthmanager" />
+        <KeyWord name="repairable" />
+        <KeyWord name="repairer" />
+        <KeyWord name="researchpointconverter" />
+        <KeyWord name="resistance" />
+        <KeyWord name="reticule" />
+        <KeyWord name="retrofitcavemap_anr" />
+        <KeyWord name="retrofitforestmap_anr" />
+        <KeyWord name="revivablecorpse" />
+        <KeyWord name="rideable" />
+        <KeyWord name="rider" />
+        <KeyWord name="rider_replica" />
+        <KeyWord name="saddler" />
+        <KeyWord name="saltlicker" />
+        <KeyWord name="sandstorms" />
+        <KeyWord name="sanity" />
+        <KeyWord name="sanityaura" />
+        <KeyWord name="sanity_replica" />
+        <KeyWord name="savedrotation" />
+        <KeyWord name="savedscale" />
+        <KeyWord name="scaler" />
+        <KeyWord name="scenariorunner" />
+        <KeyWord name="schoolspawner" />
+        <KeyWord name="seasons" />
+        <KeyWord name="selfstacker" />
+        <KeyWord name="sentientaxe" />
+        <KeyWord name="sewing" />
+        <KeyWord name="shadowcreaturespawner" />
+        <KeyWord name="shadowhandspawner" />
+        <KeyWord name="shadowsubmissive" />
+        <KeyWord name="shardstate" />
+        <KeyWord name="shard_autosaver" />
+        <KeyWord name="shard_clock" />
+        <KeyWord name="shard_players" />
+        <KeyWord name="shard_seasons" />
+        <KeyWord name="shard_sinkholes" />
+        <KeyWord name="shard_worldreset" />
+        <KeyWord name="shard_worldvoter" />
+        <KeyWord name="shatterfx" />
+        <KeyWord name="shaver" />
+        <KeyWord name="shedder" />
+        <KeyWord name="shelf" />
+        <KeyWord name="sheltered" />
+        <KeyWord name="sheltered_replica" />
+        <KeyWord name="shop" />
+        <KeyWord name="singingshellmanager" />
+        <KeyWord name="singingshelltrigger" />
+        <KeyWord name="sinkholespawner" />
+        <KeyWord name="sisturnregistry" />
+        <KeyWord name="sizetweener" />
+        <KeyWord name="skeletonsweeper" />
+        <KeyWord name="skinner" />
+        <KeyWord name="sleeper" />
+        <KeyWord name="sleepingbag" />
+        <KeyWord name="smotherer" />
+        <KeyWord name="soul" />
+        <KeyWord name="souleater" />
+        <KeyWord name="spawner" />
+        <KeyWord name="spawnfader" />
+        <KeyWord name="specialeventsetup" />
+        <KeyWord name="spectatorcorpse" />
+        <KeyWord name="spell" />
+        <KeyWord name="spellcaster" />
+        <KeyWord name="spooked" />
+        <KeyWord name="squadmember" />
+        <KeyWord name="squidspawner" />
+        <KeyWord name="stackable" />
+        <KeyWord name="stackable_replica" />
+        <KeyWord name="steeringwheel" />
+        <KeyWord name="steeringwheeluser" />
+        <KeyWord name="stewer" />
+        <KeyWord name="stormwatcher" />
+        <KeyWord name="stretcher" />
+        <KeyWord name="stunnable" />
+        <KeyWord name="submersible" />
+        <KeyWord name="summoningitem" />
+        <KeyWord name="symbolswapdata" />
+        <KeyWord name="tackler" />
+        <KeyWord name="tacklesketch" />
+        <KeyWord name="talkable" />
+        <KeyWord name="talker" />
+        <KeyWord name="teacher" />
+        <KeyWord name="teamattacker" />
+        <KeyWord name="teamleader" />
+        <KeyWord name="teleportedoverride" />
+        <KeyWord name="teleporter" />
+        <KeyWord name="temperature" />
+        <KeyWord name="terraformer" />
+        <KeyWord name="thief" />
+        <KeyWord name="timer" />
+        <KeyWord name="toadstoolspawner" />
+        <KeyWord name="tool" />
+        <KeyWord name="touchstonetracker" />
+        <KeyWord name="townportalregistry" />
+        <KeyWord name="tradable" />
+        <KeyWord name="trader" />
+        <KeyWord name="transformer" />
+        <KeyWord name="transparentonsanity" />
+        <KeyWord name="trap" />
+        <KeyWord name="treasuremarked" />
+        <KeyWord name="tributable" />
+        <KeyWord name="trophyscale" />
+        <KeyWord name="uianim" />
+        <KeyWord name="unevenground" />
+        <KeyWord name="uniqueid" />
+        <KeyWord name="uniqueprefabids" />
+        <KeyWord name="unsaddler" />
+        <KeyWord name="unwrappable" />
+        <KeyWord name="updatelooper" />
+        <KeyWord name="upgradeable" />
+        <KeyWord name="upgrader" />
+        <KeyWord name="useableitem" />
+        <KeyWord name="vase" />
+        <KeyWord name="vasedecoration" />
+        <KeyWord name="walkableplatform" />
+        <KeyWord name="walkableplatformmanager" />
+        <KeyWord name="walkingplank" />
+        <KeyWord name="walkingplankuser" />
+        <KeyWord name="wardrobe" />
+        <KeyWord name="waterphysics" />
+        <KeyWord name="waterproofer" />
+        <KeyWord name="wateryprotection" />
+        <KeyWord name="wavemanager" />
+        <KeyWord name="weapon" />
+        <KeyWord name="weather" />
+        <KeyWord name="weighable" />
+        <KeyWord name="werebeast" />
+        <KeyWord name="wereeater" />
+        <KeyWord name="wereness" />
+        <KeyWord name="wildfires" />
+        <KeyWord name="winch" />
+        <KeyWord name="winchtarget" />
+        <KeyWord name="wintersfeasttable" />
+        <KeyWord name="wintertreegiftable" />
+        <KeyWord name="winter_treeseed" />
+        <KeyWord name="wisecracker" />
+        <KeyWord name="witherable" />
+        <KeyWord name="workable" />
+        <KeyWord name="worker" />
+        <KeyWord name="workmultiplier" />
+        <KeyWord name="worldcharacterselectlobby" />
+        <KeyWord name="worlddeciduoustreeupdater" />
+        <KeyWord name="worldmeteorshower" />
+        <KeyWord name="worldmigrator" />
+        <KeyWord name="worldoverseer" />
+        <KeyWord name="worldreset" />
+        <KeyWord name="worldstate" />
+        <KeyWord name="worldtemperature" />
+        <KeyWord name="worldvoter" />
+        <KeyWord name="worldwind" />
+        <KeyWord name="writeable" />
+        <KeyWord name="writeable_replica" />
+        <KeyWord name="yotc_racecompetitor" />
+        <KeyWord name="yotc_raceprizemanager" />
+        <KeyWord name="yotc_racestart" />
+        <KeyWord name="yotc_racestats" />
+        <KeyWord name="activatable" />
+<!--         饥荒常用命令 -->
+        <KeyWord name="DoTaskInTime" func="yes" />
+        <KeyWord name="DoPeriodicTask" func="yes" />
+        <KeyWord name="components" func="yes" />
+        <KeyWord name="replica" />
+        <KeyWord name="TheSim" />
+        <KeyWord name="TheNet" />
+        <KeyWord name="ThePlayer" />
+        <KeyWord name="TheShard" />
+        <KeyWord name="TheWorld" />
+        		<KeyWord name="AnimState" />
+		<KeyWord name="modassert" />
+		<KeyWord name="moderror" />
+		<KeyWord name="postinitfns = {}" />
+		<KeyWord name="postinitdata = {}" />
+		<KeyWord name="AddLevelPreInit" />
+		<KeyWord name="AddLevelPreInitAny" />
+		<KeyWord name="AddTaskSetPreInit" />
+		<KeyWord name="AddTaskSetPreInitAny" />
+		<KeyWord name="AddTaskPreInit" />
+		<KeyWord name="AddRoomPreInit" />
+		<KeyWord name="AddLocation" />
+		<KeyWord name="AddLevel" />
+		<KeyWord name="AddTaskSet" />
+		<KeyWord name="AddTas" />
+		<KeyWord name="AddRoomLocation" />
+		<KeyWord name="AddGameMode" />
+		<KeyWord name="GetModConfigData" />
+		<KeyWord name="AddGamePostInit" />
+		<KeyWord name="AddSimPostInit" />
+		<KeyWord name="AddGlobalClassPostConstruct" />
+		<KeyWord name="AddClassPostConstruct" />
+		<KeyWord name="ReleaseID" />
+		<KeyWord name="CurrentRelease" />
+		<KeyWord name="AddAction" />
+		<KeyWord name="AddComponentAction" />
+		<KeyWord name="AddMinimapAtlas" />
+		<KeyWord name="AddStategraphActionHandler" />
+		<KeyWord name="AddStategraphState" />
+		<KeyWord name="AddStategraphEvent" />
+		<KeyWord name="AddStategraphPostInit" />
+		<KeyWord name="AddComponentPostInit" />
+		<KeyWord name="AddPrefabPostInitAny" />
+		<KeyWord name="AddPlayerPostInit" />
+		<KeyWord name="PrefabPostInit" />
+		<KeyWord name="AddPrefabPostInit" />
+		<KeyWord name="AddBrainPostInit" />
+		<KeyWord name="AddIngredientValues" />
+		<KeyWord name="cookerrecipes" />
+		<KeyWord name="AddCookerRecipe" />
+		<KeyWord name="AddModCharacter" />
+		<KeyWord name="RemoveDefaultCharacter" />
+		<KeyWord name="AddRecipe" />
+		<KeyWord name="Recipe" />
+		<KeyWord name="AddRecipeTab" />
+		<KeyWord name="Prefab" />
+		<KeyWord name="Asset" />
+		<KeyWord name="Ingredient" />
+		<KeyWord name="LoadPOFile" />
+		<KeyWord name="RemapSoundEvent" />
+		<KeyWord name="AddReplicableComponent" />
+		<KeyWord name="AddModRPCHandler" />
+		<KeyWord name="GetModRPCHandler" />
+		<KeyWord name="SendModRPCToServer" />
+		<KeyWord name="MOD_RPC" />
+		<KeyWord name="GetModRPC" />
+		<KeyWord name="SetModHUDFocus" />
+		<KeyWord name="AddUserCommand" />
+		<KeyWord name="AddVoteCommand" />
+		<KeyWord name="ExcludeClothingSymbolForModCharacter" />
+        		<KeyWord name="SpawnPrefab" />
+		<KeyWord name="GoToState" />
+		<KeyWord name="Class" />
+		<KeyWord name="AddChild" />
+		<KeyWord name="Remove" />
+		<KeyWord name="SpawnChild" />
+		<KeyWord name="SendRPCToServer" />
+		<KeyWord name="PushScreen" />
+		<KeyWord name="PopScreen" />
+		<KeyWord name="TheFrontEnd" />
+		<KeyWord name="HUD" />
+		<KeyWord name="controls" />
+		<KeyWord name="CreatePrefabSkin" />
+		<KeyWord name="Asset" />
+		<KeyWord name="ANIM" />
+		<KeyWord name="ATLAS" />
+		<KeyWord name="IMAGE" />
+		<KeyWord name="SOUNDPACKAGE" />
+		<KeyWord name="value" />
+		<KeyWord name="set" />
+		<KeyWord name="net_bool          " />
+		<KeyWord name="net_tinybyte      " />
+		<KeyWord name="net_smallbyte     " />
+		<KeyWord name="net_byte          " />
+		<KeyWord name="net_shortint      " />
+		<KeyWord name="net_ushortint     " />
+		<KeyWord name="net_int           " />
+		<KeyWord name="net_uint          " />
+		<KeyWord name="net_float         " />
+		<KeyWord name="net_hash          " />
+		<KeyWord name="net_string        " />
+		<KeyWord name="net_entity        " />
+		<KeyWord name="net_bytearray     " />
+		<KeyWord name="net_smallbytearray" />
+		<KeyWord name="net_event" />
+		<KeyWord name="PushEvent" />
+		<KeyWord name="ListenForEvent" />
+		<KeyWord name="HasTag" />
+		<KeyWord name="AddTag" />
+		<KeyWord name="Hide" />
+		<KeyWord name="Show" />
+		<KeyWord name="DoDelta" />
+		<KeyWord name="GiveItem" />
+		<KeyWord name="AddComponent" />
+		<KeyWord name="RemoveComponent" />
+		<KeyWord name="IsValid" />
+		<KeyWord name="OnSave" />
+		<KeyWord name="OnLoad" />
+		<KeyWord name="OnPreload" />
+		<KeyWord name="OnClick" />
+		<KeyWord name="OnControl" />
+		<KeyWord name="OnRawKey" />
+		<KeyWord name="OnUpdate" />
+		<KeyWord name="ismastersim" />
+		<KeyWord name="ismastershard" />
+		<KeyWord name="OverrideSymbol" />
+		<KeyWord name="AddOverrideBuild" />
+		<KeyWord name="AllPlayers" />
+		<KeyWord name="CreateEntity" />
+		<KeyWord name="Entity" />
+		<KeyWord name="entity" />
+		<KeyWord name="inst" />
+		<KeyWord name="selfstacker" />
+		<KeyWord name="AddTransform" />
+		<KeyWord name="AddAnimState" />
+		<KeyWord name="AddSoundEmitter" />
+		<KeyWord name="AddDynamicShadow" />
+		<KeyWord name="AddMiniMapEntity" />
+		<KeyWord name="AddLight" />
+		<KeyWord name="AddLightWatcher" />
+		<KeyWord name="AddNetwork" />
+		<KeyWord name="Transform" />
+		<KeyWord name="AnimState" />
+		<KeyWord name="SoundEmitter" />
+		<KeyWord name="DynamicShadow" />
+		<KeyWord name="MiniMapEntity" />
+		<KeyWord name="Light" />
+		<KeyWord name="LightWatcher" />
+		<KeyWord name="Network" />
+		<KeyWord name="SetFourFaced" />
+		<KeyWord name="SetSixFaced" />
+		<KeyWord name="SetEightFaced" />
+		<KeyWord name="SetBank" />
+		<KeyWord name="SetBuild" />
+		<KeyWord name="PlayAnimation" />
+		<KeyWord name="PushAnimation" />
+		<KeyWord name="SetPristine" />
+		<KeyWord name="IsDedicated" />
+		<KeyWord name="RemoveTag" />
+		<KeyWord name="userid" />
+		<KeyWord name="MakePlayerCharacter" />
+		<KeyWord name="MakePlacer" />
+				<KeyWord name="DumpTableXML" />
+		<KeyWord name="DebugSpawn" />
+		<KeyWord name="GetClosest" />
+		<KeyWord name="SpawnAt" />
+		<KeyWord name="string:split" />
+		<KeyWord name="string.findall" />
+		<KeyWord name="string.rfind" />
+		<KeyWord name="string.rfind_plain" />
+		<KeyWord name="table.contains" />
+		<KeyWord name="table.containskey" />
+		<KeyWord name="table.getkeys" />
+		<KeyWord name="table.reverse" />
+		<KeyWord name="table.invert" />
+		<KeyWord name="table.removearrayvalue" />
+		<KeyWord name="table.removetablevalue" />
+		<KeyWord name="table.reverselookup" />
+		<KeyWord name="ipairs_reverse" />
+		<KeyWord name="GetFlattenedSparse" />
+		<KeyWord name="RemoveByValue" />
+		<KeyWord name="GetTableSize" />
+		<KeyWord name="GetRandomItem" />
+		<KeyWord name="GetRandomItemWithIndex" />
+		<KeyWord name="PickSome" />
+		<KeyWord name="PickSomeWithDups" />
+		<KeyWord name="ConcatArrays" />
+		<KeyWord name="JoinArrays" />
+		<KeyWord name="ExceptionArrays" />
+		<KeyWord name="ArrayUnion" />
+		<KeyWord name="ArrayIntersection" />
+		<KeyWord name="MergeMaps" />
+		<KeyWord name="MergeMapsDeep" />
+		<KeyWord name="MergeKeyValueList" />
+		<KeyWord name="SubtractMapKeys" />
+		<KeyWord name="ExtendedArray" />
+		<KeyWord name="FlattenTree" />
+		<KeyWord name="GetRandomKey" />
+		<KeyWord name="GetRandomWithVariance" />
+		<KeyWord name="GetRandomMinMax" />
+		<KeyWord name="distsq" />
+		<KeyWord name="resolvefilepath" />
+		<KeyWord name="softresolvefilepath" />
+		<KeyWord name="isnan" />
+		<KeyWord name="isinf" />
+		<KeyWord name="isbadnumber" />
+		<KeyWord name="mem_report" />
+		<KeyWord name="weighted_random_choice" />
+		<KeyWord name="RunInEnvironment" />
+		<KeyWord name="RunInEnvironmentSafe" />
+		<KeyWord name="RunInSandbox" />
+		<KeyWord name="RunInSandboxSafe" />
+		<KeyWord name="GetTickForTime" />
+		<KeyWord name="GetTimeForTick" />
+		<KeyWord name="GetTaskRemaining" />
+		<KeyWord name="GetTaskTime" />
+		<KeyWord name="shuffleArray" />
+		<KeyWord name="shuffledKeys" />
+		<KeyWord name="sortedKeys" />
+		<KeyWord name="TrackedAssert" />
+		<KeyWord name="deepcopy" />
+		<KeyWord name="shallowcopy" />
+		<KeyWord name="IsTableEmpty" />
+		<KeyWord name="fastdump" />
+		<KeyWord name="circular_index_number" />
+		<KeyWord name="circular_index" />
+		<KeyWord name="RingBuffer:Clear" />
+		<KeyWord name="RingBuffer:Add" />
+		<KeyWord name="RingBuffer:Get" />
+		<KeyWord name="RingBuffer:GetBuffer" />
+		<KeyWord name="RingBuffer:Resize" />
+		<KeyWord name="DynamicPosition:__eq" />
+		<KeyWord name="DynamicPosition:__tostring" />
+		<KeyWord name="DynamicPosition:GetPosition" />
+		<KeyWord name="LinkedList:Append" />
+		<KeyWord name="LinkedList:Remove" />
+		<KeyWord name="LinkedList:Head" />
+		<KeyWord name="LinkedList:Tail" />
+		<KeyWord name="LinkedList:Clear" />
+		<KeyWord name="LinkedList:Count" />
+		<KeyWord name="LinkedList:Iterator" />
+		<KeyWord name="table.setfield" />
+		<KeyWord name="table.getfield" />
+		<KeyWord name="table.findfield" />
+		<KeyWord name="table.findpath" />
+		<KeyWord name="TrackMem" />
+		<KeyWord name="DumpMem" />
+		<KeyWord name="checkbit" />
+		<KeyWord name="IsWithinAngle" />
+		<KeyWord name="string.random" />
+		<KeyWord name="HexToRGB" />
+		<KeyWord name="RGBToPercentColor" />
+		<KeyWord name="HexToPercentColor" />
+		<KeyWord name="CalcDiminishingReturns" />
+		<KeyWord name="Dist2dSq" />
+		<KeyWord name="DistPointToSegmentXYSq" />
+		<KeyWord name="orderedNext" />
+		<KeyWord name="orderedPairs" />
+        <KeyWord name="SetPosition" />
+        <KeyWord name="GetPosition" />
+        <KeyWord name="Entity:AddNetwork" />
+<KeyWord name="EntityScript:GetSaveRecord" />
+<KeyWord name="EntityScript:Hide" />
+<KeyWord name="EntityScript:Show" />
+<KeyWord name="EntityScript:IsInLimbo" />
+<KeyWord name="EntityScript:RemoveFromScene" />
+<KeyWord name="EntityScript:ReturnToScene" />
+<KeyWord name="EntityScript:__tostring" />
+<KeyWord name="EntityScript:AddInherentAction" />
+<KeyWord name="EntityScript:RemoveInherentAction" />
+<KeyWord name="EntityScript:GetTimeAlive" />
+<KeyWord name="EntityScript:StartUpdatingComponent" />
+<KeyWord name="EntityScript:StopUpdatingComponent" />
+<KeyWord name="EntityScript:StopUpdatingComponent_Deferred" />
+<KeyWord name="EntityScript:StartWallUpdatingComponent" />
+<KeyWord name="EntityScript:StopWallUpdatingComponent" />
+<KeyWord name="EntityScript:GetComponentName" />
+<KeyWord name="EntityScript:AddTag" />
+<KeyWord name="EntityScript:RemoveTag" />
+<KeyWord name="EntityScript:HasTag" />
+<KeyWord name="EntityScript:AddComponent" />
+<KeyWord name="EntityScript:RemoveComponent" />
+<KeyWord name="EntityScript:GetBasicDisplayName" />
+<KeyWord name="EntityScript:GetAdjectivedName" />
+<KeyWord name="EntityScript:GetDisplayName" />
+<KeyWord name="EntityScript:GetIsWet" />
+<KeyWord name="EntityScript:GetSkinBuild" />
+<KeyWord name="EntityScript:GetSkinName" />
+<KeyWord name="EntityScript:SetPrefabName" />
+<KeyWord name="EntityScript:SetPrefabNameOverride" />
+<KeyWord name="EntityScript:SetDeployExtraSpacing" />
+<KeyWord name="EntityScript:SetTerraformExtraSpacing" />
+<KeyWord name="EntityScript:SetGroundTargetBlockerRadius" />
+<KeyWord name="EntityScript:SpawnChild" />
+<KeyWord name="EntityScript:RemoveChild" />
+<KeyWord name="EntityScript:AddChild" />
+<KeyWord name="EntityScript:GetBrainString" />
+<KeyWord name="EntityScript:GetDebugString" />
+<KeyWord name="EntityScript:KillTasks" />
+<KeyWord name="EntityScript:StartThread" />
+<KeyWord name="EntityScript:RunScript" />
+<KeyWord name="EntityScript:RestartBrain" />
+<KeyWord name="EntityScript:StopBrain" />
+<KeyWord name="EntityScript:SetBrain" />
+<KeyWord name="EntityScript:SetStateGraph" />
+<KeyWord name="EntityScript:ClearStateGraph" />
+<KeyWord name="EntityScript:ListenForEvent" />
+<KeyWord name="EntityScript:RemoveEventCallback" />
+<KeyWord name="EntityScript:RemoveAllEventCallbacks" />
+<KeyWord name="EntityScript:WatchWorldState" />
+<KeyWord name="EntityScript:StopWatchingWorldState" />
+<KeyWord name="EntityScript:StopAllWatchingWorldStates" />
+<KeyWord name="EntityScript:PushEvent" />
+<KeyWord name="EntityScript:SetPhysicsRadiusOverride" />
+<KeyWord name="EntityScript:GetPhysicsRadius" />
+<KeyWord name="EntityScript:GetPosition" />
+<KeyWord name="EntityScript:GetRotation" />
+<KeyWord name="EntityScript:GetAngleToPoint" />
+<KeyWord name="EntityScript:GetPositionAdjacentTo" />
+<KeyWord name="EntityScript:ForceFacePoint" />
+<KeyWord name="EntityScript:FacePoint" />
+<KeyWord name="EntityScript:GetDistanceSqToInst" />
+<KeyWord name="EntityScript:IsNear" />
+<KeyWord name="EntityScript:GetDistanceSqToPoint" />
+<KeyWord name="EntityScript:IsNearPlayer" />
+<KeyWord name="EntityScript:GetNearestPlayer" />
+<KeyWord name="EntityScript:GetDistanceSqToClosestPlayer" />
+<KeyWord name="EntityScript:FaceAwayFromPoint" />
+<KeyWord name="EntityScript:IsAsleep" />
+<KeyWord name="EntityScript:CancelAllPendingTasks" />
+<KeyWord name="EntityScript:DoPeriodicTask" />
+<KeyWord name="EntityScript:DoTaskInTime" />
+<KeyWord name="EntityScript:GetTaskInfo" />
+<KeyWord name="EntityScript:TimeRemainingInTask" />
+<KeyWord name="EntityScript:ResumeTask" />
+<KeyWord name="EntityScript:ClearBufferedAction" />
+<KeyWord name="EntityScript:PreviewBufferedAction" />
+<KeyWord name="EntityScript:PerformPreviewBufferedAction" />
+<KeyWord name="EntityScript:PushBufferedAction" />
+<KeyWord name="EntityScript:PerformBufferedAction" />
+<KeyWord name="EntityScript:GetBufferedAction" />
+<KeyWord name="EntityScript:OnBuilt" />
+<KeyWord name="EntityScript:Remove" />
+<KeyWord name="EntityScript:IsValid" />
+<KeyWord name="EntityScript:CanInteractWith" />
+<KeyWord name="EntityScript:OnUsedAsItem" />
+<KeyWord name="EntityScript:CanDoAction" />
+<KeyWord name="EntityScript:IsOnValidGround" />
+<KeyWord name="EntityScript:IsOnPassablePoint" />
+<KeyWord name="EntityScript:IsOnOcean" />
+<KeyWord name="EntityScript:GetCurrentPlatform" />
+<KeyWord name="EntityScript:GetCurrentTileType" />
+<KeyWord name="EntityScript:PutBackOnGround" />
+<KeyWord name="EntityScript:GetPersistData" />
+<KeyWord name="EntityScript:LoadPostPass" />
+<KeyWord name="EntityScript:SetPersistData" />
+<KeyWord name="EntityScript:GetAdjective" />
+<KeyWord name="EntityScript:SetInherentSceneAction" />
+<KeyWord name="EntityScript:SetInherentSceneAltAction" />
+<KeyWord name="EntityScript:LongUpdate" />
+
+<KeyWord name="inst:GetSaveRecord" />
+<KeyWord name="inst:Hide" />
+<KeyWord name="inst:Show" />
+<KeyWord name="inst:IsInLimbo" />
+<KeyWord name="inst:RemoveFromScene" />
+<KeyWord name="inst:ReturnToScene" />
+<KeyWord name="inst:__tostring" />
+<KeyWord name="inst:AddInherentAction" />
+<KeyWord name="inst:RemoveInherentAction" />
+<KeyWord name="inst:GetTimeAlive" />
+<KeyWord name="inst:StartUpdatingComponent" />
+<KeyWord name="inst:StopUpdatingComponent" />
+<KeyWord name="inst:StopUpdatingComponent_Deferred" />
+<KeyWord name="inst:StartWallUpdatingComponent" />
+<KeyWord name="inst:StopWallUpdatingComponent" />
+<KeyWord name="inst:GetComponentName" />
+<KeyWord name="inst:AddTag" />
+<KeyWord name="inst:RemoveTag" />
+<KeyWord name="inst:HasTag" />
+<KeyWord name="inst:AddComponent" />
+<KeyWord name="inst:RemoveComponent" />
+<KeyWord name="inst:GetBasicDisplayName" />
+<KeyWord name="inst:GetAdjectivedName" />
+<KeyWord name="inst:GetDisplayName" />
+<KeyWord name="inst:GetIsWet" />
+<KeyWord name="inst:GetSkinBuild" />
+<KeyWord name="inst:GetSkinName" />
+<KeyWord name="inst:SetPrefabName" />
+<KeyWord name="inst:SetPrefabNameOverride" />
+<KeyWord name="inst:SetDeployExtraSpacing" />
+<KeyWord name="inst:SetTerraformExtraSpacing" />
+<KeyWord name="inst:SetGroundTargetBlockerRadius" />
+<KeyWord name="inst:SpawnChild" />
+<KeyWord name="inst:RemoveChild" />
+<KeyWord name="inst:AddChild" />
+<KeyWord name="inst:GetBrainString" />
+<KeyWord name="inst:GetDebugString" />
+<KeyWord name="inst:KillTasks" />
+<KeyWord name="inst:StartThread" />
+<KeyWord name="inst:RunScript" />
+<KeyWord name="inst:RestartBrain" />
+<KeyWord name="inst:StopBrain" />
+<KeyWord name="inst:SetBrain" />
+<KeyWord name="inst:SetStateGraph" />
+<KeyWord name="inst:ClearStateGraph" />
+<KeyWord name="inst:ListenForEvent" />
+<KeyWord name="inst:RemoveEventCallback" />
+<KeyWord name="inst:RemoveAllEventCallbacks" />
+<KeyWord name="inst:WatchWorldState" />
+<KeyWord name="inst:StopWatchingWorldState" />
+<KeyWord name="inst:StopAllWatchingWorldStates" />
+<KeyWord name="inst:PushEvent" />
+<KeyWord name="inst:SetPhysicsRadiusOverride" />
+<KeyWord name="inst:GetPhysicsRadius" />
+<KeyWord name="inst:GetPosition" />
+<KeyWord name="inst:GetRotation" />
+<KeyWord name="inst:GetAngleToPoint" />
+<KeyWord name="inst:GetPositionAdjacentTo" />
+<KeyWord name="inst:ForceFacePoint" />
+<KeyWord name="inst:FacePoint" />
+<KeyWord name="inst:GetDistanceSqToInst" />
+<KeyWord name="inst:IsNear" />
+<KeyWord name="inst:GetDistanceSqToPoint" />
+<KeyWord name="inst:IsNearPlayer" />
+<KeyWord name="inst:GetNearestPlayer" />
+<KeyWord name="inst:GetDistanceSqToClosestPlayer" />
+<KeyWord name="inst:FaceAwayFromPoint" />
+<KeyWord name="inst:IsAsleep" />
+<KeyWord name="inst:CancelAllPendingTasks" />
+<KeyWord name="inst:DoPeriodicTask" />
+<KeyWord name="inst:DoTaskInTime" />
+<KeyWord name="inst:GetTaskInfo" />
+<KeyWord name="inst:TimeRemainingInTask" />
+<KeyWord name="inst:ResumeTask" />
+<KeyWord name="inst:ClearBufferedAction" />
+<KeyWord name="inst:PreviewBufferedAction" />
+<KeyWord name="inst:PerformPreviewBufferedAction" />
+<KeyWord name="inst:PushBufferedAction" />
+<KeyWord name="inst:PerformBufferedAction" />
+<KeyWord name="inst:GetBufferedAction" />
+<KeyWord name="inst:OnBuilt" />
+<KeyWord name="inst:Remove" />
+<KeyWord name="inst:IsValid" />
+<KeyWord name="inst:CanInteractWith" />
+<KeyWord name="inst:OnUsedAsItem" />
+<KeyWord name="inst:CanDoAction" />
+<KeyWord name="inst:IsOnValidGround" />
+<KeyWord name="inst:IsOnPassablePoint" />
+<KeyWord name="inst:IsOnOcean" />
+<KeyWord name="inst:GetCurrentPlatform" />
+<KeyWord name="inst:GetCurrentTileType" />
+<KeyWord name="inst:PutBackOnGround" />
+<KeyWord name="inst:GetPersistData" />
+<KeyWord name="inst:LoadPostPass" />
+<KeyWord name="inst:SetPersistData" />
+<KeyWord name="inst:GetAdjective" />
+<KeyWord name="inst:SetInherentSceneAction" />
+<KeyWord name="inst:SetInherentSceneAltAction" />
+<KeyWord name="inst:LongUpdate" />
+
+<KeyWord name="inst.GetSaveRecord" />
+<KeyWord name="inst.Hide" />
+<KeyWord name="inst.Show" />
+<KeyWord name="inst.IsInLimbo" />
+<KeyWord name="inst.RemoveFromScene" />
+<KeyWord name="inst.ReturnToScene" />
+<KeyWord name="inst.__tostring" />
+<KeyWord name="inst.AddInherentAction" />
+<KeyWord name="inst.RemoveInherentAction" />
+<KeyWord name="inst.GetTimeAlive" />
+<KeyWord name="inst.StartUpdatingComponent" />
+<KeyWord name="inst.StopUpdatingComponent" />
+<KeyWord name="inst.StopUpdatingComponent_Deferred" />
+<KeyWord name="inst.StartWallUpdatingComponent" />
+<KeyWord name="inst.StopWallUpdatingComponent" />
+<KeyWord name="inst.GetComponentName" />
+<KeyWord name="inst.AddTag" />
+<KeyWord name="inst.RemoveTag" />
+<KeyWord name="inst.HasTag" />
+<KeyWord name="inst.AddComponent" />
+<KeyWord name="inst.RemoveComponent" />
+<KeyWord name="inst.GetBasicDisplayName" />
+<KeyWord name="inst.GetAdjectivedName" />
+<KeyWord name="inst.GetDisplayName" />
+<KeyWord name="inst.GetIsWet" />
+<KeyWord name="inst.GetSkinBuild" />
+<KeyWord name="inst.GetSkinName" />
+<KeyWord name="inst.SetPrefabName" />
+<KeyWord name="inst.SetPrefabNameOverride" />
+<KeyWord name="inst.SetDeployExtraSpacing" />
+<KeyWord name="inst.SetTerraformExtraSpacing" />
+<KeyWord name="inst.SetGroundTargetBlockerRadius" />
+<KeyWord name="inst.SpawnChild" />
+<KeyWord name="inst.RemoveChild" />
+<KeyWord name="inst.AddChild" />
+<KeyWord name="inst.GetBrainString" />
+<KeyWord name="inst.GetDebugString" />
+<KeyWord name="inst.KillTasks" />
+<KeyWord name="inst.StartThread" />
+<KeyWord name="inst.RunScript" />
+<KeyWord name="inst.RestartBrain" />
+<KeyWord name="inst.StopBrain" />
+<KeyWord name="inst.SetBrain" />
+<KeyWord name="inst.SetStateGraph" />
+<KeyWord name="inst.ClearStateGraph" />
+<KeyWord name="inst.ListenForEvent" />
+<KeyWord name="inst.RemoveEventCallback" />
+<KeyWord name="inst.RemoveAllEventCallbacks" />
+<KeyWord name="inst.WatchWorldState" />
+<KeyWord name="inst.StopWatchingWorldState" />
+<KeyWord name="inst.StopAllWatchingWorldStates" />
+<KeyWord name="inst.PushEvent" />
+<KeyWord name="inst.SetPhysicsRadiusOverride" />
+<KeyWord name="inst.GetPhysicsRadius" />
+<KeyWord name="inst.GetPosition" />
+<KeyWord name="inst.GetRotation" />
+<KeyWord name="inst.GetAngleToPoint" />
+<KeyWord name="inst.GetPositionAdjacentTo" />
+<KeyWord name="inst.ForceFacePoint" />
+<KeyWord name="inst.FacePoint" />
+<KeyWord name="inst.GetDistanceSqToInst" />
+<KeyWord name="inst.IsNear" />
+<KeyWord name="inst.GetDistanceSqToPoint" />
+<KeyWord name="inst.IsNearPlayer" />
+<KeyWord name="inst.GetNearestPlayer" />
+<KeyWord name="inst.GetDistanceSqToClosestPlayer" />
+<KeyWord name="inst.FaceAwayFromPoint" />
+<KeyWord name="inst.IsAsleep" />
+<KeyWord name="inst.CancelAllPendingTasks" />
+<KeyWord name="inst.DoPeriodicTask" />
+<KeyWord name="inst.DoTaskInTime" />
+<KeyWord name="inst.GetTaskInfo" />
+<KeyWord name="inst.TimeRemainingInTask" />
+<KeyWord name="inst.ResumeTask" />
+<KeyWord name="inst.ClearBufferedAction" />
+<KeyWord name="inst.PreviewBufferedAction" />
+<KeyWord name="inst.PerformPreviewBufferedAction" />
+<KeyWord name="inst.PushBufferedAction" />
+<KeyWord name="inst.PerformBufferedAction" />
+<KeyWord name="inst.GetBufferedAction" />
+<KeyWord name="inst.OnBuilt" />
+<KeyWord name="inst.Remove" />
+<KeyWord name="inst.IsValid" />
+<KeyWord name="inst.CanInteractWith" />
+<KeyWord name="inst.OnUsedAsItem" />
+<KeyWord name="inst.CanDoAction" />
+<KeyWord name="inst.IsOnValidGround" />
+<KeyWord name="inst.IsOnPassablePoint" />
+<KeyWord name="inst.IsOnOcean" />
+<KeyWord name="inst.GetCurrentPlatform" />
+<KeyWord name="inst.GetCurrentTileType" />
+<KeyWord name="inst.PutBackOnGround" />
+<KeyWord name="inst.GetPersistData" />
+<KeyWord name="inst.LoadPostPass" />
+<KeyWord name="inst.SetPersistData" />
+<KeyWord name="inst.GetAdjective" />
+<KeyWord name="inst.SetInherentSceneAction" />
+<KeyWord name="inst.SetInherentSceneAltAction" />
+<KeyWord name="inst.LongUpdate" />
+<KeyWord name="Cleanup" />
+<KeyWord name="Cancel" />
+<KeyWord name="IsModEnable" />
+<KeyWord name="SoraCD" />
+<KeyWord name="SoraUP" />
+<KeyWord name="SoraGetRandom" />
+<KeyWord name="copytotable" />
+<KeyWord name="comparetable" />
+<KeyWord name="SoraMakeWidgetMovable" />
+
+<KeyWord name="getsora" />
+
+<KeyWord name="SoraString" />
+
+<KeyWord name="AddLaterFn" />
+
+
+<KeyWord name="bhook" func="yes" >
+    <Overload retVal="drop fn return:oldfn,fn" >
+		<Param name="table"/>
+		<Param name="name"/>
+		<Param name="fn"/>
+	</Overload>
+</KeyWord>
+<KeyWord name="ehook" func="yes" >
+    <Overload retVal="drop oldfn return:oldfn,fn" >
+		<Param name="table"/>
+		<Param name="name"/>
+		<Param name="fn"/>
+	</Overload>
+</KeyWord>
+<KeyWord name="rhook" func="yes" >
+    <Overload retVal="oldfn return:oldfn,fn" >
+		<Param name="table"/>
+		<Param name="name"/>
+		<Param name="fn({oldreturn},{...})"/>
+	</Overload>
+</KeyWord>
+<KeyWord name="hook" func="yes" >
+    <Overload retVal="drop return:oldfn,fn" >
+		<Param name="table"/>
+		<Param name="name"/>
+		<Param name="fn(s:call,e:return)"/>
+        <Param name="startorend"/>
+	</Overload>
+</KeyWord>
+    </AutoComplete>
+</NotepadPlus>

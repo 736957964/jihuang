@@ -1,0 +1,3 @@
+inventoryitemimages切图工具
+需要一个xml和一张Png 然后就可以自动切图了
+png可以用tex转化出来

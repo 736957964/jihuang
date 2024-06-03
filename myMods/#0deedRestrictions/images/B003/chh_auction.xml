@@ -1,0 +1,54 @@
+<Atlas>
+	<Texture filename="chh_auction.tex"/>
+	<Elements>
+		<Element name="chh_auction_44.tex" u1="0.241240" u2="0.836253" v1="0.252016" v2="0.555108"/>
+		<Element name="chh_auction_15.tex" u1="0.428571" u2="0.714960" v1="0.100134" v2="0.209677"/>
+		<Element name="chh_auction_30.tex" u1="0.000000" u2="0.427224" v1="0.038306" v2="0.209677"/>
+		<Element name="chh_auction_43.tex" u1="0.837601" u2="0.947439" v1="0.495296" v2="0.524194"/>
+		<Element name="chh_auction_25.tex" u1="0.837601" u2="0.898922" v1="0.282930" v2="0.306452"/>
+		<Element name="chh_auction_9.tex" u1="0.791105" u2="0.944070" v1="0.571909" v2="0.601478"/>
+		<Element name="chh_auction_14.tex" u1="0.943396" u2="0.966981" v1="0.776210" v2="0.811156"/>
+		<Element name="chh_auction_32.tex" u1="0.862534" u2="0.932615" v1="0.635753" v2="0.672043"/>
+		<Element name="chh_auction_17.tex" u1="0.837601" u2="0.971024" v1="0.260753" v2="0.281586"/>
+		<Element name="chh_auction_4.tex" u1="0.933962" u2="0.983154" v1="0.643145" v2="0.672043"/>
+		<Element name="chh_auction_13.tex" u1="0.837601" u2="0.941375" v1="0.525538" v2="0.555108"/>
+		<Element name="chh_auction_3.tex" u1="0.968329" u2="0.992588" v1="0.788306" v2="0.811156"/>
+		<Element name="chh_auction_22.tex" u1="0.809973" u2="0.875337" v1="0.746640" v2="0.811156"/>
+		<Element name="chh_auction_11.tex" u1="0.933288" u2="0.996631" v1="0.231183" v2="0.250672"/>
+		<Element name="chh_auction_16.tex" u1="0.791105" u2="0.855121" v1="0.557796" v2="0.570565"/>
+		<Element name="chh_auction_23.tex" u1="0.968329" u2="0.980458" v1="0.776210" v2="0.786962"/>
+		<Element name="chh_auction_41.tex" u1="0.965633" u2="0.987871" v1="0.615591" v2="0.634409"/>
+		<Element name="chh_auction_42.tex" u1="0.898248" u2="0.964286" v1="0.605511" v2="0.634409"/>
+		<Element name="chh_auction_34.tex" u1="0.837601" u2="0.958221" v1="0.465054" v2="0.493952"/>
+		<Element name="chh_auction_47.tex" u1="0.000000" u2="0.239892" v1="0.211022" v2="0.555108"/>
+		<Element name="chh_auction_46.tex" u1="0.809973" u2="0.992588" v1="0.886425" v2="1.000000"/>
+		<Element name="chh_auction_20.tex" u1="0.791105" u2="0.896900" v1="0.602823" v2="0.634409"/>
+		<Element name="chh_auction_24.tex" u1="0.876685" u2="0.942049" v1="0.747312" v2="0.811156"/>
+		<Element name="chh_auction_21.tex" u1="0.900270" u2="0.966981" v1="0.282930" v2="0.306452"/>
+		<Element name="chh_auction_12.tex" u1="0.951482" u2="0.986523" v1="0.682124" v2="0.714382"/>
+		<Element name="chh_auction_28.tex" u1="0.964286" u2="0.996631" v1="0.716398" v2="0.745296"/>
+		<Element name="chh_auction_29.tex" u1="0.000000" u2="0.808625" v1="0.001344" v2="0.036962"/>
+		<Element name="chh_auction_36.tex" u1="0.837601" u2="0.902965" v1="0.358199" v2="0.382392"/>
+		<Element name="chh_auction_18.tex" u1="0.791105" u2="0.950135" v1="0.673387" v2="0.714382"/>
+		<Element name="chh_auction_10.tex" u1="0.744609" u2="0.931941" v1="0.225806" v2="0.250672"/>
+		<Element name="chh_auction_39.tex" u1="0.989218" u2="0.998652" v1="0.873656" v2="0.885081"/>
+		<Element name="chh_auction_35.tex" u1="0.945418" u2="0.987871" v1="0.583333" v2="0.601478"/>
+		<Element name="chh_auction_33.tex" u1="0.791105" u2="0.861186" v1="0.635753" v2="0.672043"/>
+		<Element name="chh_auction_45.tex" u1="0.837601" u2="0.909030" v1="0.409274" v2="0.435484"/>
+		<Element name="chh_auction_26.tex" u1="0.904313" u2="0.981132" v1="0.358199" v2="0.382392"/>
+		<Element name="chh_auction_40.tex" u1="0.837601" u2="0.963612" v1="0.436828" v2="0.463710"/>
+		<Element name="chh_auction_8.tex" u1="0.943396" u2="0.977089" v1="0.752016" v2="0.774866"/>
+		<Element name="chh_auction_27.tex" u1="0.837601" u2="0.966981" v1="0.307796" v2="0.331317"/>
+		<Element name="chh_auction_38.tex" u1="0.837601" u2="0.960916" v1="0.332661" v2="0.356855"/>
+		<Element name="chh_auction_5.tex" u1="0.978437" u2="0.990566" v1="0.763441" v2="0.774866"/>
+		<Element name="chh_auction_2.tex" u1="0.899596" u2="0.987871" v1="0.812500" v2="0.885081"/>
+		<Element name="chh_auction_19.tex" u1="0.837601" u2="0.969677" v1="0.383737" v2="0.407930"/>
+		<Element name="chh_auction_6.tex" u1="0.791105" u2="0.808625" v1="0.715726" v2="1.000000"/>
+		<Element name="chh_auction_49.tex" u1="0.241240" u2="0.743261" v1="0.217742" v2="0.250672"/>
+		<Element name="chh_auction_48.tex" u1="0.809973" u2="0.898248" v1="0.812500" v2="0.885081"/>
+		<Element name="chh_auction_37.tex" u1="0.910377" u2="0.977089" v1="0.411290" v2="0.435484"/>
+		<Element name="chh_auction_1.tex" u1="0.428571" u2="0.930593" v1="0.072581" v2="0.098790"/>
+		<Element name="chh_auction_31.tex" u1="0.000000" u2="0.789757" v1="0.556452" v2="1.000000"/>
+		<Element name="chh_auction_7.tex" u1="0.809973" u2="0.962938" v1="0.715726" v2="0.745296"/>
+	</Elements>
+</Atlas>
