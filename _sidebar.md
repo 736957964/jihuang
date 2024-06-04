@@ -12,8 +12,6 @@
   * [人物动作](sg/rwdz)
 - Lua通用
   * [通用写法](/lua/index)
-- 自定义通用函数
-  * [xx](/sample-foodrecipe)
 - 案例
   * [小案例](anli/smallAn)
 - 下载

@@ -116,14 +116,23 @@ inst.components.pickable.quickpick = true --开启快采 记得注意写保护
 inst.components.pickable:MakeBarren()--使得贫瘠 注意写保护
 ```
 
-## workable 铲除组件
+## workable 可铲除组件
 ```lua 
-inst:AddComponent("workable")--可铲除的
+inst:AddComponent("workable")--可铲除的（草 树都算）
 inst.components.workable:SetWorkAction(ACTIONS.DIG)--设置工作动作
 inst.components.workable:SetOnFinishCallback(dig_up)--完成后回调
-inst.components.workable:SetWorkLeft(1)--设置剩余工时？
+inst.components.workable:SetWorkLeft(1)--设置剩余工作次数  math.clamp(work or 10, 1, self.maxwork) 这里设置不会超出maxwork 
 inst.components.instrument.range = TUNING.HORN_RANGE --工具范围
 inst.components.instrument:SetOnHeardFn(HearHorn)--工具回调
+TheInput:GetWorldEntityUnderMouse().components.workable:Destroy(ThePlayer)--判断workleft > 0然后 WorkedBy(destroyer, self.workleft)
+--触发 ShouldRecoil(worker, tool, numworks)  WorkedBy_Internal(worker, numworks)  numworks 就是self.workleft
+target.components.workable:WorkedBy(worker, numworks)
+
+:SetShouldRecoilFn(fn) -- local recoil, remainingworks =  self.shouldrecoilfn(self.inst, worker, tool, numworks) 工作物体 操作人 工具 剩余工作次数
+:ShouldRecoil(worker, tool, numworks) -- 自己翻 返回格式 return false or true, numworks or 0
+-- numworks默认1 worker:PushEvent("working"   self.inst:PushEvent("worked"
+-- workleft <=0   self.inst:PushEvent("workfinished"   worker:PushEvent("finishedwork"  有 plant 和没有 burnt 并且不是  diseaseable:IsDiseased()  会世界推送 plantkilled
+:WorkedBy_Internal(worker, numworks)
 ```
 ## talker 说话组件
 ```lua 
@@ -460,7 +469,7 @@ inst.AnimState:SetMultColour(255/255,255/255,255/255,0.5) --设置物体颜色�
 inst.MiniMapEntity:SetIcon("backpack.png") --设置小地图上的图标
 ```
 
-## Transform 组件
+## Transform 
 ```lua 
 inst.Transform:SetRotation( 135 ) --旋转角度
 inst.Transform:SetScale(1.5, 1.5, 1.5) --设置大小
@@ -468,4 +477,8 @@ inst.Transform:SetTwoFaced() --二面 citters
 inst.Transform:SetFourFaced() --四面
 inst.Transform:SetSixFaced() --六面
 inst.Transform:SetEightFaced()--八面
+```
+## diseaseable 患病组件
+```lua 
+inst:AddComponent("diseaseable")
 ```

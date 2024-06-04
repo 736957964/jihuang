@@ -14,7 +14,11 @@ inst:ListenForEvent("consumeingredients", inst.onitembuild, owner) --绿护符 �
 stacksizechange --物品堆叠数量改变的时候
 ms_playerdespawn --玩家下线的时候触发 --请注意 单人也许会失效（可能是主机的原因？）
 death --死亡 推送后会挂掉
+working
 worked --砍树事件（工作）
+workfinished
+finishedwork
+TheWorld:PushEvent('plantkilled')
 armordamaged -- 甲掉耐久了
 armorbroke --甲破了 在 组件armor中
 equip--装备
