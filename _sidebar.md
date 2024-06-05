@@ -2,17 +2,20 @@
   * [Mod相关信息](/README)
 - 公用部分
   * [公用components](/components/index)
+  * [prefab](/components/prefab)
   * [actions动作](/actions/index)
   * [tag标签](/lins/tag)
   * [UI模块](/lins/ui)
   * [监听](/lins/jianting)
   * [全局](/lins/quanju)
   * [杂物](/lins/zawu)
-- SG
-  * [人物动作](sg/rwdz)
-- Lua通用
-  * [通用写法](/lua/index)
+- [SG](sg/rwdz)
+- [Lua通用](/lua/index)
 - 案例
   * [小案例](anli/smallAn)
-- 下载
-  * [数据提取](xiazai/tq)
+- [数据提取1](xiazai/tq1)
+- [数据提取2](xiazai/tq2)
+- [数据提取3](xiazai/tq3)
+- [数据提取4](xiazai/tq4)
+- [数据提取5](xiazai/tq5)
+- [字典](xiazai/tq6)

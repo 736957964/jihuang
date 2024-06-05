@@ -1,6 +1,7 @@
 >  随笔-sg
 
-## 人物动作
+人物动作
+-------------------
 ```lua
 -- ThePlayer.sg:GoToState("changeoutsidewardrobe")
 	ThePlayer.sg:GoToState("hop_master")	--跳起来

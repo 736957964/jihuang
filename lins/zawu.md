@@ -1,4 +1,6 @@
 >   随笔
+
+
 ## 垃圾堆
 ```lua 
 target:IsValid() --有效目标
@@ -1024,3 +1026,4 @@ opalpreciousgem 彩虹宝石
 waterballoon 水球
 homesign木牌
 ```
+

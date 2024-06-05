@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="BRANCH:main" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </select>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3c8aa7ba-d357-4bef-ac0c-75aab0a8640a" name="默认的" comment="">
+      <change afterPath="$PROJECT_DIR$/components/prefab.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/xiazai/tq1.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/xiazai/tq2.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/xiazai/tq3.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/xiazai/tq4.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/xiazai/tq5.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/xiazai/tq6.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_sidebar.md" beforeDir="false" afterPath="$PROJECT_DIR$/_sidebar.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lins/zawu.md" beforeDir="false" afterPath="$PROJECT_DIR$/lins/zawu.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sg/rwdz.md" beforeDir="false" afterPath="$PROJECT_DIR$/sg/rwdz.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/xiazai/tq.md" beforeDir="false" afterPath="$PROJECT_DIR$/xiazai/tq.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/xiazai/字典.lua" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/xiazai/数据提取.lua" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GitToolBoxStore">
+    <option name="projectConfigVersion" value="2" />
+  </component>
+  <component name="ProjectId" id="2hMZXxOkTB1Aer7kRUseEKMlXUn" />
+  <component name="ProjectLevelVcsManager">
+    <OptionsSetting value="false" id="更新" />
+    <ConfirmationsSetting value="2" id="新增" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="showMembers" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/xiazai" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\代码\jihuang\xiazai" />
+      <recent name="D:\代码\jihuang" />
+      <recent name="D:\代码\jihuang\actions" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3c8aa7ba-d357-4bef-ac0c-75aab0a8640a" name="默认的" comment="" />
+      <created>1717405950649</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1717405950649</updated>
+      <workItem from="1717405951877" duration="3025000" />
+      <workItem from="1717468700303" duration="30000" />
+      <workItem from="1717568295639" duration="4419000" />
+    </task>
+    <task id="LOCAL-00001" summary="nojekyll">
+      <created>1717406018857</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1717406018857</updated>
+    </task>
+    <task id="LOCAL-00002" summary="测试一下">
+      <created>1717406178097</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1717406178097</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="main" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="nojekyll" />
+    <MESSAGE value="测试一下" />
+    <option name="LAST_COMMIT_MESSAGE" value="测试一下" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="609" y="208" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1717572427613">
+      <screen x="0" y="0" width="1536" height="816" />
+    </state>
+    <state x="609" y="208" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1536.816@0.0.1536.816" timestamp="1717572427613" />
+    <state x="458" y="0" key="CommitChangelistDialog2" timestamp="1717406176516">
+      <screen x="0" y="0" width="1536" height="816" />
+    </state>
+    <state x="458" y="0" key="CommitChangelistDialog2/0.0.1536.816@0.0.1536.816" timestamp="1717406176516" />
+    <state x="549" y="163" key="FileChooserDialogImpl" timestamp="1717569117714">
+      <screen x="0" y="0" width="1536" height="816" />
+    </state>
+    <state x="549" y="163" key="FileChooserDialogImpl/0.0.1536.816@0.0.1536.816" timestamp="1717569117714" />
+    <state x="361" y="127" key="Vcs.Push.Dialog.v2" timestamp="1717406179152">
+      <screen x="0" y="0" width="1536" height="816" />
+    </state>
+    <state x="361" y="127" key="Vcs.Push.Dialog.v2/0.0.1536.816@0.0.1536.816" timestamp="1717406179152" />
+    <state x="582" y="321" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1717568297416">
+      <screen x="0" y="0" width="1536" height="816" />
+    </state>
+    <state x="582" y="321" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1536.816@0.0.1536.816" timestamp="1717568297416" />
+    <state x="466" y="111" width="603" height="594" key="find.popup" timestamp="1717572524123">
+      <screen x="0" y="0" width="1536" height="816" />
+    </state>
+    <state x="466" y="111" width="603" height="594" key="find.popup/0.0.1536.816@0.0.1536.816" timestamp="1717572524123" />
+    <state x="431" y="137" width="672" height="678" key="search.everywhere.popup" timestamp="1717406752098">
+      <screen x="0" y="0" width="1536" height="816" />
+    </state>
+    <state x="431" y="137" width="672" height="678" key="search.everywhere.popup/0.0.1536.816@0.0.1536.816" timestamp="1717406752098" />
+  </component>
+</project>
