@@ -256,7 +256,11 @@ for k,v in pairs(TheWorld.guard_authorization.OU_76561197960975131) do print(v) 
   actioncomponents	
 --------------------
 ```
-
+**世界季节状态**
+```lua 
+--世界季节状态 spring 春天 summer 夏天 autumn 秋天 winter 冬天
+TheWorld.state.season
+```
 
 ## TUNING
 ```lua 

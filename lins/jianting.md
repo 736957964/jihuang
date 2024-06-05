@@ -114,7 +114,7 @@ bufferedbuildsdirty--建筑装饰
 isperformactionsuccessdirty--表演成功？
 pausepredictionframesdirty --停止播放声音
 itemplanted 种植的植物
-
+onwakeup --唤醒的时候
 
 
 

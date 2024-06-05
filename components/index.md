@@ -86,8 +86,8 @@ inst.components.combat:SetTarget(data.attacker) --设定目标   --只针对玩�
 -- target 攻击目标, range 范围 , fn 触发的函数, maxnum 最大的共享目标数量, musttags
 inst.components.combat:ShareTarget(data.attacker, 30, function(dude) return dude:HasTag("frog") and not dude.components.health:IsDead() end, 5) --共享攻击目标
 target.components.combat.target = nil --目标的目标为nil  --目标是怪物，怪物的目标是你，为nil，怪物不打人了，丧失攻击行为
-
 Combat:StopTrackingTarget(target) --停止攻击目标 清掉了 enterlimbo onremove 监听
+inst.components.combat:HasTarget() -- 应该是判定是否有攻击目标
 ```
 ## locomotor 移动组件
 ```lua 
@@ -422,22 +422,12 @@ inst.components.moisture:IsWet() --判断是否潮湿的 是个布尔值
 -----太多了 自己去翻吧
 ```
 
-## moisture 潮湿组件
+## sleeper 睡觉组件？
 ```lua 
---ps:潮湿组件官方目前只有 player_common 和dragonfly有  大部分功能需要没有 forceddrymodifiers:Get() 的情况下才会生效
---推送的监听：moisturedelta(old,new)
-inst:AddComponent("moisture")
-inst.components.moisture:ForceDry(true,source) --强制干燥? true为执行false不执行 source为目标 如果不写默认inst
-inst.components.moisture:SetMoistureLevel() --设置湿度级别
-inst.components.moisture:SetWaterproofInventory()--设置防水库存
-inst.components.moisture:SetPercent--设置百分比
-inst.components.moisture:SetInherentWaterproofness()--设置固有防水性
-inst.components.moisture:GetMaxMoisture() --获取最大湿度
-inst.components.moisture:GetMoisture() --获取湿度
-inst.components.moisture:GetMoisturePercent() --获取水分百分比
-inst.components.moisture:GetWaterproofInventory()--获取防水库存
-inst.components.moisture:IsWet() --判断是否潮湿的 是个布尔值
------太多了 自己去翻吧
+inst:AddComponent("sleeper")
+inst.components.sleeper:SetResistance(4)
+inst.components.sleeper:SetSleepTest(ShouldSleep) --睡觉测试
+inst.components.sleeper:SetWakeTest(ShouldWake) --唤醒测试
 ```
 
 ## blinkstaff 传送组件

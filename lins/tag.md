@@ -17,5 +17,10 @@ inst:HasTag("player") --玩家标签   幽灵标签 playerghost
 inst:RemoveTag("insomniac") --移除失眠症（wickerbottom）老太太可以睡帐篷
 inst:RemoveTag("monster")--韦伯不被当成怪物（webber） --即可让韦伯不被当成怪物，猪人、兔人等中立动物不会主动攻击你,当然后果是怪物比如蜘蛛就会主动攻击你了
 inst:RemoveComponent('tradable') --移除可交易标签
-
+"CHOP_workable", --可以采的
+"DIG_workable", --可以产的 
+"HAMMER_workable", --可以锤的
+"MINE_workable"--可以挖的
+"insect",--昆虫
+"INLIMBO"
 ```
