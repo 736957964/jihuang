@@ -314,7 +314,7 @@ return Prefab("pidan", fn, assets, prefabs)
 - MakeHauntableLaunchOrChangePrefab()
 - MakeHauntablePerish()
 - MakeHauntableLaunchAndPerish()
-- MakeHauntablePanic()
+- MakeHauntablePanic() -- 添加 hauntable 组件
 - MakeHauntablePanicAndIgnite()
 - MakeHauntablePlayAnim()
 - MakeHauntableGoToState()

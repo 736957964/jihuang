@@ -472,3 +472,30 @@ inst.Transform:SetEightFaced()--八面
 ```lua 
 inst:AddComponent("diseaseable")
 ```
+
+## embarker 上船组件
+```lua 
+inst:AddComponent("embarker")
+```
+
+## drownable 可淹死组件 ？
+```lua 
+inst:AddComponent("drownable")
+```
+## thief 小偷组件
+```lua 
+inst:AddComponent("thief")
+```
+## freezable 可冻结组件
+```lua 
+inst:AddComponent("freezable")
+```
+## knownlocations 记录点 （记录你当前的 坐标 是家）
+```lua 
+inst:AddComponent("knownlocations")
+```
+
+## inspectable 可检查组件
+```lua 
+inst:AddComponent("inspectable")
+```
