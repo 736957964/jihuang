@@ -452,3 +452,86 @@ return CustomPanel
 ### 4. 关键踩坑点
 1. **客机幽灵态输入穿透**：玩家死亡变成幽灵（`playerghost`）时，UI 仍可能被点击，服务端处理 RPC 前**必须严密校验 `not player:HasTag("playerghost")`**；
 2. **层级与遮罩冲突**：自定义面板不要直接挂在 `self`，必须挂在 `self.top_root` 下，否则打开暂停菜单（PauseScreen）或地图（MapScreen）时会导致渲染层级穿帮。
+
+<a id="case-6"></a>
+
+## 案例 6：高性能定时周期刷怪点与防卡顿清理机制（十面埋伏）
+
+> 来源工程：`十面埋伏 (#MOD-shimianmaifu)` / 核心文件：`scripts/components/rp_monster_point.lua` 与 `rp_autodelete.lua`
+
+### 1. 业务目标
+实现类似塔防/入侵式的周期波次刷怪系统，同时确保实体超出距离或脱战超时时能够平滑自杀清理，防止服务器实体数量爆炸卡死。
+
+### 2. 核心架构设计
+1. **轻量级周期调度器**：利用 `inst:DoPeriodicTask` 或 `components/timer` 控制波次刷新；
+2. **玩家密度与地皮安全检测**：在 `TheWorld.Map:IsPassableAtPoint` 校验合法刷怪坐标，避免刷在虚空或海面；
+3. **带缓释特���的自动回收（`autodelete`）**：离开玩家视距超过 N 秒后触发溶解淡出并执行 `Remove()`。
+
+### 3. 标准工程源码实现
+
+```lua
+-- scripts/components/wave_spawner.lua (服务端波次生成器)
+local WaveSpawner = Class(function(self, inst)
+    self.inst = inst
+    self.wave_interval = 30 -- 每 30 秒一波
+    self.max_alive = 10     -- 场上最大同屏存活
+    self.spawned_monsters = {}
+    self.is_active = false
+end)
+
+function WaveSpawner:Start()
+    if self.task == nil then
+        self.task = self.inst:DoPeriodicTask(self.wave_interval, function() self:SpawnWave() end)
+    end
+end
+
+function WaveSpawner:SpawnWave()
+    -- 清理已死亡或销毁的无效引用
+    for k = #self.spawned_monsters, 1, -1 do
+        local m = self.spawned_monsters[k]
+        if not m:IsValid() or (m.components.health and m.components.health:IsDead()) then
+            table.remove(self.spawned_monsters, k)
+        end
+    end
+
+    if #self.spawned_monsters >= self.max_alive then
+        return -- 达到上限，放弃本波生成防止崩服
+    end
+
+    local x, y, z = self.inst.Transform:GetWorldPosition()
+    local angle = math.random() * 2 * PI
+    local radius = math.random(5, 12)
+    local sx, sz = x + radius * math.cos(angle), z + radius * math.sin(angle)
+
+    -- 必须校验地皮可通行性，防止生成在虚空或海中
+    if TheWorld.Map:IsPassableAtPoint(sx, 0, sz) then
+        local monster = SpawnPrefab("spider")
+        monster.Transform:SetPosition(sx, 0, sz)
+
+        -- 挂载自杀销毁组件，防止玩家逃跑后实体永久残留
+        if monster.components.health then
+            monster:DoTaskInTime(120, function()
+                if monster:IsValid() and not monster.components.combat.target then
+                    SpawnPrefab("small_puff").Transform:SetPosition(monster.Transform:GetWorldPosition())
+                    monster:Remove()
+                end
+            end)
+        end
+
+        table.insert(self.spawned_monsters, monster)
+    end
+end
+
+function WaveSpawner:OnRemoveFromEntity()
+    if self.task then
+        self.task:Cancel()
+        self.task = nil
+    end
+end
+
+return WaveSpawner
+```
+
+### 4. 关键踩坑点
+1. **防止 `table` 引用内存泄漏**：在记录生成的怪时，必须定期用逆序循环（`for k = #list, 1, -1`）清洗掉已经死亡或 `Remove()` 的无效实体句柄；
+2. **生成前坐标校验（IsPassableAtPoint）**：许多刷怪 Mod 在地下或沿海区域刷怪时直接报错或掉落虚空，就是漏了地皮阻挡与海水判定。
