@@ -220,3 +220,235 @@ return Prefab("magic_aoe_fan", fn, assets)
 ### 3. 开发避坑点
 1. **TheSim:FindEntities 严禁滥用**：该函数是在底层 C++ 引擎中做空间加速八叉树遍历，不要在 OnUpdate 每帧调用；只在触发动作或技能瞬间调用一次；
 2. **INLIMBO 标签必须排除**：进入箱子或玩家背包的实体会被打上 INLIMBO 标签，如果不排除，搜寻半径内的玩家背包里的物品也会被检索并误伤！
+
+
+<a id="case-4"></a>
+
+## 案例 4：高阶 BOSS 阶段转换与仇恨锁定（神话书说·黑风怪/辟寒大王）
+
+> 来源工程：`神话书说 (1991746508)` / 核心文件：`scripts/prefabs/blackbear.lua` 与 `scripts/brains/blackbearbrain.lua`
+
+### 1. 业务目标
+实现多阶段 BOSS（血量阈值触发转阶段、狂暴吼叫全屏震慑、周期性特定技能冲撞、以及脱战回血软锁定）。
+
+### 2. 核心架构设计
+1. **血量监听与阶段切换**：利用 `health:SetOnHealthChangedFn` 监测血量百分比（如 < 50% 触发转阶段）；
+2. **专属状态机注入（StateGraph）**：通过 `sg:GoToState("roar")` 强制打断当前所有动作进入咆哮无敌帧；
+3. **行为树权重调度（Brain）**：使用 `PriorityNode` 分流攻击、放技能、冲刺与脱战逻辑。
+
+### 3. 标准工程源码实现
+
+```lua
+-- scripts/prefabs/custom_boss.lua (主客机预制体)
+local assets = {
+    Asset("ANIM", "anim/bearger_build.zip"),
+    Asset("ANIM", "anim/bearger_basic.zip"),
+    Asset("SOUND", "sound/bearger.fsb"),
+}
+
+local prefabs = {
+    "groundpound_fx",
+    "collapse_small",
+}
+
+-- 阶段切换核心回调
+local function OnHealthChanged(inst, data)
+    if not inst.components.health:IsDead() then
+        local percent = data.newpercent
+        -- 触发 50% 狂暴阶段（仅触发一次）
+        if percent < 0.5 and not inst.is_enraged then
+            inst.is_enraged = true
+            -- 强制切入咆哮无敌状态，震落周围玩家武器
+            inst.sg:GoToState("roar")
+            -- 狂暴数值强化
+            inst.components.combat:SetDefaultDamage(150)
+            inst.components.locomotor.runspeed = 10
+            inst.components.combat:SetAttackPeriod(2.0)
+        end
+    end
+end
+
+-- 范围地震伤害判定（排除虚空和无敌目标）
+local function DoGroundPound(inst)
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local ents = TheSim:FindEntities(x, y, z, 8, { "_combat" }, { "INLIMBO", "flight", "FX" })
+    for _, ent in ipairs(ents) do
+        if ent:IsValid() and not ent:IsInLimbo() and ent ~= inst then
+            if inst.components.combat:CanTarget(ent) then
+                ent.components.combat:GetAttacked(inst, 80, nil, "groundpound")
+                if ent.components.inventory and math.random() < 0.3 then
+                    ent.components.inventory:DropEverything(false, true) -- 震落手持武器
+                end
+            end
+        end
+    end
+    SpawnPrefab("groundpound_fx").Transform:SetPosition(x, y, z)
+end
+
+local function fn()
+    local inst = CreateEntity()
+
+    inst.entity:AddTransform()
+    inst.entity:AddAnimState()
+    inst.entity:AddSoundEmitter()
+    inst.entity:AddDynamicShadow()
+    inst.entity:AddNetwork()
+
+    MakeCharacterPhysics(inst, 1000, 1.5)
+
+    inst.AnimState:SetBank("bearger")
+    inst.AnimState:SetBuild("bearger_build")
+    inst.AnimState:PlayAnimation("idle_loop", true)
+
+    inst:AddTag("epic")
+    inst:AddTag("monster")
+    inst:AddTag("hostile")
+    inst:AddTag("scarytoprey")
+
+    inst.entity:SetPristine()
+
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    -- 服务端组件
+    inst:AddComponent("health")
+    inst.components.health:SetMaxHealth(6000)
+
+    inst:AddComponent("combat")
+    inst.components.combat:SetDefaultDamage(100)
+    inst.components.combat:SetAttackPeriod(3.0)
+    inst.components.combat:SetRange(4, 5)
+
+    inst:AddComponent("locomotor")
+    inst.components.locomotor.walkspeed = 4
+    inst.components.locomotor.runspeed = 8
+
+    inst:AddComponent("inspectable")
+
+    -- 挂载状态机与行为树
+    inst:SetStateGraph("SGcustom_boss")
+    inst:SetBrain(require("brains/custom_bossbrain"))
+
+    -- 监听血量变化
+    inst:ListenForEvent("healthdelta", OnHealthChanged)
+    inst.DoGroundPound = DoGroundPound
+
+    return inst
+end
+
+return Prefab("custom_boss", fn, assets, prefabs)
+```
+
+```lua
+-- scripts/brains/custom_bossbrain.lua (行为树逻辑)
+require "behaviours/chaseandattack"
+require "behaviours/runaway"
+require "behaviours/wander"
+require "behaviours/doaction"
+
+local CustomBossBrain = Class(Brain, function(self, inst)
+    Brain._ctor(self, inst)
+end)
+
+function CustomBossBrain:OnStart()
+    local root = PriorityNode({
+        -- 1. 狂暴状态下优先冲撞/地裂
+        WhileNode(function() return self.inst.is_enraged and not self.inst.sg:HasStateTag("busy") end, "EnragedPound",
+            DoAction(self.inst, function()
+                if self.inst.components.combat.target and self.inst:GetDistanceSqToInst(self.inst.components.combat.target) < 64 then
+                    self.inst.sg:GoToState("groundpound")
+                end
+            end)
+        ),
+        -- 2. 正常追击与普攻
+        ChaseAndAttack(self.inst, 30, 40),
+        -- 3. 闲置巡逻漫步
+        Wander(self.inst, function() return self.inst:GetPosition() end, 15),
+    }, 0.5)
+
+    self.bt = BT(self.inst, root)
+end
+
+return CustomBossBrain
+```
+
+### 4. 关键踩坑点
+1. **咆哮无敌帧状态标签**：在 SG 中必须给 roar 状态打上 `inst.sg:AddStateTag("busy")` 和 `inst.sg:AddStateTag("nosleep")`，防止在转阶段瞬间被催眠/冰冻打断导致状态永久卡死；
+2. **脱战仇恨清理**：在 `ChaseAndAttack` 之外，必须在预制体中配置 `inst.components.combat:SetRetargetFunction(3, RetargetFn)`，并在失去视野时正确注销 `target`，否则 BOSS 会无限跨越地图追击玩家引发卡顿。
+
+<a id="case-5"></a>
+
+## 案例 5：现代客机响应式 HUD 悬浮面板与自定义 RPC 通信
+
+> 来源工程：`蜘蛛纸牌 (spider_solitaire)` 与 `Sora 框架` / 核心文件：`scripts/widgets/screen.lua` 与 `modmain.lua`
+
+### 1. 业务目标
+实现一个客户端专属的 UI 面板（可拖拽、点击按钮触发服务器动作、服务端数据向客户端回传实时刷新）。
+
+### 2. 核心架构设计
+1. **客户端层级注入**：在 `AddClassPostConstruct("widgets/controls", ...)` 中向 `inst.top_root` 挂载根节点，保证不受缩放异常影响；
+2. **客向主 RPC（User Action）**：通过 `SendModRPCToServer(MOD_RPC["MYMOD"]["CLICK_BTN"], ...)` 提交合法操作；
+3. **���向客 RPC / NetVar 同步**：重要数值使用 `net_shortint` 等网络变量自动同步，避免频繁 RPC 丢包。
+
+### 3. 标准工程源码实现
+
+```lua
+-- modmain.lua (注册 RPC 与网络交互)
+GLOBAL.setmetatable(env, { __index = function(t, k) return GLOBAL.rawget(GLOBAL, k) end })
+
+-- 1. 注册客户端 -> 服务端 RPC
+AddModRPCHandler("MY_MOD_UI", "TRIGGER_SKILL", function(player, skill_id)
+    if player and player:IsValid() and not player:HasTag("playerghost") then
+        -- 服务端校验：技能冷却与消耗
+        if player.components.hunger and player.components.hunger.current >= 10 then
+            player.components.hunger:DoDelta(-10)
+            player.components.talker:Say("技能释放成功！消耗10饱食度")
+        end
+    end
+end)
+
+-- 2. 注入客机 HUD
+AddClassPostConstruct("widgets/controls", function(self)
+    local CustomPanel = require("widgets/custom_panel")
+    self.custom_panel = self.top_root:AddChild(CustomPanel(self.owner))
+    self.custom_panel:SetPosition(-100, 50, 0)
+end)
+```
+
+```lua
+-- scripts/widgets/custom_panel.lua (UI 控件实现)
+local Widget = require("widgets/widget")
+local Image = require("widgets/image")
+local ImageButton = require("widgets/imagebutton")
+local Text = require("widgets/text")
+
+local CustomPanel = Class(Widget, function(self, owner)
+    Widget._ctor(self, "CustomPanel")
+    self.owner = owner
+
+    -- 根背景底图
+    self.bg = self:AddChild(Image("images/global.xml", "square.tex"))
+    self.bg:SetSize(200, 100)
+    self.bg:SetTint(0, 0, 0, 0.7)
+
+    -- 标题文字
+    self.title = self:AddChild(Text(BODYTEXTFONT, 20, "阿鲸快捷操作面板", { 1, 1, 1, 1 }))
+    self.title:SetPosition(0, 30, 0)
+
+    -- 触发按钮
+    self.btn = self:AddChild(ImageButton())
+    self.btn:SetPosition(0, -20, 0)
+    self.btn:SetText("释放法术 (-10饱食)")
+    self.btn:SetOnClick(function()
+        -- 发送客机 RPC 到服务器执行业务
+        SendModRPCToServer(MOD_RPC["MY_MOD_UI"]["TRIGGER_SKILL"], 1)
+    end)
+end)
+
+return CustomPanel
+```
+
+### 4. 关键踩坑点
+1. **客机幽灵态输入穿透**：玩家死亡变成幽灵（`playerghost`）时，UI 仍可能被点击，服务端处理 RPC 前**必须严密校验 `not player:HasTag("playerghost")`**；
+2. **层级与遮罩冲突**：自定义面板不要直接挂在 `self`，必须挂在 `self.top_root` 下，否则打开暂停菜单（PauseScreen）或地图（MapScreen）时会导致渲染层级穿帮。
