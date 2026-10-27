@@ -1,4 +1,4 @@
-- 前言
+﻿- 前言
   * [Mod相关信息](/README)
 - 01 核心系统
   * [01-core 总览](/01-core/index)
@@ -109,6 +109,7 @@
   * [10-networking 总览](/10-networking/index)
 - 11 Modding Mod开发
   * [11-modding 总览](/11-modding/index)
+  * [Mod开发工程核心规范](/11-modding/engineering_rules)
 - 12 Cooking 烹饪
   * [12-cooking 总览](/12-cooking/index)
 - 13 World 世界

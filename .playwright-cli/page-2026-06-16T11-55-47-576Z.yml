@@ -1,0 +1,333 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e392]:
+        - listitem [ref=e393]:
+          - text: 前言
+          - list [ref=e394]:
+            - listitem [ref=e395]:
+              - link "Mod相关信息" [ref=e396] [cursor=pointer]:
+                - /url: "#/README"
+        - listitem [ref=e397]:
+          - text: 01 核心系统
+          - list [ref=e398]:
+            - listitem [ref=e399]:
+              - link "01-core 总览" [ref=e400] [cursor=pointer]:
+                - /url: "#/01-core/index"
+              - list [ref=e401]:
+                - listitem [ref=e402]:
+                  - text: "-"
+                  - link "子目录" [ref=e403] [cursor=pointer]:
+                    - /url: "#/01-core/index?id=%e5%ad%90%e7%9b%ae%e5%bd%95"
+            - listitem [ref=e404]:
+              - link "EntityScript 实体脚本" [ref=e405] [cursor=pointer]:
+                - /url: "#/01-core/entity"
+            - listitem [ref=e406]:
+              - link "Prefab 预制体系统" [ref=e407] [cursor=pointer]:
+                - /url: "#/01-core/prefab"
+            - listitem [ref=e408]:
+              - link "Class 类系统" [ref=e409] [cursor=pointer]:
+                - /url: "#/01-core/class"
+            - listitem [ref=e410]:
+              - link "全局函数" [ref=e411] [cursor=pointer]:
+                - /url: "#/01-core/mainfunctions"
+            - listitem [ref=e412]:
+              - link "全局变量" [ref=e413] [cursor=pointer]:
+                - /url: "#/01-core/globals"
+            - listitem [ref=e414]:
+              - link "simutil 工具函数" [ref=e415] [cursor=pointer]:
+                - /url: "#/01-core/simutil"
+        - listitem [ref=e416]:
+          - text: 02 Components 组件
+          - list [ref=e417]:
+            - listitem [ref=e418]:
+              - link "02-components 总览" [ref=e419] [cursor=pointer]:
+                - /url: "#/02-components/index"
+            - listitem [ref=e420]:
+              - text: 战斗 Combat
+              - list [ref=e421]:
+                - listitem [ref=e422]:
+                  - link "combat 总览" [ref=e423] [cursor=pointer]:
+                    - /url: "#/02-components/combat/index"
+                - listitem [ref=e424]:
+                  - link "combat 战斗" [ref=e425] [cursor=pointer]:
+                    - /url: "#/02-components/combat/combat"
+                - listitem [ref=e426]:
+                  - link "health 生命值" [ref=e427] [cursor=pointer]:
+                    - /url: "#/02-components/combat/health"
+                - listitem [ref=e428]:
+                  - link "weapon 武器" [ref=e429] [cursor=pointer]:
+                    - /url: "#/02-components/combat/weapon"
+                - listitem [ref=e430]:
+                  - link "armor 盔甲" [ref=e431] [cursor=pointer]:
+                    - /url: "#/02-components/combat/armor"
+            - listitem [ref=e432]:
+              - text: 生存 Survival
+              - list [ref=e433]:
+                - listitem [ref=e434]:
+                  - link "survival 总览" [ref=e435] [cursor=pointer]:
+                    - /url: "#/02-components/survival/index"
+                - listitem [ref=e436]:
+                  - link "hunger 饥饿" [ref=e437] [cursor=pointer]:
+                    - /url: "#/02-components/survival/hunger"
+                - listitem [ref=e438]:
+                  - link "sanity 理智" [ref=e439] [cursor=pointer]:
+                    - /url: "#/02-components/survival/sanity"
+            - listitem [ref=e440]:
+              - text: 背包 Inventory
+              - list [ref=e441]:
+                - listitem [ref=e442]:
+                  - link "inventory 总览" [ref=e443] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/index"
+                - listitem [ref=e444]:
+                  - link "inventory 背包" [ref=e445] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/inventory"
+                - listitem [ref=e446]:
+                  - link "container 容器" [ref=e447] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/container"
+            - listitem [ref=e448]:
+              - text: 工作 Work
+              - list [ref=e449]:
+                - listitem [ref=e450]:
+                  - link "work 总览" [ref=e451] [cursor=pointer]:
+                    - /url: "#/02-components/work/index"
+                - listitem [ref=e452]:
+                  - link "workable 可工作" [ref=e453] [cursor=pointer]:
+                    - /url: "#/02-components/work/workable"
+            - listitem [ref=e454]:
+              - text: 食物 Edible
+              - list [ref=e455]:
+                - listitem [ref=e456]:
+                  - link "edible 总览" [ref=e457] [cursor=pointer]:
+                    - /url: "#/02-components/edible/index"
+                - listitem [ref=e458]:
+                  - link "edible 可食用" [ref=e459] [cursor=pointer]:
+                    - /url: "#/02-components/edible/edible"
+                - listitem [ref=e460]:
+                  - link "perishable 易腐" [ref=e461] [cursor=pointer]:
+                    - /url: "#/02-components/edible/perishable"
+            - listitem [ref=e462]:
+              - text: 建造 Builder
+              - list [ref=e463]:
+                - listitem [ref=e464]:
+                  - link "builder 总览" [ref=e465] [cursor=pointer]:
+                    - /url: "#/02-components/builder/index"
+                - listitem [ref=e466]:
+                  - link "builder 建造" [ref=e467] [cursor=pointer]:
+                    - /url: "#/02-components/builder/builder"
+            - listitem [ref=e468]:
+              - text: 燃烧 Burnable
+              - list [ref=e469]:
+                - listitem [ref=e470]:
+                  - link "burnable 总览" [ref=e471] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/index"
+                - listitem [ref=e472]:
+                  - link "burnable 可燃" [ref=e473] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/burnable"
+            - listitem [ref=e474]:
+              - text: 生物 Creature
+              - list [ref=e475]:
+                - listitem [ref=e476]:
+                  - link "creature 总览" [ref=e477] [cursor=pointer]:
+                    - /url: "#/02-components/creature/index"
+                - listitem [ref=e478]:
+                  - link "childspawner 子生物生成" [ref=e479] [cursor=pointer]:
+                    - /url: "#/02-components/creature/childspawner"
+            - listitem [ref=e480]:
+              - text: 其他 Other
+              - list [ref=e481]:
+                - listitem [ref=e482]:
+                  - link "other 总览" [ref=e483] [cursor=pointer]:
+                    - /url: "#/02-components/other/index"
+                - listitem [ref=e484]:
+                  - link "finiteuses 耐久度" [ref=e485] [cursor=pointer]:
+                    - /url: "#/02-components/other/finiteuses"
+            - listitem [ref=e486]:
+              - text: 航海 Sailing
+              - list [ref=e487]:
+                - listitem [ref=e488]:
+                  - link "sailing 总览" [ref=e489] [cursor=pointer]:
+                    - /url: "#/02-components/sailing/index"
+        - listitem [ref=e490]:
+          - text: 03 Actions 动作
+          - list [ref=e491]:
+            - listitem [ref=e492]:
+              - link "03-actions 总览" [ref=e493] [cursor=pointer]:
+                - /url: "#/03-actions/index"
+            - listitem [ref=e494]:
+              - link "动作列表" [ref=e495] [cursor=pointer]:
+                - /url: "#/03-actions/detail/action-list"
+        - listitem [ref=e496]:
+          - text: 04 Tags 标签
+          - list [ref=e497]:
+            - listitem [ref=e498]:
+              - link "04-tags 总览" [ref=e499] [cursor=pointer]:
+                - /url: "#/04-tags/index"
+        - listitem [ref=e500]:
+          - text: 05 Events 事件
+          - list [ref=e501]:
+            - listitem [ref=e502]:
+              - link "05-events 总览" [ref=e503] [cursor=pointer]:
+                - /url: "#/05-events/index"
+        - listitem [ref=e504]:
+          - text: 06 Stategraphs 状态图
+          - list [ref=e505]:
+            - listitem [ref=e506]:
+              - link "06-stategraphs 总览" [ref=e507] [cursor=pointer]:
+                - /url: "#/06-stategraphs/index"
+            - listitem [ref=e508]:
+              - link "常用 SG 参考" [ref=e509] [cursor=pointer]:
+                - /url: "#/06-stategraphs/sg-reference"
+        - listitem [ref=e510]:
+          - text: 07 Brains 行为大脑
+          - list [ref=e511]:
+            - listitem [ref=e512]:
+              - link "07-brains 总览" [ref=e513] [cursor=pointer]:
+                - /url: "#/07-brains/index"
+            - listitem [ref=e514]:
+              - link "常用 Brain 参考" [ref=e515] [cursor=pointer]:
+                - /url: "#/07-brains/brain-reference"
+        - listitem [ref=e516]:
+          - text: 08 Prefabs 预设
+          - list [ref=e517]:
+            - listitem [ref=e518]:
+              - link "08-prefabs 总览" [ref=e519] [cursor=pointer]:
+                - /url: "#/08-prefabs/index"
+            - listitem [ref=e520]:
+              - link "Prefab 分类参考" [ref=e521] [cursor=pointer]:
+                - /url: "#/08-prefabs/prefabs-reference"
+        - listitem [ref=e522]:
+          - text: 09 Tuning 调参
+          - list [ref=e523]:
+            - listitem [ref=e524]:
+              - link "09-tuning 总览" [ref=e525] [cursor=pointer]:
+                - /url: "#/09-tuning/index"
+        - listitem [ref=e526]:
+          - text: 10 Networking 网络
+          - list [ref=e527]:
+            - listitem [ref=e528]:
+              - link "10-networking 总览" [ref=e529] [cursor=pointer]:
+                - /url: "#/10-networking/index"
+        - listitem [ref=e530]:
+          - text: 11 Modding Mod开发
+          - list [ref=e531]:
+            - listitem [ref=e532]:
+              - link "11-modding 总览" [ref=e533] [cursor=pointer]:
+                - /url: "#/11-modding/index"
+        - listitem [ref=e534]:
+          - text: 12 Cooking 烹饪
+          - list [ref=e535]:
+            - listitem [ref=e536]:
+              - link "12-cooking 总览" [ref=e537] [cursor=pointer]:
+                - /url: "#/12-cooking/index"
+        - listitem [ref=e538]:
+          - text: 13 World 世界
+          - list [ref=e539]:
+            - listitem [ref=e540]:
+              - link "13-world 总览" [ref=e541] [cursor=pointer]:
+                - /url: "#/13-world/index"
+            - listitem [ref=e542]:
+              - link "地图生成系统" [ref=e543] [cursor=pointer]:
+                - /url: "#/13-world/worldgen"
+        - listitem [ref=e544]:
+          - text: 14 Skilltree 技能树
+          - list [ref=e545]:
+            - listitem [ref=e546]:
+              - link "14-skilltree 总览" [ref=e547] [cursor=pointer]:
+                - /url: "#/14-skilltree/index"
+        - listitem [ref=e548]:
+          - text: 15 UI 界面
+          - list [ref=e549]:
+            - listitem [ref=e550]:
+              - link "15-ui 总览" [ref=e551] [cursor=pointer]:
+                - /url: "#/15-ui/index"
+        - listitem [ref=e552]:
+          - text: 16 Constants 常量
+          - list [ref=e553]:
+            - listitem [ref=e554]:
+              - link "16-constants 总览" [ref=e555] [cursor=pointer]:
+                - /url: "#/16-constants/index"
+        - listitem [ref=e556]:
+          - text: 17 Standard Components 标准组件
+          - list [ref=e557]:
+            - listitem [ref=e558]:
+              - link "17-standardcomponents 总览" [ref=e559] [cursor=pointer]:
+                - /url: "#/17-standardcomponents/index"
+        - listitem [ref=e560]:
+          - text: 18 Behaviours 行为树
+          - list [ref=e561]:
+            - listitem [ref=e562]:
+              - link "18-behaviours 总览" [ref=e563] [cursor=pointer]:
+                - /url: "#/18-behaviours/index"
+        - listitem [ref=e564]:
+          - text: 19 FX 特效
+          - list [ref=e565]:
+            - listitem [ref=e566]:
+              - link "19-fx 总览" [ref=e567] [cursor=pointer]:
+                - /url: "#/19-fx/index"
+        - listitem [ref=e568]:
+          - text: 案例
+          - list [ref=e569]:
+            - listitem [ref=e570]:
+              - link "小案例" [ref=e571] [cursor=pointer]:
+                - /url: "#/anli/smallAn"
+        - listitem [ref=e572]:
+          - text: 数据提取
+          - list [ref=e573]:
+            - listitem [ref=e574]:
+              - link "数据提取1" [ref=e575] [cursor=pointer]:
+                - /url: "#/xiazai/tq1"
+            - listitem [ref=e576]:
+              - link "数据提取2" [ref=e577] [cursor=pointer]:
+                - /url: "#/xiazai/tq2"
+            - listitem [ref=e578]:
+              - link "数据提取3" [ref=e579] [cursor=pointer]:
+                - /url: "#/xiazai/tq3"
+            - listitem [ref=e580]:
+              - link "数据提取4" [ref=e581] [cursor=pointer]:
+                - /url: "#/xiazai/tq4"
+            - listitem [ref=e582]:
+              - link "数据提取5" [ref=e583] [cursor=pointer]:
+                - /url: "#/xiazai/tq5"
+            - listitem [ref=e584]:
+              - link "字典" [ref=e585] [cursor=pointer]:
+                - /url: "#/xiazai/tq6"
+    - article [ref=e212]:
+      - heading "01 - 核心系统" [level=1] [ref=e586]:
+        - link "01 - 核心系统" [ref=e587] [cursor=pointer]:
+          - /url: "#/01-core/index?id=_01-%e6%a0%b8%e5%bf%83%e7%b3%bb%e7%bb%9f"
+      - paragraph [ref=e588]: DST 的核心系统包含实体管理、预制体注册、类系统、全局函数和全局变量。
+      - heading "子目录" [level=2] [ref=e589]:
+        - link "子目录" [ref=e590] [cursor=pointer]:
+          - /url: "#/01-core/index?id=%e5%ad%90%e7%9b%ae%e5%bd%95"
+      - list [ref=e591]:
+        - listitem [ref=e592]:
+          - link "EntityScript" [ref=e593] [cursor=pointer]:
+            - /url: "#/entity"
+          - text: — 实体脚本，所有
+          - code [ref=e594]: inst
+          - text: 可用的方法和属性
+        - listitem [ref=e595]:
+          - link "Prefab 系统" [ref=e596] [cursor=pointer]:
+            - /url: "#/prefab"
+          - text: — 预制体创建、注册、Asset、依赖
+        - listitem [ref=e597]:
+          - link "Class 类系统" [ref=e598] [cursor=pointer]:
+            - /url: "#/class"
+          - text: — 面向对象类定义与继承
+        - listitem [ref=e599]:
+          - link "全局函数" [ref=e600] [cursor=pointer]:
+            - /url: "#/mainfunctions"
+          - text: — SpawnPrefab、SavePersistentString 等
+        - listitem [ref=e601]:
+          - link "全局变量" [ref=e602] [cursor=pointer]:
+            - /url: "#/globals"
+          - text: — TheWorld、ThePlayer、TheSim、TheNet 等

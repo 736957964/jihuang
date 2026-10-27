@@ -1,0 +1,805 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e393]:
+        - listitem [ref=e394]:
+          - text: 前言
+          - list [ref=e395]:
+            - listitem [ref=e396]:
+              - link "Mod相关信息" [ref=e397] [cursor=pointer]:
+                - /url: "#/README"
+        - listitem [ref=e398]:
+          - text: 01 核心系统
+          - list [ref=e399]:
+            - listitem [ref=e400]:
+              - link "01-core 总览" [ref=e401] [cursor=pointer]:
+                - /url: "#/01-core/index"
+            - listitem [ref=e402]:
+              - link "EntityScript 实体脚本" [ref=e403] [cursor=pointer]:
+                - /url: "#/01-core/entity"
+            - listitem [ref=e404]:
+              - link "Prefab 预制体系统" [ref=e405] [cursor=pointer]:
+                - /url: "#/01-core/prefab"
+            - listitem [ref=e406]:
+              - link "Class 类系统" [ref=e407] [cursor=pointer]:
+                - /url: "#/01-core/class"
+            - listitem [ref=e408]:
+              - link "全局函数" [ref=e409] [cursor=pointer]:
+                - /url: "#/01-core/mainfunctions"
+            - listitem [ref=e410]:
+              - link "全局变量" [ref=e411] [cursor=pointer]:
+                - /url: "#/01-core/globals"
+            - listitem [ref=e412]:
+              - link "simutil 工具函数" [ref=e413] [cursor=pointer]:
+                - /url: "#/01-core/simutil"
+        - listitem [ref=e414]:
+          - text: 02 Components 组件
+          - list [ref=e415]:
+            - listitem [ref=e416]:
+              - link "02-components 总览" [ref=e417] [cursor=pointer]:
+                - /url: "#/02-components/index"
+              - list [ref=e418]:
+                - listitem [ref=e419]:
+                  - text: "-"
+                  - link "目录" [ref=e420] [cursor=pointer]:
+                    - /url: "#/02-components/index?id=%e7%9b%ae%e5%bd%95"
+                - listitem [ref=e421]:
+                  - text: "-"
+                  - link "组件通用模式" [ref=e422] [cursor=pointer]:
+                    - /url: "#/02-components/index?id=%e7%bb%84%e4%bb%b6%e9%80%9a%e7%94%a8%e6%a8%a1%e5%bc%8f"
+                - listitem [ref=e423]:
+                  - text: "-"
+                  - link "常用组件 API 速查" [ref=e424] [cursor=pointer]:
+                    - /url: "#/02-components/index?id=%e5%b8%b8%e7%94%a8%e7%bb%84%e4%bb%b6-api-%e9%80%9f%e6%9f%a5"
+                - listitem [ref=e425]:
+                  - text: "-"
+                  - link "Mod 开发：组件回调" [ref=e426] [cursor=pointer]:
+                    - /url: "#/02-components/index?id=mod-%e5%bc%80%e5%8f%91%ef%bc%9a%e7%bb%84%e4%bb%b6%e5%9b%9e%e8%b0%83"
+            - listitem [ref=e427]:
+              - text: 战斗 Combat
+              - list [ref=e428]:
+                - listitem [ref=e429]:
+                  - link "combat 总览" [ref=e430] [cursor=pointer]:
+                    - /url: "#/02-components/combat/index"
+                - listitem [ref=e431]:
+                  - link "combat 战斗" [ref=e432] [cursor=pointer]:
+                    - /url: "#/02-components/combat/combat"
+                - listitem [ref=e433]:
+                  - link "health 生命值" [ref=e434] [cursor=pointer]:
+                    - /url: "#/02-components/combat/health"
+                - listitem [ref=e435]:
+                  - link "weapon 武器" [ref=e436] [cursor=pointer]:
+                    - /url: "#/02-components/combat/weapon"
+                - listitem [ref=e437]:
+                  - link "armor 盔甲" [ref=e438] [cursor=pointer]:
+                    - /url: "#/02-components/combat/armor"
+            - listitem [ref=e439]:
+              - text: 生存 Survival
+              - list [ref=e440]:
+                - listitem [ref=e441]:
+                  - link "survival 总览" [ref=e442] [cursor=pointer]:
+                    - /url: "#/02-components/survival/index"
+                - listitem [ref=e443]:
+                  - link "hunger 饥饿" [ref=e444] [cursor=pointer]:
+                    - /url: "#/02-components/survival/hunger"
+                - listitem [ref=e445]:
+                  - link "sanity 理智" [ref=e446] [cursor=pointer]:
+                    - /url: "#/02-components/survival/sanity"
+            - listitem [ref=e447]:
+              - text: 背包 Inventory
+              - list [ref=e448]:
+                - listitem [ref=e449]:
+                  - link "inventory 总览" [ref=e450] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/index"
+                - listitem [ref=e451]:
+                  - link "inventory 背包" [ref=e452] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/inventory"
+                - listitem [ref=e453]:
+                  - link "container 容器" [ref=e454] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/container"
+            - listitem [ref=e455]:
+              - text: 工作 Work
+              - list [ref=e456]:
+                - listitem [ref=e457]:
+                  - link "work 总览" [ref=e458] [cursor=pointer]:
+                    - /url: "#/02-components/work/index"
+                - listitem [ref=e459]:
+                  - link "workable 可工作" [ref=e460] [cursor=pointer]:
+                    - /url: "#/02-components/work/workable"
+            - listitem [ref=e461]:
+              - text: 食物 Edible
+              - list [ref=e462]:
+                - listitem [ref=e463]:
+                  - link "edible 总览" [ref=e464] [cursor=pointer]:
+                    - /url: "#/02-components/edible/index"
+                - listitem [ref=e465]:
+                  - link "edible 可食用" [ref=e466] [cursor=pointer]:
+                    - /url: "#/02-components/edible/edible"
+                - listitem [ref=e467]:
+                  - link "perishable 易腐" [ref=e468] [cursor=pointer]:
+                    - /url: "#/02-components/edible/perishable"
+            - listitem [ref=e469]:
+              - text: 建造 Builder
+              - list [ref=e470]:
+                - listitem [ref=e471]:
+                  - link "builder 总览" [ref=e472] [cursor=pointer]:
+                    - /url: "#/02-components/builder/index"
+                - listitem [ref=e473]:
+                  - link "builder 建造" [ref=e474] [cursor=pointer]:
+                    - /url: "#/02-components/builder/builder"
+            - listitem [ref=e475]:
+              - text: 燃烧 Burnable
+              - list [ref=e476]:
+                - listitem [ref=e477]:
+                  - link "burnable 总览" [ref=e478] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/index"
+                - listitem [ref=e479]:
+                  - link "burnable 可燃" [ref=e480] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/burnable"
+            - listitem [ref=e481]:
+              - text: 生物 Creature
+              - list [ref=e482]:
+                - listitem [ref=e483]:
+                  - link "creature 总览" [ref=e484] [cursor=pointer]:
+                    - /url: "#/02-components/creature/index"
+                - listitem [ref=e485]:
+                  - link "childspawner 子生物生成" [ref=e486] [cursor=pointer]:
+                    - /url: "#/02-components/creature/childspawner"
+            - listitem [ref=e487]:
+              - text: 其他 Other
+              - list [ref=e488]:
+                - listitem [ref=e489]:
+                  - link "other 总览" [ref=e490] [cursor=pointer]:
+                    - /url: "#/02-components/other/index"
+                - listitem [ref=e491]:
+                  - link "finiteuses 耐久度" [ref=e492] [cursor=pointer]:
+                    - /url: "#/02-components/other/finiteuses"
+            - listitem [ref=e493]:
+              - text: 航海 Sailing
+              - list [ref=e494]:
+                - listitem [ref=e495]:
+                  - link "sailing 总览" [ref=e496] [cursor=pointer]:
+                    - /url: "#/02-components/sailing/index"
+        - listitem [ref=e497]:
+          - text: 03 Actions 动作
+          - list [ref=e498]:
+            - listitem [ref=e499]:
+              - link "03-actions 总览" [ref=e500] [cursor=pointer]:
+                - /url: "#/03-actions/index"
+            - listitem [ref=e501]:
+              - link "动作列表" [ref=e502] [cursor=pointer]:
+                - /url: "#/03-actions/detail/action-list"
+        - listitem [ref=e503]:
+          - text: 04 Tags 标签
+          - list [ref=e504]:
+            - listitem [ref=e505]:
+              - link "04-tags 总览" [ref=e506] [cursor=pointer]:
+                - /url: "#/04-tags/index"
+        - listitem [ref=e507]:
+          - text: 05 Events 事件
+          - list [ref=e508]:
+            - listitem [ref=e509]:
+              - link "05-events 总览" [ref=e510] [cursor=pointer]:
+                - /url: "#/05-events/index"
+        - listitem [ref=e511]:
+          - text: 06 Stategraphs 状态图
+          - list [ref=e512]:
+            - listitem [ref=e513]:
+              - link "06-stategraphs 总览" [ref=e514] [cursor=pointer]:
+                - /url: "#/06-stategraphs/index"
+            - listitem [ref=e515]:
+              - link "常用 SG 参考" [ref=e516] [cursor=pointer]:
+                - /url: "#/06-stategraphs/sg-reference"
+        - listitem [ref=e517]:
+          - text: 07 Brains 行为大脑
+          - list [ref=e518]:
+            - listitem [ref=e519]:
+              - link "07-brains 总览" [ref=e520] [cursor=pointer]:
+                - /url: "#/07-brains/index"
+            - listitem [ref=e521]:
+              - link "常用 Brain 参考" [ref=e522] [cursor=pointer]:
+                - /url: "#/07-brains/brain-reference"
+        - listitem [ref=e523]:
+          - text: 08 Prefabs 预设
+          - list [ref=e524]:
+            - listitem [ref=e525]:
+              - link "08-prefabs 总览" [ref=e526] [cursor=pointer]:
+                - /url: "#/08-prefabs/index"
+            - listitem [ref=e527]:
+              - link "Prefab 分类参考" [ref=e528] [cursor=pointer]:
+                - /url: "#/08-prefabs/prefabs-reference"
+        - listitem [ref=e529]:
+          - text: 09 Tuning 调参
+          - list [ref=e530]:
+            - listitem [ref=e531]:
+              - link "09-tuning 总览" [ref=e532] [cursor=pointer]:
+                - /url: "#/09-tuning/index"
+        - listitem [ref=e533]:
+          - text: 10 Networking 网络
+          - list [ref=e534]:
+            - listitem [ref=e535]:
+              - link "10-networking 总览" [ref=e536] [cursor=pointer]:
+                - /url: "#/10-networking/index"
+        - listitem [ref=e537]:
+          - text: 11 Modding Mod开发
+          - list [ref=e538]:
+            - listitem [ref=e539]:
+              - link "11-modding 总览" [ref=e540] [cursor=pointer]:
+                - /url: "#/11-modding/index"
+        - listitem [ref=e541]:
+          - text: 12 Cooking 烹饪
+          - list [ref=e542]:
+            - listitem [ref=e543]:
+              - link "12-cooking 总览" [ref=e544] [cursor=pointer]:
+                - /url: "#/12-cooking/index"
+        - listitem [ref=e545]:
+          - text: 13 World 世界
+          - list [ref=e546]:
+            - listitem [ref=e547]:
+              - link "13-world 总览" [ref=e548] [cursor=pointer]:
+                - /url: "#/13-world/index"
+            - listitem [ref=e549]:
+              - link "地图生成系统" [ref=e550] [cursor=pointer]:
+                - /url: "#/13-world/worldgen"
+        - listitem [ref=e551]:
+          - text: 14 Skilltree 技能树
+          - list [ref=e552]:
+            - listitem [ref=e553]:
+              - link "14-skilltree 总览" [ref=e554] [cursor=pointer]:
+                - /url: "#/14-skilltree/index"
+        - listitem [ref=e555]:
+          - text: 15 UI 界面
+          - list [ref=e556]:
+            - listitem [ref=e557]:
+              - link "15-ui 总览" [ref=e558] [cursor=pointer]:
+                - /url: "#/15-ui/index"
+        - listitem [ref=e559]:
+          - text: 16 Constants 常量
+          - list [ref=e560]:
+            - listitem [ref=e561]:
+              - link "16-constants 总览" [ref=e562] [cursor=pointer]:
+                - /url: "#/16-constants/index"
+        - listitem [ref=e563]:
+          - text: 17 Standard Components 标准组件
+          - list [ref=e564]:
+            - listitem [ref=e565]:
+              - link "17-standardcomponents 总览" [ref=e566] [cursor=pointer]:
+                - /url: "#/17-standardcomponents/index"
+        - listitem [ref=e567]:
+          - text: 18 Behaviours 行为树
+          - list [ref=e568]:
+            - listitem [ref=e569]:
+              - link "18-behaviours 总览" [ref=e570] [cursor=pointer]:
+                - /url: "#/18-behaviours/index"
+        - listitem [ref=e571]:
+          - text: 19 FX 特效
+          - list [ref=e572]:
+            - listitem [ref=e573]:
+              - link "19-fx 总览" [ref=e574] [cursor=pointer]:
+                - /url: "#/19-fx/index"
+        - listitem [ref=e575]:
+          - text: 案例
+          - list [ref=e576]:
+            - listitem [ref=e577]:
+              - link "小案例" [ref=e578] [cursor=pointer]:
+                - /url: "#/anli/smallAn"
+        - listitem [ref=e579]:
+          - text: 数据提取
+          - list [ref=e580]:
+            - listitem [ref=e581]:
+              - link "数据提取1" [ref=e582] [cursor=pointer]:
+                - /url: "#/xiazai/tq1"
+            - listitem [ref=e583]:
+              - link "数据提取2" [ref=e584] [cursor=pointer]:
+                - /url: "#/xiazai/tq2"
+            - listitem [ref=e585]:
+              - link "数据提取3" [ref=e586] [cursor=pointer]:
+                - /url: "#/xiazai/tq3"
+            - listitem [ref=e587]:
+              - link "数据提取4" [ref=e588] [cursor=pointer]:
+                - /url: "#/xiazai/tq4"
+            - listitem [ref=e589]:
+              - link "数据提取5" [ref=e590] [cursor=pointer]:
+                - /url: "#/xiazai/tq5"
+            - listitem [ref=e591]:
+              - link "字典" [ref=e592] [cursor=pointer]:
+                - /url: "#/xiazai/tq6"
+    - article [ref=e212]:
+      - heading "02 - 组件系统（Components）" [level=1] [ref=e593]:
+        - link "02 - 组件系统（Components）" [ref=e594] [cursor=pointer]:
+          - /url: "#/02-components/index?id=_02-%e7%bb%84%e4%bb%b6%e7%b3%bb%e7%bb%9f%ef%bc%88components%ef%bc%89"
+      - blockquote [ref=e595]:
+        - paragraph [ref=e596]:
+          - text: "源码目录:"
+          - code [ref=e597]: scripts/components/
+          - text: 总计约 815 个组件
+      - paragraph [ref=e598]:
+        - text: 组件是 DST 中最核心的可复用功能单元。每个组件封装一组相关逻辑，通过
+        - code [ref=e599]: inst:AddComponent("componentname")
+        - text: 添加到实体上，通过
+        - code [ref=e600]: inst.components.componentname
+        - text: 访问。
+      - separator [ref=e601]
+      - heading "目录" [level=2] [ref=e602]:
+        - link "目录" [ref=e603] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e7%9b%ae%e5%bd%95"
+      - table [ref=e604]:
+        - rowgroup [ref=e605]:
+          - row "分类 目录 说明" [ref=e606]:
+            - columnheader "分类" [ref=e607]
+            - columnheader "目录" [ref=e608]
+            - columnheader "说明" [ref=e609]
+        - rowgroup [ref=e610]:
+          - row "战斗 combat/ combat, health, weapon, armor, aoeweapon_* 等" [ref=e611]:
+            - cell "战斗" [ref=e612]:
+              - link "战斗" [ref=e613] [cursor=pointer]:
+                - /url: "#/02-components/combat/index"
+            - cell "combat/" [ref=e614]:
+              - code [ref=e615]: combat/
+            - cell "combat, health, weapon, armor, aoeweapon_* 等" [ref=e616]
+          - row "生存 survival/ hunger, sanity, temperature, moisture, age 等" [ref=e617]:
+            - cell "生存" [ref=e618]:
+              - link "生存" [ref=e619] [cursor=pointer]:
+                - /url: "#/02-components/survival/index"
+            - cell "survival/" [ref=e620]:
+              - code [ref=e621]: survival/
+            - cell "hunger, sanity, temperature, moisture, age 等" [ref=e622]
+          - row "物品/容器 inventory/ inventory, inventoryitem, container, stackable, equippable 等" [ref=e623]:
+            - cell "物品/容器" [ref=e624]:
+              - link "物品/容器" [ref=e625] [cursor=pointer]:
+                - /url: "#/02-components/inventory/index"
+            - cell "inventory/" [ref=e626]:
+              - code [ref=e627]: inventory/
+            - cell "inventory, inventoryitem, container, stackable, equippable 等" [ref=e628]
+          - row "移动/导航 movement/ locomotor, amphibiouscreature 等" [ref=e629]:
+            - cell "移动/导航" [ref=e630]
+            - cell "movement/" [ref=e631]:
+              - code [ref=e632]: movement/
+            - cell "locomotor, amphibiouscreature 等" [ref=e633]
+          - row "工作/采集 work/ workable, harvestable, pickable, diggable, tool 等" [ref=e634]:
+            - cell "工作/采集" [ref=e635]:
+              - link "工作/采集" [ref=e636] [cursor=pointer]:
+                - /url: "#/02-components/work/index"
+            - cell "work/" [ref=e637]:
+              - code [ref=e638]: work/
+            - cell "workable, harvestable, pickable, diggable, tool 等" [ref=e639]
+          - row "食物/烹饪 edible/ edible, cooker, cookable, stewer, perishable 等" [ref=e640]:
+            - cell "食物/烹饪" [ref=e641]:
+              - link "食物/烹饪" [ref=e642] [cursor=pointer]:
+                - /url: "#/02-components/edible/index"
+            - cell "edible/" [ref=e643]:
+              - code [ref=e644]: edible/
+            - cell "edible, cooker, cookable, stewer, perishable 等" [ref=e645]
+          - row "建造/制作 builder/ builder, deployable, craftingstation, prototyper 等" [ref=e646]:
+            - cell "建造/制作" [ref=e647]:
+              - link "建造/制作" [ref=e648] [cursor=pointer]:
+                - /url: "#/02-components/builder/index"
+            - cell "builder/" [ref=e649]:
+              - code [ref=e650]: builder/
+            - cell "builder, deployable, craftingstation, prototyper 等" [ref=e651]
+          - row "火/光/燃烧 burnable/ burnable, fueled, light, propagator 等" [ref=e652]:
+            - cell "火/光/燃烧" [ref=e653]:
+              - link "火/光/燃烧" [ref=e654] [cursor=pointer]:
+                - /url: "#/02-components/burnable/index"
+            - cell "burnable/" [ref=e655]:
+              - code [ref=e656]: burnable/
+            - cell "burnable, fueled, light, propagator 等" [ref=e657]
+          - row "生物/生成 creature/ childspawner, follower, spawner, herdmember 等" [ref=e658]:
+            - cell "生物/生成" [ref=e659]:
+              - link "生物/生成" [ref=e660] [cursor=pointer]:
+                - /url: "#/02-components/creature/index"
+            - cell "creature/" [ref=e661]:
+              - code [ref=e662]: creature/
+            - cell "childspawner, follower, spawner, herdmember 等" [ref=e663]
+          - row "航海 sailing/ boatphysics, sail, anchor, boatleak, boatmagnet 等" [ref=e664]:
+            - cell "航海" [ref=e665]:
+              - link "航海" [ref=e666] [cursor=pointer]:
+                - /url: "#/02-components/sailing/index"
+            - cell "sailing/" [ref=e667]:
+              - code [ref=e668]: sailing/
+            - cell "boatphysics, sail, anchor, boatleak, boatmagnet 等" [ref=e669]
+          - row "技能树 skilltree/ 各角色技能相关组件" [ref=e670]:
+            - cell "技能树" [ref=e671]
+            - cell "skilltree/" [ref=e672]:
+              - code [ref=e673]: skilltree/
+            - cell "各角色技能相关组件" [ref=e674]
+          - row "世界/环境 world/ worldstate, weather, seasons, clock, temperature 等" [ref=e675]:
+            - cell "世界/环境" [ref=e676]
+            - cell "world/" [ref=e677]:
+              - code [ref=e678]: world/
+            - cell "worldstate, weather, seasons, clock, temperature 等" [ref=e679]
+          - row "其他 other/ 不属以上分类的其余组件合集" [ref=e680]:
+            - cell "其他" [ref=e681]:
+              - link "其他" [ref=e682] [cursor=pointer]:
+                - /url: "#/02-components/other/index"
+            - cell "other/" [ref=e683]:
+              - code [ref=e684]: other/
+            - cell "不属以上分类的其余组件合集" [ref=e685]
+      - separator [ref=e686]
+      - heading "组件通用模式" [level=2] [ref=e687]:
+        - link "组件通用模式" [ref=e688] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e7%bb%84%e4%bb%b6%e9%80%9a%e7%94%a8%e6%a8%a1%e5%bc%8f"
+      - heading "生命周期回调" [level=3] [ref=e689]:
+        - link "生命周期回调" [ref=e690] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e5%9b%9e%e8%b0%83"
+      - generic [ref=e691]:
+        - code [ref=e692]: "-- 保存数据 function MyComponent:OnSave() return { key = self.value } end -- 加载数据 function MyComponent:OnLoad(data) if data and data.key then self.value = data.key end end -- 实体从世界移除 function MyComponent:OnRemoveEntity() -- 清理资源 end -- 组件从实体移除 function MyComponent:OnRemoveFromEntity() -- 清理监听等 end"
+        - text: lua
+      - heading "世界状态监视" [level=3] [ref=e693]:
+        - link "世界状态监视" [ref=e694] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e4%b8%96%e7%95%8c%e7%8a%b6%e6%80%81%e7%9b%91%e8%a7%86"
+      - generic [ref=e695]:
+        - code [ref=e696]: "-- 自动绑定到 self.inst，随实体移除自动解绑 function MyComponent:WatchWorldState(variable, fn) function MyComponent:StopWatchingWorldState(variable, fn)"
+        - text: lua
+      - heading "添加/移除组件" [level=3] [ref=e697]:
+        - link "添加/移除组件" [ref=e698] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e6%b7%bb%e5%8a%a0%e7%a7%bb%e9%99%a4%e7%bb%84%e4%bb%b6"
+      - generic [ref=e699]:
+        - code [ref=e700]: inst:AddComponent("health") -- 添加组件 inst:RemoveComponent("health") -- 移除组件 inst:HasComponent("health") -- 检查是否有组件 inst.components.health -- 访问组件实例
+        - text: lua
+      - separator [ref=e701]
+      - heading "常用组件 API 速查" [level=2] [ref=e702]:
+        - link "常用组件 API 速查" [ref=e703] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e5%b8%b8%e7%94%a8%e7%bb%84%e4%bb%b6-api-%e9%80%9f%e6%9f%a5"
+      - heading "基础属性" [level=3] [ref=e704]:
+        - link "基础属性" [ref=e705] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e5%9f%ba%e7%a1%80%e5%b1%9e%e6%80%a7"
+      - table [ref=e706]:
+        - rowgroup [ref=e707]:
+          - row "组件 核心方法" [ref=e708]:
+            - columnheader "组件" [ref=e709]
+            - columnheader "核心方法" [ref=e710]
+        - rowgroup [ref=e711]:
+          - row "health SetMaxHealth(v), DoDelta(delta), GetCurrent(), IsDead(), Kill()" [ref=e712]:
+            - cell "health" [ref=e713]:
+              - code [ref=e714]: health
+            - cell "SetMaxHealth(v), DoDelta(delta), GetCurrent(), IsDead(), Kill()" [ref=e715]:
+              - code [ref=e716]: SetMaxHealth(v)
+              - text: ","
+              - code [ref=e717]: DoDelta(delta)
+              - text: ","
+              - code [ref=e718]: GetCurrent()
+              - text: ","
+              - code [ref=e719]: IsDead()
+              - text: ","
+              - code [ref=e720]: Kill()
+          - row "combat SetTarget(t), SetDefaultDamage(v), SetAttackPeriod(v), SetRange(v)" [ref=e721]:
+            - cell "combat" [ref=e722]:
+              - code [ref=e723]: combat
+            - cell "SetTarget(t), SetDefaultDamage(v), SetAttackPeriod(v), SetRange(v)" [ref=e724]:
+              - code [ref=e725]: SetTarget(t)
+              - text: ","
+              - code [ref=e726]: SetDefaultDamage(v)
+              - text: ","
+              - code [ref=e727]: SetAttackPeriod(v)
+              - text: ","
+              - code [ref=e728]: SetRange(v)
+          - row "sanity SetMax(v), DoDelta(delta), GetPercent()" [ref=e729]:
+            - cell "sanity" [ref=e730]:
+              - code [ref=e731]: sanity
+            - cell "SetMax(v), DoDelta(delta), GetPercent()" [ref=e732]:
+              - code [ref=e733]: SetMax(v)
+              - text: ","
+              - code [ref=e734]: DoDelta(delta)
+              - text: ","
+              - code [ref=e735]: GetPercent()
+          - row "hunger SetMax(v), DoDelta(delta), GetPercent(), SetRate(v)" [ref=e736]:
+            - cell "hunger" [ref=e737]:
+              - code [ref=e738]: hunger
+            - cell "SetMax(v), DoDelta(delta), GetPercent(), SetRate(v)" [ref=e739]:
+              - code [ref=e740]: SetMax(v)
+              - text: ","
+              - code [ref=e741]: DoDelta(delta)
+              - text: ","
+              - code [ref=e742]: GetPercent()
+              - text: ","
+              - code [ref=e743]: SetRate(v)
+          - row "temperature SetCurrent(v), GetCurrent(), SetMode(m)" [ref=e744]:
+            - cell "temperature" [ref=e745]:
+              - code [ref=e746]: temperature
+            - cell "SetCurrent(v), GetCurrent(), SetMode(m)" [ref=e747]:
+              - code [ref=e748]: SetCurrent(v)
+              - text: ","
+              - code [ref=e749]: GetCurrent()
+              - text: ","
+              - code [ref=e750]: SetMode(m)
+      - heading "物品/容器" [level=3] [ref=e751]:
+        - link "物品/容器" [ref=e752] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e7%89%a9%e5%93%81%e5%ae%b9%e5%99%a8"
+      - table [ref=e753]:
+        - rowgroup [ref=e754]:
+          - row "组件 核心方法" [ref=e755]:
+            - columnheader "组件" [ref=e756]
+            - columnheader "核心方法" [ref=e757]
+        - rowgroup [ref=e758]:
+          - row "inventory GiveItem(item), DropItem(item), HasItem(name, amount), GetEquippedItem(slot)" [ref=e759]:
+            - cell "inventory" [ref=e760]:
+              - code [ref=e761]: inventory
+            - cell "GiveItem(item), DropItem(item), HasItem(name, amount), GetEquippedItem(slot)" [ref=e762]:
+              - code [ref=e763]: GiveItem(item)
+              - text: ","
+              - code [ref=e764]: DropItem(item)
+              - text: ","
+              - code [ref=e765]: HasItem(name, amount)
+              - text: ","
+              - code [ref=e766]: GetEquippedItem(slot)
+          - row "inventoryitem SetOnPutInInventoryFn(fn), SetOnDroppedFn(fn), IsHeld()" [ref=e767]:
+            - cell "inventoryitem" [ref=e768]:
+              - code [ref=e769]: inventoryitem
+            - cell "SetOnPutInInventoryFn(fn), SetOnDroppedFn(fn), IsHeld()" [ref=e770]:
+              - code [ref=e771]: SetOnPutInInventoryFn(fn)
+              - text: ","
+              - code [ref=e772]: SetOnDroppedFn(fn)
+              - text: ","
+              - code [ref=e773]: IsHeld()
+          - row "container GiveItem(item), DropEverything(), FindItem(fn), IsOpen(), IsFull()" [ref=e774]:
+            - cell "container" [ref=e775]:
+              - code [ref=e776]: container
+            - cell "GiveItem(item), DropEverything(), FindItem(fn), IsOpen(), IsFull()" [ref=e777]:
+              - code [ref=e778]: GiveItem(item)
+              - text: ","
+              - code [ref=e779]: DropEverything()
+              - text: ","
+              - code [ref=e780]: FindItem(fn)
+              - text: ","
+              - code [ref=e781]: IsOpen()
+              - text: ","
+              - code [ref=e782]: IsFull()
+          - row "stackable SetStackSize(n), StackSize(), IsFull()" [ref=e783]:
+            - cell "stackable" [ref=e784]:
+              - code [ref=e785]: stackable
+            - cell "SetStackSize(n), StackSize(), IsFull()" [ref=e786]:
+              - code [ref=e787]: SetStackSize(n)
+              - text: ","
+              - code [ref=e788]: StackSize()
+              - text: ","
+              - code [ref=e789]: IsFull()
+          - row "equippable IsEquipped(), GetEquipSlot(), EquipSlot(), SetOnEquip(fn)" [ref=e790]:
+            - cell "equippable" [ref=e791]:
+              - code [ref=e792]: equippable
+            - cell "IsEquipped(), GetEquipSlot(), EquipSlot(), SetOnEquip(fn)" [ref=e793]:
+              - code [ref=e794]: IsEquipped()
+              - text: ","
+              - code [ref=e795]: GetEquipSlot()
+              - text: ","
+              - code [ref=e796]: EquipSlot()
+              - text: ","
+              - code [ref=e797]: SetOnEquip(fn)
+      - heading "状态/行为" [level=3] [ref=e798]:
+        - link "状态/行为" [ref=e799] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e7%8a%b6%e6%80%81%e8%a1%8c%e4%b8%ba"
+      - table [ref=e800]:
+        - rowgroup [ref=e801]:
+          - row "组件 核心方法" [ref=e802]:
+            - columnheader "组件" [ref=e803]
+            - columnheader "核心方法" [ref=e804]
+        - rowgroup [ref=e805]:
+          - row "workable SetWorkLeft(v), SetWorkAction(action), WorkedBy(worker, amount)" [ref=e806]:
+            - cell "workable" [ref=e807]:
+              - code [ref=e808]: workable
+            - cell "SetWorkLeft(v), SetWorkAction(action), WorkedBy(worker, amount)" [ref=e809]:
+              - code [ref=e810]: SetWorkLeft(v)
+              - text: ","
+              - code [ref=e811]: SetWorkAction(action)
+              - text: ","
+              - code [ref=e812]: WorkedBy(worker, amount)
+          - row "burnable Ignite(), Extinguish(), IsBurning(), SetOnBurntFn(fn)" [ref=e813]:
+            - cell "burnable" [ref=e814]:
+              - code [ref=e815]: burnable
+            - cell "Ignite(), Extinguish(), IsBurning(), SetOnBurntFn(fn)" [ref=e816]:
+              - code [ref=e817]: Ignite()
+              - text: ","
+              - code [ref=e818]: Extinguish()
+              - text: ","
+              - code [ref=e819]: IsBurning()
+              - text: ","
+              - code [ref=e820]: SetOnBurntFn(fn)
+          - row "fueled SetMaxFuel(v), StartConsuming(), StopConsuming(), GetPercent()" [ref=e821]:
+            - cell "fueled" [ref=e822]:
+              - code [ref=e823]: fueled
+            - cell "SetMaxFuel(v), StartConsuming(), StopConsuming(), GetPercent()" [ref=e824]:
+              - code [ref=e825]: SetMaxFuel(v)
+              - text: ","
+              - code [ref=e826]: StartConsuming()
+              - text: ","
+              - code [ref=e827]: StopConsuming()
+              - text: ","
+              - code [ref=e828]: GetPercent()
+          - row "edible GetHunger(), GetSanity(), GetHealth(), SetOnEatenFn(fn)" [ref=e829]:
+            - cell "edible" [ref=e830]:
+              - code [ref=e831]: edible
+            - cell "GetHunger(), GetSanity(), GetHealth(), SetOnEatenFn(fn)" [ref=e832]:
+              - code [ref=e833]: GetHunger()
+              - text: ","
+              - code [ref=e834]: GetSanity()
+              - text: ","
+              - code [ref=e835]: GetHealth()
+              - text: ","
+              - code [ref=e836]: SetOnEatenFn(fn)
+          - row "perishable SetPerishTime(t), StartPerishing(), StopPerishing(), SetPercent(p)" [ref=e837]:
+            - cell "perishable" [ref=e838]:
+              - code [ref=e839]: perishable
+            - cell "SetPerishTime(t), StartPerishing(), StopPerishing(), SetPercent(p)" [ref=e840]:
+              - code [ref=e841]: SetPerishTime(t)
+              - text: ","
+              - code [ref=e842]: StartPerishing()
+              - text: ","
+              - code [ref=e843]: StopPerishing()
+              - text: ","
+              - code [ref=e844]: SetPercent(p)
+          - row "cookable SetProduct(name), SetOnCookedFn(fn)" [ref=e845]:
+            - cell "cookable" [ref=e846]:
+              - code [ref=e847]: cookable
+            - cell "SetProduct(name), SetOnCookedFn(fn)" [ref=e848]:
+              - code [ref=e849]: SetProduct(name)
+              - text: ","
+              - code [ref=e850]: SetOnCookedFn(fn)
+          - row "cooker StartCooking(), StopCooking(), GetDonePercent()" [ref=e851]:
+            - cell "cooker" [ref=e852]:
+              - code [ref=e853]: cooker
+            - cell "StartCooking(), StopCooking(), GetDonePercent()" [ref=e854]:
+              - code [ref=e855]: StartCooking()
+              - text: ","
+              - code [ref=e856]: StopCooking()
+              - text: ","
+              - code [ref=e857]: GetDonePercent()
+          - row "deployable SetDeployMode(mode), SetDeploySpacing(s)" [ref=e858]:
+            - cell "deployable" [ref=e859]:
+              - code [ref=e860]: deployable
+            - cell "SetDeployMode(mode), SetDeploySpacing(s)" [ref=e861]:
+              - code [ref=e862]: SetDeployMode(mode)
+              - text: ","
+              - code [ref=e863]: SetDeploySpacing(s)
+          - row "tradable SetPrice(item, qty), SetOnAcceptFn(fn)" [ref=e864]:
+            - cell "tradable" [ref=e865]:
+              - code [ref=e866]: tradable
+            - cell "SetPrice(item, qty), SetOnAcceptFn(fn)" [ref=e867]:
+              - code [ref=e868]: SetPrice(item, qty)
+              - text: ","
+              - code [ref=e869]: SetOnAcceptFn(fn)
+          - row "sleeper GoToSleep(time), WakeUp(), IsAsleep()" [ref=e870]:
+            - cell "sleeper" [ref=e871]:
+              - code [ref=e872]: sleeper
+            - cell "GoToSleep(time), WakeUp(), IsAsleep()" [ref=e873]:
+              - code [ref=e874]: GoToSleep(time)
+              - text: ","
+              - code [ref=e875]: WakeUp()
+              - text: ","
+              - code [ref=e876]: IsAsleep()
+          - row "freezable AddColdness(v), IsFrozen(), Unfreeze()" [ref=e877]:
+            - cell "freezable" [ref=e878]:
+              - code [ref=e879]: freezable
+            - cell "AddColdness(v), IsFrozen(), Unfreeze()" [ref=e880]:
+              - code [ref=e881]: AddColdness(v)
+              - text: ","
+              - code [ref=e882]: IsFrozen()
+              - text: ","
+              - code [ref=e883]: Unfreeze()
+          - row "heater heatfn = function(inst) return temp end" [ref=e884]:
+            - cell "heater" [ref=e885]:
+              - code [ref=e886]: heater
+            - cell "heatfn = function(inst) return temp end" [ref=e887]:
+              - code [ref=e888]: heatfn = function(inst) return temp end
+      - heading "生物" [level=3] [ref=e889]:
+        - link "生物" [ref=e890] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e7%94%9f%e7%89%a9"
+      - table [ref=e891]:
+        - rowgroup [ref=e892]:
+          - row "组件 核心方法" [ref=e893]:
+            - columnheader "组件" [ref=e894]
+            - columnheader "核心方法" [ref=e895]
+        - rowgroup [ref=e896]:
+          - row "locomotor GoToPoint(x,y,z), Stop(), WalkForward(), RunForward()" [ref=e897]:
+            - cell "locomotor" [ref=e898]:
+              - code [ref=e899]: locomotor
+            - cell "GoToPoint(x,y,z), Stop(), WalkForward(), RunForward()" [ref=e900]:
+              - code [ref=e901]: GoToPoint(x,y,z)
+              - text: ","
+              - code [ref=e902]: Stop()
+              - text: ","
+              - code [ref=e903]: WalkForward()
+              - text: ","
+              - code [ref=e904]: RunForward()
+          - row "follower SetLeader(inst), IsNearLeader(range)" [ref=e905]:
+            - cell "follower" [ref=e906]:
+              - code [ref=e907]: follower
+            - cell "SetLeader(inst), IsNearLeader(range)" [ref=e908]:
+              - code [ref=e909]: SetLeader(inst)
+              - text: ","
+              - code [ref=e910]: IsNearLeader(range)
+          - row "lootdropper SetLoot(table), GenerateLoot(), DropLoot(pos)" [ref=e911]:
+            - cell "lootdropper" [ref=e912]:
+              - code [ref=e913]: lootdropper
+            - cell "SetLoot(table), GenerateLoot(), DropLoot(pos)" [ref=e914]:
+              - code [ref=e915]: SetLoot(table)
+              - text: ","
+              - code [ref=e916]: GenerateLoot()
+              - text: ","
+              - code [ref=e917]: DropLoot(pos)
+          - row "knownlocations RememberLocation(key, loc), GetLocation(key)" [ref=e918]:
+            - cell "knownlocations" [ref=e919]:
+              - code [ref=e920]: knownlocations
+            - cell "RememberLocation(key, loc), GetLocation(key)" [ref=e921]:
+              - code [ref=e922]: RememberLocation(key, loc)
+              - text: ","
+              - code [ref=e923]: GetLocation(key)
+          - row "childspawner StartSpawning(), SpawnChild(), ReleaseAllChildren()" [ref=e924]:
+            - cell "childspawner" [ref=e925]:
+              - code [ref=e926]: childspawner
+            - cell "StartSpawning(), SpawnChild(), ReleaseAllChildren()" [ref=e927]:
+              - code [ref=e928]: StartSpawning()
+              - text: ","
+              - code [ref=e929]: SpawnChild()
+              - text: ","
+              - code [ref=e930]: ReleaseAllChildren()
+          - row "homeseeker SetHome(inst)" [ref=e931]:
+            - cell "homeseeker" [ref=e932]:
+              - code [ref=e933]: homeseeker
+            - cell "SetHome(inst)" [ref=e934]:
+              - code [ref=e935]: SetHome(inst)
+      - heading "工具/武器" [level=3] [ref=e936]:
+        - link "工具/武器" [ref=e937] [cursor=pointer]:
+          - /url: "#/02-components/index?id=%e5%b7%a5%e5%85%b7%e6%ad%a6%e5%99%a8"
+      - table [ref=e938]:
+        - rowgroup [ref=e939]:
+          - row "组件 核心方法" [ref=e940]:
+            - columnheader "组件" [ref=e941]
+            - columnheader "核心方法" [ref=e942]
+        - rowgroup [ref=e943]:
+          - row "weapon SetDamage(v), SetOnAttack(fn), SetAttackCallback(fn)" [ref=e944]:
+            - cell "weapon" [ref=e945]:
+              - code [ref=e946]: weapon
+            - cell "SetDamage(v), SetOnAttack(fn), SetAttackCallback(fn)" [ref=e947]:
+              - code [ref=e948]: SetDamage(v)
+              - text: ","
+              - code [ref=e949]: SetOnAttack(fn)
+              - text: ","
+              - code [ref=e950]: SetAttackCallback(fn)
+          - row "armor SetAbsorption(v), SetCondition(v), SetKeepOnFinished(b)" [ref=e951]:
+            - cell "armor" [ref=e952]:
+              - code [ref=e953]: armor
+            - cell "SetAbsorption(v), SetCondition(v), SetKeepOnFinished(b)" [ref=e954]:
+              - code [ref=e955]: SetAbsorption(v)
+              - text: ","
+              - code [ref=e956]: SetCondition(v)
+              - text: ","
+              - code [ref=e957]: SetKeepOnFinished(b)
+          - row "tool SetAction(action), SetOnWorkFinished(fn)" [ref=e958]:
+            - cell "tool" [ref=e959]:
+              - code [ref=e960]: tool
+            - cell "SetAction(action), SetOnWorkFinished(fn)" [ref=e961]:
+              - code [ref=e962]: SetAction(action)
+              - text: ","
+              - code [ref=e963]: SetOnWorkFinished(fn)
+          - row "finiteuses SetMaxUses(n), Use(n), SetPercent(p), GetPercent()" [ref=e964]:
+            - cell "finiteuses" [ref=e965]:
+              - code [ref=e966]: finiteuses
+            - cell "SetMaxUses(n), Use(n), SetPercent(p), GetPercent()" [ref=e967]:
+              - code [ref=e968]: SetMaxUses(n)
+              - text: ","
+              - code [ref=e969]: Use(n)
+              - text: ","
+              - code [ref=e970]: SetPercent(p)
+              - text: ","
+              - code [ref=e971]: GetPercent()
+          - row "repairable SetOnRepaired(fn), SetRepairMaterial(m)" [ref=e972]:
+            - cell "repairable" [ref=e973]:
+              - code [ref=e974]: repairable
+            - cell "SetOnRepaired(fn), SetRepairMaterial(m)" [ref=e975]:
+              - code [ref=e976]: SetOnRepaired(fn)
+              - text: ","
+              - code [ref=e977]: SetRepairMaterial(m)
+      - heading "Mod 开发：组件回调" [level=2] [ref=e978]:
+        - link "Mod 开发：组件回调" [ref=e979] [cursor=pointer]:
+          - /url: "#/02-components/index?id=mod-%e5%bc%80%e5%8f%91%ef%bc%9a%e7%bb%84%e4%bb%b6%e5%9b%9e%e8%b0%83"
+      - generic [ref=e980]:
+        - code [ref=e981]: "-- 对现有组件添加后处理 AddComponentPostInit(\"health\", function(Health, inst) local old_DoDelta = Health.DoDelta Health.DoDelta = function(self, amount, ...) -- 修改伤害逻辑 return old_DoDelta(self, amount, ...) end end)"
+        - text: lua

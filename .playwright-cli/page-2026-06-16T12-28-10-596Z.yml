@@ -1,0 +1,293 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e20]:
+        - listitem [ref=e21] [cursor=pointer]: 前言
+        - listitem [ref=e22] [cursor=pointer]: 01 核心系统
+        - listitem [ref=e23] [cursor=pointer]:
+          - text: 02 Components 组件
+          - list [ref=e224]:
+            - listitem [ref=e225]:
+              - link "02-components 总览" [ref=e226]:
+                - /url: "#/02-components/index"
+            - listitem [ref=e227]: 战斗 Combat
+            - listitem [ref=e228]: 生存 Survival
+            - listitem [ref=e229]: 背包 Inventory
+            - listitem [ref=e230]: 工作 Work
+            - listitem [ref=e231]: 食物 Edible
+            - listitem [ref=e232]: 建造 Builder
+            - listitem [ref=e233]: 燃烧 Burnable
+            - listitem [ref=e234]: 生物 Creature
+            - listitem [ref=e235]:
+              - text: 其他 Other
+              - list [ref=e237]:
+                - listitem [ref=e238]:
+                  - link "other 总览" [ref=e239]:
+                    - /url: "#/02-components/other/index"
+                - listitem [ref=e240]:
+                  - text: 物品系统
+                  - list [ref=e246]:
+                    - listitem [ref=e247]:
+                      - link "inventoryitem 库存物品" [ref=e248]:
+                        - /url: "#/02-components/other/inventoryitem"
+                    - listitem [ref=e249]:
+                      - link "stackable 堆叠" [ref=e250]:
+                        - /url: "#/02-components/other/stackable"
+                    - listitem [ref=e251]:
+                      - link "equippable 可装备" [ref=e252]:
+                        - /url: "#/02-components/other/equippable"
+                    - listitem [ref=e253]:
+                      - link "deployable 可部署" [ref=e254]:
+                        - /url: "#/02-components/other/deployable"
+                    - listitem [ref=e255]:
+                      - link "finiteuses 耐久度" [ref=e256]:
+                        - /url: "#/02-components/other/finiteuses"
+                    - listitem [ref=e257]:
+                      - link "repairable 可修复" [ref=e258]:
+                        - /url: "#/02-components/other/repairable"
+                    - listitem [ref=e259]:
+                      - link "tradable 可交易" [ref=e260]:
+                        - /url: "#/02-components/other/tradable"
+                - listitem [ref=e241]: 交互系统
+                - listitem [ref=e242]: 环境系统
+                - listitem [ref=e243]: 传送/变形/状态
+                - listitem [ref=e244]: 外观/控制/地图
+                - listitem [ref=e245]: 其他
+            - listitem [ref=e236]: 航海 Sailing
+        - listitem [ref=e24] [cursor=pointer]: 03 Actions 动作
+        - listitem [ref=e25] [cursor=pointer]: 04 Tags 标签
+        - listitem [ref=e26] [cursor=pointer]: 05 Events 事件
+        - listitem [ref=e27] [cursor=pointer]: 06 Stategraphs 状态图
+        - listitem [ref=e28] [cursor=pointer]: 07 Brains 行为大脑
+        - listitem [ref=e29] [cursor=pointer]: 08 Prefabs 预设
+        - listitem [ref=e30] [cursor=pointer]: 09 Tuning 调参
+        - listitem [ref=e31] [cursor=pointer]: 10 Networking 网络
+        - listitem [ref=e32] [cursor=pointer]: 11 Modding Mod开发
+        - listitem [ref=e33] [cursor=pointer]: 12 Cooking 烹饪
+        - listitem [ref=e34] [cursor=pointer]: 13 World 世界
+        - listitem [ref=e35] [cursor=pointer]: 14 Skilltree 技能树
+        - listitem [ref=e36] [cursor=pointer]: 15 UI 界面
+        - listitem [ref=e37] [cursor=pointer]: 16 Constants 常量
+        - listitem [ref=e38] [cursor=pointer]: 17 Standard Components 标准组件
+        - listitem [ref=e39] [cursor=pointer]: 18 Behaviours 行为树
+        - listitem [ref=e40] [cursor=pointer]: 19 FX 特效
+        - listitem [ref=e41] [cursor=pointer]: 案例
+        - listitem [ref=e42] [cursor=pointer]: 数据提取
+    - article [ref=e44]:
+      - heading "饥荒联机版 (Don't Starve Together) Mod 开发参考文档" [level=1] [ref=e45]:
+        - link "饥荒联机版 (Don't Starve Together) Mod 开发参考文档" [ref=e46] [cursor=pointer]:
+          - /url: "#/?id=%e9%a5%a5%e8%8d%92%e8%81%94%e6%9c%ba%e7%89%88-don39t-starve-together-mod-%e5%bc%80%e5%8f%91%e5%8f%82%e8%80%83%e6%96%87%e6%a1%a3"
+      - blockquote [ref=e47]:
+        - paragraph [ref=e48]:
+          - text: 基于 DST 源码
+          - code [ref=e49]: scripts.zip
+          - text: 完整反编译分析，覆盖所有重要模块的 API 参考。
+      - heading "目录导航" [level=2] [ref=e50]:
+        - link "目录导航" [ref=e51] [cursor=pointer]:
+          - /url: "#/?id=%e7%9b%ae%e5%bd%95%e5%af%bc%e8%88%aa"
+      - table [ref=e52]:
+        - rowgroup [ref=e53]:
+          - row "模块 路径 说明" [ref=e54]:
+            - columnheader "模块" [ref=e55]
+            - columnheader "路径" [ref=e56]
+            - columnheader "说明" [ref=e57]
+        - rowgroup [ref=e58]:
+          - row "核心系统 01-core/ EntityScript、Prefab、Class、全局函数、全局变量" [ref=e59]:
+            - cell "核心系统" [ref=e60]:
+              - strong [ref=e61]: 核心系统
+            - cell "01-core/" [ref=e62]:
+              - link "01-core/" [ref=e63] [cursor=pointer]:
+                - /url: "#/01-core/index"
+            - cell "EntityScript、Prefab、Class、全局函数、全局变量" [ref=e64]
+          - row "组件系统 02-components/ 815个组件，按功能分10大类" [ref=e65]:
+            - cell "组件系统" [ref=e66]:
+              - strong [ref=e67]: 组件系统
+            - cell "02-components/" [ref=e68]:
+              - link "02-components/" [ref=e69] [cursor=pointer]:
+                - /url: "#/02-components/index"
+            - cell "815个组件，按功能分10大类" [ref=e70]
+          - row "动作系统 03-actions/ 所有 ACTIONS 定义和使用" [ref=e71]:
+            - cell "动作系统" [ref=e72]:
+              - strong [ref=e73]: 动作系统
+            - cell "03-actions/" [ref=e74]:
+              - link "03-actions/" [ref=e75] [cursor=pointer]:
+                - /url: "#/03-actions/index"
+            - cell "所有 ACTIONS 定义和使用" [ref=e76]
+          - row "标签系统 04-tags/ TAG 完整分类列表" [ref=e77]:
+            - cell "标签系统" [ref=e78]:
+              - strong [ref=e79]: 标签系统
+            - cell "04-tags/" [ref=e80]:
+              - link "04-tags/" [ref=e81] [cursor=pointer]:
+                - /url: "#/04-tags/index"
+            - cell "TAG 完整分类列表" [ref=e82]
+          - row "事件系统 05-events/ 所有推送事件、监听机制" [ref=e83]:
+            - cell "事件系统" [ref=e84]:
+              - strong [ref=e85]: 事件系统
+            - cell "05-events/" [ref=e86]:
+              - link "05-events/" [ref=e87] [cursor=pointer]:
+                - /url: "#/05-events/index"
+            - cell "所有推送事件、监听机制" [ref=e88]
+          - row "状态机 06-stategraphs/ SG 状态机系统" [ref=e89]:
+            - cell "状态机" [ref=e90]:
+              - strong [ref=e91]: 状态机
+            - cell "06-stategraphs/" [ref=e92]:
+              - link "06-stategraphs/" [ref=e93] [cursor=pointer]:
+                - /url: "#/06-stategraphs/index"
+            - cell "SG 状态机系统" [ref=e94]
+          - row "大脑系统 07-brains/ AI 行为树" [ref=e95]:
+            - cell "大脑系统" [ref=e96]:
+              - strong [ref=e97]: 大脑系统
+            - cell "07-brains/" [ref=e98]:
+              - link "07-brains/" [ref=e99] [cursor=pointer]:
+                - /url: "#/07-brains/index"
+            - cell "AI 行为树" [ref=e100]
+          - row "预制体 08-prefabs/ 1583个预制体分类索引" [ref=e101]:
+            - cell "预制体" [ref=e102]:
+              - strong [ref=e103]: 预制体
+            - cell "08-prefabs/" [ref=e104]:
+              - link "08-prefabs/" [ref=e105] [cursor=pointer]:
+                - /url: "#/08-prefabs/index"
+            - cell "1583个预制体分类索引" [ref=e106]
+          - row "TUNING 09-tuning/ 游戏数值配置" [ref=e107]:
+            - cell "TUNING" [ref=e108]:
+              - strong [ref=e109]: TUNING
+            - cell "09-tuning/" [ref=e110]:
+              - link "09-tuning/" [ref=e111] [cursor=pointer]:
+                - /url: "#/09-tuning/index"
+            - cell "游戏数值配置" [ref=e112]
+          - row "网络同步 10-networking/ 主客机同步、NetVar、RPC" [ref=e113]:
+            - cell "网络同步" [ref=e114]:
+              - strong [ref=e115]: 网络同步
+            - cell "10-networking/" [ref=e116]:
+              - link "10-networking/" [ref=e117] [cursor=pointer]:
+                - /url: "#/10-networking/index"
+            - cell "主客机同步、NetVar、RPC" [ref=e118]
+          - row "Mod开发 11-modding/ modinfo、modmain、PostInit系列" [ref=e119]:
+            - cell "Mod开发" [ref=e120]:
+              - strong [ref=e121]: Mod开发
+            - cell "11-modding/" [ref=e122]:
+              - link "11-modding/" [ref=e123] [cursor=pointer]:
+                - /url: "#/11-modding/index"
+            - cell "modinfo、modmain、PostInit系列" [ref=e124]
+          - row "烹饪系统 12-cooking/ 食谱、烹饪机制" [ref=e125]:
+            - cell "烹饪系统" [ref=e126]:
+              - strong [ref=e127]: 烹饪系统
+            - cell "12-cooking/" [ref=e128]:
+              - link "12-cooking/" [ref=e129] [cursor=pointer]:
+                - /url: "#/12-cooking/index"
+            - cell "食谱、烹饪机制" [ref=e130]
+          - row "世界系统 13-world/ 地图、季节、天气" [ref=e131]:
+            - cell "世界系统" [ref=e132]:
+              - strong [ref=e133]: 世界系统
+            - cell "13-world/" [ref=e134]:
+              - link "13-world/" [ref=e135] [cursor=pointer]:
+                - /url: "#/13-world/index"
+            - cell "地图、季节、天气" [ref=e136]
+          - row "技能树 14-skilltree/ 技能树系统" [ref=e137]:
+            - cell "技能树" [ref=e138]:
+              - strong [ref=e139]: 技能树
+            - cell "14-skilltree/" [ref=e140]:
+              - link "14-skilltree/" [ref=e141] [cursor=pointer]:
+                - /url: "#/14-skilltree/index"
+            - cell "技能树系统" [ref=e142]
+          - row "UI系统 15-ui/ Widget、Screen" [ref=e143]:
+            - cell "UI系统" [ref=e144]:
+              - strong [ref=e145]: UI系统
+            - cell "15-ui/" [ref=e146]:
+              - link "15-ui/" [ref=e147] [cursor=pointer]:
+                - /url: "#/15-ui/index"
+            - cell "Widget、Screen" [ref=e148]
+          - row "常量枚举 16-constants/ 所有常量与枚举定义" [ref=e149]:
+            - cell "常量枚举" [ref=e150]:
+              - strong [ref=e151]: 常量枚举
+            - cell "16-constants/" [ref=e152]:
+              - link "16-constants/" [ref=e153] [cursor=pointer]:
+                - /url: "#/16-constants/index"
+            - cell "所有常量与枚举定义" [ref=e154]
+          - row "标准组件函数 17-standardcomponents/ Make系列标准组件函数" [ref=e155]:
+            - cell "标准组件函数" [ref=e156]:
+              - strong [ref=e157]: 标准组件函数
+            - cell "17-standardcomponents/" [ref=e158]:
+              - link "17-standardcomponents/" [ref=e159] [cursor=pointer]:
+                - /url: "#/17-standardcomponents/index"
+            - cell "Make系列标准组件函数" [ref=e160]
+      - heading "快速开始" [level=2] [ref=e161]:
+        - link "快速开始" [ref=e162] [cursor=pointer]:
+          - /url: "#/?id=%e5%bf%ab%e9%80%9f%e5%bc%80%e5%a7%8b"
+      - heading "Mod 开发最小模板" [level=3] [ref=e163]:
+        - link "Mod 开发最小模板" [ref=e164] [cursor=pointer]:
+          - /url: "#/?id=mod-%e5%bc%80%e5%8f%91%e6%9c%80%e5%b0%8f%e6%a8%a1%e6%9d%bf"
+      - generic [ref=e165]:
+        - code [ref=e166]: "-- modinfo.lua name = \"我的Mod\" description = \"Mod描述\" author = \"作者\" version = \"1.0\" dst_compatible = true all_clients_require_mod = true -- modmain.lua -- 全局Hook点 AddPrefabPostInit(\"wilson\", function(inst) -- 修改wilson角色 end)"
+        - text: lua
+      - heading "常用全局变量速查" [level=3] [ref=e167]:
+        - link "常用全局变量速查" [ref=e168] [cursor=pointer]:
+          - /url: "#/?id=%e5%b8%b8%e7%94%a8%e5%85%a8%e5%b1%80%e5%8f%98%e9%87%8f%e9%80%9f%e6%9f%a5"
+      - table [ref=e169]:
+        - rowgroup [ref=e170]:
+          - row "变量 说明 可用范围" [ref=e171]:
+            - columnheader "变量" [ref=e172]
+            - columnheader "说明" [ref=e173]
+            - columnheader "可用范围" [ref=e174]
+        - rowgroup [ref=e175]:
+          - row "TheWorld 世界实例 游戏中" [ref=e176]:
+            - cell "TheWorld" [ref=e177]:
+              - code [ref=e178]: TheWorld
+            - cell "世界实例" [ref=e179]
+            - cell "游戏中" [ref=e180]
+          - row "ThePlayer 当前玩家 客户端" [ref=e181]:
+            - cell "ThePlayer" [ref=e182]:
+              - code [ref=e183]: ThePlayer
+            - cell "当前玩家" [ref=e184]
+            - cell "客户端" [ref=e185]
+          - row "TheSim 引擎层接口 全局" [ref=e186]:
+            - cell "TheSim" [ref=e187]:
+              - code [ref=e188]: TheSim
+            - cell "引擎层接口" [ref=e189]
+            - cell "全局" [ref=e190]
+          - row "TheNet 网络接口 全局" [ref=e191]:
+            - cell "TheNet" [ref=e192]:
+              - code [ref=e193]: TheNet
+            - cell "网络接口" [ref=e194]
+            - cell "全局" [ref=e195]
+          - row "TheFrontEnd 前端UI管理 全局" [ref=e196]:
+            - cell "TheFrontEnd" [ref=e197]:
+              - code [ref=e198]: TheFrontEnd
+            - cell "前端UI管理" [ref=e199]
+            - cell "全局" [ref=e200]
+          - row "AllPlayers 所有玩家列表 服务端" [ref=e201]:
+            - cell "AllPlayers" [ref=e202]:
+              - code [ref=e203]: AllPlayers
+            - cell "所有玩家列表" [ref=e204]
+            - cell "服务端" [ref=e205]
+          - row "Ents[guid] 通过GUID获取实体 全局" [ref=e206]:
+            - cell "Ents[guid]" [ref=e207]:
+              - code [ref=e208]: Ents[guid]
+            - cell "通过GUID获取实体" [ref=e209]
+            - cell "全局" [ref=e210]
+          - row "GLOBAL 全局环境表 Mod环境" [ref=e211]:
+            - cell "GLOBAL" [ref=e212]:
+              - code [ref=e213]: GLOBAL
+            - cell "全局环境表" [ref=e214]
+            - cell "Mod环境" [ref=e215]
+      - heading "主客机区分" [level=3] [ref=e216]:
+        - link "主客机区分" [ref=e217] [cursor=pointer]:
+          - /url: "#/?id=%e4%b8%bb%e5%ae%a2%e6%9c%ba%e5%8c%ba%e5%88%86"
+      - generic [ref=e218]:
+        - code [ref=e219]: if TheWorld.ismastersim then -- 仅在主机执行的逻辑 end if TheNet:GetIsServer() then -- 服务端逻辑 end
+        - text: lua
+      - heading "源码版本" [level=2] [ref=e220]:
+        - link "源码版本" [ref=e221] [cursor=pointer]:
+          - /url: "#/?id=%e6%ba%90%e7%a0%81%e7%89%88%e6%9c%ac"
+      - paragraph [ref=e222]:
+        - text: 基于 Don't Starve Together
+        - code [ref=e223]: scripts.zip
+        - text: 解压分析，815个组件、1583个预制体、191个Brain、261个StateGraph。

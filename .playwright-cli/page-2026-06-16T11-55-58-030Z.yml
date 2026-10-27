@@ -1,0 +1,1334 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e392]:
+        - listitem [ref=e393]:
+          - text: 前言
+          - list [ref=e394]:
+            - listitem [ref=e395]:
+              - link "Mod相关信息" [ref=e396] [cursor=pointer]:
+                - /url: "#/README"
+        - listitem [ref=e397]:
+          - text: 01 核心系统
+          - list [ref=e398]:
+            - listitem [ref=e399]:
+              - link "01-core 总览" [ref=e400] [cursor=pointer]:
+                - /url: "#/01-core/index"
+              - list [ref=e401]:
+                - listitem [ref=e402]:
+                  - text: "-"
+                  - link "子目录" [ref=e403] [cursor=pointer]:
+                    - /url: "#/01-core/index?id=%e5%ad%90%e7%9b%ae%e5%bd%95"
+            - listitem [ref=e404]:
+              - link "EntityScript 实体脚本" [ref=e405] [cursor=pointer]:
+                - /url: "#/01-core/entity"
+            - listitem [ref=e406]:
+              - link "Prefab 预制体系统" [ref=e407] [cursor=pointer]:
+                - /url: "#/01-core/prefab"
+            - listitem [ref=e408]:
+              - link "Class 类系统" [ref=e409] [cursor=pointer]:
+                - /url: "#/01-core/class"
+            - listitem [ref=e410]:
+              - link "全局函数" [ref=e411] [cursor=pointer]:
+                - /url: "#/01-core/mainfunctions"
+            - listitem [ref=e412]:
+              - link "全局变量" [ref=e413] [cursor=pointer]:
+                - /url: "#/01-core/globals"
+            - listitem [ref=e414]:
+              - link "simutil 工具函数" [ref=e415] [cursor=pointer]:
+                - /url: "#/01-core/simutil"
+        - listitem [ref=e416]:
+          - text: 02 Components 组件
+          - list [ref=e417]:
+            - listitem [ref=e418]:
+              - link "02-components 总览" [ref=e419] [cursor=pointer]:
+                - /url: "#/02-components/index"
+            - listitem [ref=e420]:
+              - text: 战斗 Combat
+              - list [ref=e421]:
+                - listitem [ref=e422]:
+                  - link "combat 总览" [ref=e423] [cursor=pointer]:
+                    - /url: "#/02-components/combat/index"
+                - listitem [ref=e424]:
+                  - link "combat 战斗" [ref=e425] [cursor=pointer]:
+                    - /url: "#/02-components/combat/combat"
+                - listitem [ref=e426]:
+                  - link "health 生命值" [ref=e427] [cursor=pointer]:
+                    - /url: "#/02-components/combat/health"
+                - listitem [ref=e428]:
+                  - link "weapon 武器" [ref=e429] [cursor=pointer]:
+                    - /url: "#/02-components/combat/weapon"
+                - listitem [ref=e430]:
+                  - link "armor 盔甲" [ref=e431] [cursor=pointer]:
+                    - /url: "#/02-components/combat/armor"
+            - listitem [ref=e432]:
+              - text: 生存 Survival
+              - list [ref=e433]:
+                - listitem [ref=e434]:
+                  - link "survival 总览" [ref=e435] [cursor=pointer]:
+                    - /url: "#/02-components/survival/index"
+                - listitem [ref=e436]:
+                  - link "hunger 饥饿" [ref=e437] [cursor=pointer]:
+                    - /url: "#/02-components/survival/hunger"
+                - listitem [ref=e438]:
+                  - link "sanity 理智" [ref=e439] [cursor=pointer]:
+                    - /url: "#/02-components/survival/sanity"
+            - listitem [ref=e440]:
+              - text: 背包 Inventory
+              - list [ref=e441]:
+                - listitem [ref=e442]:
+                  - link "inventory 总览" [ref=e443] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/index"
+                - listitem [ref=e444]:
+                  - link "inventory 背包" [ref=e445] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/inventory"
+                - listitem [ref=e446]:
+                  - link "container 容器" [ref=e447] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/container"
+            - listitem [ref=e448]:
+              - text: 工作 Work
+              - list [ref=e449]:
+                - listitem [ref=e450]:
+                  - link "work 总览" [ref=e451] [cursor=pointer]:
+                    - /url: "#/02-components/work/index"
+                - listitem [ref=e452]:
+                  - link "workable 可工作" [ref=e453] [cursor=pointer]:
+                    - /url: "#/02-components/work/workable"
+            - listitem [ref=e454]:
+              - text: 食物 Edible
+              - list [ref=e455]:
+                - listitem [ref=e456]:
+                  - link "edible 总览" [ref=e457] [cursor=pointer]:
+                    - /url: "#/02-components/edible/index"
+                - listitem [ref=e458]:
+                  - link "edible 可食用" [ref=e459] [cursor=pointer]:
+                    - /url: "#/02-components/edible/edible"
+                - listitem [ref=e460]:
+                  - link "perishable 易腐" [ref=e461] [cursor=pointer]:
+                    - /url: "#/02-components/edible/perishable"
+            - listitem [ref=e462]:
+              - text: 建造 Builder
+              - list [ref=e463]:
+                - listitem [ref=e464]:
+                  - link "builder 总览" [ref=e465] [cursor=pointer]:
+                    - /url: "#/02-components/builder/index"
+                - listitem [ref=e466]:
+                  - link "builder 建造" [ref=e467] [cursor=pointer]:
+                    - /url: "#/02-components/builder/builder"
+            - listitem [ref=e468]:
+              - text: 燃烧 Burnable
+              - list [ref=e469]:
+                - listitem [ref=e470]:
+                  - link "burnable 总览" [ref=e471] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/index"
+                - listitem [ref=e472]:
+                  - link "burnable 可燃" [ref=e473] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/burnable"
+            - listitem [ref=e474]:
+              - text: 生物 Creature
+              - list [ref=e475]:
+                - listitem [ref=e476]:
+                  - link "creature 总览" [ref=e477] [cursor=pointer]:
+                    - /url: "#/02-components/creature/index"
+                - listitem [ref=e478]:
+                  - link "childspawner 子生物生成" [ref=e479] [cursor=pointer]:
+                    - /url: "#/02-components/creature/childspawner"
+            - listitem [ref=e480]:
+              - text: 其他 Other
+              - list [ref=e481]:
+                - listitem [ref=e482]:
+                  - link "other 总览" [ref=e483] [cursor=pointer]:
+                    - /url: "#/02-components/other/index"
+                - listitem [ref=e484]:
+                  - link "finiteuses 耐久度" [ref=e485] [cursor=pointer]:
+                    - /url: "#/02-components/other/finiteuses"
+            - listitem [ref=e486]:
+              - text: 航海 Sailing
+              - list [ref=e487]:
+                - listitem [ref=e488]:
+                  - link "sailing 总览" [ref=e489] [cursor=pointer]:
+                    - /url: "#/02-components/sailing/index"
+        - listitem [ref=e490]:
+          - text: 03 Actions 动作
+          - list [ref=e491]:
+            - listitem [ref=e492]:
+              - link "03-actions 总览" [ref=e493] [cursor=pointer]:
+                - /url: "#/03-actions/index"
+            - listitem [ref=e494]:
+              - link "动作列表" [ref=e495] [cursor=pointer]:
+                - /url: "#/03-actions/detail/action-list"
+        - listitem [ref=e496]:
+          - text: 04 Tags 标签
+          - list [ref=e497]:
+            - listitem [ref=e498]:
+              - link "04-tags 总览" [ref=e499] [cursor=pointer]:
+                - /url: "#/04-tags/index"
+        - listitem [ref=e500]:
+          - text: 05 Events 事件
+          - list [ref=e501]:
+            - listitem [ref=e502]:
+              - link "05-events 总览" [ref=e503] [cursor=pointer]:
+                - /url: "#/05-events/index"
+        - listitem [ref=e504]:
+          - text: 06 Stategraphs 状态图
+          - list [ref=e505]:
+            - listitem [ref=e506]:
+              - link "06-stategraphs 总览" [ref=e507] [cursor=pointer]:
+                - /url: "#/06-stategraphs/index"
+            - listitem [ref=e508]:
+              - link "常用 SG 参考" [ref=e509] [cursor=pointer]:
+                - /url: "#/06-stategraphs/sg-reference"
+        - listitem [ref=e510]:
+          - text: 07 Brains 行为大脑
+          - list [ref=e511]:
+            - listitem [ref=e512]:
+              - link "07-brains 总览" [ref=e513] [cursor=pointer]:
+                - /url: "#/07-brains/index"
+            - listitem [ref=e514]:
+              - link "常用 Brain 参考" [ref=e515] [cursor=pointer]:
+                - /url: "#/07-brains/brain-reference"
+        - listitem [ref=e516]:
+          - text: 08 Prefabs 预设
+          - list [ref=e517]:
+            - listitem [ref=e518]:
+              - link "08-prefabs 总览" [ref=e519] [cursor=pointer]:
+                - /url: "#/08-prefabs/index"
+            - listitem [ref=e520]:
+              - link "Prefab 分类参考" [ref=e521] [cursor=pointer]:
+                - /url: "#/08-prefabs/prefabs-reference"
+        - listitem [ref=e522]:
+          - text: 09 Tuning 调参
+          - list [ref=e523]:
+            - listitem [ref=e524]:
+              - link "09-tuning 总览" [ref=e525] [cursor=pointer]:
+                - /url: "#/09-tuning/index"
+        - listitem [ref=e526]:
+          - text: 10 Networking 网络
+          - list [ref=e527]:
+            - listitem [ref=e528]:
+              - link "10-networking 总览" [ref=e529] [cursor=pointer]:
+                - /url: "#/10-networking/index"
+        - listitem [ref=e530]:
+          - text: 11 Modding Mod开发
+          - list [ref=e531]:
+            - listitem [ref=e532]:
+              - link "11-modding 总览" [ref=e533] [cursor=pointer]:
+                - /url: "#/11-modding/index"
+        - listitem [ref=e534]:
+          - text: 12 Cooking 烹饪
+          - list [ref=e535]:
+            - listitem [ref=e536]:
+              - link "12-cooking 总览" [ref=e537] [cursor=pointer]:
+                - /url: "#/12-cooking/index"
+        - listitem [ref=e538]:
+          - text: 13 World 世界
+          - list [ref=e539]:
+            - listitem [ref=e540]:
+              - link "13-world 总览" [ref=e541] [cursor=pointer]:
+                - /url: "#/13-world/index"
+            - listitem [ref=e542]:
+              - link "地图生成系统" [ref=e543] [cursor=pointer]:
+                - /url: "#/13-world/worldgen"
+        - listitem [ref=e544]:
+          - text: 14 Skilltree 技能树
+          - list [ref=e545]:
+            - listitem [ref=e546]:
+              - link "14-skilltree 总览" [ref=e547] [cursor=pointer]:
+                - /url: "#/14-skilltree/index"
+        - listitem [ref=e548]:
+          - text: 15 UI 界面
+          - list [ref=e549]:
+            - listitem [ref=e550]:
+              - link "15-ui 总览" [ref=e551] [cursor=pointer]:
+                - /url: "#/15-ui/index"
+        - listitem [ref=e552]:
+          - text: 16 Constants 常量
+          - list [ref=e553]:
+            - listitem [ref=e554]:
+              - link "16-constants 总览" [ref=e555] [cursor=pointer]:
+                - /url: "#/16-constants/index"
+        - listitem [ref=e556]:
+          - text: 17 Standard Components 标准组件
+          - list [ref=e557]:
+            - listitem [ref=e558]:
+              - link "17-standardcomponents 总览" [ref=e559] [cursor=pointer]:
+                - /url: "#/17-standardcomponents/index"
+        - listitem [ref=e560]:
+          - text: 18 Behaviours 行为树
+          - list [ref=e561]:
+            - listitem [ref=e562]:
+              - link "18-behaviours 总览" [ref=e563] [cursor=pointer]:
+                - /url: "#/18-behaviours/index"
+        - listitem [ref=e564]:
+          - text: 19 FX 特效
+          - list [ref=e565]:
+            - listitem [ref=e566]:
+              - link "19-fx 总览" [ref=e567] [cursor=pointer]:
+                - /url: "#/19-fx/index"
+        - listitem [ref=e568]:
+          - text: 案例
+          - list [ref=e569]:
+            - listitem [ref=e570]:
+              - link "小案例" [ref=e571] [cursor=pointer]:
+                - /url: "#/anli/smallAn"
+        - listitem [ref=e572]:
+          - text: 数据提取
+          - list [ref=e573]:
+            - listitem [ref=e574]:
+              - link "数据提取1" [ref=e575] [cursor=pointer]:
+                - /url: "#/xiazai/tq1"
+            - listitem [ref=e576]:
+              - link "数据提取2" [ref=e577] [cursor=pointer]:
+                - /url: "#/xiazai/tq2"
+            - listitem [ref=e578]:
+              - link "数据提取3" [ref=e579] [cursor=pointer]:
+                - /url: "#/xiazai/tq3"
+            - listitem [ref=e580]:
+              - link "数据提取4" [ref=e581] [cursor=pointer]:
+                - /url: "#/xiazai/tq4"
+            - listitem [ref=e582]:
+              - link "数据提取5" [ref=e583] [cursor=pointer]:
+                - /url: "#/xiazai/tq5"
+            - listitem [ref=e584]:
+              - link "字典" [ref=e585] [cursor=pointer]:
+                - /url: "#/xiazai/tq6"
+    - article [ref=e212]:
+      - heading "Combat 战斗组件" [level=1] [ref=e603]:
+        - link "Combat 战斗组件" [ref=e604] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=combat-%e6%88%98%e6%96%97%e7%bb%84%e4%bb%b6"
+      - blockquote [ref=e605]:
+        - paragraph [ref=e606]:
+          - text: "源码:"
+          - code [ref=e607]: scripts/components/combat.lua
+      - heading "概述" [level=2] [ref=e608]:
+        - link "概述" [ref=e609] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e6%a6%82%e8%bf%b0"
+      - paragraph [ref=e610]: Combat 组件是 DST 战斗系统的核心，负责管理实体的攻击行为、目标选择、伤害计算和战斗状态。几乎所有能攻击或被攻击的实体都需要挂载此组件。
+      - heading "属性" [level=2] [ref=e611]:
+        - link "属性" [ref=e612] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e5%b1%9e%e6%80%a7"
+      - table [ref=e613]:
+        - rowgroup [ref=e614]:
+          - row "属性名 类型 默认值 说明" [ref=e615]:
+            - columnheader "属性名" [ref=e616]
+            - columnheader "类型" [ref=e617]
+            - columnheader "默认值" [ref=e618]
+            - columnheader "说明" [ref=e619]
+        - rowgroup [ref=e620]:
+          - row "attackrange number 3 攻击范围" [ref=e621]:
+            - cell "attackrange" [ref=e622]:
+              - code [ref=e623]: attackrange
+            - cell "number" [ref=e624]
+            - cell "3" [ref=e625]:
+              - code [ref=e626]: "3"
+            - cell "攻击范围" [ref=e627]
+          - row "hitrange number 3 命中判定范围" [ref=e628]:
+            - cell "hitrange" [ref=e629]:
+              - code [ref=e630]: hitrange
+            - cell "number" [ref=e631]
+            - cell "3" [ref=e632]:
+              - code [ref=e633]: "3"
+            - cell "命中判定范围" [ref=e634]
+          - row "areahitrange number nil 范围攻击半径（设置后启用AOE）" [ref=e635]:
+            - cell "areahitrange" [ref=e636]:
+              - code [ref=e637]: areahitrange
+            - cell "number" [ref=e638]
+            - cell "nil" [ref=e639]:
+              - code [ref=e640]: nil
+            - cell "范围攻击半径（设置后启用AOE）" [ref=e641]
+          - row "areahitdamagepercent number nil AOE伤害百分比（0~1，默认1）" [ref=e642]:
+            - cell "areahitdamagepercent" [ref=e643]:
+              - code [ref=e644]: areahitdamagepercent
+            - cell "number" [ref=e645]
+            - cell "nil" [ref=e646]:
+              - code [ref=e647]: nil
+            - cell "AOE伤害百分比（0~1，默认1）" [ref=e648]
+          - row "hitarc number nil 攻击扇形角度（弧度制，nil=360度）" [ref=e649]:
+            - cell "hitarc" [ref=e650]:
+              - code [ref=e651]: hitarc
+            - cell "number" [ref=e652]
+            - cell "nil" [ref=e653]:
+              - code [ref=e654]: nil
+            - cell "攻击扇形角度（弧度制，nil=360度）" [ref=e655]
+          - row "defaultdamage number 0 默认空手伤害" [ref=e656]:
+            - cell "defaultdamage" [ref=e657]:
+              - code [ref=e658]: defaultdamage
+            - cell "number" [ref=e659]
+            - cell "0" [ref=e660]:
+              - code [ref=e661]: "0"
+            - cell "默认空手伤害" [ref=e662]
+          - row "min_attack_period number 4 最小攻击间隔（秒）" [ref=e663]:
+            - cell "min_attack_period" [ref=e664]:
+              - code [ref=e665]: min_attack_period
+            - cell "number" [ref=e666]
+            - cell "4" [ref=e667]:
+              - code [ref=e668]: "4"
+            - cell "最小攻击间隔（秒）" [ref=e669]
+          - row "canattack boolean true 是否能攻击" [ref=e670]:
+            - cell "canattack" [ref=e671]:
+              - code [ref=e672]: canattack
+            - cell "boolean" [ref=e673]
+            - cell "true" [ref=e674]:
+              - code [ref=e675]: "true"
+            - cell "是否能攻击" [ref=e676]
+          - row "forcefacing boolean true 攻击时是否强制面向目标" [ref=e677]:
+            - cell "forcefacing" [ref=e678]:
+              - code [ref=e679]: forcefacing
+            - cell "boolean" [ref=e680]
+            - cell "true" [ref=e681]:
+              - code [ref=e682]: "true"
+            - cell "攻击时是否强制面向目标" [ref=e683]
+          - row "target Entity nil 当前目标" [ref=e684]:
+            - cell "target" [ref=e685]:
+              - code [ref=e686]: target
+            - cell "Entity" [ref=e687]
+            - cell "nil" [ref=e688]:
+              - code [ref=e689]: nil
+            - cell "当前目标" [ref=e690]
+          - row "lasttargetGUID GUID nil 上一个目标的GUID" [ref=e691]:
+            - cell "lasttargetGUID" [ref=e692]:
+              - code [ref=e693]: lasttargetGUID
+            - cell "GUID" [ref=e694]
+            - cell "nil" [ref=e695]:
+              - code [ref=e696]: nil
+            - cell "上一个目标的GUID" [ref=e697]
+          - row "panic_thresh number nil 恐慌阈值（血量低于此值触发恐慌）" [ref=e698]:
+            - cell "panic_thresh" [ref=e699]:
+              - code [ref=e700]: panic_thresh
+            - cell "number" [ref=e701]
+            - cell "nil" [ref=e702]:
+              - code [ref=e703]: nil
+            - cell "恐慌阈值（血量低于此值触发恐慌）" [ref=e704]
+          - row "damagemultiplier number nil 伤害倍率（默认1）" [ref=e705]:
+            - cell "damagemultiplier" [ref=e706]:
+              - code [ref=e707]: damagemultiplier
+            - cell "number" [ref=e708]
+            - cell "nil" [ref=e709]:
+              - code [ref=e710]: nil
+            - cell "伤害倍率（默认1）" [ref=e711]
+          - row "damagebonus number nil 伤害加成（固定值，不受倍率影响）" [ref=e712]:
+            - cell "damagebonus" [ref=e713]:
+              - code [ref=e714]: damagebonus
+            - cell "number" [ref=e715]
+            - cell "nil" [ref=e716]:
+              - code [ref=e717]: nil
+            - cell "伤害加成（固定值，不受倍率影响）" [ref=e718]
+          - row "playerdamagepercent number nil NPC对玩家伤害倍率（仅空手时生效）" [ref=e719]:
+            - cell "playerdamagepercent" [ref=e720]:
+              - code [ref=e721]: playerdamagepercent
+            - cell "number" [ref=e722]
+            - cell "nil" [ref=e723]:
+              - code [ref=e724]: nil
+            - cell "NPC对玩家伤害倍率（仅空手时生效）" [ref=e725]
+          - row "pvp_damagemod number nil PVP伤害修正" [ref=e726]:
+            - cell "pvp_damagemod" [ref=e727]:
+              - code [ref=e728]: pvp_damagemod
+            - cell "number" [ref=e729]
+            - cell "nil" [ref=e730]:
+              - code [ref=e731]: nil
+            - cell "PVP伤害修正" [ref=e732]
+          - row "ignorehitrange boolean nil 是否忽略命中距离检测" [ref=e733]:
+            - cell "ignorehitrange" [ref=e734]:
+              - code [ref=e735]: ignorehitrange
+            - cell "boolean" [ref=e736]
+            - cell "nil" [ref=e737]:
+              - code [ref=e738]: nil
+            - cell "是否忽略命中距离检测" [ref=e739]
+          - row "noimpactsound boolean nil 是否禁用受击音效" [ref=e740]:
+            - cell "noimpactsound" [ref=e741]:
+              - code [ref=e742]: noimpactsound
+            - cell "boolean" [ref=e743]
+            - cell "nil" [ref=e744]:
+              - code [ref=e745]: nil
+            - cell "是否禁用受击音效" [ref=e746]
+          - row "tough boolean nil 是否坚韧（需要特定条件才能造成伤害）" [ref=e747]:
+            - cell "tough" [ref=e748]:
+              - code [ref=e749]: tough
+            - cell "boolean" [ref=e750]
+            - cell "nil" [ref=e751]:
+              - code [ref=e752]: nil
+            - cell "是否坚韧（需要特定条件才能造成伤害）" [ref=e753]
+          - row "playerstunlock enum nil 玩家眩晕锁定设置（PLAYERSTUNLOCK枚举）" [ref=e754]:
+            - cell "playerstunlock" [ref=e755]:
+              - code [ref=e756]: playerstunlock
+            - cell "enum" [ref=e757]
+            - cell "nil" [ref=e758]:
+              - code [ref=e759]: nil
+            - cell "玩家眩晕锁定设置（PLAYERSTUNLOCK枚举）" [ref=e760]
+          - row "hiteffectsymbol string \"marker\" 命中特效附着点" [ref=e761]:
+            - cell "hiteffectsymbol" [ref=e762]:
+              - code [ref=e763]: hiteffectsymbol
+            - cell "string" [ref=e764]
+            - cell "\"marker\"" [ref=e765]:
+              - code [ref=e766]: "\"marker\""
+            - cell "命中特效附着点" [ref=e767]
+          - row "nextbattlecrytime number nil 下次战吼时间" [ref=e768]:
+            - cell "nextbattlecrytime" [ref=e769]:
+              - code [ref=e770]: nextbattlecrytime
+            - cell "number" [ref=e771]
+            - cell "nil" [ref=e772]:
+              - code [ref=e773]: nil
+            - cell "下次战吼时间" [ref=e774]
+          - row "battlecryenabled boolean true 是否启用战吼" [ref=e775]:
+            - cell "battlecryenabled" [ref=e776]:
+              - code [ref=e777]: battlecryenabled
+            - cell "boolean" [ref=e778]
+            - cell "true" [ref=e779]:
+              - code [ref=e780]: "true"
+            - cell "是否启用战吼" [ref=e781]
+          - row "lastwasattackedtime number 0 上次被攻击时间" [ref=e782]:
+            - cell "lastwasattackedtime" [ref=e783]:
+              - code [ref=e784]: lastwasattackedtime
+            - cell "number" [ref=e785]
+            - cell "0" [ref=e786]:
+              - code [ref=e787]: "0"
+            - cell "上次被攻击时间" [ref=e788]
+          - row "laststartattacktime number 0 上次开始攻击时间" [ref=e789]:
+            - cell "laststartattacktime" [ref=e790]:
+              - code [ref=e791]: laststartattacktime
+            - cell "number" [ref=e792]
+            - cell "0" [ref=e793]:
+              - code [ref=e794]: "0"
+            - cell "上次开始攻击时间" [ref=e795]
+          - row "lastdoattacktime number nil 上次执行攻击时间" [ref=e796]:
+            - cell "lastdoattacktime" [ref=e797]:
+              - code [ref=e798]: lastdoattacktime
+            - cell "number" [ref=e799]
+            - cell "nil" [ref=e800]:
+              - code [ref=e801]: nil
+            - cell "上次执行攻击时间" [ref=e802]
+          - row "lastattacker Entity nil 上次攻击者" [ref=e803]:
+            - cell "lastattacker" [ref=e804]:
+              - code [ref=e805]: lastattacker
+            - cell "Entity" [ref=e806]
+            - cell "nil" [ref=e807]:
+              - code [ref=e808]: nil
+            - cell "上次攻击者" [ref=e809]
+          - row "lastattacktype string nil 上次攻击类型（\"projectile\" 或 nil）" [ref=e810]:
+            - cell "lastattacktype" [ref=e811]:
+              - code [ref=e812]: lastattacktype
+            - cell "string" [ref=e813]
+            - cell "nil" [ref=e814]:
+              - code [ref=e815]: nil
+            - cell "上次攻击类型（\"projectile\" 或 nil）" [ref=e816]
+          - row "laststimuli string nil 上次攻击刺激类型" [ref=e817]:
+            - cell "laststimuli" [ref=e818]:
+              - code [ref=e819]: laststimuli
+            - cell "string" [ref=e820]
+            - cell "nil" [ref=e821]:
+              - code [ref=e822]: nil
+            - cell "上次攻击刺激类型" [ref=e823]
+          - row "lastwasattackedbytargettime number 0 上次被目标攻击的时间" [ref=e824]:
+            - cell "lastwasattackedbytargettime" [ref=e825]:
+              - code [ref=e826]: lastwasattackedbytargettime
+            - cell "number" [ref=e827]
+            - cell "0" [ref=e828]:
+              - code [ref=e829]: "0"
+            - cell "上次被目标攻击的时间" [ref=e830]
+      - heading "回调函数属性" [level=3] [ref=e831]:
+        - link "回调函数属性" [ref=e832] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e5%9b%9e%e8%b0%83%e5%87%bd%e6%95%b0%e5%b1%9e%e6%80%a7"
+      - table [ref=e833]:
+        - rowgroup [ref=e834]:
+          - row "属性名 说明" [ref=e835]:
+            - columnheader "属性名" [ref=e836]
+            - columnheader "说明" [ref=e837]
+        - rowgroup [ref=e838]:
+          - row "onhitfn 被命中时回调 fn(inst, attacker, damage, spdamage)" [ref=e839]:
+            - cell "onhitfn" [ref=e840]:
+              - code [ref=e841]: onhitfn
+            - cell "被命中时回调 fn(inst, attacker, damage, spdamage)" [ref=e842]:
+              - text: 被命中时回调
+              - code [ref=e843]: fn(inst, attacker, damage, spdamage)
+          - row "onhitotherfn 命中他人时回调 fn(attacker, target, damage, stimuli, weapon, damageresolved, spdamage, redirected)" [ref=e844]:
+            - cell "onhitotherfn" [ref=e845]:
+              - code [ref=e846]: onhitotherfn
+            - cell "命中他人时回调 fn(attacker, target, damage, stimuli, weapon, damageresolved, spdamage, redirected)" [ref=e847]:
+              - text: 命中他人时回调
+              - code [ref=e848]: fn(attacker, target, damage, stimuli, weapon, damageresolved, spdamage, redirected)
+          - row "keeptargetfn 保持目标判定函数 fn(inst, target) -> bool" [ref=e849]:
+            - cell "keeptargetfn" [ref=e850]:
+              - code [ref=e851]: keeptargetfn
+            - cell "保持目标判定函数 fn(inst, target) -> bool" [ref=e852]:
+              - text: 保持目标判定函数
+              - code [ref=e853]: fn(inst, target) -> bool
+          - row "shouldaggrofn 自定义仇恨判定 fn(inst, target) -> bool" [ref=e854]:
+            - cell "shouldaggrofn" [ref=e855]:
+              - code [ref=e856]: shouldaggrofn
+            - cell "自定义仇恨判定 fn(inst, target) -> bool" [ref=e857]:
+              - text: 自定义仇恨判定
+              - code [ref=e858]: fn(inst, target) -> bool
+          - row "shouldrecoilfn 自定义弹反判定 fn(inst, attacker, weapon, damage) -> bool, remaining_damage" [ref=e859]:
+            - cell "shouldrecoilfn" [ref=e860]:
+              - code [ref=e861]: shouldrecoilfn
+            - cell "自定义弹反判定 fn(inst, attacker, weapon, damage) -> bool, remaining_damage" [ref=e862]:
+              - text: 自定义弹反判定
+              - code [ref=e863]: fn(inst, attacker, weapon, damage) -> bool, remaining_damage
+          - row "bonusdamagefn 额外伤害计算 fn(attacker, target, damage, weapon) -> number" [ref=e864]:
+            - cell "bonusdamagefn" [ref=e865]:
+              - code [ref=e866]: bonusdamagefn
+            - cell "额外伤害计算 fn(attacker, target, damage, weapon) -> number" [ref=e867]:
+              - text: 额外伤害计算
+              - code [ref=e868]: fn(attacker, target, damage, weapon) -> number
+          - row "targetfn 重定向目标函数 fn(inst) -> newtarget, forcechange" [ref=e869]:
+            - cell "targetfn" [ref=e870]:
+              - code [ref=e871]: targetfn
+            - cell "重定向目标函数 fn(inst) -> newtarget, forcechange" [ref=e872]:
+              - text: 重定向目标函数
+              - code [ref=e873]: fn(inst) -> newtarget, forcechange
+          - row "redirectdamagefn 伤害重定向 fn(inst, attacker, damage, weapon, stimuli, spdamage) -> redirect_target" [ref=e874]:
+            - cell "redirectdamagefn" [ref=e875]:
+              - code [ref=e876]: redirectdamagefn
+            - cell "伤害重定向 fn(inst, attacker, damage, weapon, stimuli, spdamage) -> redirect_target" [ref=e877]:
+              - text: 伤害重定向
+              - code [ref=e878]: fn(inst, attacker, damage, weapon, stimuli, spdamage) -> redirect_target
+          - row "customdamagemultfn 自定义伤害倍率 fn(inst, target, weapon, multiplier, mount) -> number" [ref=e879]:
+            - cell "customdamagemultfn" [ref=e880]:
+              - code [ref=e881]: customdamagemultfn
+            - cell "自定义伤害倍率 fn(inst, target, weapon, multiplier, mount) -> number" [ref=e882]:
+              - text: 自定义伤害倍率
+              - code [ref=e883]: fn(inst, target, weapon, multiplier, mount) -> number
+          - row "customspdamagemultfn 自定义特殊伤害倍率" [ref=e884]:
+            - cell "customspdamagemultfn" [ref=e885]:
+              - code [ref=e886]: customspdamagemultfn
+            - cell "自定义特殊伤害倍率" [ref=e887]
+          - row "workmultiplierfn 工作倍率函数" [ref=e888]:
+            - cell "workmultiplierfn" [ref=e889]:
+              - code [ref=e890]: workmultiplierfn
+            - cell "工作倍率函数" [ref=e891]
+          - row "cansuggesttargetfn 是否接受建议目标 fn(inst, target) -> bool" [ref=e892]:
+            - cell "cansuggesttargetfn" [ref=e893]:
+              - code [ref=e894]: cansuggesttargetfn
+            - cell "是否接受建议目标 fn(inst, target) -> bool" [ref=e895]:
+              - text: 是否接受建议目标
+              - code [ref=e896]: fn(inst, target) -> bool
+      - heading "SourceModifierList" [level=3] [ref=e897]:
+        - link "SourceModifierList" [ref=e898] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=sourcemodifierlist"
+      - table [ref=e899]:
+        - rowgroup [ref=e900]:
+          - row "属性名 说明" [ref=e901]:
+            - columnheader "属性名" [ref=e902]
+            - columnheader "说明" [ref=e903]
+        - rowgroup [ref=e904]:
+          - row "externaldamagemultipliers 对外伤害倍率列表（支持多源叠加）" [ref=e905]:
+            - cell "externaldamagemultipliers" [ref=e906]:
+              - code [ref=e907]: externaldamagemultipliers
+            - cell "对外伤害倍率列表（支持多源叠加）" [ref=e908]
+          - row "externaldamagetakenmultipliers 承受伤害倍率列表（护甲减免后）" [ref=e909]:
+            - cell "externaldamagetakenmultipliers" [ref=e910]:
+              - code [ref=e911]: externaldamagetakenmultipliers
+            - cell "承受伤害倍率列表（护甲减免后）" [ref=e912]
+          - row "conditionexternaldamagetakenmultipliers 条件性额外承受伤害倍率" [ref=e913]:
+            - cell "conditionexternaldamagetakenmultipliers" [ref=e914]:
+              - code [ref=e915]: conditionexternaldamagetakenmultipliers
+            - cell "条件性额外承受伤害倍率" [ref=e916]
+      - heading "方法" [level=2] [ref=e917]:
+        - link "方法" [ref=e918] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e6%96%b9%e6%b3%95"
+      - heading "目标管理" [level=3] [ref=e919]:
+        - link "目标管理" [ref=e920] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e7%9b%ae%e6%a0%87%e7%ae%a1%e7%90%86"
+      - table [ref=e921]:
+        - rowgroup [ref=e922]:
+          - row "方法签名 返回值 说明" [ref=e923]:
+            - columnheader "方法签名" [ref=e924]
+            - columnheader "返回值" [ref=e925]
+            - columnheader "说明" [ref=e926]
+        - rowgroup [ref=e927]:
+          - row "SetTarget(target) — 设置攻击目标，自动验证合法性" [ref=e928]:
+            - cell "SetTarget(target)" [ref=e929]:
+              - code [ref=e930]: SetTarget(target)
+            - cell "—" [ref=e931]
+            - cell "设置攻击目标，自动验证合法性" [ref=e932]
+          - row "DropTarget(hasnexttarget) — 丢弃当前目标" [ref=e933]:
+            - cell "DropTarget(hasnexttarget)" [ref=e934]:
+              - code [ref=e935]: DropTarget(hasnexttarget)
+            - cell "—" [ref=e936]
+            - cell "丢弃当前目标" [ref=e937]
+          - row "EngageTarget(target, oldtarget) — 内部：接战目标，追踪事件" [ref=e938]:
+            - cell "EngageTarget(target, oldtarget)" [ref=e939]:
+              - code [ref=e940]: EngageTarget(target, oldtarget)
+            - cell "—" [ref=e941]
+            - cell "内部：接战目标，追踪事件" [ref=e942]
+          - row "SuggestTarget(target) boolean 建议目标（若当前无目标则设置）" [ref=e943]:
+            - cell "SuggestTarget(target)" [ref=e944]:
+              - code [ref=e945]: SuggestTarget(target)
+            - cell "boolean" [ref=e946]
+            - cell "建议目标（若当前无目标则设置）" [ref=e947]
+          - row "ShareTarget(target, range, fn, maxnum, musttags) — 共享目标给附近友军" [ref=e948]:
+            - cell "ShareTarget(target, range, fn, maxnum, musttags)" [ref=e949]:
+              - code [ref=e950]: ShareTarget(target, range, fn, maxnum, musttags)
+            - cell "—" [ref=e951]
+            - cell "共享目标给附近友军" [ref=e952]
+          - row "TargetIs(target) boolean 检查是否是该目标" [ref=e953]:
+            - cell "TargetIs(target)" [ref=e954]:
+              - code [ref=e955]: TargetIs(target)
+            - cell "boolean" [ref=e956]
+            - cell "检查是否是该目标" [ref=e957]
+          - row "HasTarget() boolean 是否有当前目标" [ref=e958]:
+            - cell "HasTarget()" [ref=e959]:
+              - code [ref=e960]: HasTarget()
+            - cell "boolean" [ref=e961]
+            - cell "是否有当前目标" [ref=e962]
+          - row "IsValidTarget(target) boolean 目标是否有效（委托给replica）" [ref=e963]:
+            - cell "IsValidTarget(target)" [ref=e964]:
+              - code [ref=e965]: IsValidTarget(target)
+            - cell "boolean" [ref=e966]
+            - cell "目标是否有效（委托给replica）" [ref=e967]
+          - row "ValidateTarget() boolean 验证并清理无效目标" [ref=e968]:
+            - cell "ValidateTarget()" [ref=e969]:
+              - code [ref=e970]: ValidateTarget()
+            - cell "boolean" [ref=e971]
+            - cell "验证并清理无效目标" [ref=e972]
+          - row "IsRecentTarget(target) boolean 是否是最近目标（当前或上一个）" [ref=e973]:
+            - cell "IsRecentTarget(target)" [ref=e974]:
+              - code [ref=e975]: IsRecentTarget(target)
+            - cell "boolean" [ref=e976]
+            - cell "是否是最近目标（当前或上一个）" [ref=e977]
+          - row "SetLastTarget(target) — 记录上一个目标" [ref=e978]:
+            - cell "SetLastTarget(target)" [ref=e979]:
+              - code [ref=e980]: SetLastTarget(target)
+            - cell "—" [ref=e981]
+            - cell "记录上一个目标" [ref=e982]
+          - row "SetKeepTargetFunction(fn) — 设置保持目标判定函数" [ref=e983]:
+            - cell "SetKeepTargetFunction(fn)" [ref=e984]:
+              - code [ref=e985]: SetKeepTargetFunction(fn)
+            - cell "—" [ref=e986]
+            - cell "设置保持目标判定函数" [ref=e987]
+          - row "TryRetarget() — 尝试切换目标（通过targetfn）" [ref=e988]:
+            - cell "TryRetarget()" [ref=e989]:
+              - code [ref=e990]: TryRetarget()
+            - cell "—" [ref=e991]
+            - cell "尝试切换目标（通过targetfn）" [ref=e992]
+          - row "SetRetargetFunction(period, fn) — 设置定期重定向目标" [ref=e993]:
+            - cell "SetRetargetFunction(period, fn)" [ref=e994]:
+              - code [ref=e995]: SetRetargetFunction(period, fn)
+            - cell "—" [ref=e996]
+            - cell "设置定期重定向目标" [ref=e997]
+          - row "GiveUp() — 放弃战斗（说话+丢目标）" [ref=e998]:
+            - cell "GiveUp()" [ref=e999]:
+              - code [ref=e1000]: GiveUp()
+            - cell "—" [ref=e1001]
+            - cell "放弃战斗（说话+丢目标）" [ref=e1002]
+      - heading "攻击行为" [level=3] [ref=e1003]:
+        - link "攻击行为" [ref=e1004] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e6%94%bb%e5%87%bb%e8%a1%8c%e4%b8%ba"
+      - table [ref=e1005]:
+        - rowgroup [ref=e1006]:
+          - row "方法签名 返回值 说明" [ref=e1007]:
+            - columnheader "方法签名" [ref=e1008]
+            - columnheader "返回值" [ref=e1009]
+            - columnheader "说明" [ref=e1010]
+        - rowgroup [ref=e1011]:
+          - row "TryAttack(target) boolean 尝试攻击（发送doattack事件）" [ref=e1012]:
+            - cell "TryAttack(target)" [ref=e1013]:
+              - code [ref=e1014]: TryAttack(target)
+            - cell "boolean" [ref=e1015]
+            - cell "尝试攻击（发送doattack事件）" [ref=e1016]
+          - row "ForceAttack() boolean 强制攻击" [ref=e1017]:
+            - cell "ForceAttack()" [ref=e1018]:
+              - code [ref=e1019]: ForceAttack()
+            - cell "boolean" [ref=e1020]
+            - cell "强制攻击" [ref=e1021]
+          - row "StartAttack() — 开始攻击（面向目标+启动冷却）" [ref=e1022]:
+            - cell "StartAttack()" [ref=e1023]:
+              - code [ref=e1024]: StartAttack()
+            - cell "—" [ref=e1025]
+            - cell "开始攻击（面向目标+启动冷却）" [ref=e1026]
+          - row "CancelAttack() — 取消攻击（重置冷却）" [ref=e1027]:
+            - cell "CancelAttack()" [ref=e1028]:
+              - code [ref=e1029]: CancelAttack()
+            - cell "—" [ref=e1030]
+            - cell "取消攻击（重置冷却）" [ref=e1031]
+          - row "DoAttack(targ, weapon, projectile, stimuli, instancemult, instrangeoverride, instpos) — 执行攻击（计算伤害+命中检测+AOE）" [ref=e1032]:
+            - cell "DoAttack(targ, weapon, projectile, stimuli, instancemult, instrangeoverride, instpos)" [ref=e1033]:
+              - code [ref=e1034]: DoAttack(targ, weapon, projectile, stimuli, instancemult, instrangeoverride, instpos)
+            - cell "—" [ref=e1035]
+            - cell "执行攻击（计算伤害+命中检测+AOE）" [ref=e1036]
+          - row "CanAttack(target) boolean, should_give_up 能否攻击" [ref=e1037]:
+            - cell "CanAttack(target)" [ref=e1038]:
+              - code [ref=e1039]: CanAttack(target)
+            - cell "boolean, should_give_up" [ref=e1040]
+            - cell "能否攻击" [ref=e1041]
+          - row "LocomotorCanAttack(reached_dest, target) boolean, invalid, in_cooldown 移动系统中检查攻击条件" [ref=e1042]:
+            - cell "LocomotorCanAttack(reached_dest, target)" [ref=e1043]:
+              - code [ref=e1044]: LocomotorCanAttack(reached_dest, target)
+            - cell "boolean, invalid, in_cooldown" [ref=e1045]
+            - cell "移动系统中检查攻击条件" [ref=e1046]
+          - row "CanHitTarget(target, weapon) boolean 能否命中目标（距离+弧角检测）" [ref=e1047]:
+            - cell "CanHitTarget(target, weapon)" [ref=e1048]:
+              - code [ref=e1049]: CanHitTarget(target, weapon)
+            - cell "boolean" [ref=e1050]
+            - cell "能否命中目标（距离+弧角检测）" [ref=e1051]
+          - row "CanExtinguishTarget(target, weapon) boolean 能否灭火目标" [ref=e1052]:
+            - cell "CanExtinguishTarget(target, weapon)" [ref=e1053]:
+              - code [ref=e1054]: CanExtinguishTarget(target, weapon)
+            - cell "boolean" [ref=e1055]
+            - cell "能否灭火目标" [ref=e1056]
+          - row "CanLightTarget(target, weapon) boolean 能否点燃目标" [ref=e1057]:
+            - cell "CanLightTarget(target, weapon)" [ref=e1058]:
+              - code [ref=e1059]: CanLightTarget(target, weapon)
+            - cell "boolean" [ref=e1060]
+            - cell "能否点燃目标" [ref=e1061]
+          - row "CanBeAttacked(attacker) boolean 能否被攻击者攻击（委托给replica）" [ref=e1062]:
+            - cell "CanBeAttacked(attacker)" [ref=e1063]:
+              - code [ref=e1064]: CanBeAttacked(attacker)
+            - cell "boolean" [ref=e1065]
+            - cell "能否被攻击者攻击（委托给replica）" [ref=e1066]
+      - heading "冷却与范围" [level=3] [ref=e1067]:
+        - link "冷却与范围" [ref=e1068] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e5%86%b7%e5%8d%b4%e4%b8%8e%e8%8c%83%e5%9b%b4"
+      - table [ref=e1069]:
+        - rowgroup [ref=e1070]:
+          - row "方法签名 返回值 说明" [ref=e1071]:
+            - columnheader "方法签名" [ref=e1072]
+            - columnheader "返回值" [ref=e1073]
+            - columnheader "说明" [ref=e1074]
+        - rowgroup [ref=e1075]:
+          - row "InCooldown() boolean 是否在攻击冷却中" [ref=e1076]:
+            - cell "InCooldown()" [ref=e1077]:
+              - code [ref=e1078]: InCooldown()
+            - cell "boolean" [ref=e1079]
+            - cell "是否在攻击冷却中" [ref=e1080]
+          - row "GetCooldown() number 获取剩余冷却时间" [ref=e1081]:
+            - cell "GetCooldown()" [ref=e1082]:
+              - code [ref=e1083]: GetCooldown()
+            - cell "number" [ref=e1084]
+            - cell "获取剩余冷却时间" [ref=e1085]
+          - row "ResetCooldown() — 重置冷却" [ref=e1086]:
+            - cell "ResetCooldown()" [ref=e1087]:
+              - code [ref=e1088]: ResetCooldown()
+            - cell "—" [ref=e1089]
+            - cell "重置冷却" [ref=e1090]
+          - row "RestartCooldown() — 重新开始冷却" [ref=e1091]:
+            - cell "RestartCooldown()" [ref=e1092]:
+              - code [ref=e1093]: RestartCooldown()
+            - cell "—" [ref=e1094]
+            - cell "重新开始冷却" [ref=e1095]
+          - row "OverrideCooldown(cd) — 覆盖冷却时间" [ref=e1096]:
+            - cell "OverrideCooldown(cd)" [ref=e1097]:
+              - code [ref=e1098]: OverrideCooldown(cd)
+            - cell "—" [ref=e1099]
+            - cell "覆盖冷却时间" [ref=e1100]
+          - row "SetAttackPeriod(period) — 设置攻击间隔" [ref=e1101]:
+            - cell "SetAttackPeriod(period)" [ref=e1102]:
+              - code [ref=e1103]: SetAttackPeriod(period)
+            - cell "—" [ref=e1104]
+            - cell "设置攻击间隔" [ref=e1105]
+          - row "SetRange(attack, hit) — 设置攻击范围" [ref=e1106]:
+            - cell "SetRange(attack, hit)" [ref=e1107]:
+              - code [ref=e1108]: SetRange(attack, hit)
+            - cell "—" [ref=e1109]
+            - cell "设置攻击范围" [ref=e1110]
+          - row "SetHitArc(arc) — 设置攻击扇形角度" [ref=e1111]:
+            - cell "SetHitArc(arc)" [ref=e1112]:
+              - code [ref=e1113]: SetHitArc(arc)
+            - cell "—" [ref=e1114]
+            - cell "设置攻击扇形角度" [ref=e1115]
+          - row "GetAttackRange() number 获取攻击范围（含武器加成）" [ref=e1116]:
+            - cell "GetAttackRange()" [ref=e1117]:
+              - code [ref=e1118]: GetAttackRange()
+            - cell "number" [ref=e1119]
+            - cell "获取攻击范围（含武器加成）" [ref=e1120]
+          - row "GetHitRange() number 获取命中范围" [ref=e1121]:
+            - cell "GetHitRange()" [ref=e1122]:
+              - code [ref=e1123]: GetHitRange()
+            - cell "number" [ref=e1124]
+            - cell "获取命中范围" [ref=e1125]
+          - row "CalcAttackRangeSq(target) number 计算攻击范围平方" [ref=e1126]:
+            - cell "CalcAttackRangeSq(target)" [ref=e1127]:
+              - code [ref=e1128]: CalcAttackRangeSq(target)
+            - cell "number" [ref=e1129]
+            - cell "计算攻击范围平方" [ref=e1130]
+          - row "CalcHitRangeSq(target) number 计算命中范围平方" [ref=e1131]:
+            - cell "CalcHitRangeSq(target)" [ref=e1132]:
+              - code [ref=e1133]: CalcHitRangeSq(target)
+            - cell "number" [ref=e1134]
+            - cell "计算命中范围平方" [ref=e1135]
+          - row "ClearAttackTemps() — 清除临时攻击参数" [ref=e1136]:
+            - cell "ClearAttackTemps()" [ref=e1137]:
+              - code [ref=e1138]: ClearAttackTemps()
+            - cell "—" [ref=e1139]
+            - cell "清除临时攻击参数" [ref=e1140]
+      - heading "伤害计算" [level=3] [ref=e1141]:
+        - link "伤害计算" [ref=e1142] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e4%bc%a4%e5%ae%b3%e8%ae%a1%e7%ae%97"
+      - table [ref=e1143]:
+        - rowgroup [ref=e1144]:
+          - row "方法签名 返回值 说明" [ref=e1145]:
+            - columnheader "方法签名" [ref=e1146]
+            - columnheader "返回值" [ref=e1147]
+            - columnheader "说明" [ref=e1148]
+        - rowgroup [ref=e1149]:
+          - row "CalcDamage(target, weapon, multiplier) damage, spdamage 计算伤害（核心伤害公式）" [ref=e1150]:
+            - cell "CalcDamage(target, weapon, multiplier)" [ref=e1151]:
+              - code [ref=e1152]: CalcDamage(target, weapon, multiplier)
+            - cell "damage, spdamage" [ref=e1153]
+            - cell "计算伤害（核心伤害公式）" [ref=e1154]
+          - row "SetDefaultDamage(damage) — 设置默认空手伤害" [ref=e1155]:
+            - cell "SetDefaultDamage(damage)" [ref=e1156]:
+              - code [ref=e1157]: SetDefaultDamage(damage)
+            - cell "—" [ref=e1158]
+            - cell "设置默认空手伤害" [ref=e1159]
+          - row "GetWeapon() Entity/nil 获取手持武器" [ref=e1160]:
+            - cell "GetWeapon()" [ref=e1161]:
+              - code [ref=e1162]: GetWeapon()
+            - cell "Entity/nil" [ref=e1163]
+            - cell "获取手持武器" [ref=e1164]
+          - row "SetPlayerStunlock(stunlock) — 设置玩家眩晕锁定" [ref=e1165]:
+            - cell "SetPlayerStunlock(stunlock)" [ref=e1166]:
+              - code [ref=e1167]: SetPlayerStunlock(stunlock)
+            - cell "—" [ref=e1168]
+            - cell "设置玩家眩晕锁定" [ref=e1169]
+          - row "GetLastAttackedTime() number 获取上次被攻击时间" [ref=e1170]:
+            - cell "GetLastAttackedTime()" [ref=e1171]:
+              - code [ref=e1172]: GetLastAttackedTime()
+            - cell "number" [ref=e1173]
+            - cell "获取上次被攻击时间" [ref=e1174]
+          - row "BlankOutAttacks(fortime) — 暂停攻击能力一段时间" [ref=e1175]:
+            - cell "BlankOutAttacks(fortime)" [ref=e1176]:
+              - code [ref=e1177]: BlankOutAttacks(fortime)
+            - cell "—" [ref=e1178]
+            - cell "暂停攻击能力一段时间" [ref=e1179]
+      - heading "范围攻击" [level=3] [ref=e1180]:
+        - link "范围攻击" [ref=e1181] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e8%8c%83%e5%9b%b4%e6%94%bb%e5%87%bb"
+      - table [ref=e1182]:
+        - rowgroup [ref=e1183]:
+          - row "方法签名 返回值 说明" [ref=e1184]:
+            - columnheader "方法签名" [ref=e1185]
+            - columnheader "返回值" [ref=e1186]
+            - columnheader "说明" [ref=e1187]
+        - rowgroup [ref=e1188]:
+          - row "SetAreaDamage(range, percent, areahitcheck) — 设置范围攻击" [ref=e1189]:
+            - cell "SetAreaDamage(range, percent, areahitcheck)" [ref=e1190]:
+              - code [ref=e1191]: SetAreaDamage(range, percent, areahitcheck)
+            - cell "—" [ref=e1192]
+            - cell "设置范围攻击" [ref=e1193]
+          - row "EnableAreaDamage(enable) — 启用/禁用范围攻击" [ref=e1194]:
+            - cell "EnableAreaDamage(enable)" [ref=e1195]:
+              - code [ref=e1196]: EnableAreaDamage(enable)
+            - cell "—" [ref=e1197]
+            - cell "启用/禁用范围攻击" [ref=e1198]
+          - row "DoAreaAttack(target, range, weapon, validfn, stimuli, excludetags, onlyontarget) number 执行范围攻击，返回命中数" [ref=e1199]:
+            - cell "DoAreaAttack(target, range, weapon, validfn, stimuli, excludetags, onlyontarget)" [ref=e1200]:
+              - code [ref=e1201]: DoAreaAttack(target, range, weapon, validfn, stimuli, excludetags, onlyontarget)
+            - cell "number" [ref=e1202]
+            - cell "执行范围攻击，返回命中数" [ref=e1203]
+      - heading "伤害反射" [level=3] [ref=e1204]:
+        - link "伤害反射" [ref=e1205] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e4%bc%a4%e5%ae%b3%e5%8f%8d%e5%b0%84"
+      - table [ref=e1206]:
+        - rowgroup [ref=e1207]:
+          - row "方法签名 返回值 说明" [ref=e1208]:
+            - columnheader "方法签名" [ref=e1209]
+            - columnheader "返回值" [ref=e1210]
+            - columnheader "说明" [ref=e1211]
+        - rowgroup [ref=e1212]:
+          - row "CalcReflectedDamage(targ, dmg, weapon, stimuli, reflect_list, spdmg) reflected_dmg, reflected_spdmg 计算反伤" [ref=e1213]:
+            - cell "CalcReflectedDamage(targ, dmg, weapon, stimuli, reflect_list, spdmg)" [ref=e1214]:
+              - code [ref=e1215]: CalcReflectedDamage(targ, dmg, weapon, stimuli, reflect_list, spdmg)
+            - cell "reflected_dmg, reflected_spdmg" [ref=e1216]
+            - cell "计算反伤" [ref=e1217]
+      - heading "仇恨系统" [level=3] [ref=e1218]:
+        - link "仇恨系统" [ref=e1219] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e4%bb%87%e6%81%a8%e7%b3%bb%e7%bb%9f"
+      - table [ref=e1220]:
+        - rowgroup [ref=e1221]:
+          - row "方法签名 返回值 说明" [ref=e1222]:
+            - columnheader "方法签名" [ref=e1223]
+            - columnheader "返回值" [ref=e1224]
+            - columnheader "说明" [ref=e1225]
+        - rowgroup [ref=e1226]:
+          - row "ShouldAggro(target, ignore_forbidden) boolean 是否应该仇恨目标" [ref=e1227]:
+            - cell "ShouldAggro(target, ignore_forbidden)" [ref=e1228]:
+              - code [ref=e1229]: ShouldAggro(target, ignore_forbidden)
+            - cell "boolean" [ref=e1230]
+            - cell "是否应该仇恨目标" [ref=e1231]
+          - row "SetShouldAggroFn(fn) — 设置仇恨判定函数" [ref=e1232]:
+            - cell "SetShouldAggroFn(fn)" [ref=e1233]:
+              - code [ref=e1234]: SetShouldAggroFn(fn)
+            - cell "—" [ref=e1235]
+            - cell "设置仇恨判定函数" [ref=e1236]
+          - row "AddNoAggroTag(tag) — 添加不仇恨标签" [ref=e1237]:
+            - cell "AddNoAggroTag(tag)" [ref=e1238]:
+              - code [ref=e1239]: AddNoAggroTag(tag)
+            - cell "—" [ref=e1240]
+            - cell "添加不仇恨标签" [ref=e1241]
+          - row "RemoveNoAggroTag(tag) — 移除不仇恨标签" [ref=e1242]:
+            - cell "RemoveNoAggroTag(tag)" [ref=e1243]:
+              - code [ref=e1244]: RemoveNoAggroTag(tag)
+            - cell "—" [ref=e1245]
+            - cell "移除不仇恨标签" [ref=e1246]
+          - row "SetNoAggroTags(tags) — 设置不仇恨标签列表" [ref=e1247]:
+            - cell "SetNoAggroTags(tags)" [ref=e1248]:
+              - code [ref=e1249]: SetNoAggroTags(tags)
+            - cell "—" [ref=e1250]
+            - cell "设置不仇恨标签列表" [ref=e1251]
+          - row "SetShouldAvoidAggro(target) — 临时避免仇恨某目标" [ref=e1252]:
+            - cell "SetShouldAvoidAggro(target)" [ref=e1253]:
+              - code [ref=e1254]: SetShouldAvoidAggro(target)
+            - cell "—" [ref=e1255]
+            - cell "临时避免仇恨某目标" [ref=e1256]
+          - row "RemoveShouldAvoidAggro(target) — 移除临时避免仇恨" [ref=e1257]:
+            - cell "RemoveShouldAvoidAggro(target)" [ref=e1258]:
+              - code [ref=e1259]: RemoveShouldAvoidAggro(target)
+            - cell "—" [ref=e1260]
+            - cell "移除临时避免仇恨" [ref=e1261]
+      - heading "其他" [level=3] [ref=e1262]:
+        - link "其他" [ref=e1263] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e5%85%b6%e4%bb%96"
+      - table [ref=e1264]:
+        - rowgroup [ref=e1265]:
+          - row "方法签名 返回值 说明" [ref=e1266]:
+            - columnheader "方法签名" [ref=e1267]
+            - columnheader "返回值" [ref=e1268]
+            - columnheader "说明" [ref=e1269]
+        - rowgroup [ref=e1270]:
+          - row "GetAttacked(attacker, damage, weapon, stimuli, spdamage) boolean 被攻击处理（核心流程）" [ref=e1271]:
+            - cell "GetAttacked(attacker, damage, weapon, stimuli, spdamage)" [ref=e1272]:
+              - code [ref=e1273]: GetAttacked(attacker, damage, weapon, stimuli, spdamage)
+            - cell "boolean" [ref=e1274]
+            - cell "被攻击处理（核心流程）" [ref=e1275]
+          - row "BattleCry() — 发出战吼" [ref=e1276]:
+            - cell "BattleCry()" [ref=e1277]:
+              - code [ref=e1278]: BattleCry()
+            - cell "—" [ref=e1279]
+            - cell "发出战吼" [ref=e1280]
+          - row "ResetBattleCryCooldown(t) — 重置战吼冷却" [ref=e1281]:
+            - cell "ResetBattleCryCooldown(t)" [ref=e1282]:
+              - code [ref=e1283]: ResetBattleCryCooldown(t)
+            - cell "—" [ref=e1284]
+            - cell "重置战吼冷却" [ref=e1285]
+          - row "SetHurtSound(sound) — 设置受伤音效" [ref=e1286]:
+            - cell "SetHurtSound(sound)" [ref=e1287]:
+              - code [ref=e1288]: SetHurtSound(sound)
+            - cell "—" [ref=e1289]
+            - cell "设置受伤音效" [ref=e1290]
+          - row "SetOnHit(fn) — 设置被命中回调" [ref=e1291]:
+            - cell "SetOnHit(fn)" [ref=e1292]:
+              - code [ref=e1293]: SetOnHit(fn)
+            - cell "—" [ref=e1294]
+            - cell "设置被命中回调" [ref=e1295]
+          - row "SetCanSuggestTargetFn(fn) — 设置建议目标回调" [ref=e1296]:
+            - cell "SetCanSuggestTargetFn(fn)" [ref=e1297]:
+              - code [ref=e1298]: SetCanSuggestTargetFn(fn)
+            - cell "—" [ref=e1299]
+            - cell "设置建议目标回调" [ref=e1300]
+          - row "SetRequiresToughCombat(tough) — 设置坚韧战斗要求" [ref=e1301]:
+            - cell "SetRequiresToughCombat(tough)" [ref=e1302]:
+              - code [ref=e1303]: SetRequiresToughCombat(tough)
+            - cell "—" [ref=e1304]
+            - cell "设置坚韧战斗要求" [ref=e1305]
+          - row "SetShouldRecoilFn(fn) — 设置弹反判定函数" [ref=e1306]:
+            - cell "SetShouldRecoilFn(fn)" [ref=e1307]:
+              - code [ref=e1308]: SetShouldRecoilFn(fn)
+            - cell "—" [ref=e1309]
+            - cell "设置弹反判定函数" [ref=e1310]
+          - row "GetBattleCryString(target) string, strid 获取战吼字符串（可重写）" [ref=e1311]:
+            - cell "GetBattleCryString(target)" [ref=e1312]:
+              - code [ref=e1313]: GetBattleCryString(target)
+            - cell "string, strid" [ref=e1314]
+            - cell "获取战吼字符串（可重写）" [ref=e1315]
+          - row "GetGiveUpString(target) string, strid 获取放弃战斗字符串（可重写）" [ref=e1316]:
+            - cell "GetGiveUpString(target)" [ref=e1317]:
+              - code [ref=e1318]: GetGiveUpString(target)
+            - cell "string, strid" [ref=e1319]
+            - cell "获取放弃战斗字符串（可重写）" [ref=e1320]
+          - row "GetImpactSound(target, weapon) string 获取受击音效" [ref=e1321]:
+            - cell "GetImpactSound(target, weapon)" [ref=e1322]:
+              - code [ref=e1323]: GetImpactSound(target, weapon)
+            - cell "string" [ref=e1324]
+            - cell "获取受击音效" [ref=e1325]
+          - row "CanBeAlly(guy) boolean 是否可能是友军" [ref=e1326]:
+            - cell "CanBeAlly(guy)" [ref=e1327]:
+              - code [ref=e1328]: CanBeAlly(guy)
+            - cell "boolean" [ref=e1329]
+            - cell "是否可能是友军" [ref=e1330]
+          - row "IsAlly(guy) boolean 是否是友军" [ref=e1331]:
+            - cell "IsAlly(guy)" [ref=e1332]:
+              - code [ref=e1333]: IsAlly(guy)
+            - cell "boolean" [ref=e1334]
+            - cell "是否是友军" [ref=e1335]
+          - row "GetDebugString() string 获取调试字符串" [ref=e1336]:
+            - cell "GetDebugString()" [ref=e1337]:
+              - code [ref=e1338]: GetDebugString()
+            - cell "string" [ref=e1339]
+            - cell "获取调试字符串" [ref=e1340]
+          - row "OnEntitySleep() — 实体休眠时清理重定向任务" [ref=e1341]:
+            - cell "OnEntitySleep()" [ref=e1342]:
+              - code [ref=e1343]: OnEntitySleep()
+            - cell "—" [ref=e1344]
+            - cell "实体休眠时清理重定向任务" [ref=e1345]
+          - row "OnEntityWake() — 实体唤醒时恢复重定向任务" [ref=e1346]:
+            - cell "OnEntityWake()" [ref=e1347]:
+              - code [ref=e1348]: OnEntityWake()
+            - cell "—" [ref=e1349]
+            - cell "实体唤醒时恢复重定向任务" [ref=e1350]
+          - row "OnUpdate(dt) — 每帧更新（检查keeptargetfn）" [ref=e1351]:
+            - cell "OnUpdate(dt)" [ref=e1352]:
+              - code [ref=e1353]: OnUpdate(dt)
+            - cell "—" [ref=e1354]
+            - cell "每帧更新（检查keeptargetfn）" [ref=e1355]
+          - row "OnRemoveFromEntity() — 移除时清理" [ref=e1356]:
+            - cell "OnRemoveFromEntity()" [ref=e1357]:
+              - code [ref=e1358]: OnRemoveFromEntity()
+            - cell "—" [ref=e1359]
+            - cell "移除时清理" [ref=e1360]
+      - heading "事件" [level=2] [ref=e1361]:
+        - link "事件" [ref=e1362] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e4%ba%8b%e4%bb%b6"
+      - heading "推送事件" [level=3] [ref=e1363]:
+        - link "推送事件" [ref=e1364] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e6%8e%a8%e9%80%81%e4%ba%8b%e4%bb%b6"
+      - table [ref=e1365]:
+        - rowgroup [ref=e1366]:
+          - row "事件名 触发时机 数据" [ref=e1367]:
+            - columnheader "事件名" [ref=e1368]
+            - columnheader "触发时机" [ref=e1369]
+            - columnheader "数据" [ref=e1370]
+        - rowgroup [ref=e1371]:
+          - 'row "newcombattarget 获取新目标 {target, oldtarget}" [ref=e1372]':
+            - cell "newcombattarget" [ref=e1373]:
+              - code [ref=e1374]: newcombattarget
+            - cell "获取新目标" [ref=e1375]
+            - 'cell "{target, oldtarget}" [ref=e1376]':
+              - code [ref=e1377]: "{target, oldtarget}"
+          - 'row "droppedtarget 丢弃目标 {target}" [ref=e1378]':
+            - cell "droppedtarget" [ref=e1379]:
+              - code [ref=e1380]: droppedtarget
+            - cell "丢弃目标" [ref=e1381]
+            - 'cell "{target}" [ref=e1382]':
+              - code [ref=e1383]: "{target}"
+          - row "losttarget 目标丢失（keeptargetfn返回false） —" [ref=e1384]:
+            - cell "losttarget" [ref=e1385]:
+              - code [ref=e1386]: losttarget
+            - cell "目标丢失（keeptargetfn返回false）" [ref=e1387]
+            - cell "—" [ref=e1388]
+          - 'row "giveuptarget 放弃战斗 {target}" [ref=e1389]':
+            - cell "giveuptarget" [ref=e1390]:
+              - code [ref=e1391]: giveuptarget
+            - cell "放弃战斗" [ref=e1392]
+            - 'cell "{target}" [ref=e1393]':
+              - code [ref=e1394]: "{target}"
+          - 'row "attacked 被攻击 {attacker, damage, damageresolved, original_damage, weapon, stimuli, spdamage, redirected}" [ref=e1395]':
+            - cell "attacked" [ref=e1396]:
+              - code [ref=e1397]: attacked
+            - cell "被攻击" [ref=e1398]
+            - 'cell "{attacker, damage, damageresolved, original_damage, weapon, stimuli, spdamage, redirected}" [ref=e1399]':
+              - code [ref=e1400]: "{attacker, damage, damageresolved, original_damage, weapon, stimuli, spdamage, redirected}"
+          - 'row "blocked 攻击被格挡 {attacker, damage, spdamage, original_damage}" [ref=e1401]':
+            - cell "blocked" [ref=e1402]:
+              - code [ref=e1403]: blocked
+            - cell "攻击被格挡" [ref=e1404]
+            - 'cell "{attacker, damage, spdamage, original_damage}" [ref=e1405]':
+              - code [ref=e1406]: "{attacker, damage, spdamage, original_damage}"
+          - 'row "doattack 请求执行攻击 {target}" [ref=e1407]':
+            - cell "doattack" [ref=e1408]:
+              - code [ref=e1409]: doattack
+            - cell "请求执行攻击" [ref=e1410]
+            - 'cell "{target}" [ref=e1411]':
+              - code [ref=e1412]: "{target}"
+          - 'row "onattackother 攻击其他实体 {target, weapon, projectile, stimuli}" [ref=e1413]':
+            - cell "onattackother" [ref=e1414]:
+              - code [ref=e1415]: onattackother
+            - cell "攻击其他实体" [ref=e1416]
+            - 'cell "{target, weapon, projectile, stimuli}" [ref=e1417]':
+              - code [ref=e1418]: "{target, weapon, projectile, stimuli}"
+          - 'row "onhitother 命中其他实体（由攻击者推送） {target, damage, damageresolved, stimuli, spdamage, weapon, redirected}" [ref=e1419]':
+            - cell "onhitother" [ref=e1420]:
+              - code [ref=e1421]: onhitother
+            - cell "命中其他实体（由攻击者推送）" [ref=e1422]
+            - 'cell "{target, damage, damageresolved, stimuli, spdamage, weapon, redirected}" [ref=e1423]':
+              - code [ref=e1424]: "{target, damage, damageresolved, stimuli, spdamage, weapon, redirected}"
+          - 'row "onmissother 未命中目标 {target, weapon}" [ref=e1425]':
+            - cell "onmissother" [ref=e1426]:
+              - code [ref=e1427]: onmissother
+            - cell "未命中目标" [ref=e1428]
+            - 'cell "{target, weapon}" [ref=e1429]':
+              - code [ref=e1430]: "{target, weapon}"
+          - 'row "onareaattackother AOE命中 {target, weapon, stimuli}" [ref=e1431]':
+            - cell "onareaattackother" [ref=e1432]:
+              - code [ref=e1433]: onareaattackother
+            - cell "AOE命中" [ref=e1434]
+            - 'cell "{target, weapon, stimuli}" [ref=e1435]':
+              - code [ref=e1436]: "{target, weapon, stimuli}"
+          - row "weapontooweak 武器太弱无法造成伤害 —" [ref=e1437]:
+            - cell "weapontooweak" [ref=e1438]:
+              - code [ref=e1439]: weapontooweak
+            - cell "武器太弱无法造成伤害" [ref=e1440]
+            - cell "—" [ref=e1441]
+          - 'row "killed 击杀目标（由被击杀者推送） {victim, attacker}" [ref=e1442]':
+            - cell "killed" [ref=e1443]:
+              - code [ref=e1444]: killed
+            - cell "击杀目标（由被击杀者推送）" [ref=e1445]
+            - 'cell "{victim, attacker}" [ref=e1446]':
+              - code [ref=e1447]: "{victim, attacker}"
+          - 'row "recoil_off 弹反卸力 {target}" [ref=e1448]':
+            - cell "recoil_off" [ref=e1449]:
+              - code [ref=e1450]: recoil_off
+            - cell "弹反卸力" [ref=e1451]
+            - 'cell "{target}" [ref=e1452]':
+              - code [ref=e1453]: "{target}"
+      - heading "监听事件" [level=3] [ref=e1454]:
+        - link "监听事件" [ref=e1455] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e7%9b%91%e5%90%ac%e4%ba%8b%e4%bb%b6"
+      - table [ref=e1456]:
+        - rowgroup [ref=e1457]:
+          - row "事件名 来源 处理" [ref=e1458]:
+            - columnheader "事件名" [ref=e1459]
+            - columnheader "来源" [ref=e1460]
+            - columnheader "处理" [ref=e1461]
+        - rowgroup [ref=e1462]:
+          - row "knockback — CommonHandlers.ResetHitRecoveryDelay" [ref=e1463]:
+            - cell "knockback" [ref=e1464]:
+              - code [ref=e1465]: knockback
+            - cell "—" [ref=e1466]
+            - cell "CommonHandlers.ResetHitRecoveryDelay" [ref=e1467]:
+              - code [ref=e1468]: CommonHandlers.ResetHitRecoveryDelay
+          - row "enterlimbo 目标 DropTarget" [ref=e1469]:
+            - cell "enterlimbo" [ref=e1470]:
+              - code [ref=e1471]: enterlimbo
+            - cell "目标" [ref=e1472]
+            - cell "DropTarget" [ref=e1473]:
+              - code [ref=e1474]: DropTarget
+          - row "onremove 目标 DropTarget" [ref=e1475]:
+            - cell "onremove" [ref=e1476]:
+              - code [ref=e1477]: onremove
+            - cell "目标" [ref=e1478]
+            - cell "DropTarget" [ref=e1479]:
+              - code [ref=e1480]: DropTarget
+          - row "transfercombattarget 目标 转移目标" [ref=e1481]:
+            - cell "transfercombattarget" [ref=e1482]:
+              - code [ref=e1483]: transfercombattarget
+            - cell "目标" [ref=e1484]
+            - cell "转移目标" [ref=e1485]
+          - row "leaderchanged 目标 友军检查" [ref=e1486]:
+            - cell "leaderchanged" [ref=e1487]:
+              - code [ref=e1488]: leaderchanged
+            - cell "目标" [ref=e1489]
+            - cell "友军检查" [ref=e1490]
+      - heading "使用示例" [level=2] [ref=e1491]:
+        - link "使用示例" [ref=e1492] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e4%bd%bf%e7%94%a8%e7%a4%ba%e4%be%8b"
+      - generic [ref=e1493]:
+        - code [ref=e1494]: "-- 基本战斗设置 inst.components.combat:SetDefaultDamage(30) inst.components.combat:SetRange(3, 4) inst.components.combat:SetAttackPeriod(2) -- 设置AOE攻击 inst.components.combat:SetAreaDamage(2, 0.5) -- 半径2，50%伤害 -- 设置被命中回调 inst.components.combat:SetOnHit(function(inst, attacker, damage) if attacker and attacker:HasTag(\"monster\") then inst.components.combat:SuggestTarget(attacker) end end) -- 自定义仇恨判定 inst.components.combat:SetShouldAggroFn(function(inst, target) return not target:HasTag(\"wall\") end) -- 添加禁止攻击标签 inst.components.combat:AddNoAggroTag(\"smallbird\") -- 设置坚韧（需要特殊武器才能造成伤害） inst.components.combat:SetRequiresToughCombat(true) -- 伤害倍率（2倍伤害） inst.components.combat.externaldamagemultipliers:SetModifier(\"night\", 2) -- 恐慌阈值 inst.components.combat.panic_thresh = 0.3 -- 30%血量时恐慌"
+        - text: lua
+      - heading "伤害计算流程" [level=2] [ref=e1495]:
+        - link "伤害计算流程" [ref=e1496] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e4%bc%a4%e5%ae%b3%e8%ae%a1%e7%ae%97%e6%b5%81%e7%a8%8b"
+      - paragraph [ref=e1497]:
+        - code [ref=e1498]: DoAttack
+        - text: 是核心攻击流程，按以下顺序执行：
+      - list [ref=e1499]:
+        - listitem [ref=e1500]:
+          - strong [ref=e1501]: 范围检测
+          - text: — 检查目标是否在攻击范围内
+        - listitem [ref=e1502]:
+          - strong [ref=e1503]: 弹反检测
+          - text: — 调用目标的
+          - code [ref=e1504]: ShouldRecoil
+        - listitem [ref=e1505]:
+          - strong [ref=e1506]: 事件推送
+          - text: —
+          - code [ref=e1507]: onattackother
+        - listitem [ref=e1508]:
+          - strong [ref=e1509]: 远程武器处理
+          - text: — projectile / complexprojectile / LaunchProjectile
+        - listitem [ref=e1510]:
+          - strong [ref=e1511]: 伤害计算
+          - text: —
+          - code [ref=e1512]: CalcDamage
+          - text: （考虑武器、倍率、电击加成、PVP修正）
+        - listitem [ref=e1513]:
+          - strong [ref=e1514]: 反伤计算
+          - text: —
+          - code [ref=e1515]: CalcReflectedDamage
+        - listitem [ref=e1516]:
+          - strong [ref=e1517]: 伤害应用
+          - text: — 目标的
+          - code [ref=e1518]: GetAttacked
+        - listitem [ref=e1519]:
+          - strong [ref=e1520]: 武器磨损
+          - text: —
+          - code [ref=e1521]: weapon:OnAttack
+        - listitem [ref=e1522]:
+          - strong [ref=e1523]: AOE处理
+          - text: —
+          - code [ref=e1524]: DoAreaAttack
+        - listitem [ref=e1525]:
+          - strong [ref=e1526]: 反伤应用
+          - text: — 对攻击者造成反伤
+      - heading "被攻击处理流程" [level=2] [ref=e1527]:
+        - link "被攻击处理流程" [ref=e1528] [cursor=pointer]:
+          - /url: "#/02-components/combat/combat?id=%e8%a2%ab%e6%94%bb%e5%87%bb%e5%a4%84%e7%90%86%e6%b5%81%e7%a8%8b"
+      - paragraph [ref=e1529]:
+        - code [ref=e1530]: GetAttacked
+        - text: 处理被攻击的完整流程：
+      - list [ref=e1531]:
+        - listitem [ref=e1532]:
+          - strong [ref=e1533]: 死亡检查
+          - text: — 已死亡则返回
+        - listitem [ref=e1534]:
+          - strong [ref=e1535]: 伤害重定向
+          - text: —
+          - code [ref=e1536]: redirectdamagefn
+        - listitem [ref=e1537]:
+          - strong [ref=e1538]: 弹反处理
+          - text: —
+          - code [ref=e1539]: ShouldRecoil
+        - listitem [ref=e1540]:
+          - strong [ref=e1541]: 闪避
+          - text: —
+          - code [ref=e1542]: attackdodger:Dodge
+        - listitem [ref=e1543]:
+          - strong [ref=e1544]: 护甲减免
+          - text: —
+          - code [ref=e1545]: inventory:ApplyDamage
+        - listitem [ref=e1546]:
+          - strong [ref=e1547]: 鞍具减免
+          - text: —
+          - code [ref=e1548]: saddler:ApplyDamage
+        - listitem [ref=e1549]:
+          - strong [ref=e1550]: 伤害类型抗性
+          - text: —
+          - code [ref=e1551]: damagetyperesist
+        - listitem [ref=e1552]:
+          - strong [ref=e1553]: 额外伤害倍率
+          - text: —
+          - code [ref=e1554]: conditionexternaldamagetakenmultipliers
+        - listitem [ref=e1555]:
+          - strong [ref=e1556]: 无敌检测
+          - text: —
+          - code [ref=e1557]: IsInvincible
+        - listitem [ref=e1558]:
+          - strong [ref=e1559]: 额外伤害
+          - text: —
+          - code [ref=e1560]: bonusdamagefn
+        - listitem [ref=e1561]:
+          - strong [ref=e1562]: 平面实体
+          - text: —
+          - code [ref=e1563]: planarentity:AbsorbDamage
+        - listitem [ref=e1564]:
+          - strong [ref=e1565]: 特殊伤害
+          - text: —
+          - code [ref=e1566]: SpDamageUtil
+        - listitem [ref=e1567]:
+          - strong [ref=e1568]: 应用伤害
+          - text: —
+          - code [ref=e1569]: health:DoDelta
+        - listitem [ref=e1570]:
+          - strong [ref=e1571]: 事件推送
+          - text: —
+          - code [ref=e1572]: attacked
+          - text: /
+          - code [ref=e1573]: blocked

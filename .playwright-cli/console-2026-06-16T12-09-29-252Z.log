@@ -1,0 +1,3 @@
+[    2206ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:51158/favicon.ico:0
+[   51968ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:51158/02-components/combat/_sidebar.md:0
+[   51971ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:51158/02-components/_sidebar.md:0

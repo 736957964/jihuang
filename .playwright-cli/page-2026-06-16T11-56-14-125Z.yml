@@ -1,0 +1,1148 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e3890]:
+        - listitem [ref=e3891]:
+          - text: 前言
+          - list [ref=e3892]:
+            - listitem [ref=e3893]:
+              - link "Mod相关信息" [ref=e3894] [cursor=pointer]:
+                - /url: "#/README"
+        - listitem [ref=e3895]:
+          - text: 01 核心系统
+          - list [ref=e3896]:
+            - listitem [ref=e3897]:
+              - link "01-core 总览" [ref=e3898] [cursor=pointer]:
+                - /url: "#/01-core/index"
+            - listitem [ref=e3899]:
+              - link "EntityScript 实体脚本" [ref=e3900] [cursor=pointer]:
+                - /url: "#/01-core/entity"
+            - listitem [ref=e3901]:
+              - link "Prefab 预制体系统" [ref=e3902] [cursor=pointer]:
+                - /url: "#/01-core/prefab"
+            - listitem [ref=e3903]:
+              - link "Class 类系统" [ref=e3904] [cursor=pointer]:
+                - /url: "#/01-core/class"
+            - listitem [ref=e3905]:
+              - link "全局函数" [ref=e3906] [cursor=pointer]:
+                - /url: "#/01-core/mainfunctions"
+            - listitem [ref=e3907]:
+              - link "全局变量" [ref=e3908] [cursor=pointer]:
+                - /url: "#/01-core/globals"
+            - listitem [ref=e3909]:
+              - link "simutil 工具函数" [ref=e3910] [cursor=pointer]:
+                - /url: "#/01-core/simutil"
+        - listitem [ref=e3911]:
+          - text: 02 Components 组件
+          - list [ref=e3912]:
+            - listitem [ref=e3913]:
+              - link "02-components 总览" [ref=e3914] [cursor=pointer]:
+                - /url: "#/02-components/index"
+            - listitem [ref=e3915]:
+              - text: 战斗 Combat
+              - list [ref=e3916]:
+                - listitem [ref=e3917]:
+                  - link "combat 总览" [ref=e3918] [cursor=pointer]:
+                    - /url: "#/02-components/combat/index"
+                - listitem [ref=e3919]:
+                  - link "combat 战斗" [ref=e3920] [cursor=pointer]:
+                    - /url: "#/02-components/combat/combat"
+                - listitem [ref=e3921]:
+                  - link "health 生命值" [ref=e3922] [cursor=pointer]:
+                    - /url: "#/02-components/combat/health"
+                - listitem [ref=e3923]:
+                  - link "weapon 武器" [ref=e3924] [cursor=pointer]:
+                    - /url: "#/02-components/combat/weapon"
+                - listitem [ref=e3925]:
+                  - link "armor 盔甲" [ref=e3926] [cursor=pointer]:
+                    - /url: "#/02-components/combat/armor"
+            - listitem [ref=e3927]:
+              - text: 生存 Survival
+              - list [ref=e3928]:
+                - listitem [ref=e3929]:
+                  - link "survival 总览" [ref=e3930] [cursor=pointer]:
+                    - /url: "#/02-components/survival/index"
+                - listitem [ref=e3931]:
+                  - link "hunger 饥饿" [ref=e3932] [cursor=pointer]:
+                    - /url: "#/02-components/survival/hunger"
+                - listitem [ref=e3933]:
+                  - link "sanity 理智" [ref=e3934] [cursor=pointer]:
+                    - /url: "#/02-components/survival/sanity"
+            - listitem [ref=e3935]:
+              - text: 背包 Inventory
+              - list [ref=e3936]:
+                - listitem [ref=e3937]:
+                  - link "inventory 总览" [ref=e3938] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/index"
+                - listitem [ref=e3939]:
+                  - link "inventory 背包" [ref=e3940] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/inventory"
+                - listitem [ref=e3941]:
+                  - link "container 容器" [ref=e3942] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/container"
+            - listitem [ref=e3943]:
+              - text: 工作 Work
+              - list [ref=e3944]:
+                - listitem [ref=e3945]:
+                  - link "work 总览" [ref=e3946] [cursor=pointer]:
+                    - /url: "#/02-components/work/index"
+                - listitem [ref=e3947]:
+                  - link "workable 可工作" [ref=e3948] [cursor=pointer]:
+                    - /url: "#/02-components/work/workable"
+            - listitem [ref=e3949]:
+              - text: 食物 Edible
+              - list [ref=e3950]:
+                - listitem [ref=e3951]:
+                  - link "edible 总览" [ref=e3952] [cursor=pointer]:
+                    - /url: "#/02-components/edible/index"
+                - listitem [ref=e3953]:
+                  - link "edible 可食用" [ref=e3954] [cursor=pointer]:
+                    - /url: "#/02-components/edible/edible"
+                - listitem [ref=e3955]:
+                  - link "perishable 易腐" [ref=e3956] [cursor=pointer]:
+                    - /url: "#/02-components/edible/perishable"
+            - listitem [ref=e3957]:
+              - text: 建造 Builder
+              - list [ref=e3958]:
+                - listitem [ref=e3959]:
+                  - link "builder 总览" [ref=e3960] [cursor=pointer]:
+                    - /url: "#/02-components/builder/index"
+                - listitem [ref=e3961]:
+                  - link "builder 建造" [ref=e3962] [cursor=pointer]:
+                    - /url: "#/02-components/builder/builder"
+            - listitem [ref=e3963]:
+              - text: 燃烧 Burnable
+              - list [ref=e3964]:
+                - listitem [ref=e3965]:
+                  - link "burnable 总览" [ref=e3966] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/index"
+                - listitem [ref=e3967]:
+                  - link "burnable 可燃" [ref=e3968] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/burnable"
+            - listitem [ref=e3969]:
+              - text: 生物 Creature
+              - list [ref=e3970]:
+                - listitem [ref=e3971]:
+                  - link "creature 总览" [ref=e3972] [cursor=pointer]:
+                    - /url: "#/02-components/creature/index"
+                - listitem [ref=e3973]:
+                  - link "childspawner 子生物生成" [ref=e3974] [cursor=pointer]:
+                    - /url: "#/02-components/creature/childspawner"
+            - listitem [ref=e3975]:
+              - text: 其他 Other
+              - list [ref=e3976]:
+                - listitem [ref=e3977]:
+                  - link "other 总览" [ref=e3978] [cursor=pointer]:
+                    - /url: "#/02-components/other/index"
+                - listitem [ref=e3979]:
+                  - link "finiteuses 耐久度" [ref=e3980] [cursor=pointer]:
+                    - /url: "#/02-components/other/finiteuses"
+            - listitem [ref=e3981]:
+              - text: 航海 Sailing
+              - list [ref=e3982]:
+                - listitem [ref=e3983]:
+                  - link "sailing 总览" [ref=e3984] [cursor=pointer]:
+                    - /url: "#/02-components/sailing/index"
+        - listitem [ref=e3985]:
+          - text: 03 Actions 动作
+          - list [ref=e3986]:
+            - listitem [ref=e3987]:
+              - link "03-actions 总览" [ref=e3988] [cursor=pointer]:
+                - /url: "#/03-actions/index"
+            - listitem [ref=e3989]:
+              - link "动作列表" [ref=e3990] [cursor=pointer]:
+                - /url: "#/03-actions/detail/action-list"
+              - list [ref=e3991]:
+                - listitem [ref=e3992]:
+                  - text: "-"
+                  - link "基础交互动作" [ref=e3993] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e5%9f%ba%e7%a1%80%e4%ba%a4%e4%ba%92%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e3994]:
+                  - text: "-"
+                  - link "物品操作动作" [ref=e3995] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e7%89%a9%e5%93%81%e6%93%8d%e4%bd%9c%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e3996]:
+                  - text: "-"
+                  - link "采集/工作动作" [ref=e3997] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e9%87%87%e9%9b%86%e5%b7%a5%e4%bd%9c%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e3998]:
+                  - text: "-"
+                  - link "战斗动作" [ref=e3999] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e6%88%98%e6%96%97%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4000]:
+                  - text: "-"
+                  - link "建造/部署动作" [ref=e4001] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e5%bb%ba%e9%80%a0%e9%83%a8%e7%bd%b2%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4002]:
+                  - text: "-"
+                  - link "火/光/燃料动作" [ref=e4003] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e7%81%ab%e5%85%89%e7%87%83%e6%96%99%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4004]:
+                  - text: "-"
+                  - link "海洋/航海动作" [ref=e4005] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e6%b5%b7%e6%b4%8b%e8%88%aa%e6%b5%b7%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4006]:
+                  - text: "-"
+                  - link "食物/烹饪动作" [ref=e4007] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e9%a3%9f%e7%89%a9%e7%83%b9%e9%a5%aa%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4008]:
+                  - text: "-"
+                  - link "制作/配方动作" [ref=e4009] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e5%88%b6%e4%bd%9c%e9%85%8d%e6%96%b9%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4010]:
+                  - text: "-"
+                  - link "激活/切换动作" [ref=e4011] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e6%bf%80%e6%b4%bb%e5%88%87%e6%8d%a2%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4012]:
+                  - text: "-"
+                  - link "生物/宠物动作" [ref=e4013] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e7%94%9f%e7%89%a9%e5%ae%a0%e7%89%a9%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4014]:
+                  - text: "-"
+                  - link "陷阱/狩猎动作" [ref=e4015] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e9%99%b7%e9%98%b1%e7%8b%a9%e7%8c%8e%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4016]:
+                  - text: "-"
+                  - link "睡眠/休息动作" [ref=e4017] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e7%9d%a1%e7%9c%a0%e4%bc%91%e6%81%af%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4018]:
+                  - text: "-"
+                  - link "角色专属动作" [ref=e4019] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e8%a7%92%e8%89%b2%e4%b8%93%e5%b1%9e%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4020]:
+                  - text: "-"
+                  - link "娱乐/小游戏动作" [ref=e4021] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e5%a8%b1%e4%b9%90%e5%b0%8f%e6%b8%b8%e6%88%8f%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4022]:
+                  - text: "-"
+                  - link "地图操作动作" [ref=e4023] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e5%9c%b0%e5%9b%be%e6%93%8d%e4%bd%9c%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4024]:
+                  - text: "-"
+                  - link "农业/植物动作" [ref=e4025] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e5%86%9c%e4%b8%9a%e6%a4%8d%e7%89%a9%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4026]:
+                  - text: "-"
+                  - link "装饰/节日动作" [ref=e4027] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e8%a3%85%e9%a5%b0%e8%8a%82%e6%97%a5%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4028]:
+                  - text: "-"
+                  - link "纸牌/包裹动作" [ref=e4029] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e7%ba%b8%e7%89%8c%e5%8c%85%e8%a3%b9%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4030]:
+                  - text: "-"
+                  - link "任务动作" [ref=e4031] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e4%bb%bb%e5%8a%a1%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4032]:
+                  - text: "-"
+                  - link "牛年/其他活动动作" [ref=e4033] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e7%89%9b%e5%b9%b4%e5%85%b6%e4%bb%96%e6%b4%bb%e5%8a%a8%e5%8a%a8%e4%bd%9c"
+                - listitem [ref=e4034]:
+                  - text: "-"
+                  - link "其他特殊动作" [ref=e4035] [cursor=pointer]:
+                    - /url: "#/03-actions/detail/action-list?id=%e5%85%b6%e4%bb%96%e7%89%b9%e6%ae%8a%e5%8a%a8%e4%bd%9c"
+        - listitem [ref=e4036]:
+          - text: 04 Tags 标签
+          - list [ref=e4037]:
+            - listitem [ref=e4038]:
+              - link "04-tags 总览" [ref=e4039] [cursor=pointer]:
+                - /url: "#/04-tags/index"
+        - listitem [ref=e4040]:
+          - text: 05 Events 事件
+          - list [ref=e4041]:
+            - listitem [ref=e4042]:
+              - link "05-events 总览" [ref=e4043] [cursor=pointer]:
+                - /url: "#/05-events/index"
+        - listitem [ref=e4044]:
+          - text: 06 Stategraphs 状态图
+          - list [ref=e4045]:
+            - listitem [ref=e4046]:
+              - link "06-stategraphs 总览" [ref=e4047] [cursor=pointer]:
+                - /url: "#/06-stategraphs/index"
+            - listitem [ref=e4048]:
+              - link "常用 SG 参考" [ref=e4049] [cursor=pointer]:
+                - /url: "#/06-stategraphs/sg-reference"
+        - listitem [ref=e4050]:
+          - text: 07 Brains 行为大脑
+          - list [ref=e4051]:
+            - listitem [ref=e4052]:
+              - link "07-brains 总览" [ref=e4053] [cursor=pointer]:
+                - /url: "#/07-brains/index"
+            - listitem [ref=e4054]:
+              - link "常用 Brain 参考" [ref=e4055] [cursor=pointer]:
+                - /url: "#/07-brains/brain-reference"
+        - listitem [ref=e4056]:
+          - text: 08 Prefabs 预设
+          - list [ref=e4057]:
+            - listitem [ref=e4058]:
+              - link "08-prefabs 总览" [ref=e4059] [cursor=pointer]:
+                - /url: "#/08-prefabs/index"
+            - listitem [ref=e4060]:
+              - link "Prefab 分类参考" [ref=e4061] [cursor=pointer]:
+                - /url: "#/08-prefabs/prefabs-reference"
+        - listitem [ref=e4062]:
+          - text: 09 Tuning 调参
+          - list [ref=e4063]:
+            - listitem [ref=e4064]:
+              - link "09-tuning 总览" [ref=e4065] [cursor=pointer]:
+                - /url: "#/09-tuning/index"
+        - listitem [ref=e4066]:
+          - text: 10 Networking 网络
+          - list [ref=e4067]:
+            - listitem [ref=e4068]:
+              - link "10-networking 总览" [ref=e4069] [cursor=pointer]:
+                - /url: "#/10-networking/index"
+        - listitem [ref=e4070]:
+          - text: 11 Modding Mod开发
+          - list [ref=e4071]:
+            - listitem [ref=e4072]:
+              - link "11-modding 总览" [ref=e4073] [cursor=pointer]:
+                - /url: "#/11-modding/index"
+        - listitem [ref=e4074]:
+          - text: 12 Cooking 烹饪
+          - list [ref=e4075]:
+            - listitem [ref=e4076]:
+              - link "12-cooking 总览" [ref=e4077] [cursor=pointer]:
+                - /url: "#/12-cooking/index"
+        - listitem [ref=e4078]:
+          - text: 13 World 世界
+          - list [ref=e4079]:
+            - listitem [ref=e4080]:
+              - link "13-world 总览" [ref=e4081] [cursor=pointer]:
+                - /url: "#/13-world/index"
+            - listitem [ref=e4082]:
+              - link "地图生成系统" [ref=e4083] [cursor=pointer]:
+                - /url: "#/13-world/worldgen"
+        - listitem [ref=e4084]:
+          - text: 14 Skilltree 技能树
+          - list [ref=e4085]:
+            - listitem [ref=e4086]:
+              - link "14-skilltree 总览" [ref=e4087] [cursor=pointer]:
+                - /url: "#/14-skilltree/index"
+        - listitem [ref=e4088]:
+          - text: 15 UI 界面
+          - list [ref=e4089]:
+            - listitem [ref=e4090]:
+              - link "15-ui 总览" [ref=e4091] [cursor=pointer]:
+                - /url: "#/15-ui/index"
+        - listitem [ref=e4092]:
+          - text: 16 Constants 常量
+          - list [ref=e4093]:
+            - listitem [ref=e4094]:
+              - link "16-constants 总览" [ref=e4095] [cursor=pointer]:
+                - /url: "#/16-constants/index"
+        - listitem [ref=e4096]:
+          - text: 17 Standard Components 标准组件
+          - list [ref=e4097]:
+            - listitem [ref=e4098]:
+              - link "17-standardcomponents 总览" [ref=e4099] [cursor=pointer]:
+                - /url: "#/17-standardcomponents/index"
+        - listitem [ref=e4100]:
+          - text: 18 Behaviours 行为树
+          - list [ref=e4101]:
+            - listitem [ref=e4102]:
+              - link "18-behaviours 总览" [ref=e4103] [cursor=pointer]:
+                - /url: "#/18-behaviours/index"
+        - listitem [ref=e4104]:
+          - text: 19 FX 特效
+          - list [ref=e4105]:
+            - listitem [ref=e4106]:
+              - link "19-fx 总览" [ref=e4107] [cursor=pointer]:
+                - /url: "#/19-fx/index"
+        - listitem [ref=e4108]:
+          - text: 案例
+          - list [ref=e4109]:
+            - listitem [ref=e4110]:
+              - link "小案例" [ref=e4111] [cursor=pointer]:
+                - /url: "#/anli/smallAn"
+        - listitem [ref=e4112]:
+          - text: 数据提取
+          - list [ref=e4113]:
+            - listitem [ref=e4114]:
+              - link "数据提取1" [ref=e4115] [cursor=pointer]:
+                - /url: "#/xiazai/tq1"
+            - listitem [ref=e4116]:
+              - link "数据提取2" [ref=e4117] [cursor=pointer]:
+                - /url: "#/xiazai/tq2"
+            - listitem [ref=e4118]:
+              - link "数据提取3" [ref=e4119] [cursor=pointer]:
+                - /url: "#/xiazai/tq3"
+            - listitem [ref=e4120]:
+              - link "数据提取4" [ref=e4121] [cursor=pointer]:
+                - /url: "#/xiazai/tq4"
+            - listitem [ref=e4122]:
+              - link "数据提取5" [ref=e4123] [cursor=pointer]:
+                - /url: "#/xiazai/tq5"
+            - listitem [ref=e4124]:
+              - link "字典" [ref=e4125] [cursor=pointer]:
+                - /url: "#/xiazai/tq6"
+    - article [ref=e212]:
+      - heading "06-stategraphs — 常用状态机 (SG) 详细参考" [level=1] [ref=e4126]:
+        - link "06-stategraphs — 常用状态机 (SG) 详细参考" [ref=e4127] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_06-stategraphs-%e5%b8%b8%e7%94%a8%e7%8a%b6%e6%80%81%e6%9c%ba-sg-%e8%af%a6%e7%bb%86%e5%8f%82%e8%80%83"
+      - blockquote [ref=e4128]:
+        - paragraph [ref=e4129]:
+          - text: "源码:"
+          - code [ref=e4130]: scripts/stategraphs/
+          - text: (261 个 SG 文件) 每个生物/实体都有自己的 StateGraph，定义其动画状态、事件处理和状态转换逻辑。
+      - separator [ref=e4131]
+      - heading "1. 通用状态 (commonstates.lua)" [level=2] [ref=e4132]:
+        - link "1. 通用状态 (commonstates.lua)" [ref=e4133] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_1-%e9%80%9a%e7%94%a8%e7%8a%b6%e6%80%81-commonstateslua"
+      - paragraph [ref=e4134]:
+        - code [ref=e4135]: commonstates.lua
+        - text: 定义了几乎所有 SG 共享的基础状态。
+      - heading "1.1 基础状态列表" [level=3] [ref=e4136]:
+        - link "1.1 基础状态列表" [ref=e4137] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_11-%e5%9f%ba%e7%a1%80%e7%8a%b6%e6%80%81%e5%88%97%e8%a1%a8"
+      - table [ref=e4138]:
+        - rowgroup [ref=e4139]:
+          - row "状态名 说明 标签" [ref=e4140]:
+            - columnheader "状态名" [ref=e4141]
+            - columnheader "说明" [ref=e4142]
+            - columnheader "标签" [ref=e4143]
+        - rowgroup [ref=e4144]:
+          - row "idle 待机 \"idle\", \"canrotate\"" [ref=e4145]:
+            - cell "idle" [ref=e4146]:
+              - code [ref=e4147]: idle
+            - cell "待机" [ref=e4148]
+            - cell "\"idle\", \"canrotate\"" [ref=e4149]:
+              - code [ref=e4150]: "\"idle\""
+              - text: ","
+              - code [ref=e4151]: "\"canrotate\""
+          - row "walk 走路 \"moving\", \"walking\", \"canrotate\"" [ref=e4152]:
+            - cell "walk" [ref=e4153]:
+              - code [ref=e4154]: walk
+            - cell "走路" [ref=e4155]
+            - cell "\"moving\", \"walking\", \"canrotate\"" [ref=e4156]:
+              - code [ref=e4157]: "\"moving\""
+              - text: ","
+              - code [ref=e4158]: "\"walking\""
+              - text: ","
+              - code [ref=e4159]: "\"canrotate\""
+          - row "run 跑步 \"moving\", \"running\", \"canrotate\"" [ref=e4160]:
+            - cell "run" [ref=e4161]:
+              - code [ref=e4162]: run
+            - cell "跑步" [ref=e4163]
+            - cell "\"moving\", \"running\", \"canrotate\"" [ref=e4164]:
+              - code [ref=e4165]: "\"moving\""
+              - text: ","
+              - code [ref=e4166]: "\"running\""
+              - text: ","
+              - code [ref=e4167]: "\"canrotate\""
+          - row "hit 被击中 \"busy\"" [ref=e4168]:
+            - cell "hit" [ref=e4169]:
+              - code [ref=e4170]: hit
+            - cell "被击中" [ref=e4171]
+            - cell "\"busy\"" [ref=e4172]:
+              - code [ref=e4173]: "\"busy\""
+          - row "death 死亡 \"busy\", \"dead\"" [ref=e4174]:
+            - cell "death" [ref=e4175]:
+              - code [ref=e4176]: death
+            - cell "死亡" [ref=e4177]
+            - cell "\"busy\", \"dead\"" [ref=e4178]:
+              - code [ref=e4179]: "\"busy\""
+              - text: ","
+              - code [ref=e4180]: "\"dead\""
+          - row "eat 吃东西 \"busy\"" [ref=e4181]:
+            - cell "eat" [ref=e4182]:
+              - code [ref=e4183]: eat
+            - cell "吃东西" [ref=e4184]
+            - cell "\"busy\"" [ref=e4185]:
+              - code [ref=e4186]: "\"busy\""
+          - row "sleep 睡眠 \"sleeping\", \"busy\"" [ref=e4187]:
+            - cell "sleep" [ref=e4188]:
+              - code [ref=e4189]: sleep
+            - cell "睡眠" [ref=e4190]
+            - cell "\"sleeping\", \"busy\"" [ref=e4191]:
+              - code [ref=e4192]: "\"sleeping\""
+              - text: ","
+              - code [ref=e4193]: "\"busy\""
+          - row "wakeup 醒来 \"busy\"" [ref=e4194]:
+            - cell "wakeup" [ref=e4195]:
+              - code [ref=e4196]: wakeup
+            - cell "醒来" [ref=e4197]
+            - cell "\"busy\"" [ref=e4198]:
+              - code [ref=e4199]: "\"busy\""
+          - row "dance 跳舞 \"dancing\"" [ref=e4200]:
+            - cell "dance" [ref=e4201]:
+              - code [ref=e4202]: dance
+            - cell "跳舞" [ref=e4203]
+            - cell "\"dancing\"" [ref=e4204]:
+              - code [ref=e4205]: "\"dancing\""
+          - row "freeze 冻结 \"frozen\", \"busy\"" [ref=e4206]:
+            - cell "freeze" [ref=e4207]:
+              - code [ref=e4208]: freeze
+            - cell "冻结" [ref=e4209]
+            - cell "\"frozen\", \"busy\"" [ref=e4210]:
+              - code [ref=e4211]: "\"frozen\""
+              - text: ","
+              - code [ref=e4212]: "\"busy\""
+          - row "electrocute 触电 \"busy\"" [ref=e4213]:
+            - cell "electrocute" [ref=e4214]:
+              - code [ref=e4215]: electrocute
+            - cell "触电" [ref=e4216]
+            - cell "\"busy\"" [ref=e4217]:
+              - code [ref=e4218]: "\"busy\""
+          - row "jump 跳跃 \"jumping\"" [ref=e4219]:
+            - cell "jump" [ref=e4220]:
+              - code [ref=e4221]: jump
+            - cell "跳跃" [ref=e4222]
+            - cell "\"jumping\"" [ref=e4223]:
+              - code [ref=e4224]: "\"jumping\""
+          - row "fall 掉落 \"falling\"" [ref=e4225]:
+            - cell "fall" [ref=e4226]:
+              - code [ref=e4227]: fall
+            - cell "掉落" [ref=e4228]
+            - cell "\"falling\"" [ref=e4229]:
+              - code [ref=e4230]: "\"falling\""
+          - row "knockback 击退 \"busy\"" [ref=e4231]:
+            - cell "knockback" [ref=e4232]:
+              - code [ref=e4233]: knockback
+            - cell "击退" [ref=e4234]
+            - cell "\"busy\"" [ref=e4235]:
+              - code [ref=e4236]: "\"busy\""
+          - row "teleport 传送 \"busy\"" [ref=e4237]:
+            - cell "teleport" [ref=e4238]:
+              - code [ref=e4239]: teleport
+            - cell "传送" [ref=e4240]
+            - cell "\"busy\"" [ref=e4241]:
+              - code [ref=e4242]: "\"busy\""
+          - row "hide 隐藏 \"hiding\"" [ref=e4243]:
+            - cell "hide" [ref=e4244]:
+              - code [ref=e4245]: hide
+            - cell "隐藏" [ref=e4246]
+            - cell "\"hiding\"" [ref=e4247]:
+              - code [ref=e4248]: "\"hiding\""
+      - heading "1.2 常用状态标签" [level=3] [ref=e4249]:
+        - link "1.2 常用状态标签" [ref=e4250] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_12-%e5%b8%b8%e7%94%a8%e7%8a%b6%e6%80%81%e6%a0%87%e7%ad%be"
+      - table [ref=e4251]:
+        - rowgroup [ref=e4252]:
+          - row "标签 含义" [ref=e4253]:
+            - columnheader "标签" [ref=e4254]
+            - columnheader "含义" [ref=e4255]
+        - rowgroup [ref=e4256]:
+          - row "\"idle\" 待机中，可接受新动作" [ref=e4257]:
+            - cell "\"idle\"" [ref=e4258]:
+              - code [ref=e4259]: "\"idle\""
+            - cell "待机中，可接受新动作" [ref=e4260]
+          - row "\"busy\" 忙碌中，不接受新动作" [ref=e4261]:
+            - cell "\"busy\"" [ref=e4262]:
+              - code [ref=e4263]: "\"busy\""
+            - cell "忙碌中，不接受新动作" [ref=e4264]
+          - row "\"moving\" 正在移动" [ref=e4265]:
+            - cell "\"moving\"" [ref=e4266]:
+              - code [ref=e4267]: "\"moving\""
+            - cell "正在移动" [ref=e4268]
+          - row "\"canrotate\" 可以旋转朝向" [ref=e4269]:
+            - cell "\"canrotate\"" [ref=e4270]:
+              - code [ref=e4271]: "\"canrotate\""
+            - cell "可以旋转朝向" [ref=e4272]
+          - row "\"nopredict\" 不进行动作预测" [ref=e4273]:
+            - cell "\"nopredict\"" [ref=e4274]:
+              - code [ref=e4275]: "\"nopredict\""
+            - cell "不进行动作预测" [ref=e4276]
+          - row "\"attack\" 攻击动作" [ref=e4277]:
+            - cell "\"attack\"" [ref=e4278]:
+              - code [ref=e4279]: "\"attack\""
+            - cell "攻击动作" [ref=e4280]
+          - row "\"jumping\" 跳跃中" [ref=e4281]:
+            - cell "\"jumping\"" [ref=e4282]:
+              - code [ref=e4283]: "\"jumping\""
+            - cell "跳跃中" [ref=e4284]
+          - row "\"frozen\" 被冻结" [ref=e4285]:
+            - cell "\"frozen\"" [ref=e4286]:
+              - code [ref=e4287]: "\"frozen\""
+            - cell "被冻结" [ref=e4288]
+          - row "\"sleeping\" 睡眠中" [ref=e4289]:
+            - cell "\"sleeping\"" [ref=e4290]:
+              - code [ref=e4291]: "\"sleeping\""
+            - cell "睡眠中" [ref=e4292]
+          - row "\"dead\" 已死亡" [ref=e4293]:
+            - cell "\"dead\"" [ref=e4294]:
+              - code [ref=e4295]: "\"dead\""
+            - cell "已死亡" [ref=e4296]
+          - row "\"nointerrupt\" 不可打断" [ref=e4297]:
+            - cell "\"nointerrupt\"" [ref=e4298]:
+              - code [ref=e4299]: "\"nointerrupt\""
+            - cell "不可打断" [ref=e4300]
+      - heading "1.3 事件处理器" [level=3] [ref=e4301]:
+        - link "1.3 事件处理器" [ref=e4302] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_13-%e4%ba%8b%e4%bb%b6%e5%a4%84%e7%90%86%e5%99%a8"
+      - paragraph [ref=e4303]: 通用状态响应的事件：
+      - generic [ref=e4304]:
+        - code [ref=e4305]: "-- 通用事件处理器 EventHandler(\"attacked\", function(inst) ... end) -- 被攻击 EventHandler(\"death\", function(inst) ... end) -- 死亡 EventHandler(\"gotnewitem\", function(inst) ... end) -- 获得新物品 EventHandler(\"eat\", function(inst) ... end) -- 吃东西 EventHandler(\"frozen\", function(inst) ... end) -- 被冻结 EventHandler(\"electrocuted\", function(inst) ... end) -- 被电击 EventHandler(\"locomote\", function(inst) ... end) -- 移动命令 EventHandler(\"knockback\", function(inst) ... end) -- 被击退"
+        - text: lua
+      - separator [ref=e4306]
+      - heading "2. 玩家 SG (SGplayer_*.lua)" [level=2] [ref=e4307]:
+        - link "2. 玩家 SG (SGplayer_*.lua)" [ref=e4308] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_2-%e7%8e%a9%e5%ae%b6-sg-sgplayer_lua"
+      - paragraph [ref=e4309]: 玩家 SG 是最复杂的，包含大量状态。
+      - heading "2.1 玩家核心状态" [level=3] [ref=e4310]:
+        - link "2.1 玩家核心状态" [ref=e4311] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_21-%e7%8e%a9%e5%ae%b6%e6%a0%b8%e5%bf%83%e7%8a%b6%e6%80%81"
+      - table [ref=e4312]:
+        - rowgroup [ref=e4313]:
+          - row "状态 说明 动画" [ref=e4314]:
+            - columnheader "状态" [ref=e4315]
+            - columnheader "说明" [ref=e4316]
+            - columnheader "动画" [ref=e4317]
+        - rowgroup [ref=e4318]:
+          - row "idle 待机 idle" [ref=e4319]:
+            - cell "idle" [ref=e4320]:
+              - code [ref=e4321]: idle
+            - cell "待机" [ref=e4322]
+            - cell "idle" [ref=e4323]
+          - row "walk 走路 walk" [ref=e4324]:
+            - cell "walk" [ref=e4325]:
+              - code [ref=e4326]: walk
+            - cell "走路" [ref=e4327]
+            - cell "walk" [ref=e4328]
+          - row "run 跑步 run" [ref=e4329]:
+            - cell "run" [ref=e4330]:
+              - code [ref=e4331]: run
+            - cell "跑步" [ref=e4332]
+            - cell "run" [ref=e4333]
+          - row "doshortaction 短动作（捡起/采集） 取决于动作" [ref=e4334]:
+            - cell "doshortaction" [ref=e4335]:
+              - code [ref=e4336]: doshortaction
+            - cell "短动作（捡起/采集）" [ref=e4337]
+            - cell "取决于动作" [ref=e4338]
+          - row "dolongaction 长动作（砍树/挖矿） 取决于动作" [ref=e4339]:
+            - cell "dolongaction" [ref=e4340]:
+              - code [ref=e4341]: dolongaction
+            - cell "长动作（砍树/挖矿）" [ref=e4342]
+            - cell "取决于动作" [ref=e4343]
+          - row "domediumaction 中等动作 取决于动作" [ref=e4344]:
+            - cell "domediumaction" [ref=e4345]:
+              - code [ref=e4346]: domediumaction
+            - cell "中等动作" [ref=e4347]
+            - cell "取决于动作" [ref=e4348]
+          - row "attack 攻击 attack" [ref=e4349]:
+            - cell "attack" [ref=e4350]:
+              - code [ref=e4351]: attack
+            - cell "攻击" [ref=e4352]
+            - cell "attack" [ref=e4353]
+          - row "death 死亡 death" [ref=e4354]:
+            - cell "death" [ref=e4355]:
+              - code [ref=e4356]: death
+            - cell "死亡" [ref=e4357]
+            - cell "death" [ref=e4358]
+          - row "readbook 读书 取决于书" [ref=e4359]:
+            - cell "readbook" [ref=e4360]:
+              - code [ref=e4361]: readbook
+            - cell "读书" [ref=e4362]
+            - cell "取决于书" [ref=e4363]
+          - row "castspell 施法 取决于法术" [ref=e4364]:
+            - cell "castspell" [ref=e4365]:
+              - code [ref=e4366]: castspell
+            - cell "施法" [ref=e4367]
+            - cell "取决于法术" [ref=e4368]
+          - row "mount 骑乘 取决于坐骑" [ref=e4369]:
+            - cell "mount" [ref=e4370]:
+              - code [ref=e4371]: mount
+            - cell "骑乘" [ref=e4372]
+            - cell "取决于坐骑" [ref=e4373]
+          - row "dismount 下马 取决于坐骑" [ref=e4374]:
+            - cell "dismount" [ref=e4375]:
+              - code [ref=e4376]: dismount
+            - cell "下马" [ref=e4377]
+            - cell "取决于坐骑" [ref=e4378]
+          - row "fish 钓鱼 fishing" [ref=e4379]:
+            - cell "fish" [ref=e4380]:
+              - code [ref=e4381]: fish
+            - cell "钓鱼" [ref=e4382]
+            - cell "fishing" [ref=e4383]
+          - row "row 划船 rowing" [ref=e4384]:
+            - cell "row" [ref=e4385]:
+              - code [ref=e4386]: row
+            - cell "划船" [ref=e4387]
+            - cell "rowing" [ref=e4388]
+          - row "sail 扬帆 sailing" [ref=e4389]:
+            - cell "sail" [ref=e4390]:
+              - code [ref=e4391]: sail
+            - cell "扬帆" [ref=e4392]
+            - cell "sailing" [ref=e4393]
+          - row "steer 掌舵 steering" [ref=e4394]:
+            - cell "steer" [ref=e4395]:
+              - code [ref=e4396]: steer
+            - cell "掌舵" [ref=e4397]
+            - cell "steering" [ref=e4398]
+          - row "pickup 捡起 pickup" [ref=e4399]:
+            - cell "pickup" [ref=e4400]:
+              - code [ref=e4401]: pickup
+            - cell "捡起" [ref=e4402]
+            - cell "pickup" [ref=e4403]
+          - row "eat 吃 eat" [ref=e4404]:
+            - cell "eat" [ref=e4405]:
+              - code [ref=e4406]: eat
+            - cell "吃" [ref=e4407]
+            - cell "eat" [ref=e4408]
+          - row "build 建造 build" [ref=e4409]:
+            - cell "build" [ref=e4410]:
+              - code [ref=e4411]: build
+            - cell "建造" [ref=e4412]
+            - cell "build" [ref=e4413]
+          - row "place 放置 取决于物品" [ref=e4414]:
+            - cell "place" [ref=e4415]:
+              - code [ref=e4416]: place
+            - cell "放置" [ref=e4417]
+            - cell "取决于物品" [ref=e4418]
+          - row "useitem 使用物品 取决于物品" [ref=e4419]:
+            - cell "useitem" [ref=e4420]:
+              - code [ref=e4421]: useitem
+            - cell "使用物品" [ref=e4422]
+            - cell "取决于物品" [ref=e4423]
+          - row "sleepin 入睡 取决于床" [ref=e4424]:
+            - cell "sleepin" [ref=e4425]:
+              - code [ref=e4426]: sleepin
+            - cell "入睡" [ref=e4427]
+            - cell "取决于床" [ref=e4428]
+          - row "sleepout 醒来 取决于床" [ref=e4429]:
+            - cell "sleepout" [ref=e4430]:
+              - code [ref=e4431]: sleepout
+            - cell "醒来" [ref=e4432]
+            - cell "取决于床" [ref=e4433]
+          - row "hide 躲藏 hide" [ref=e4434]:
+            - cell "hide" [ref=e4435]:
+              - code [ref=e4436]: hide
+            - cell "躲藏" [ref=e4437]
+            - cell "hide" [ref=e4438]
+          - row "emote 表情 取决于表情" [ref=e4439]:
+            - cell "emote" [ref=e4440]:
+              - code [ref=e4441]: emote
+            - cell "表情" [ref=e4442]
+            - cell "取决于表情" [ref=e4443]
+      - heading "2.2 玩家特殊状态" [level=3] [ref=e4444]:
+        - link "2.2 玩家特殊状态" [ref=e4445] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_22-%e7%8e%a9%e5%ae%b6%e7%89%b9%e6%ae%8a%e7%8a%b6%e6%80%81"
+      - table [ref=e4446]:
+        - rowgroup [ref=e4447]:
+          - row "状态 说明" [ref=e4448]:
+            - columnheader "状态" [ref=e4449]
+            - columnheader "说明" [ref=e4450]
+        - rowgroup [ref=e4451]:
+          - row "umbrella 撑伞" [ref=e4452]:
+            - cell "umbrella" [ref=e4453]:
+              - code [ref=e4454]: umbrella
+            - cell "撑伞" [ref=e4455]
+          - row "mining 挖矿" [ref=e4456]:
+            - cell "mining" [ref=e4457]:
+              - code [ref=e4458]: mining
+            - cell "挖矿" [ref=e4459]
+          - row "chop 砍树" [ref=e4460]:
+            - cell "chop" [ref=e4461]:
+              - code [ref=e4462]: chop
+            - cell "砍树" [ref=e4463]
+          - row "hammer 锤击" [ref=e4464]:
+            - cell "hammer" [ref=e4465]:
+              - code [ref=e4466]: hammer
+            - cell "锤击" [ref=e4467]
+          - row "net 捕虫网" [ref=e4468]:
+            - cell "net" [ref=e4469]:
+              - code [ref=e4470]: net
+            - cell "捕虫网" [ref=e4471]
+          - row "shave 剃毛" [ref=e4472]:
+            - cell "shave" [ref=e4473]:
+              - code [ref=e4474]: shave
+            - cell "剃毛" [ref=e4475]
+          - row "heal 治疗" [ref=e4476]:
+            - cell "heal" [ref=e4477]:
+              - code [ref=e4478]: heal
+            - cell "治疗" [ref=e4479]
+          - row "revive 复活" [ref=e4480]:
+            - cell "revive" [ref=e4481]:
+              - code [ref=e4482]: revive
+            - cell "复活" [ref=e4483]
+          - row "resurrect 被复活" [ref=e4484]:
+            - cell "resurrect" [ref=e4485]:
+              - code [ref=e4486]: resurrect
+            - cell "被复活" [ref=e4487]
+          - row "cook 烹饪" [ref=e4488]:
+            - cell "cook" [ref=e4489]:
+              - code [ref=e4490]: cook
+            - cell "烹饪" [ref=e4491]
+          - row "fish_catch 钓到鱼" [ref=e4492]:
+            - cell "fish_catch" [ref=e4493]:
+              - code [ref=e4494]: fish_catch
+            - cell "钓到鱼" [ref=e4495]
+          - row "oceanfishing 海钓" [ref=e4496]:
+            - cell "oceanfishing" [ref=e4497]:
+              - code [ref=e4498]: oceanfishing
+            - cell "海钓" [ref=e4499]
+          - row "plant 种植" [ref=e4500]:
+            - cell "plant" [ref=e4501]:
+              - code [ref=e4502]: plant
+            - cell "种植" [ref=e4503]
+          - row "fertilize 施肥" [ref=e4504]:
+            - cell "fertilize" [ref=e4505]:
+              - code [ref=e4506]: fertilize
+            - cell "施肥" [ref=e4507]
+          - row "till 耕地" [ref=e4508]:
+            - cell "till" [ref=e4509]:
+              - code [ref=e4510]: till
+            - cell "耕地" [ref=e4511]
+          - row "water 浇水" [ref=e4512]:
+            - cell "water" [ref=e4513]:
+              - code [ref=e4514]: water
+            - cell "浇水" [ref=e4515]
+      - heading "2.3 角色特有 SG" [level=3] [ref=e4516]:
+        - link "2.3 角色特有 SG" [ref=e4517] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_23-%e8%a7%92%e8%89%b2%e7%89%b9%e6%9c%89-sg"
+      - table [ref=e4518]:
+        - rowgroup [ref=e4519]:
+          - row "SG 文件 角色 特殊状态" [ref=e4520]:
+            - columnheader "SG 文件" [ref=e4521]
+            - columnheader "角色" [ref=e4522]
+            - columnheader "特殊状态" [ref=e4523]
+        - rowgroup [ref=e4524]:
+          - row "SGwilson.lua 威尔逊 胡子生长" [ref=e4525]:
+            - cell "SGwilson.lua" [ref=e4526]:
+              - code [ref=e4527]: SGwilson.lua
+            - cell "威尔逊" [ref=e4528]
+            - cell "胡子生长" [ref=e4529]
+          - row "SGwillow.lua 薇洛 打火机、火焰" [ref=e4530]:
+            - cell "SGwillow.lua" [ref=e4531]:
+              - code [ref=e4532]: SGwillow.lua
+            - cell "薇洛" [ref=e4533]
+            - cell "打火机、火焰" [ref=e4534]
+          - row "SGwolfgang.lua 沃尔夫冈 力量变身" [ref=e4535]:
+            - cell "SGwolfgang.lua" [ref=e4536]:
+              - code [ref=e4537]: SGwolfgang.lua
+            - cell "沃尔夫冈" [ref=e4538]
+            - cell "力量变身" [ref=e4539]
+          - row "SGwendy.lua 温蒂 阿比盖尔召唤" [ref=e4540]:
+            - cell "SGwendy.lua" [ref=e4541]:
+              - code [ref=e4542]: SGwendy.lua
+            - cell "温蒂" [ref=e4543]
+            - cell "阿比盖尔召唤" [ref=e4544]
+          - row "SGwx78.lua WX-78 电路、扫描" [ref=e4545]:
+            - cell "SGwx78.lua" [ref=e4546]:
+              - code [ref=e4547]: SGwx78.lua
+            - cell "WX-78" [ref=e4548]
+            - cell "电路、扫描" [ref=e4549]
+          - row "SGwickerbottom.lua 薇克巴顿 读书" [ref=e4550]:
+            - cell "SGwickerbottom.lua" [ref=e4551]:
+              - code [ref=e4552]: SGwickerbottom.lua
+            - cell "薇克巴顿" [ref=e4553]
+            - cell "读书" [ref=e4554]
+          - row "SGwoodie.lua 伍迪 变身动画" [ref=e4555]:
+            - cell "SGwoodie.lua" [ref=e4556]:
+              - code [ref=e4557]: SGwoodie.lua
+            - cell "伍迪" [ref=e4558]
+            - cell "变身动画" [ref=e4559]
+          - row "SGmaxwell.lua 麦斯威尔 暗影召唤" [ref=e4560]:
+            - cell "SGmaxwell.lua" [ref=e4561]:
+              - code [ref=e4562]: SGmaxwell.lua
+            - cell "麦斯威尔" [ref=e4563]
+            - cell "暗影召唤" [ref=e4564]
+          - row "SGwigfrid.lua 薇格弗德 战吼、专属武器" [ref=e4565]:
+            - cell "SGwigfrid.lua" [ref=e4566]:
+              - code [ref=e4567]: SGwigfrid.lua
+            - cell "薇格弗德" [ref=e4568]
+            - cell "战吼、专属武器" [ref=e4569]
+          - row "SGwebber.lua 韦伯 蜘蛛相关" [ref=e4570]:
+            - cell "SGwebber.lua" [ref=e4571]:
+              - code [ref=e4572]: SGwebber.lua
+            - cell "韦伯" [ref=e4573]
+            - cell "蜘蛛相关" [ref=e4574]
+          - row "SGwinona.lua 薇诺娜 投石机" [ref=e4575]:
+            - cell "SGwinona.lua" [ref=e4576]:
+              - code [ref=e4577]: SGwinona.lua
+            - cell "薇诺娜" [ref=e4578]
+            - cell "投石机" [ref=e4579]
+          - row "SGwortox.lua 沃拓克斯 灵魂跳跃" [ref=e4580]:
+            - cell "SGwortox.lua" [ref=e4581]:
+              - code [ref=e4582]: SGwortox.lua
+            - cell "沃拓克斯" [ref=e4583]
+            - cell "灵魂跳跃" [ref=e4584]
+          - row "SGwormwood.lua 沃姆伍德 种植、开花" [ref=e4585]:
+            - cell "SGwormwood.lua" [ref=e4586]:
+              - code [ref=e4587]: SGwormwood.lua
+            - cell "沃姆伍德" [ref=e4588]
+            - cell "种植、开花" [ref=e4589]
+          - row "SGwurt.lua 沃特 鱼人相关" [ref=e4590]:
+            - cell "SGwurt.lua" [ref=e4591]:
+              - code [ref=e4592]: SGwurt.lua
+            - cell "沃特" [ref=e4593]
+            - cell "鱼人相关" [ref=e4594]
+          - row "SGwalter.lua 沃尔特 弹弓、沃比" [ref=e4595]:
+            - cell "SGwalter.lua" [ref=e4596]:
+              - code [ref=e4597]: SGwalter.lua
+            - cell "沃尔特" [ref=e4598]
+            - cell "弹弓、沃比" [ref=e4599]
+          - row "SGwanda.lua 旺达 时钟魔法" [ref=e4600]:
+            - cell "SGwanda.lua" [ref=e4601]:
+              - code [ref=e4602]: SGwanda.lua
+            - cell "旺达" [ref=e4603]
+            - cell "时钟魔法" [ref=e4604]
+          - row "SGwarly.lua 沃利 厨师动作" [ref=e4605]:
+            - cell "SGwarly.lua" [ref=e4606]:
+              - code [ref=e4607]: SGwarly.lua
+            - cell "沃利" [ref=e4608]
+            - cell "厨师动作" [ref=e4609]
+      - separator [ref=e4610]
+      - heading "3. Boss SG 列表" [level=2] [ref=e4611]:
+        - link "3. Boss SG 列表" [ref=e4612] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_3-boss-sg-%e5%88%97%e8%a1%a8"
+      - table [ref=e4613]:
+        - rowgroup [ref=e4614]:
+          - row "SG 文件 Boss 核心状态" [ref=e4615]:
+            - columnheader "SG 文件" [ref=e4616]
+            - columnheader "Boss" [ref=e4617]
+            - columnheader "核心状态" [ref=e4618]
+        - rowgroup [ref=e4619]:
+          - row "SGdeerclops.lua 独眼巨鹿 attack, groundpound, howl" [ref=e4620]:
+            - cell "SGdeerclops.lua" [ref=e4621]:
+              - code [ref=e4622]: SGdeerclops.lua
+            - cell "独眼巨鹿" [ref=e4623]
+            - cell "attack, groundpound, howl" [ref=e4624]
+          - row "SGbearger.lua 熊獾 attack, groundpound, yawn" [ref=e4625]:
+            - cell "SGbearger.lua" [ref=e4626]:
+              - code [ref=e4627]: SGbearger.lua
+            - cell "熊獾" [ref=e4628]
+            - cell "attack, groundpound, yawn" [ref=e4629]
+          - row "SGdragonfly.lua 蜻蜓龙 attack, enrage, stomp, lavae_spawn" [ref=e4630]:
+            - cell "SGdragonfly.lua" [ref=e4631]:
+              - code [ref=e4632]: SGdragonfly.lua
+            - cell "蜻蜓龙" [ref=e4633]
+            - cell "attack, enrage, stomp, lavae_spawn" [ref=e4634]
+          - row "SGmoose.lua 麋鹿鹅 attack, honk, charge" [ref=e4635]:
+            - cell "SGmoose.lua" [ref=e4636]:
+              - code [ref=e4637]: SGmoose.lua
+            - cell "麋鹿鹅" [ref=e4638]
+            - cell "attack, honk, charge" [ref=e4639]
+          - row "SGklaus.lua 克劳斯 attack, cast, leap, summon" [ref=e4640]:
+            - cell "SGklaus.lua" [ref=e4641]:
+              - code [ref=e4642]: SGklaus.lua
+            - cell "克劳斯" [ref=e4643]
+            - cell "attack, cast, leap, summon" [ref=e4644]
+          - row "SGbeequeen.lua 蜂后 attack, screech, summon_grubs" [ref=e4645]:
+            - cell "SGbeequeen.lua" [ref=e4646]:
+              - code [ref=e4647]: SGbeequeen.lua
+            - cell "蜂后" [ref=e4648]
+            - cell "attack, screech, summon_grubs" [ref=e4649]
+          - row "SGantlion.lua 蚁狮 attack, spikes, sandstorm" [ref=e4650]:
+            - cell "SGantlion.lua" [ref=e4651]:
+              - code [ref=e4652]: SGantlion.lua
+            - cell "蚁狮" [ref=e4653]
+            - cell "attack, spikes, sandstorm" [ref=e4654]
+          - row "SGmalbatross.lua 邪天翁 attack, dive, swoop, tornado" [ref=e4655]:
+            - cell "SGmalbatross.lua" [ref=e4656]:
+              - code [ref=e4657]: SGmalbatross.lua
+            - cell "邪天翁" [ref=e4658]
+            - cell "attack, dive, swoop, tornado" [ref=e4659]
+          - row "SGcrabking.lua 螃蟹王 attack, heal, summon_claws, freeze" [ref=e4660]:
+            - cell "SGcrabking.lua" [ref=e4661]:
+              - code [ref=e4662]: SGcrabking.lua
+            - cell "螃蟹王" [ref=e4663]
+            - cell "attack, heal, summon_claws, freeze" [ref=e4664]
+          - row "SGtoadstool.lua 蟾蜍王 attack, spore_bomb, boom_mushroom, jump" [ref=e4665]:
+            - cell "SGtoadstool.lua" [ref=e4666]:
+              - code [ref=e4667]: SGtoadstool.lua
+            - cell "蟾蜍王" [ref=e4668]
+            - cell "attack, spore_bomb, boom_mushroom, jump" [ref=e4669]
+          - row "SGstalker.lua 远古织影者 attack, shield, summon, bone_cage" [ref=e4670]:
+            - cell "SGstalker.lua" [ref=e4671]:
+              - code [ref=e4672]: SGstalker.lua
+            - cell "远古织影者" [ref=e4673]
+            - cell "attack, shield, summon, bone_cage" [ref=e4674]
+          - row "SGminotaur.lua 远古守护者 attack, charge, stomp" [ref=e4675]:
+            - cell "SGminotaur.lua" [ref=e4676]:
+              - code [ref=e4677]: SGminotaur.lua
+            - cell "远古守护者" [ref=e4678]
+            - cell "attack, charge, stomp" [ref=e4679]
+          - row "SGalterguardian_phase1.lua 天体守护者 P1 attack, laser, spin" [ref=e4680]:
+            - cell "SGalterguardian_phase1.lua" [ref=e4681]:
+              - code [ref=e4682]: SGalterguardian_phase1.lua
+            - cell "天体守护者 P1" [ref=e4683]
+            - cell "attack, laser, spin" [ref=e4684]
+          - row "SGalterguardian_phase2.lua 天体守护者 P2 attack, crystal_summon, charge" [ref=e4685]:
+            - cell "SGalterguardian_phase2.lua" [ref=e4686]:
+              - code [ref=e4687]: SGalterguardian_phase2.lua
+            - cell "天体守护者 P2" [ref=e4688]
+            - cell "attack, crystal_summon, charge" [ref=e4689]
+          - row "SGalterguardian_phase3.lua 天体守护者 P3 attack, enlightened_attack" [ref=e4690]:
+            - cell "SGalterguardian_phase3.lua" [ref=e4691]:
+              - code [ref=e4692]: SGalterguardian_phase3.lua
+            - cell "天体守护者 P3" [ref=e4693]
+            - cell "attack, enlightened_attack" [ref=e4694]
+          - row "SGeyeofterror.lua 恐怖之眼 attack, charge, spawn_minis" [ref=e4695]:
+            - cell "SGeyeofterror.lua" [ref=e4696]:
+              - code [ref=e4697]: SGeyeofterror.lua
+            - cell "恐怖之眼" [ref=e4698]
+            - cell "attack, charge, spawn_minis" [ref=e4699]
+          - row "SGdaywalker.lua 昼行者 attack, dash, howl" [ref=e4700]:
+            - cell "SGdaywalker.lua" [ref=e4701]:
+              - code [ref=e4702]: SGdaywalker.lua
+            - cell "昼行者" [ref=e4703]
+            - cell "attack, dash, howl" [ref=e4704]
+      - separator [ref=e4705]
+      - heading "4. 常用生物 SG 列表" [level=2] [ref=e4706]:
+        - link "4. 常用生物 SG 列表" [ref=e4707] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_4-%e5%b8%b8%e7%94%a8%e7%94%9f%e7%89%a9-sg-%e5%88%97%e8%a1%a8"
+      - table [ref=e4708]:
+        - rowgroup [ref=e4709]:
+          - row "SG 文件 生物" [ref=e4710]:
+            - columnheader "SG 文件" [ref=e4711]
+            - columnheader "生物" [ref=e4712]
+        - rowgroup [ref=e4713]:
+          - row "SGspider.lua 蜘蛛" [ref=e4714]:
+            - cell "SGspider.lua" [ref=e4715]:
+              - code [ref=e4716]: SGspider.lua
+            - cell "蜘蛛" [ref=e4717]
+          - row "SGpig.lua 猪人" [ref=e4718]:
+            - cell "SGpig.lua" [ref=e4719]:
+              - code [ref=e4720]: SGpig.lua
+            - cell "猪人" [ref=e4721]
+          - row "SGbeefalo.lua 牛" [ref=e4722]:
+            - cell "SGbeefalo.lua" [ref=e4723]:
+              - code [ref=e4724]: SGbeefalo.lua
+            - cell "牛" [ref=e4725]
+          - row "SGhound.lua 猎犬" [ref=e4726]:
+            - cell "SGhound.lua" [ref=e4727]:
+              - code [ref=e4728]: SGhound.lua
+            - cell "猎犬" [ref=e4729]
+          - row "SGtallbird.lua 高鸟" [ref=e4730]:
+            - cell "SGtallbird.lua" [ref=e4731]:
+              - code [ref=e4732]: SGtallbird.lua
+            - cell "高鸟" [ref=e4733]
+          - row "SGfrog.lua 青蛙" [ref=e4734]:
+            - cell "SGfrog.lua" [ref=e4735]:
+              - code [ref=e4736]: SGfrog.lua
+            - cell "青蛙" [ref=e4737]
+          - row "SGbee.lua 蜜蜂" [ref=e4738]:
+            - cell "SGbee.lua" [ref=e4739]:
+              - code [ref=e4740]: SGbee.lua
+            - cell "蜜蜂" [ref=e4741]
+          - row "SGbat.lua 蝙蝠" [ref=e4742]:
+            - cell "SGbat.lua" [ref=e4743]:
+              - code [ref=e4744]: SGbat.lua
+            - cell "蝙蝠" [ref=e4745]
+          - row "SGchester.lua 切斯特" [ref=e4746]:
+            - cell "SGchester.lua" [ref=e4747]:
+              - code [ref=e4748]: SGchester.lua
+            - cell "切斯特" [ref=e4749]
+          - row "SGbunnyman.lua 兔人" [ref=e4750]:
+            - cell "SGbunnyman.lua" [ref=e4751]:
+              - code [ref=e4752]: SGbunnyman.lua
+            - cell "兔人" [ref=e4753]
+          - row "SGmerm.lua 鱼人" [ref=e4754]:
+            - cell "SGmerm.lua" [ref=e4755]:
+              - code [ref=e4756]: SGmerm.lua
+            - cell "鱼人" [ref=e4757]
+          - row "SGkoalefant.lua 考拉象" [ref=e4758]:
+            - cell "SGkoalefant.lua" [ref=e4759]:
+              - code [ref=e4760]: SGkoalefant.lua
+            - cell "考拉象" [ref=e4761]
+          - row "SGkrampus.lua 坎普斯" [ref=e4762]:
+            - cell "SGkrampus.lua" [ref=e4763]:
+              - code [ref=e4764]: SGkrampus.lua
+            - cell "坎普斯" [ref=e4765]
+          - row "SGLeif.lua 树精" [ref=e4766]:
+            - cell "SGLeif.lua" [ref=e4767]:
+              - code [ref=e4768]: SGLeif.lua
+            - cell "树精" [ref=e4769]
+          - row "SGrocky.lua 岩石龙虾" [ref=e4770]:
+            - cell "SGrocky.lua" [ref=e4771]:
+              - code [ref=e4772]: SGrocky.lua
+            - cell "岩石龙虾" [ref=e4773]
+          - row "SGpenguin.lua 企鹅" [ref=e4774]:
+            - cell "SGpenguin.lua" [ref=e4775]:
+              - code [ref=e4776]: SGpenguin.lua
+            - cell "企鹅" [ref=e4777]
+          - row "SGbird.lua 鸟类" [ref=e4778]:
+            - cell "SGbird.lua" [ref=e4779]:
+              - code [ref=e4780]: SGbird.lua
+            - cell "鸟类" [ref=e4781]
+          - row "SGbutterfly.lua 蝴蝶" [ref=e4782]:
+            - cell "SGbutterfly.lua" [ref=e4783]:
+              - code [ref=e4784]: SGbutterfly.lua
+            - cell "蝴蝶" [ref=e4785]
+          - row "SGmole.lua 鼹鼠" [ref=e4786]:
+            - cell "SGmole.lua" [ref=e4787]:
+              - code [ref=e4788]: SGmole.lua
+            - cell "鼹鼠" [ref=e4789]
+          - row "SGcatcoon.lua 浣熊猫" [ref=e4790]:
+            - cell "SGcatcoon.lua" [ref=e4791]:
+              - code [ref=e4792]: SGcatcoon.lua
+            - cell "浣熊猫" [ref=e4793]
+          - row "SGglommer.lua 格罗姆" [ref=e4794]:
+            - cell "SGglommer.lua" [ref=e4795]:
+              - code [ref=e4796]: SGglommer.lua
+            - cell "格罗姆" [ref=e4797]
+          - row "SGperd.lua 火鸡" [ref=e4798]:
+            - cell "SGperd.lua" [ref=e4799]:
+              - code [ref=e4800]: SGperd.lua
+            - cell "火鸡" [ref=e4801]
+          - row "SGslurtle.lua 蜗牛龟" [ref=e4802]:
+            - cell "SGslurtle.lua" [ref=e4803]:
+              - code [ref=e4804]: SGslurtle.lua
+            - cell "蜗牛龟" [ref=e4805]
+          - row "SGmosquito.lua 蚊子" [ref=e4806]:
+            - cell "SGmosquito.lua" [ref=e4807]:
+              - code [ref=e4808]: SGmosquito.lua
+            - cell "蚊子" [ref=e4809]
+          - row "SGbuzzard.lua 秃鹰" [ref=e4810]:
+            - cell "SGbuzzard.lua" [ref=e4811]:
+              - code [ref=e4812]: SGbuzzard.lua
+            - cell "秃鹰" [ref=e4813]
+          - row "SGlightninggoat.lua 闪电羊" [ref=e4814]:
+            - cell "SGlightninggoat.lua" [ref=e4815]:
+              - code [ref=e4816]: SGlightninggoat.lua
+            - cell "闪电羊" [ref=e4817]
+          - row "SGgrassgekko.lua 草壁虎" [ref=e4818]:
+            - cell "SGgrassgekko.lua" [ref=e4819]:
+              - code [ref=e4820]: SGgrassgekko.lua
+            - cell "草壁虎" [ref=e4821]
+          - row "SGworm.lua 洞穴蠕虫" [ref=e4822]:
+            - cell "SGworm.lua" [ref=e4823]:
+              - code [ref=e4824]: SGworm.lua
+            - cell "洞穴蠕虫" [ref=e4825]
+          - row "SGslurper.lua 吸食兽" [ref=e4826]:
+            - cell "SGslurper.lua" [ref=e4827]:
+              - code [ref=e4828]: SGslurper.lua
+            - cell "吸食兽" [ref=e4829]
+      - separator [ref=e4830]
+      - heading "5. SG 编写教程" [level=2] [ref=e4831]:
+        - link "5. SG 编写教程" [ref=e4832] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_5-sg-%e7%bc%96%e5%86%99%e6%95%99%e7%a8%8b"
+      - heading "5.1 基础 SG 模板" [level=3] [ref=e4833]:
+        - link "5.1 基础 SG 模板" [ref=e4834] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_51-%e5%9f%ba%e7%a1%80-sg-%e6%a8%a1%e6%9d%bf"
+      - generic [ref=e4835]:
+        - code [ref=e4836]: "-- SGmycreature.lua require(\"stategraphs/commonstates\") local actionhandlers = { ActionHandler(ACTIONS.ATTACK, \"attack\"), ActionHandler(ACTIONS.EAT, \"eat\"), } local events = { CommonHandlers.OnLocomote(false, true), -- 走路+跑步 CommonHandlers.OnAttacked(), CommonHandlers.OnDeath(), CommonHandlers.OnSleep(), CommonHandlers.OnFreeze(), CommonHandlers.OnAttack(), CommonHandlers.OnHit(), CommonHandlers.OnEat(), EventHandler(\"my_event\", function(inst, data) if not (inst.sg:HasStateTag(\"busy\") or inst.sg:HasStateTag(\"dead\")) then inst.sg:GoToState(\"my_state\", data) end end), } local states = { State{ name = \"idle\", tags = { \"idle\", \"canrotate\" }, onenter = function(inst) inst.AnimState:PlayAnimation(\"idle\", true) -- true = 循环 end, events = { EventHandler(\"animover\", function(inst) inst.sg:GoToState(\"idle\") end), }, }, State{ name = \"attack\", tags = { \"attack\", \"busy\", \"canrotate\" }, onenter = function(inst, target) inst.components.combat:StartAttack() inst.AnimState:PlayAnimation(\"attack\") inst.sg.statemem.target = target end, timeline = { TimeEvent(8 * FRAMES, function(inst) inst.components.combat:DoAttack(inst.sg.statemem.target) end), }, events = { EventHandler(\"animover\", function(inst) inst.sg:GoToState(\"idle\") end), }, }, State{ name = \"death\", tags = { \"busy\", \"dead\" }, onenter = function(inst) inst.AnimState:PlayAnimation(\"death\") inst.components.lootdropper:DropLoot() end, events = { EventHandler(\"animover\", function(inst) inst:Remove() end), }, }, } return StateGraph(\"mycreature\", states, events, \"idle\", actionhandlers)"
+        - text: lua
+      - heading "5.2 TimeEvent 用法" [level=3] [ref=e4837]:
+        - link "5.2 TimeEvent 用法" [ref=e4838] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_52-timeevent-%e7%94%a8%e6%b3%95"
+      - generic [ref=e4839]:
+        - code [ref=e4840]: "timeline = { -- 在动画的第 N 帧执行 TimeEvent(5 * FRAMES, function(inst) -- 第 5 帧 end), TimeEvent(10 * FRAMES, function(inst) -- 第 10 帧 end), -- 根据动画事件触发 TimeEvent(\"hit\", function(inst) -- 动画中标记 \"hit\" 的位置 end), -- 范围事件 TimeEvent(5 * FRAMES, 15 * FRAMES, function(inst) -- 5-15 帧期间持续执行 end), }"
+        - text: lua
+      - heading "5.3 状态转换" [level=3] [ref=e4841]:
+        - link "5.3 状态转换" [ref=e4842] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_53-%e7%8a%b6%e6%80%81%e8%bd%ac%e6%8d%a2"
+      - generic [ref=e4843]:
+        - code [ref=e4844]: "-- 基本转换 inst.sg:GoToState(\"walk\") -- 带参数转换 inst.sg:GoToState(\"attack\", target) -- 条件转换 if not inst.sg:HasStateTag(\"busy\") then inst.sg:GoToState(\"idle\") end -- 检查当前状态 if inst.sg:HasStateTag(\"idle\") then -- 在待机中 end -- 获取当前状态名 local state = inst.sg.currentstate.name"
+        - text: lua
+      - heading "5.4 在 Prefab 中绑定 SG" [level=3] [ref=e4845]:
+        - link "5.4 在 Prefab 中绑定 SG" [ref=e4846] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_54-%e5%9c%a8-prefab-%e4%b8%ad%e7%bb%91%e5%ae%9a-sg"
+      - generic [ref=e4847]:
+        - code [ref=e4848]: local function fn() local inst = CreateEntity() -- ... 实体设置 ... inst:SetStateGraph("SGmycreature") return inst end
+        - text: lua
+      - heading "5.5 在 Mod 中修改 SG" [level=3] [ref=e4849]:
+        - link "5.5 在 Mod 中修改 SG" [ref=e4850] [cursor=pointer]:
+          - /url: "#/06-stategraphs/sg-reference?id=_55-%e5%9c%a8-mod-%e4%b8%ad%e4%bf%ae%e6%94%b9-sg"
+      - generic [ref=e4851]:
+        - code [ref=e4852]: "-- 在 modmain.lua 中 AddStategraphPostInit(\"wilson\", function(sg) -- 修改已有状态 local idleState = sg.states[\"idle\"] -- ... -- 添加新状态 sg.states[\"my_state\"] = State{ name = \"my_state\", -- ... } end)"
+        - text: lua

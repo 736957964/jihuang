@@ -1,0 +1,778 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e4853]:
+        - listitem [ref=e4854]:
+          - text: 前言
+          - list [ref=e4855]:
+            - listitem [ref=e4856]:
+              - link "Mod相关信息" [ref=e4857] [cursor=pointer]:
+                - /url: "#/README"
+        - listitem [ref=e4858]:
+          - text: 01 核心系统
+          - list [ref=e4859]:
+            - listitem [ref=e4860]:
+              - link "01-core 总览" [ref=e4861] [cursor=pointer]:
+                - /url: "#/01-core/index"
+            - listitem [ref=e4862]:
+              - link "EntityScript 实体脚本" [ref=e4863] [cursor=pointer]:
+                - /url: "#/01-core/entity"
+            - listitem [ref=e4864]:
+              - link "Prefab 预制体系统" [ref=e4865] [cursor=pointer]:
+                - /url: "#/01-core/prefab"
+            - listitem [ref=e4866]:
+              - link "Class 类系统" [ref=e4867] [cursor=pointer]:
+                - /url: "#/01-core/class"
+            - listitem [ref=e4868]:
+              - link "全局函数" [ref=e4869] [cursor=pointer]:
+                - /url: "#/01-core/mainfunctions"
+            - listitem [ref=e4870]:
+              - link "全局变量" [ref=e4871] [cursor=pointer]:
+                - /url: "#/01-core/globals"
+            - listitem [ref=e4872]:
+              - link "simutil 工具函数" [ref=e4873] [cursor=pointer]:
+                - /url: "#/01-core/simutil"
+        - listitem [ref=e4874]:
+          - text: 02 Components 组件
+          - list [ref=e4875]:
+            - listitem [ref=e4876]:
+              - link "02-components 总览" [ref=e4877] [cursor=pointer]:
+                - /url: "#/02-components/index"
+            - listitem [ref=e4878]:
+              - text: 战斗 Combat
+              - list [ref=e4879]:
+                - listitem [ref=e4880]:
+                  - link "combat 总览" [ref=e4881] [cursor=pointer]:
+                    - /url: "#/02-components/combat/index"
+                - listitem [ref=e4882]:
+                  - link "combat 战斗" [ref=e4883] [cursor=pointer]:
+                    - /url: "#/02-components/combat/combat"
+                - listitem [ref=e4884]:
+                  - link "health 生命值" [ref=e4885] [cursor=pointer]:
+                    - /url: "#/02-components/combat/health"
+                - listitem [ref=e4886]:
+                  - link "weapon 武器" [ref=e4887] [cursor=pointer]:
+                    - /url: "#/02-components/combat/weapon"
+                - listitem [ref=e4888]:
+                  - link "armor 盔甲" [ref=e4889] [cursor=pointer]:
+                    - /url: "#/02-components/combat/armor"
+            - listitem [ref=e4890]:
+              - text: 生存 Survival
+              - list [ref=e4891]:
+                - listitem [ref=e4892]:
+                  - link "survival 总览" [ref=e4893] [cursor=pointer]:
+                    - /url: "#/02-components/survival/index"
+                - listitem [ref=e4894]:
+                  - link "hunger 饥饿" [ref=e4895] [cursor=pointer]:
+                    - /url: "#/02-components/survival/hunger"
+                - listitem [ref=e4896]:
+                  - link "sanity 理智" [ref=e4897] [cursor=pointer]:
+                    - /url: "#/02-components/survival/sanity"
+            - listitem [ref=e4898]:
+              - text: 背包 Inventory
+              - list [ref=e4899]:
+                - listitem [ref=e4900]:
+                  - link "inventory 总览" [ref=e4901] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/index"
+                - listitem [ref=e4902]:
+                  - link "inventory 背包" [ref=e4903] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/inventory"
+                - listitem [ref=e4904]:
+                  - link "container 容器" [ref=e4905] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/container"
+            - listitem [ref=e4906]:
+              - text: 工作 Work
+              - list [ref=e4907]:
+                - listitem [ref=e4908]:
+                  - link "work 总览" [ref=e4909] [cursor=pointer]:
+                    - /url: "#/02-components/work/index"
+                - listitem [ref=e4910]:
+                  - link "workable 可工作" [ref=e4911] [cursor=pointer]:
+                    - /url: "#/02-components/work/workable"
+            - listitem [ref=e4912]:
+              - text: 食物 Edible
+              - list [ref=e4913]:
+                - listitem [ref=e4914]:
+                  - link "edible 总览" [ref=e4915] [cursor=pointer]:
+                    - /url: "#/02-components/edible/index"
+                - listitem [ref=e4916]:
+                  - link "edible 可食用" [ref=e4917] [cursor=pointer]:
+                    - /url: "#/02-components/edible/edible"
+                - listitem [ref=e4918]:
+                  - link "perishable 易腐" [ref=e4919] [cursor=pointer]:
+                    - /url: "#/02-components/edible/perishable"
+            - listitem [ref=e4920]:
+              - text: 建造 Builder
+              - list [ref=e4921]:
+                - listitem [ref=e4922]:
+                  - link "builder 总览" [ref=e4923] [cursor=pointer]:
+                    - /url: "#/02-components/builder/index"
+                - listitem [ref=e4924]:
+                  - link "builder 建造" [ref=e4925] [cursor=pointer]:
+                    - /url: "#/02-components/builder/builder"
+            - listitem [ref=e4926]:
+              - text: 燃烧 Burnable
+              - list [ref=e4927]:
+                - listitem [ref=e4928]:
+                  - link "burnable 总览" [ref=e4929] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/index"
+                - listitem [ref=e4930]:
+                  - link "burnable 可燃" [ref=e4931] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/burnable"
+            - listitem [ref=e4932]:
+              - text: 生物 Creature
+              - list [ref=e4933]:
+                - listitem [ref=e4934]:
+                  - link "creature 总览" [ref=e4935] [cursor=pointer]:
+                    - /url: "#/02-components/creature/index"
+                - listitem [ref=e4936]:
+                  - link "childspawner 子生物生成" [ref=e4937] [cursor=pointer]:
+                    - /url: "#/02-components/creature/childspawner"
+            - listitem [ref=e4938]:
+              - text: 其他 Other
+              - list [ref=e4939]:
+                - listitem [ref=e4940]:
+                  - link "other 总览" [ref=e4941] [cursor=pointer]:
+                    - /url: "#/02-components/other/index"
+                - listitem [ref=e4942]:
+                  - link "finiteuses 耐久度" [ref=e4943] [cursor=pointer]:
+                    - /url: "#/02-components/other/finiteuses"
+            - listitem [ref=e4944]:
+              - text: 航海 Sailing
+              - list [ref=e4945]:
+                - listitem [ref=e4946]:
+                  - link "sailing 总览" [ref=e4947] [cursor=pointer]:
+                    - /url: "#/02-components/sailing/index"
+        - listitem [ref=e4948]:
+          - text: 03 Actions 动作
+          - list [ref=e4949]:
+            - listitem [ref=e4950]:
+              - link "03-actions 总览" [ref=e4951] [cursor=pointer]:
+                - /url: "#/03-actions/index"
+            - listitem [ref=e4952]:
+              - link "动作列表" [ref=e4953] [cursor=pointer]:
+                - /url: "#/03-actions/detail/action-list"
+        - listitem [ref=e4954]:
+          - text: 04 Tags 标签
+          - list [ref=e4955]:
+            - listitem [ref=e4956]:
+              - link "04-tags 总览" [ref=e4957] [cursor=pointer]:
+                - /url: "#/04-tags/index"
+        - listitem [ref=e4958]:
+          - text: 05 Events 事件
+          - list [ref=e4959]:
+            - listitem [ref=e4960]:
+              - link "05-events 总览" [ref=e4961] [cursor=pointer]:
+                - /url: "#/05-events/index"
+        - listitem [ref=e4962]:
+          - text: 06 Stategraphs 状态图
+          - list [ref=e4963]:
+            - listitem [ref=e4964]:
+              - link "06-stategraphs 总览" [ref=e4965] [cursor=pointer]:
+                - /url: "#/06-stategraphs/index"
+            - listitem [ref=e4966]:
+              - link "常用 SG 参考" [ref=e4967] [cursor=pointer]:
+                - /url: "#/06-stategraphs/sg-reference"
+              - list [ref=e4968]:
+                - listitem [ref=e4969]:
+                  - text: "-"
+                  - link "1. 通用状态 (commonstates.lua)" [ref=e4970] [cursor=pointer]:
+                    - /url: "#/06-stategraphs/sg-reference?id=_1-%e9%80%9a%e7%94%a8%e7%8a%b6%e6%80%81-commonstateslua"
+                - listitem [ref=e4971]:
+                  - text: "-"
+                  - link "2. 玩家 SG (SGplayer_*.lua)" [ref=e4972] [cursor=pointer]:
+                    - /url: "#/06-stategraphs/sg-reference?id=_2-%e7%8e%a9%e5%ae%b6-sg-sgplayer_lua"
+                - listitem [ref=e4973]:
+                  - text: "-"
+                  - link "3. Boss SG 列表" [ref=e4974] [cursor=pointer]:
+                    - /url: "#/06-stategraphs/sg-reference?id=_3-boss-sg-%e5%88%97%e8%a1%a8"
+                - listitem [ref=e4975]:
+                  - text: "-"
+                  - link "4. 常用生物 SG 列表" [ref=e4976] [cursor=pointer]:
+                    - /url: "#/06-stategraphs/sg-reference?id=_4-%e5%b8%b8%e7%94%a8%e7%94%9f%e7%89%a9-sg-%e5%88%97%e8%a1%a8"
+                - listitem [ref=e4977]:
+                  - text: "-"
+                  - link "5. SG 编写教程" [ref=e4978] [cursor=pointer]:
+                    - /url: "#/06-stategraphs/sg-reference?id=_5-sg-%e7%bc%96%e5%86%99%e6%95%99%e7%a8%8b"
+        - listitem [ref=e4979]:
+          - text: 07 Brains 行为大脑
+          - list [ref=e4980]:
+            - listitem [ref=e4981]:
+              - link "07-brains 总览" [ref=e4982] [cursor=pointer]:
+                - /url: "#/07-brains/index"
+            - listitem [ref=e4983]:
+              - link "常用 Brain 参考" [ref=e4984] [cursor=pointer]:
+                - /url: "#/07-brains/brain-reference"
+        - listitem [ref=e4985]:
+          - text: 08 Prefabs 预设
+          - list [ref=e4986]:
+            - listitem [ref=e4987]:
+              - link "08-prefabs 总览" [ref=e4988] [cursor=pointer]:
+                - /url: "#/08-prefabs/index"
+            - listitem [ref=e4989]:
+              - link "Prefab 分类参考" [ref=e4990] [cursor=pointer]:
+                - /url: "#/08-prefabs/prefabs-reference"
+        - listitem [ref=e4991]:
+          - text: 09 Tuning 调参
+          - list [ref=e4992]:
+            - listitem [ref=e4993]:
+              - link "09-tuning 总览" [ref=e4994] [cursor=pointer]:
+                - /url: "#/09-tuning/index"
+        - listitem [ref=e4995]:
+          - text: 10 Networking 网络
+          - list [ref=e4996]:
+            - listitem [ref=e4997]:
+              - link "10-networking 总览" [ref=e4998] [cursor=pointer]:
+                - /url: "#/10-networking/index"
+        - listitem [ref=e4999]:
+          - text: 11 Modding Mod开发
+          - list [ref=e5000]:
+            - listitem [ref=e5001]:
+              - link "11-modding 总览" [ref=e5002] [cursor=pointer]:
+                - /url: "#/11-modding/index"
+        - listitem [ref=e5003]:
+          - text: 12 Cooking 烹饪
+          - list [ref=e5004]:
+            - listitem [ref=e5005]:
+              - link "12-cooking 总览" [ref=e5006] [cursor=pointer]:
+                - /url: "#/12-cooking/index"
+        - listitem [ref=e5007]:
+          - text: 13 World 世界
+          - list [ref=e5008]:
+            - listitem [ref=e5009]:
+              - link "13-world 总览" [ref=e5010] [cursor=pointer]:
+                - /url: "#/13-world/index"
+            - listitem [ref=e5011]:
+              - link "地图生成系统" [ref=e5012] [cursor=pointer]:
+                - /url: "#/13-world/worldgen"
+        - listitem [ref=e5013]:
+          - text: 14 Skilltree 技能树
+          - list [ref=e5014]:
+            - listitem [ref=e5015]:
+              - link "14-skilltree 总览" [ref=e5016] [cursor=pointer]:
+                - /url: "#/14-skilltree/index"
+        - listitem [ref=e5017]:
+          - text: 15 UI 界面
+          - list [ref=e5018]:
+            - listitem [ref=e5019]:
+              - link "15-ui 总览" [ref=e5020] [cursor=pointer]:
+                - /url: "#/15-ui/index"
+        - listitem [ref=e5021]:
+          - text: 16 Constants 常量
+          - list [ref=e5022]:
+            - listitem [ref=e5023]:
+              - link "16-constants 总览" [ref=e5024] [cursor=pointer]:
+                - /url: "#/16-constants/index"
+        - listitem [ref=e5025]:
+          - text: 17 Standard Components 标准组件
+          - list [ref=e5026]:
+            - listitem [ref=e5027]:
+              - link "17-standardcomponents 总览" [ref=e5028] [cursor=pointer]:
+                - /url: "#/17-standardcomponents/index"
+        - listitem [ref=e5029]:
+          - text: 18 Behaviours 行为树
+          - list [ref=e5030]:
+            - listitem [ref=e5031]:
+              - link "18-behaviours 总览" [ref=e5032] [cursor=pointer]:
+                - /url: "#/18-behaviours/index"
+        - listitem [ref=e5033]:
+          - text: 19 FX 特效
+          - list [ref=e5034]:
+            - listitem [ref=e5035]:
+              - link "19-fx 总览" [ref=e5036] [cursor=pointer]:
+                - /url: "#/19-fx/index"
+        - listitem [ref=e5037]:
+          - text: 案例
+          - list [ref=e5038]:
+            - listitem [ref=e5039]:
+              - link "小案例" [ref=e5040] [cursor=pointer]:
+                - /url: "#/anli/smallAn"
+        - listitem [ref=e5041]:
+          - text: 数据提取
+          - list [ref=e5042]:
+            - listitem [ref=e5043]:
+              - link "数据提取1" [ref=e5044] [cursor=pointer]:
+                - /url: "#/xiazai/tq1"
+            - listitem [ref=e5045]:
+              - link "数据提取2" [ref=e5046] [cursor=pointer]:
+                - /url: "#/xiazai/tq2"
+            - listitem [ref=e5047]:
+              - link "数据提取3" [ref=e5048] [cursor=pointer]:
+                - /url: "#/xiazai/tq3"
+            - listitem [ref=e5049]:
+              - link "数据提取4" [ref=e5050] [cursor=pointer]:
+                - /url: "#/xiazai/tq4"
+            - listitem [ref=e5051]:
+              - link "数据提取5" [ref=e5052] [cursor=pointer]:
+                - /url: "#/xiazai/tq5"
+            - listitem [ref=e5053]:
+              - link "字典" [ref=e5054] [cursor=pointer]:
+                - /url: "#/xiazai/tq6"
+    - article [ref=e212]:
+      - heading "13-world — 地图生成系统 (World Generation)" [level=1] [ref=e5055]:
+        - link "13-world — 地图生成系统 (World Generation)" [ref=e5056] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_13-world-%e5%9c%b0%e5%9b%be%e7%94%9f%e6%88%90%e7%b3%bb%e7%bb%9f-world-generation"
+      - blockquote [ref=e5057]:
+        - paragraph [ref=e5058]:
+          - text: "源码:"
+          - code [ref=e5059]: scripts/map/
+          - text: (478+ 文件) 地图生成是 DST 最复杂的系统之一，负责创建整个游戏世界的地形、生态区、资源分布和特殊结构。
+      - separator [ref=e5060]
+      - heading "1. 地图生成系统架构" [level=2] [ref=e5061]:
+        - link "1. 地图生成系统架构" [ref=e5062] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_1-%e5%9c%b0%e5%9b%be%e7%94%9f%e6%88%90%e7%b3%bb%e7%bb%9f%e6%9e%b6%e6%9e%84"
+      - heading "1.1 核心文件结构" [level=3] [ref=e5063]:
+        - link "1.1 核心文件结构" [ref=e5064] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_11-%e6%a0%b8%e5%bf%83%e6%96%87%e4%bb%b6%e7%bb%93%e6%9e%84"
+      - code [ref=e5066]: "map/ ├── level.lua # 关卡/世界定义 ├── levels.lua # 所有关卡配置 ├── terrain.lua # 地形类型定义 ├── rooms.lua # 房间定义（地形块） ├── room_functions.lua # 房间生成函数 ├── tasks.lua # 任务定义（生成什么） ├── tasksets.lua # 任务集（一组任务） ├── layouts.lua # 静态布局定义 ├── layout.lua # 布局生成逻辑 ├── static_layout.lua # 静态布局系统 ├── object_layout.lua # 对象布局 ├── graphnode.lua # 图节点（房间连接） ├── graphedge.lua # 图边（连接路径） ├── settings.lua # 生成设置 ├── network.lua # 网络相关 ├── customise.lua # 自定义世界设置 ├── customize.lua # 自定义选项 ├── locations.lua # 特殊位置定义 ├── startlocations.lua # 起始位置 ├── pointsofinterest.lua # 兴趣点 ├── protected_resources.lua # 受保护资源 ├── resource_substitution.lua # 资源替换 ├── storygen.lua # 故事生成 ├── boons.lua # 恩赐（奖励箱等） ├── traps.lua # 陷阱 ├── bunches.lua # 资源簇 ├── bunch_spawner.lua # 资源簇生成器 ├── lockandkey.lua # 锁钥机制 ├── maptags.lua # 地图标签 ├── extents.lua # 范围限制 ├── maze_layouts.lua # 迷宫布局 ├── stack.lua # 堆栈工具 ├── placement.lua # 放置工具 ├── blockersets.lua # 阻挡器集合 │ ├── forest_map.lua # 森林地图 ├── caves_retrofit_land.lua # 洞穴改造 ├── ocean_gen.lua # 海洋生成 ├── ocean_gen_config.lua # 海洋生成配置 ├── ocean_retrofit_island.lua # 海洋岛屿改造 ├── monkeyisland_worldgen.lua # 猴岛世界生成 ├── waterlog_worldgen.lua # 水木世界生成 ├── archive_worldgen.lua # 档案区世界生成 ├── retrofit_savedata.lua # 存档数据改造 │ ├── levels/ # 关卡配置文件 ├── rooms/ # 42 个房间定义文件 ├── tasks/ # 10 个任务定义文件 ├── tasksets/ # 任务集配置 └── static_layouts/ # 340 个静态布局文件"
+      - heading "1.2 世界生成流程" [level=3] [ref=e5067]:
+        - link "1.2 世界生成流程" [ref=e5068] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_12-%e4%b8%96%e7%95%8c%e7%94%9f%e6%88%90%e6%b5%81%e7%a8%8b"
+      - code [ref=e5070]: 1. settings.lua → 读取世界设置（大小、季节等） 2. level.lua → 初始化关卡 3. terrain.lua → 生成地形基础 4. graphnode.lua → 创建房间图节点 5. rooms.lua → 定义房间内容 6. tasks.lua → 执行生成任务 7. static_layout.lua → 放置静态结构 8. pointsofinterest.lua → 标记特殊位置
+      - separator [ref=e5071]
+      - heading "2. 地形系统 (terrain.lua)" [level=2] [ref=e5072]:
+        - link "2. 地形系统 (terrain.lua)" [ref=e5073] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_2-%e5%9c%b0%e5%bd%a2%e7%b3%bb%e7%bb%9f-terrainlua"
+      - heading "2.1 地形类型" [level=3] [ref=e5074]:
+        - link "2.1 地形类型" [ref=e5075] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_21-%e5%9c%b0%e5%bd%a2%e7%b1%bb%e5%9e%8b"
+      - table [ref=e5076]:
+        - rowgroup [ref=e5077]:
+          - row "地形 ID 名称 说明" [ref=e5078]:
+            - columnheader "地形 ID" [ref=e5079]
+            - columnheader "名称" [ref=e5080]
+            - columnheader "说明" [ref=e5081]
+        - rowgroup [ref=e5082]:
+          - row "GROUND.ROAD 道路 移动速度加成" [ref=e5083]:
+            - cell "GROUND.ROAD" [ref=e5084]:
+              - code [ref=e5085]: GROUND.ROAD
+            - cell "道路" [ref=e5086]
+            - cell "移动速度加成" [ref=e5087]
+          - row "GROUND.ROCKY 岩石地 矿区" [ref=e5088]:
+            - cell "GROUND.ROCKY" [ref=e5089]:
+              - code [ref=e5090]: GROUND.ROCKY
+            - cell "岩石地" [ref=e5091]
+            - cell "矿区" [ref=e5092]
+          - row "GROUND.DIRT 泥土 普通地面" [ref=e5093]:
+            - cell "GROUND.DIRT" [ref=e5094]:
+              - code [ref=e5095]: GROUND.DIRT
+            - cell "泥土" [ref=e5096]
+            - cell "普通地面" [ref=e5097]
+          - row "GROUND.SAVANNA 稀树草原 草原生态" [ref=e5098]:
+            - cell "GROUND.SAVANNA" [ref=e5099]:
+              - code [ref=e5100]: GROUND.SAVANNA
+            - cell "稀树草原" [ref=e5101]
+            - cell "草原生态" [ref=e5102]
+          - row "GROUND.GRASS 草地 绿色草地" [ref=e5103]:
+            - cell "GROUND.GRASS" [ref=e5104]:
+              - code [ref=e5105]: GROUND.GRASS
+            - cell "草地" [ref=e5106]
+            - cell "绿色草地" [ref=e5107]
+          - row "GROUND.FOREST 森林 森林生态" [ref=e5108]:
+            - cell "GROUND.FOREST" [ref=e5109]:
+              - code [ref=e5110]: GROUND.FOREST
+            - cell "森林" [ref=e5111]
+            - cell "森林生态" [ref=e5112]
+          - row "GROUND.MARSH 沼泽 湿地生态" [ref=e5113]:
+            - cell "GROUND.MARSH" [ref=e5114]:
+              - code [ref=e5115]: GROUND.MARSH
+            - cell "沼泽" [ref=e5116]
+            - cell "湿地生态" [ref=e5117]
+          - row "GROUND.WOODFLOOR 木地板 人造地面" [ref=e5118]:
+            - cell "GROUND.WOODFLOOR" [ref=e5119]:
+              - code [ref=e5120]: GROUND.WOODFLOOR
+            - cell "木地板" [ref=e5121]
+            - cell "人造地面" [ref=e5122]
+          - row "GROUND.CARPET 地毯 人造地面" [ref=e5123]:
+            - cell "GROUND.CARPET" [ref=e5124]:
+              - code [ref=e5125]: GROUND.CARPET
+            - cell "地毯" [ref=e5126]
+            - cell "人造地面" [ref=e5127]
+          - row "GROUND.CHECKER 棋盘 人造地面" [ref=e5128]:
+            - cell "GROUND.CHECKER" [ref=e5129]:
+              - code [ref=e5130]: GROUND.CHECKER
+            - cell "棋盘" [ref=e5131]
+            - cell "人造地面" [ref=e5132]
+          - row "GROUND.SAND 沙地 沙漠生态" [ref=e5133]:
+            - cell "GROUND.SAND" [ref=e5134]:
+              - code [ref=e5135]: GROUND.SAND
+            - cell "沙地" [ref=e5136]
+            - cell "沙漠生态" [ref=e5137]
+          - row "GROUND.OCEAN 海洋 水域" [ref=e5138]:
+            - cell "GROUND.OCEAN" [ref=e5139]:
+              - code [ref=e5140]: GROUND.OCEAN
+            - cell "海洋" [ref=e5141]
+            - cell "水域" [ref=e5142]
+          - row "GROUND.DECIDUOUS 落叶林 秋季森林" [ref=e5143]:
+            - cell "GROUND.DECIDUOUS" [ref=e5144]:
+              - code [ref=e5145]: GROUND.DECIDUOUS
+            - cell "落叶林" [ref=e5146]
+            - cell "秋季森林" [ref=e5147]
+          - row "GROUND.DESERT_DIRT 沙漠土 绿洲沙漠" [ref=e5148]:
+            - cell "GROUND.DESERT_DIRT" [ref=e5149]:
+              - code [ref=e5150]: GROUND.DESERT_DIRT
+            - cell "沙漠土" [ref=e5151]
+            - cell "绿洲沙漠" [ref=e5152]
+          - row "GROUND.FUNGUS 菌地 洞穴菌类区" [ref=e5153]:
+            - cell "GROUND.FUNGUS" [ref=e5154]:
+              - code [ref=e5155]: GROUND.FUNGUS
+            - cell "菌地" [ref=e5156]
+            - cell "洞穴菌类区" [ref=e5157]
+          - row "GROUND.CAVE 洞穴 洞穴地面" [ref=e5158]:
+            - cell "GROUND.CAVE" [ref=e5159]:
+              - code [ref=e5160]: GROUND.CAVE
+            - cell "洞穴" [ref=e5161]
+            - cell "洞穴地面" [ref=e5162]
+          - row "GROUND.MUD 泥地 洞穴泥地" [ref=e5163]:
+            - cell "GROUND.MUD" [ref=e5164]:
+              - code [ref=e5165]: GROUND.MUD
+            - cell "泥地" [ref=e5166]
+            - cell "洞穴泥地" [ref=e5167]
+          - row "GROUND.UNDERROCK 岩下 洞穴岩石" [ref=e5168]:
+            - cell "GROUND.UNDERROCK" [ref=e5169]:
+              - code [ref=e5170]: GROUND.UNDERROCK
+            - cell "岩下" [ref=e5171]
+            - cell "洞穴岩石" [ref=e5172]
+          - row "GROUND.PEAT 泥炭 沼泽变体" [ref=e5173]:
+            - cell "GROUND.PEAT" [ref=e5174]:
+              - code [ref=e5175]: GROUND.PEAT
+            - cell "泥炭" [ref=e5176]
+            - cell "沼泽变体" [ref=e5177]
+          - row "GROUND.SHELLBEACH 贝壳海滩 海洋生态" [ref=e5178]:
+            - cell "GROUND.SHELLBEACH" [ref=e5179]:
+              - code [ref=e5180]: GROUND.SHELLBEACH
+            - cell "贝壳海滩" [ref=e5181]
+            - cell "海洋生态" [ref=e5182]
+          - row "GROUND.METEOR 陨石 陨石区" [ref=e5183]:
+            - cell "GROUND.METEOR" [ref=e5184]:
+              - code [ref=e5185]: GROUND.METEOR
+            - cell "陨石" [ref=e5186]
+            - cell "陨石区" [ref=e5187]
+          - row "GROUND.LUNARROCK 月岩 月岛" [ref=e5188]:
+            - cell "GROUND.LUNARROCK" [ref=e5189]:
+              - code [ref=e5190]: GROUND.LUNARROCK
+            - cell "月岩" [ref=e5191]
+            - cell "月岛" [ref=e5192]
+          - row "GROUND.MOONLAND 月地 月岛" [ref=e5193]:
+            - cell "GROUND.MOONLAND" [ref=e5194]:
+              - code [ref=e5195]: GROUND.MOONLAND
+            - cell "月地" [ref=e5196]
+            - cell "月岛" [ref=e5197]
+      - heading "2.2 地形属性" [level=3] [ref=e5198]:
+        - link "2.2 地形属性" [ref=e5199] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_22-%e5%9c%b0%e5%bd%a2%e5%b1%9e%e6%80%a7"
+      - generic [ref=e5200]:
+        - code [ref=e5201]: "-- 每种地形可以设置 GROUND_TYPE = { name = \"forest\", turf_id = \"FOREST\", -- 移动速度修正 -- 可建造性 -- 视觉样式 }"
+        - text: lua
+      - separator [ref=e5202]
+      - heading "3. 世界设置 (settings.lua)" [level=2] [ref=e5203]:
+        - link "3. 世界设置 (settings.lua)" [ref=e5204] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_3-%e4%b8%96%e7%95%8c%e8%ae%be%e7%bd%ae-settingslua"
+      - heading "3.1 世界大小预设" [level=3] [ref=e5205]:
+        - link "3.1 世界大小预设" [ref=e5206] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_31-%e4%b8%96%e7%95%8c%e5%a4%a7%e5%b0%8f%e9%a2%84%e8%ae%be"
+      - table [ref=e5207]:
+        - rowgroup [ref=e5208]:
+          - row "预设 说明" [ref=e5209]:
+            - columnheader "预设" [ref=e5210]
+            - columnheader "说明" [ref=e5211]
+        - rowgroup [ref=e5212]:
+          - row "small 小型世界" [ref=e5213]:
+            - cell "small" [ref=e5214]:
+              - code [ref=e5215]: small
+            - cell "小型世界" [ref=e5216]
+          - row "medium 中型世界（默认）" [ref=e5217]:
+            - cell "medium" [ref=e5218]:
+              - code [ref=e5219]: medium
+            - cell "中型世界（默认）" [ref=e5220]
+          - row "large 大型世界" [ref=e5221]:
+            - cell "large" [ref=e5222]:
+              - code [ref=e5223]: large
+            - cell "大型世界" [ref=e5224]
+          - row "huge 巨型世界" [ref=e5225]:
+            - cell "huge" [ref=e5226]:
+              - code [ref=e5227]: huge
+            - cell "巨型世界" [ref=e5228]
+      - heading "3.2 自定义世界选项" [level=3] [ref=e5229]:
+        - link "3.2 自定义世界选项" [ref=e5230] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_32-%e8%87%aa%e5%ae%9a%e4%b9%89%e4%b8%96%e7%95%8c%e9%80%89%e9%a1%b9"
+      - paragraph [ref=e5231]:
+        - text: 在创建世界时可自定义的选项（通过
+        - code [ref=e5232]: customise.lua
+        - text: ）：
+      - list [ref=e5233]:
+        - listitem [ref=e5234]: 季节长度
+        - listitem [ref=e5235]: 昼夜长度
+        - listitem [ref=e5236]: 资源密度
+        - listitem [ref=e5237]: 生物密度
+        - listitem [ref=e5238]: Boss 数量
+        - listitem [ref=e5239]: 特殊事件开关
+        - listitem [ref=e5240]: 起始资源
+      - heading "3.3 世界预设 (Presets)" [level=3] [ref=e5241]:
+        - link "3.3 世界预设 (Presets)" [ref=e5242] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_33-%e4%b8%96%e7%95%8c%e9%a2%84%e8%ae%be-presets"
+      - generic [ref=e5243]:
+        - code [ref=e5244]: "-- levels.lua 中定义 SURVIVAL_TOGETHER = { id = \"SURVIVAL_TOGETHER\", name = \"生存\", location = \"forest\", -- 世界生成参数 }"
+        - text: lua
+      - separator [ref=e5245]
+      - heading "4. 地图生成核心概念" [level=2] [ref=e5246]:
+        - link "4. 地图生成核心概念" [ref=e5247] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_4-%e5%9c%b0%e5%9b%be%e7%94%9f%e6%88%90%e6%a0%b8%e5%bf%83%e6%a6%82%e5%bf%b5"
+      - heading "4.1 图节点 (GraphNode)" [level=3] [ref=e5248]:
+        - link "4.1 图节点 (GraphNode)" [ref=e5249] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_41-%e5%9b%be%e8%8a%82%e7%82%b9-graphnode"
+      - generic [ref=e5250]:
+        - code [ref=e5251]: "-- graphnode.lua GraphNode = { id, -- 节点 ID x, y, -- 位置 type, -- 节点类型 edges, -- 连接的边 room, -- 关联的房间 tasks, -- 关联的任务 }"
+        - text: lua
+      - heading "4.2 房间 (Room)" [level=3] [ref=e5252]:
+        - link "4.2 房间 (Room)" [ref=e5253] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_42-%e6%88%bf%e9%97%b4-room"
+      - generic [ref=e5254]:
+        - code [ref=e5255]: "-- rooms.lua Room = { name, -- 房间名称 value, -- 权重 tags, -- 标签 contents, -- 内容定义 -- 包含: -- countprefabs: 预制体分布 -- distributepercent: 分布百分比 -- prefabdata: 预制体数据 }"
+        - text: lua
+      - heading "4.3 任务 (Task)" [level=3] [ref=e5256]:
+        - link "4.3 任务 (Task)" [ref=e5257] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_43-%e4%bb%bb%e5%8a%a1-task"
+      - generic [ref=e5258]:
+        - code [ref=e5259]: "-- tasks.lua Task = { name, -- 任务名称 locks, -- 前置条件（锁） keys_given, -- 解锁的键 room_tags, -- 需要的房间标签 room_choices, -- 房间选择 room_bg, -- 背景房间 }"
+        - text: lua
+      - heading "4.4 静态布局 (StaticLayout)" [level=3] [ref=e5260]:
+        - link "4.4 静态布局 (StaticLayout)" [ref=e5261] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_44-%e9%9d%99%e6%80%81%e5%b8%83%e5%b1%80-staticlayout"
+      - paragraph [ref=e5262]: 静态布局是预定义的建筑/结构排列，340+ 个布局定义了各种套装、营地、遗迹等。
+      - generic [ref=e5263]:
+        - code [ref=e5264]: "-- static_layout.lua StaticLayout = { -- 布局数据 -- 相对位置 -- 预制体列表 -- 装饰物 }"
+        - text: lua
+      - separator [ref=e5265]
+      - heading "5. 生态区 (Biomes)" [level=2] [ref=e5266]:
+        - link "5. 生态区 (Biomes)" [ref=e5267] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_5-%e7%94%9f%e6%80%81%e5%8c%ba-biomes"
+      - heading "5.1 地表生态区" [level=3] [ref=e5268]:
+        - link "5.1 地表生态区" [ref=e5269] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_51-%e5%9c%b0%e8%a1%a8%e7%94%9f%e6%80%81%e5%8c%ba"
+      - table [ref=e5270]:
+        - rowgroup [ref=e5271]:
+          - row "生态区 主要特征 典型资源" [ref=e5272]:
+            - columnheader "生态区" [ref=e5273]
+            - columnheader "主要特征" [ref=e5274]
+            - columnheader "典型资源" [ref=e5275]
+        - rowgroup [ref=e5276]:
+          - row "森林 树多 木材、猪人房、蜘蛛巢" [ref=e5277]:
+            - cell "森林" [ref=e5278]
+            - cell "树多" [ref=e5279]
+            - cell "木材、猪人房、蜘蛛巢" [ref=e5280]
+          - row "草原 草地 兔子、草、牛群" [ref=e5281]:
+            - cell "草原" [ref=e5282]
+            - cell "草地" [ref=e5283]
+            - cell "兔子、草、牛群" [ref=e5284]
+          - row "岩石地 岩石 矿石、高鸟" [ref=e5285]:
+            - cell "岩石地" [ref=e5286]
+            - cell "岩石" [ref=e5287]
+            - cell "矿石、高鸟" [ref=e5288]
+          - row "沼泽 湿地 芦苇、触手、鱼人" [ref=e5289]:
+            - cell "沼泽" [ref=e5290]
+            - cell "湿地" [ref=e5291]
+            - cell "芦苇、触手、鱼人" [ref=e5292]
+          - row "沙漠 沙地 仙人掌、秃鹰、猎犬丘" [ref=e5293]:
+            - cell "沙漠" [ref=e5294]
+            - cell "沙地" [ref=e5295]
+            - cell "仙人掌、秃鹰、猎犬丘" [ref=e5296]
+          - row "绿洲沙漠 沙漠+湖 绿洲、蚁狮" [ref=e5297]:
+            - cell "绿洲沙漠" [ref=e5298]
+            - cell "沙漠+湖" [ref=e5299]
+            - cell "绿洲、蚁狮" [ref=e5300]
+          - row "落叶林 秋色树林 桦树、猪王、格罗姆" [ref=e5301]:
+            - cell "落叶林" [ref=e5302]
+            - cell "秋色树林" [ref=e5303]
+            - cell "桦树、猪王、格罗姆" [ref=e5304]
+          - row "月岛 月球地形 月岩、月树、变异生物" [ref=e5305]:
+            - cell "月岛" [ref=e5306]
+            - cell "月球地形" [ref=e5307]
+            - cell "月岩、月树、变异生物" [ref=e5308]
+          - row "海洋 水域 鱼群、盐矿、海上垃圾" [ref=e5309]:
+            - cell "海洋" [ref=e5310]
+            - cell "水域" [ref=e5311]
+            - cell "鱼群、盐矿、海上垃圾" [ref=e5312]
+      - heading "5.2 洞穴生态区" [level=3] [ref=e5313]:
+        - link "5.2 洞穴生态区" [ref=e5314] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_52-%e6%b4%9e%e7%a9%b4%e7%94%9f%e6%80%81%e5%8c%ba"
+      - table [ref=e5315]:
+        - rowgroup [ref=e5316]:
+          - row "生态区 主要特征" [ref=e5317]:
+            - columnheader "生态区" [ref=e5318]
+            - columnheader "主要特征" [ref=e5319]
+        - rowgroup [ref=e5320]:
+          - row "菌类区 蓝/红/绿蘑菇林" [ref=e5321]:
+            - cell "菌类区" [ref=e5322]
+            - cell "蓝/红/绿蘑菇林" [ref=e5323]
+          - row "蝙蝠区 蝙蝠洞、石笋" [ref=e5324]:
+            - cell "蝙蝠区" [ref=e5325]
+            - cell "蝙蝠洞、石笋" [ref=e5326]
+          - row "蜘蛛区 蜘蛛巢、洞穴蜘蛛" [ref=e5327]:
+            - cell "蜘蛛区" [ref=e5328]
+            - cell "蜘蛛巢、洞穴蜘蛛" [ref=e5329]
+          - row "兔人区 兔人房、胡萝卜" [ref=e5330]:
+            - cell "兔人区" [ref=e5331]
+            - cell "兔人房、胡萝卜" [ref=e5332]
+          - row "遗迹区 损坏的发条装置、铥矿" [ref=e5333]:
+            - cell "遗迹区" [ref=e5334]
+            - cell "损坏的发条装置、铥矿" [ref=e5335]
+          - row "中庭 远古守护者、远古大门" [ref=e5336]:
+            - cell "中庭" [ref=e5337]
+            - cell "远古守护者、远古大门" [ref=e5338]
+      - separator [ref=e5339]
+      - heading "6. 特殊位置 (Point of Interest)" [level=2] [ref=e5340]:
+        - link "6. 特殊位置 (Point of Interest)" [ref=e5341] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_6-%e7%89%b9%e6%ae%8a%e4%bd%8d%e7%bd%ae-point-of-interest"
+      - heading "6.1 强制生成的特殊位置" [level=3] [ref=e5342]:
+        - link "6.1 强制生成的特殊位置" [ref=e5343] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_61-%e5%bc%ba%e5%88%b6%e7%94%9f%e6%88%90%e7%9a%84%e7%89%b9%e6%ae%8a%e4%bd%8d%e7%bd%ae"
+      - table [ref=e5344]:
+        - rowgroup [ref=e5345]:
+          - row "位置 文件 说明" [ref=e5346]:
+            - columnheader "位置" [ref=e5347]
+            - columnheader "文件" [ref=e5348]
+            - columnheader "说明" [ref=e5349]
+        - rowgroup [ref=e5350]:
+          - row "猪王 pointsofinterest.lua 落叶林中心" [ref=e5351]:
+            - cell "猪王" [ref=e5352]
+            - cell "pointsofinterest.lua" [ref=e5353]:
+              - code [ref=e5354]: pointsofinterest.lua
+            - cell "落叶林中心" [ref=e5355]
+          - row "格罗姆雕像 pointsofinterest.lua 落叶林" [ref=e5356]:
+            - cell "格罗姆雕像" [ref=e5357]
+            - cell "pointsofinterest.lua" [ref=e5358]:
+              - code [ref=e5359]: pointsofinterest.lua
+            - cell "落叶林" [ref=e5360]
+          - row "麦斯威尔之门 pointsofinterest.lua 世界中心" [ref=e5361]:
+            - cell "麦斯威尔之门" [ref=e5362]
+            - cell "pointsofinterest.lua" [ref=e5363]:
+              - code [ref=e5364]: pointsofinterest.lua
+            - cell "世界中心" [ref=e5365]
+          - row "月石 pointsofinterest.lua 森林" [ref=e5366]:
+            - cell "月石" [ref=e5367]
+            - cell "pointsofinterest.lua" [ref=e5368]:
+              - code [ref=e5369]: pointsofinterest.lua
+            - cell "森林" [ref=e5370]
+          - row "虫洞 pointsofinterest.lua 成对生成" [ref=e5371]:
+            - cell "虫洞" [ref=e5372]
+            - cell "pointsofinterest.lua" [ref=e5373]:
+              - code [ref=e5374]: pointsofinterest.lua
+            - cell "成对生成" [ref=e5375]
+          - row "复活石 pointsofinterest.lua 散落各处" [ref=e5376]:
+            - cell "复活石" [ref=e5377]
+            - cell "pointsofinterest.lua" [ref=e5378]:
+              - code [ref=e5379]: pointsofinterest.lua
+            - cell "散落各处" [ref=e5380]
+      - heading "6.2 起始位置 (Start Locations)" [level=3] [ref=e5381]:
+        - link "6.2 起始位置 (Start Locations)" [ref=e5382] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_62-%e8%b5%b7%e5%a7%8b%e4%bd%8d%e7%bd%ae-start-locations"
+      - generic [ref=e5383]:
+        - code [ref=e5384]: "-- startlocations.lua -- 定义玩家生成点 -- 确保生成在安全区域（有资源、无危险） -- 多人模式下分散生成"
+        - text: lua
+      - separator [ref=e5385]
+      - heading "7. 资源生成" [level=2] [ref=e5386]:
+        - link "7. 资源生成" [ref=e5387] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_7-%e8%b5%84%e6%ba%90%e7%94%9f%e6%88%90"
+      - heading "7.1 资源簇 (Bunches)" [level=3] [ref=e5388]:
+        - link "7.1 资源簇 (Bunches)" [ref=e5389] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_71-%e8%b5%84%e6%ba%90%e7%b0%87-bunches"
+      - generic [ref=e5390]:
+        - code [ref=e5391]: "-- bunches.lua -- 定义资源如何成群生成 Bunch = { prefab, -- 预制体名称 count, -- 数量 radius, -- 分布半径 spacing, -- 间距 }"
+        - text: lua
+      - heading "7.2 受保护资源 (Protected Resources)" [level=3] [ref=e5392]:
+        - link "7.2 受保护资源 (Protected Resources)" [ref=e5393] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_72-%e5%8f%97%e4%bf%9d%e6%8a%a4%e8%b5%84%e6%ba%90-protected-resources"
+      - generic [ref=e5394]:
+        - code [ref=e5395]: "-- protected_resources.lua -- 确保某些关键资源一定存在 -- 例如：燧石、树枝、草"
+        - text: lua
+      - heading "7.3 资源替换 (Resource Substitution)" [level=3] [ref=e5396]:
+        - link "7.3 资源替换 (Resource Substitution)" [ref=e5397] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_73-%e8%b5%84%e6%ba%90%e6%9b%bf%e6%8d%a2-resource-substitution"
+      - generic [ref=e5398]:
+        - code [ref=e5399]: "-- resource_substitution.lua -- 根据世界设置替换资源 -- 例如：无草世界用树枝替代"
+        - text: lua
+      - separator [ref=e5400]
+      - heading "8. Mod 开发参考" [level=2] [ref=e5401]:
+        - link "8. Mod 开发参考" [ref=e5402] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_8-mod-%e5%bc%80%e5%8f%91%e5%8f%82%e8%80%83"
+      - heading "8.1 添加自定义生态区" [level=3] [ref=e5403]:
+        - link "8.1 添加自定义生态区" [ref=e5404] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_81-%e6%b7%bb%e5%8a%a0%e8%87%aa%e5%ae%9a%e4%b9%89%e7%94%9f%e6%80%81%e5%8c%ba"
+      - generic [ref=e5405]:
+        - code [ref=e5406]: "-- 在 modmain.lua 中 AddRoomPreInit(\"MyCustomRoom\", function(room) room.contents.countprefabs = { my_custom_tree = 5, my_custom_rock = 3, } end)"
+        - text: lua
+      - heading "8.2 添加自定义任务" [level=3] [ref=e5407]:
+        - link "8.2 添加自定义任务" [ref=e5408] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_82-%e6%b7%bb%e5%8a%a0%e8%87%aa%e5%ae%9a%e4%b9%89%e4%bb%bb%e5%8a%a1"
+      - generic [ref=e5409]:
+        - code [ref=e5410]: "-- 注册新任务类型 AddTask(\"MyCustomTask\", { locks = { LOCKS.NONE }, keys_given = { KEYS.MY_CUSTOM_KEY }, room_tags = { \"my_custom_tag\" }, room_choices = { MyCustomRoom = 1, }, })"
+        - text: lua
+      - heading "8.3 添加静态布局" [level=3] [ref=e5411]:
+        - link "8.3 添加静态布局" [ref=e5412] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_83-%e6%b7%bb%e5%8a%a0%e9%9d%99%e6%80%81%e5%b8%83%e5%b1%80"
+      - generic [ref=e5413]:
+        - code [ref=e5414]: "-- 注册静态布局 StaticLayouts[\"my_custom_layout\"] = { -- 布局数据 }"
+        - text: lua
+      - heading "8.4 修改世界生成设置" [level=3] [ref=e5415]:
+        - link "8.4 修改世界生成设置" [ref=e5416] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_84-%e4%bf%ae%e6%94%b9%e4%b8%96%e7%95%8c%e7%94%9f%e6%88%90%e8%ae%be%e7%bd%ae"
+      - generic [ref=e5417]:
+        - code [ref=e5418]: "-- 修改世界预设 GLOBAL.levels.CUSTOM_PRESET = { id = \"CUSTOM_PRESET\", name = \"自定义世界\", location = \"forest\", -- ... }"
+        - text: lua
+      - separator [ref=e5419]
+      - heading "9. 海洋生成 (ocean_gen.lua)" [level=2] [ref=e5420]:
+        - link "9. 海洋生成 (ocean_gen.lua)" [ref=e5421] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_9-%e6%b5%b7%e6%b4%8b%e7%94%9f%e6%88%90-ocean_genlua"
+      - heading "9.1 海洋生态区" [level=3] [ref=e5422]:
+        - link "9.1 海洋生态区" [ref=e5423] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_91-%e6%b5%b7%e6%b4%8b%e7%94%9f%e6%80%81%e5%8c%ba"
+      - table [ref=e5424]:
+        - rowgroup [ref=e5425]:
+          - row "生态区 说明" [ref=e5426]:
+            - columnheader "生态区" [ref=e5427]
+            - columnheader "说明" [ref=e5428]
+        - rowgroup [ref=e5429]:
+          - row "近海 浅水区，靠近陆地" [ref=e5430]:
+            - cell "近海" [ref=e5431]
+            - cell "浅水区，靠近陆地" [ref=e5432]
+          - row "中海 中等深度" [ref=e5433]:
+            - cell "中海" [ref=e5434]
+            - cell "中等深度" [ref=e5435]
+          - row "深海 深水区" [ref=e5436]:
+            - cell "深海" [ref=e5437]
+            - cell "深水区" [ref=e5438]
+          - row "暗礁 岩石水域" [ref=e5439]:
+            - cell "暗礁" [ref=e5440]
+            - cell "岩石水域" [ref=e5441]
+          - row "盐矿 盐矿区域" [ref=e5442]:
+            - cell "盐矿" [ref=e5443]
+            - cell "盐矿区域" [ref=e5444]
+          - row "海草林 海草森林" [ref=e5445]:
+            - cell "海草林" [ref=e5446]
+            - cell "海草森林" [ref=e5447]
+          - row "沉船区 沉船残骸" [ref=e5448]:
+            - cell "沉船区" [ref=e5449]
+            - cell "沉船残骸" [ref=e5450]
+      - heading "9.2 海洋特殊结构" [level=3] [ref=e5451]:
+        - link "9.2 海洋特殊结构" [ref=e5452] [cursor=pointer]:
+          - /url: "#/13-world/worldgen?id=_92-%e6%b5%b7%e6%b4%8b%e7%89%b9%e6%ae%8a%e7%bb%93%e6%9e%84"
+      - list [ref=e5453]:
+        - listitem [ref=e5454]:
+          - text: 猴岛 (
+          - code [ref=e5455]: monkeyisland_worldgen.lua
+          - text: )
+        - listitem [ref=e5456]:
+          - text: 水木 (
+          - code [ref=e5457]: waterlog_worldgen.lua
+          - text: )
+        - listitem [ref=e5458]: 月岛连接
+        - listitem [ref=e5459]: 海堆

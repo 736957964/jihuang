@@ -1,0 +1,62 @@
+<Atlas>
+	<Texture filename="poker.tex"/>
+	<Elements>
+		<Element name="hontao_9.tex" u1="0.665975" u2="0.774896" v1="0.859023" v2="1.000000"/>
+		<Element name="heitao_12.tex" u1="0.554979" u2="0.663900" v1="0.144737" v2="0.285714"/>
+		<Element name="meihua_13.tex" u1="0.776971" u2="0.885892" v1="0.573308" v2="0.714286"/>
+		<Element name="meihua_12.tex" u1="0.554979" u2="0.663900" v1="0.573308" v2="0.714286"/>
+		<Element name="hontao_8.tex" u1="0.443983" u2="0.552905" v1="0.859023" v2="1.000000"/>
+		<Element name="wangBig.tex" u1="0.000000" u2="0.108921" v1="0.430451" v2="0.571429"/>
+		<Element name="fangkuai_12.tex" u1="0.221992" u2="0.330913" v1="0.287594" v2="0.428571"/>
+		<Element name="heitao_1.tex" u1="0.887967" u2="0.996888" v1="0.144737" v2="0.285714"/>
+		<Element name="fangkuai_7.tex" u1="0.665975" u2="0.774896" v1="0.287594" v2="0.428571"/>
+		<Element name="hontao_2.tex" u1="0.110996" u2="0.219917" v1="0.716165" v2="0.857143"/>
+		<Element name="meihua_9.tex" u1="0.110996" u2="0.219917" v1="0.573308" v2="0.714286"/>
+		<Element name="meihua_11.tex" u1="0.665975" u2="0.774896" v1="0.716165" v2="0.857143"/>
+		<Element name="heitao_2.tex" u1="0.443983" u2="0.552905" v1="0.144737" v2="0.285714"/>
+		<Element name="heitao_11.tex" u1="0.110996" u2="0.219917" v1="0.001880" v2="0.142857"/>
+		<Element name="hontao_3.tex" u1="0.776971" u2="0.885892" v1="0.859023" v2="1.000000"/>
+		<Element name="fangkuai_3.tex" u1="0.332988" u2="0.441909" v1="0.430451" v2="0.571429"/>
+		<Element name="hontao_1.tex" u1="0.443983" u2="0.552905" v1="0.716165" v2="0.857143"/>
+		<Element name="meihua_6.tex" u1="0.887967" u2="0.996888" v1="0.716165" v2="0.857143"/>
+		<Element name="heitao_10.tex" u1="0.776971" u2="0.885892" v1="0.144737" v2="0.285714"/>
+		<Element name="wangSmill.tex" u1="0.000000" u2="0.108921" v1="0.001880" v2="0.142857"/>
+		<Element name="meihua_7.tex" u1="0.776971" u2="0.885892" v1="0.716165" v2="0.857143"/>
+		<Element name="heitao_8.tex" u1="0.554979" u2="0.663900" v1="0.287594" v2="0.428571"/>
+		<Element name="heitao_13.tex" u1="0.665975" u2="0.774896" v1="0.144737" v2="0.285714"/>
+		<Element name="meihua_1.tex" u1="0.554979" u2="0.663900" v1="0.716165" v2="0.857143"/>
+		<Element name="backBag2.tex" u1="0.221992" u2="0.325726" v1="0.006579" v2="0.142857"/>
+		<Element name="backBag.tex" u1="0.000000" u2="0.108921" v1="0.859023" v2="1.000000"/>
+		<Element name="fangkuai_6.tex" u1="0.776971" u2="0.885892" v1="0.430451" v2="0.571429"/>
+		<Element name="fangkuai_8.tex" u1="0.332988" u2="0.441909" v1="0.144737" v2="0.285714"/>
+		<Element name="heitao_6.tex" u1="0.221992" u2="0.330913" v1="0.144737" v2="0.285714"/>
+		<Element name="heitao_4.tex" u1="0.887967" u2="0.996888" v1="0.287594" v2="0.428571"/>
+		<Element name="heitao_3.tex" u1="0.000000" u2="0.108921" v1="0.144737" v2="0.285714"/>
+		<Element name="heitao_5.tex" u1="0.110996" u2="0.219917" v1="0.144737" v2="0.285714"/>
+		<Element name="meihua_3.tex" u1="0.443983" u2="0.552905" v1="0.573308" v2="0.714286"/>
+		<Element name="meihua_4.tex" u1="0.665975" u2="0.774896" v1="0.573308" v2="0.714286"/>
+		<Element name="meihua_8.tex" u1="0.000000" u2="0.108921" v1="0.573308" v2="0.714286"/>
+		<Element name="fangkuai_9.tex" u1="0.776971" u2="0.885892" v1="0.287594" v2="0.428571"/>
+		<Element name="meihua_10.tex" u1="0.221992" u2="0.330913" v1="0.573308" v2="0.714286"/>
+		<Element name="fangkuai_1.tex" u1="0.332988" u2="0.441909" v1="0.287594" v2="0.428571"/>
+		<Element name="dipai.tex" u1="0.110996" u2="0.219917" v1="0.287594" v2="0.428571"/>
+		<Element name="fangkuai_11.tex" u1="0.000000" u2="0.108921" v1="0.287594" v2="0.428571"/>
+		<Element name="fangkuai_10.tex" u1="0.443983" u2="0.552905" v1="0.287594" v2="0.428571"/>
+		<Element name="fangkuai_5.tex" u1="0.665975" u2="0.774896" v1="0.430451" v2="0.571429"/>
+		<Element name="hontao_7.tex" u1="0.554979" u2="0.663900" v1="0.859023" v2="1.000000"/>
+		<Element name="fangkuai_4.tex" u1="0.554979" u2="0.663900" v1="0.430451" v2="0.571429"/>
+		<Element name="heitao_9.tex" u1="0.110996" u2="0.219917" v1="0.430451" v2="0.571429"/>
+		<Element name="hontao_6.tex" u1="0.332988" u2="0.441909" v1="0.859023" v2="1.000000"/>
+		<Element name="heitao_7.tex" u1="0.221992" u2="0.330913" v1="0.430451" v2="0.571429"/>
+		<Element name="fangkuai_2.tex" u1="0.443983" u2="0.552905" v1="0.430451" v2="0.571429"/>
+		<Element name="hontao_12.tex" u1="0.332988" u2="0.441909" v1="0.716165" v2="0.857143"/>
+		<Element name="hontao_10.tex" u1="0.000000" u2="0.108921" v1="0.716165" v2="0.857143"/>
+		<Element name="meihua_2.tex" u1="0.887967" u2="0.996888" v1="0.573308" v2="0.714286"/>
+		<Element name="hontao_4.tex" u1="0.221992" u2="0.330913" v1="0.859023" v2="1.000000"/>
+		<Element name="meihua_5.tex" u1="0.332988" u2="0.441909" v1="0.573308" v2="0.714286"/>
+		<Element name="hontao_11.tex" u1="0.221992" u2="0.330913" v1="0.716165" v2="0.857143"/>
+		<Element name="hontao_5.tex" u1="0.110996" u2="0.219917" v1="0.859023" v2="1.000000"/>
+		<Element name="fangkuai_13.tex" u1="0.887967" u2="0.996888" v1="0.430451" v2="0.571429"/>
+		<Element name="hontao_13.tex" u1="0.887967" u2="0.996888" v1="0.859023" v2="1.000000"/>
+	</Elements>
+</Atlas>

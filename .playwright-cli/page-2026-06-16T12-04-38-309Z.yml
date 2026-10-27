@@ -1,0 +1,123 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+    - article [ref=e21]:
+      - heading "战斗相关组件" [level=1] [ref=e22]:
+        - link "战斗相关组件" [ref=e23] [cursor=pointer]:
+          - /url: "#/02-components/combat/index?id=%e6%88%98%e6%96%97%e7%9b%b8%e5%85%b3%e7%bb%84%e4%bb%b6"
+      - table [ref=e24]:
+        - rowgroup [ref=e25]:
+          - row "组件名 文件 说明" [ref=e26]:
+            - columnheader "组件名" [ref=e27]
+            - columnheader "文件" [ref=e28]
+            - columnheader "说明" [ref=e29]
+        - rowgroup [ref=e30]:
+          - row "combat combat.lua 战斗系统核心，攻击/伤害/目标管理" [ref=e31]:
+            - cell "combat" [ref=e32]:
+              - code [ref=e33]: combat
+            - cell "combat.lua" [ref=e34]
+            - cell "战斗系统核心，攻击/伤害/目标管理" [ref=e35]
+          - row "health health.lua 生命值管理" [ref=e36]:
+            - cell "health" [ref=e37]:
+              - code [ref=e38]: health
+            - cell "health.lua" [ref=e39]
+            - cell "生命值管理" [ref=e40]
+          - row "weapon weapon.lua 武器属性（伤害/范围/投射物）" [ref=e41]:
+            - cell "weapon" [ref=e42]:
+              - code [ref=e43]: weapon
+            - cell "weapon.lua" [ref=e44]
+            - cell "武器属性（伤害/范围/投射物）" [ref=e45]
+          - row "armor armor.lua 防具属性（吸收率/耐久/弱点）" [ref=e46]:
+            - cell "armor" [ref=e47]:
+              - code [ref=e48]: armor
+            - cell "armor.lua" [ref=e49]
+            - cell "防具属性（吸收率/耐久/弱点）" [ref=e50]
+          - row "combat_replica combat_replica.lua 客户端战斗同步" [ref=e51]:
+            - cell "combat_replica" [ref=e52]:
+              - code [ref=e53]: combat_replica
+            - cell "combat_replica.lua" [ref=e54]
+            - cell "客户端战斗同步" [ref=e55]
+          - row "aoeweapon_base aoeweapon_base.lua AOE武器基类" [ref=e56]:
+            - cell "aoeweapon_base" [ref=e57]:
+              - code [ref=e58]: aoeweapon_base
+            - cell "aoeweapon_base.lua" [ref=e59]
+            - cell "AOE武器基类" [ref=e60]
+          - row "aoeweapon_leap aoeweapon_leap.lua 跳跃AOE武器" [ref=e61]:
+            - cell "aoeweapon_leap" [ref=e62]:
+              - code [ref=e63]: aoeweapon_leap
+            - cell "aoeweapon_leap.lua" [ref=e64]
+            - cell "跳跃AOE武器" [ref=e65]
+          - row "aoeweapon_lunge aoeweapon_lunge.lua 冲刺AOE武器" [ref=e66]:
+            - cell "aoeweapon_lunge" [ref=e67]:
+              - code [ref=e68]: aoeweapon_lunge
+            - cell "aoeweapon_lunge.lua" [ref=e69]
+            - cell "冲刺AOE武器" [ref=e70]
+          - row "aoeweapon_mace aoeweapon_mace.lua 锤类AOE武器" [ref=e71]:
+            - cell "aoeweapon_mace" [ref=e72]:
+              - code [ref=e73]: aoeweapon_mace
+            - cell "aoeweapon_mace.lua" [ref=e74]
+            - cell "锤类AOE武器" [ref=e75]
+          - row "attackdodger attackdodger.lua 闪避能力" [ref=e76]:
+            - cell "attackdodger" [ref=e77]:
+              - code [ref=e78]: attackdodger
+            - cell "attackdodger.lua" [ref=e79]
+            - cell "闪避能力" [ref=e80]
+          - row "damagereflect damagereflect.lua 反伤效果" [ref=e81]:
+            - cell "damagereflect" [ref=e82]:
+              - code [ref=e83]: damagereflect
+            - cell "damagereflect.lua" [ref=e84]
+            - cell "反伤效果" [ref=e85]
+          - row "damagetypebonus damagetypebonus.lua 伤害类型加成" [ref=e86]:
+            - cell "damagetypebonus" [ref=e87]:
+              - code [ref=e88]: damagetypebonus
+            - cell "damagetypebonus.lua" [ref=e89]
+            - cell "伤害类型加成" [ref=e90]
+          - row "damagetyperesist damagetyperesist.lua 伤害类型抗性" [ref=e91]:
+            - cell "damagetyperesist" [ref=e92]:
+              - code [ref=e93]: damagetyperesist
+            - cell "damagetyperesist.lua" [ref=e94]
+            - cell "伤害类型抗性" [ref=e95]
+          - row "electricattacks electricattacks.lua 电击攻击能力" [ref=e96]:
+            - cell "electricattacks" [ref=e97]:
+              - code [ref=e98]: electricattacks
+            - cell "electricattacks.lua" [ref=e99]
+            - cell "电击攻击能力" [ref=e100]
+          - row "projectile projectile.lua 投射物（飞行道具）" [ref=e101]:
+            - cell "projectile" [ref=e102]:
+              - code [ref=e103]: projectile
+            - cell "projectile.lua" [ref=e104]
+            - cell "投射物（飞行道具）" [ref=e105]
+          - row "complexprojectile complexprojectile.lua 复杂投射物" [ref=e106]:
+            - cell "complexprojectile" [ref=e107]:
+              - code [ref=e108]: complexprojectile
+            - cell "complexprojectile.lua" [ref=e109]
+            - cell "复杂投射物" [ref=e110]
+          - row "spdamageutil spdamageutil.lua 特殊伤害工具" [ref=e111]:
+            - cell "spdamageutil" [ref=e112]:
+              - code [ref=e113]: spdamageutil
+            - cell "spdamageutil.lua" [ref=e114]
+            - cell "特殊伤害工具" [ref=e115]
+      - heading "详细文档" [level=2] [ref=e116]:
+        - link "详细文档" [ref=e117] [cursor=pointer]:
+          - /url: "#/02-components/combat/index?id=%e8%af%a6%e7%bb%86%e6%96%87%e6%a1%a3"
+      - list [ref=e118]:
+        - listitem [ref=e119]:
+          - link "Health 生命值" [ref=e120] [cursor=pointer]:
+            - /url: "#/health"
+        - listitem [ref=e121]:
+          - link "Combat 战斗" [ref=e122] [cursor=pointer]:
+            - /url: "#/combat"
+        - listitem [ref=e123]:
+          - link "Weapon 武器" [ref=e124] [cursor=pointer]:
+            - /url: "#/weapon"
+        - listitem [ref=e125]:
+          - link "Armor 防具" [ref=e126] [cursor=pointer]:
+            - /url: "#/armor"

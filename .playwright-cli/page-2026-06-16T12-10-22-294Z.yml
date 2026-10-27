@@ -1,0 +1,536 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e248]:
+        - listitem [ref=e249] [cursor=pointer]: 前言
+        - listitem [ref=e250] [cursor=pointer]: 01 核心系统
+        - listitem [ref=e251] [cursor=pointer]:
+          - text: 02 Components 组件
+          - list [ref=e252]:
+            - listitem [ref=e253]:
+              - link "02-components 总览" [ref=e254]:
+                - /url: "#/02-components/index"
+            - listitem [ref=e255]:
+              - text: 战斗 Combat
+              - list [ref=e256]:
+                - listitem [ref=e257]:
+                  - link "combat 总览" [ref=e258]:
+                    - /url: "#/02-components/combat/index"
+                - listitem [ref=e259]:
+                  - link "combat 战斗" [ref=e260]:
+                    - /url: "#/02-components/combat/combat"
+                - listitem [ref=e261]:
+                  - link "health 生命值" [ref=e262]:
+                    - /url: "#/02-components/combat/health"
+                  - list [ref=e263]:
+                    - listitem [ref=e264]:
+                      - text: "-"
+                      - link "概述" [ref=e265]:
+                        - /url: "#/02-components/combat/health?id=%e6%a6%82%e8%bf%b0"
+                    - listitem [ref=e266]:
+                      - text: "-"
+                      - link "属性" [ref=e267]:
+                        - /url: "#/02-components/combat/health?id=%e5%b1%9e%e6%80%a7"
+                    - listitem [ref=e268]:
+                      - text: "-"
+                      - link "方法" [ref=e269]:
+                        - /url: "#/02-components/combat/health?id=%e6%96%b9%e6%b3%95"
+                    - listitem [ref=e270]:
+                      - text: "-"
+                      - link "事件" [ref=e271]:
+                        - /url: "#/02-components/combat/health?id=%e4%ba%8b%e4%bb%b6"
+                    - listitem [ref=e272]:
+                      - text: "-"
+                      - link "使用示例" [ref=e273]:
+                        - /url: "#/02-components/combat/health?id=%e4%bd%bf%e7%94%a8%e7%a4%ba%e4%be%8b"
+                - listitem [ref=e274]:
+                  - link "weapon 武器" [ref=e275]:
+                    - /url: "#/02-components/combat/weapon"
+                - listitem [ref=e276]:
+                  - link "armor 盔甲" [ref=e277]:
+                    - /url: "#/02-components/combat/armor"
+            - listitem [ref=e278]: 生存 Survival
+            - listitem [ref=e279]: 背包 Inventory
+            - listitem [ref=e280]: 工作 Work
+            - listitem [ref=e281]: 食物 Edible
+            - listitem [ref=e282]: 建造 Builder
+            - listitem [ref=e283]: 燃烧 Burnable
+            - listitem [ref=e284]: 生物 Creature
+            - listitem [ref=e285]: 其他 Other
+            - listitem [ref=e286]: 航海 Sailing
+        - listitem [ref=e287] [cursor=pointer]: 03 Actions 动作
+        - listitem [ref=e288] [cursor=pointer]: 04 Tags 标签
+        - listitem [ref=e289] [cursor=pointer]: 05 Events 事件
+        - listitem [ref=e290] [cursor=pointer]: 06 Stategraphs 状态图
+        - listitem [ref=e291] [cursor=pointer]: 07 Brains 行为大脑
+        - listitem [ref=e292] [cursor=pointer]: 08 Prefabs 预设
+        - listitem [ref=e293] [cursor=pointer]: 09 Tuning 调参
+        - listitem [ref=e294] [cursor=pointer]: 10 Networking 网络
+        - listitem [ref=e295] [cursor=pointer]: 11 Modding Mod开发
+        - listitem [ref=e296] [cursor=pointer]: 12 Cooking 烹饪
+        - listitem [ref=e297] [cursor=pointer]: 13 World 世界
+        - listitem [ref=e298] [cursor=pointer]: 14 Skilltree 技能树
+        - listitem [ref=e299] [cursor=pointer]: 15 UI 界面
+        - listitem [ref=e300] [cursor=pointer]: 16 Constants 常量
+        - listitem [ref=e301] [cursor=pointer]: 17 Standard Components 标准组件
+        - listitem [ref=e302] [cursor=pointer]: 18 Behaviours 行为树
+        - listitem [ref=e303] [cursor=pointer]: 19 FX 特效
+        - listitem [ref=e304] [cursor=pointer]: 案例
+        - listitem [ref=e305] [cursor=pointer]: 数据提取
+    - article [ref=e44]:
+      - heading "Health 组件" [level=1] [ref=e306]:
+        - link "Health 组件" [ref=e307] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=health-%e7%bb%84%e4%bb%b6"
+      - blockquote [ref=e308]:
+        - paragraph [ref=e309]:
+          - text: "源码:"
+          - code [ref=e310]: scripts/components/health.lua
+      - heading "概述" [level=2] [ref=e311]:
+        - link "概述" [ref=e312] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e6%a6%82%e8%bf%b0"
+      - paragraph [ref=e313]: Health 组件管理实体的生命值系统，包括血量、无敌状态、火伤、月灼、惩罚血量、生命恢复等。
+      - heading "属性" [level=2] [ref=e314]:
+        - link "属性" [ref=e315] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e5%b1%9e%e6%80%a7"
+      - table [ref=e316]:
+        - rowgroup [ref=e317]:
+          - row "属性名 类型 默认值 说明" [ref=e318]:
+            - columnheader "属性名" [ref=e319]
+            - columnheader "类型" [ref=e320]
+            - columnheader "默认值" [ref=e321]
+            - columnheader "说明" [ref=e322]
+        - rowgroup [ref=e323]:
+          - row "maxhealth number 100 最大生命值" [ref=e324]:
+            - cell "maxhealth" [ref=e325]:
+              - code [ref=e326]: maxhealth
+            - cell "number" [ref=e327]:
+              - code [ref=e328]: number
+            - cell "100" [ref=e329]:
+              - code [ref=e330]: "100"
+            - cell "最大生命值" [ref=e331]
+          - row "minhealth number 0 最小生命值" [ref=e332]:
+            - cell "minhealth" [ref=e333]:
+              - code [ref=e334]: minhealth
+            - cell "number" [ref=e335]:
+              - code [ref=e336]: number
+            - cell "0" [ref=e337]:
+              - code [ref=e338]: "0"
+            - cell "最小生命值" [ref=e339]
+          - row "currenthealth number maxhealth 当前生命值" [ref=e340]:
+            - cell "currenthealth" [ref=e341]:
+              - code [ref=e342]: currenthealth
+            - cell "number" [ref=e343]:
+              - code [ref=e344]: number
+            - cell "maxhealth" [ref=e345]:
+              - code [ref=e346]: maxhealth
+            - cell "当前生命值" [ref=e347]
+          - row "invincible boolean false 是否无敌" [ref=e348]:
+            - cell "invincible" [ref=e349]:
+              - code [ref=e350]: invincible
+            - cell "boolean" [ref=e351]:
+              - code [ref=e352]: boolean
+            - cell "false" [ref=e353]:
+              - code [ref=e354]: "false"
+            - cell "是否无敌" [ref=e355]
+          - row "nofadeout boolean false 死亡时是否不渐隐消失" [ref=e356]:
+            - cell "nofadeout" [ref=e357]:
+              - code [ref=e358]: nofadeout
+            - cell "boolean" [ref=e359]:
+              - code [ref=e360]: boolean
+            - cell "false" [ref=e361]:
+              - code [ref=e362]: "false"
+            - cell "死亡时是否不渐隐消失" [ref=e363]
+          - row "canmurder boolean true 是否可被谋杀" [ref=e364]:
+            - cell "canmurder" [ref=e365]:
+              - code [ref=e366]: canmurder
+            - cell "boolean" [ref=e367]:
+              - code [ref=e368]: boolean
+            - cell "true" [ref=e369]:
+              - code [ref=e370]: "true"
+            - cell "是否可被谋杀" [ref=e371]
+          - row "canheal boolean true 是否可被治疗" [ref=e372]:
+            - cell "canheal" [ref=e373]:
+              - code [ref=e374]: canheal
+            - cell "boolean" [ref=e375]:
+              - code [ref=e376]: boolean
+            - cell "true" [ref=e377]:
+              - code [ref=e378]: "true"
+            - cell "是否可被治疗" [ref=e379]
+          - row "penalty number 0 生命惩罚比例 (0~1)" [ref=e380]:
+            - cell "penalty" [ref=e381]:
+              - code [ref=e382]: penalty
+            - cell "number" [ref=e383]:
+              - code [ref=e384]: number
+            - cell "0" [ref=e385]:
+              - code [ref=e386]: "0"
+            - cell "生命惩罚比例 (0~1)" [ref=e387]
+          - row "disable_penalty boolean !TUNING.HEALTH_PENALTY_ENABLED 是否禁用惩罚" [ref=e388]:
+            - cell "disable_penalty" [ref=e389]:
+              - code [ref=e390]: disable_penalty
+            - cell "boolean" [ref=e391]:
+              - code [ref=e392]: boolean
+            - cell "!TUNING.HEALTH_PENALTY_ENABLED" [ref=e393]:
+              - code [ref=e394]: "!TUNING.HEALTH_PENALTY_ENABLED"
+            - cell "是否禁用惩罚" [ref=e395]
+          - row "fire_damage_scale number 1 火伤缩放倍率" [ref=e396]:
+            - cell "fire_damage_scale" [ref=e397]:
+              - code [ref=e398]: fire_damage_scale
+            - cell "number" [ref=e399]:
+              - code [ref=e400]: number
+            - cell "1" [ref=e401]:
+              - code [ref=e402]: "1"
+            - cell "火伤缩放倍率" [ref=e403]
+          - row "fire_timestart number 1 火伤开始延迟(秒)" [ref=e404]:
+            - cell "fire_timestart" [ref=e405]:
+              - code [ref=e406]: fire_timestart
+            - cell "number" [ref=e407]:
+              - code [ref=e408]: number
+            - cell "1" [ref=e409]:
+              - code [ref=e410]: "1"
+            - cell "火伤开始延迟(秒)" [ref=e411]
+          - row "absorb number 0 已废弃 — 请用 externalabsorbmodifiers" [ref=e412]:
+            - cell "absorb" [ref=e413]:
+              - code [ref=e414]: absorb
+            - cell "number" [ref=e415]:
+              - code [ref=e416]: number
+            - cell "0" [ref=e417]:
+              - code [ref=e418]: "0"
+            - cell "已废弃 — 请用 externalabsorbmodifiers" [ref=e419]:
+              - strong [ref=e420]: 已废弃
+              - text: — 请用
+              - code [ref=e421]: externalabsorbmodifiers
+          - row "playerabsorb number 0 已废弃 — 请用 externalabsorbmodifiers" [ref=e422]:
+            - cell "playerabsorb" [ref=e423]:
+              - code [ref=e424]: playerabsorb
+            - cell "number" [ref=e425]:
+              - code [ref=e426]: number
+            - cell "0" [ref=e427]:
+              - code [ref=e428]: "0"
+            - cell "已废弃 — 请用 externalabsorbmodifiers" [ref=e429]:
+              - strong [ref=e430]: 已废弃
+              - text: — 请用
+              - code [ref=e431]: externalabsorbmodifiers
+          - row "externalabsorbmodifiers SourceModifierList 加法叠加 外部吸收修正器" [ref=e432]:
+            - cell "externalabsorbmodifiers" [ref=e433]:
+              - code [ref=e434]: externalabsorbmodifiers
+            - cell "SourceModifierList" [ref=e435]:
+              - code [ref=e436]: SourceModifierList
+            - cell "加法叠加" [ref=e437]
+            - cell "外部吸收修正器" [ref=e438]
+          - row "externalreductionmodifiers SourceModifierList 加法叠加 外部伤害减免修正器" [ref=e439]:
+            - cell "externalreductionmodifiers" [ref=e440]:
+              - code [ref=e441]: externalreductionmodifiers
+            - cell "SourceModifierList" [ref=e442]:
+              - code [ref=e443]: SourceModifierList
+            - cell "加法叠加" [ref=e444]
+            - cell "外部伤害减免修正器" [ref=e445]
+          - row "externalfiredamagemultipliers SourceModifierList — 火伤倍率修正器" [ref=e446]:
+            - cell "externalfiredamagemultipliers" [ref=e447]:
+              - code [ref=e448]: externalfiredamagemultipliers
+            - cell "SourceModifierList" [ref=e449]:
+              - code [ref=e450]: SourceModifierList
+            - cell "—" [ref=e451]
+            - cell "火伤倍率修正器" [ref=e452]
+          - row "takingfiredamage boolean false 是否正在受火伤" [ref=e453]:
+            - cell "takingfiredamage" [ref=e454]:
+              - code [ref=e455]: takingfiredamage
+            - cell "boolean" [ref=e456]:
+              - code [ref=e457]: boolean
+            - cell "false" [ref=e458]:
+              - code [ref=e459]: "false"
+            - cell "是否正在受火伤" [ref=e460]
+      - heading "方法" [level=2] [ref=e461]:
+        - link "方法" [ref=e462] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e6%96%b9%e6%b3%95"
+      - heading "生命值操作" [level=3] [ref=e463]:
+        - link "生命值操作" [ref=e464] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e7%94%9f%e5%91%bd%e5%80%bc%e6%93%8d%e4%bd%9c"
+      - table [ref=e465]:
+        - rowgroup [ref=e466]:
+          - row "方法 说明" [ref=e467]:
+            - columnheader "方法" [ref=e468]
+            - columnheader "说明" [ref=e469]
+        - rowgroup [ref=e470]:
+          - row "SetMaxHealth(amount) 设置最大生命值，同时将当前生命值设为 amount" [ref=e471]:
+            - cell "SetMaxHealth(amount)" [ref=e472]:
+              - code [ref=e473]: SetMaxHealth(amount)
+            - cell "设置最大生命值，同时将当前生命值设为 amount" [ref=e474]:
+              - text: 设置最大生命值，同时将当前生命值设为
+              - code [ref=e475]: amount
+          - row "SetMinHealth(amount) 设置最小生命值" [ref=e476]:
+            - cell "SetMinHealth(amount)" [ref=e477]:
+              - code [ref=e478]: SetMinHealth(amount)
+            - cell "设置最小生命值" [ref=e479]
+          - row "SetCurrentHealth(amount) 直接设置当前生命值" [ref=e480]:
+            - cell "SetCurrentHealth(amount)" [ref=e481]:
+              - code [ref=e482]: SetCurrentHealth(amount)
+            - cell "直接设置当前生命值" [ref=e483]
+          - row "SetVal(val, cause, afflicter) 设置生命值，触发 healthdelta 事件" [ref=e484]:
+            - cell "SetVal(val, cause, afflicter)" [ref=e485]:
+              - code [ref=e486]: SetVal(val, cause, afflicter)
+            - cell "设置生命值，触发 healthdelta 事件" [ref=e487]:
+              - text: 设置生命值，触发
+              - code [ref=e488]: healthdelta
+              - text: 事件
+          - row "SetPercent(percent, overtime, cause) 按百分比设置生命值" [ref=e489]:
+            - cell "SetPercent(percent, overtime, cause)" [ref=e490]:
+              - code [ref=e491]: SetPercent(percent, overtime, cause)
+            - cell "按百分比设置生命值" [ref=e492]
+          - row "GetPercent() 获取生命值百分比 currenthealth / maxhealth" [ref=e493]:
+            - cell "GetPercent()" [ref=e494]:
+              - code [ref=e495]: GetPercent()
+            - cell "获取生命值百分比 currenthealth / maxhealth" [ref=e496]:
+              - text: 获取生命值百分比
+              - code [ref=e497]: currenthealth / maxhealth
+          - row "GetPercentWithPenalty() 考虑惩罚后的百分比" [ref=e498]:
+            - cell "GetPercentWithPenalty()" [ref=e499]:
+              - code [ref=e500]: GetPercentWithPenalty()
+            - cell "考虑惩罚后的百分比" [ref=e501]
+          - row "GetMaxWithPenalty() 考虑惩罚后的最大生命值 maxhealth * (1 - penalty)" [ref=e502]:
+            - cell "GetMaxWithPenalty()" [ref=e503]:
+              - code [ref=e504]: GetMaxWithPenalty()
+            - cell "考虑惩罚后的最大生命值 maxhealth * (1 - penalty)" [ref=e505]:
+              - text: 考虑惩罚后的最大生命值
+              - code [ref=e506]: maxhealth * (1 - penalty)
+          - row "IsHurt() 是否受伤（当前 < 最大）" [ref=e507]:
+            - cell "IsHurt()" [ref=e508]:
+              - code [ref=e509]: IsHurt()
+            - cell "是否受伤（当前 < 最大）" [ref=e510]
+          - row "IsDead() 是否死亡（currenthealth <= 0）" [ref=e511]:
+            - cell "IsDead()" [ref=e512]:
+              - code [ref=e513]: IsDead()
+            - cell "是否死亡（currenthealth <= 0）" [ref=e514]:
+              - text: 是否死亡（
+              - code [ref=e515]: currenthealth <= 0
+              - text: ）
+          - row "Kill() 杀死实体（调用 DoDelta 扣除剩余生命）" [ref=e516]:
+            - cell "Kill()" [ref=e517]:
+              - code [ref=e518]: Kill()
+            - cell "杀死实体（调用 DoDelta 扣除剩余生命）" [ref=e519]
+          - row "ForceKill() 强制杀死（无视无敌）" [ref=e520]:
+            - cell "ForceKill()" [ref=e521]:
+              - code [ref=e522]: ForceKill()
+            - cell "强制杀死（无视无敌）" [ref=e523]
+      - heading "伤害/治疗" [level=3] [ref=e524]:
+        - link "伤害/治疗" [ref=e525] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e4%bc%a4%e5%ae%b3%e6%b2%bb%e7%96%97"
+      - table [ref=e526]:
+        - rowgroup [ref=e527]:
+          - row "方法 说明" [ref=e528]:
+            - columnheader "方法" [ref=e529]
+            - columnheader "说明" [ref=e530]
+        - rowgroup [ref=e531]:
+          - row "DoDelta(delta, overtime, cause, ignore_invincible, afflicter, ignore_absorb) 增减生命值。正值治疗，负值伤害。核心方法" [ref=e532]:
+            - cell "DoDelta(delta, overtime, cause, ignore_invincible, afflicter, ignore_absorb)" [ref=e533]:
+              - code [ref=e534]: DoDelta(delta, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+            - cell "增减生命值。正值治疗，负值伤害。核心方法" [ref=e535]
+          - row "DoFireDamage(amount, doer, instant) 火焰伤害（考虑火伤缩放和每秒上限）" [ref=e536]:
+            - cell "DoFireDamage(amount, doer, instant)" [ref=e537]:
+              - code [ref=e538]: DoFireDamage(amount, doer, instant)
+            - cell "火焰伤害（考虑火伤缩放和每秒上限）" [ref=e539]
+          - row "GetFireDamageScale() 获取当前火伤倍率" [ref=e540]:
+            - cell "GetFireDamageScale()" [ref=e541]:
+              - code [ref=e542]: GetFireDamageScale()
+            - cell "获取当前火伤倍率" [ref=e543]
+          - row "SetMaxDamageTakenPerHit(maxdamagetakenperhit) 设置单次伤害上限（传入负数）" [ref=e544]:
+            - cell "SetMaxDamageTakenPerHit(maxdamagetakenperhit)" [ref=e545]:
+              - code [ref=e546]: SetMaxDamageTakenPerHit(maxdamagetakenperhit)
+            - cell "设置单次伤害上限（传入负数）" [ref=e547]
+          - row "ForceUpdateHUD(overtime) 强制更新HUD显示" [ref=e548]:
+            - cell "ForceUpdateHUD(overtime)" [ref=e549]:
+              - code [ref=e550]: ForceUpdateHUD(overtime)
+            - cell "强制更新HUD显示" [ref=e551]
+      - heading "无敌/惩罚" [level=3] [ref=e552]:
+        - link "无敌/惩罚" [ref=e553] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e6%97%a0%e6%95%8c%e6%83%a9%e7%bd%9a"
+      - table [ref=e554]:
+        - rowgroup [ref=e555]:
+          - row "方法 说明" [ref=e556]:
+            - columnheader "方法" [ref=e557]
+            - columnheader "说明" [ref=e558]
+        - rowgroup [ref=e559]:
+          - row "SetInvincible(val) 设置无敌状态，推送 invincibletoggle 事件" [ref=e560]:
+            - cell "SetInvincible(val)" [ref=e561]:
+              - code [ref=e562]: SetInvincible(val)
+            - cell "设置无敌状态，推送 invincibletoggle 事件" [ref=e563]:
+              - text: 设置无敌状态，推送
+              - code [ref=e564]: invincibletoggle
+              - text: 事件
+          - row "IsInvincible() 是否无敌" [ref=e565]:
+            - cell "IsInvincible()" [ref=e566]:
+              - code [ref=e567]: IsInvincible()
+            - cell "是否无敌" [ref=e568]
+          - row "SetPenalty(penalty) 设置生命惩罚比例" [ref=e569]:
+            - cell "SetPenalty(penalty)" [ref=e570]:
+              - code [ref=e571]: SetPenalty(penalty)
+            - cell "设置生命惩罚比例" [ref=e572]
+          - row "DeltaPenalty(delta) 增减惩罚值" [ref=e573]:
+            - cell "DeltaPenalty(delta)" [ref=e574]:
+              - code [ref=e575]: DeltaPenalty(delta)
+            - cell "增减惩罚值" [ref=e576]
+          - row "GetPenaltyPercent() 获取惩罚百分比" [ref=e577]:
+            - cell "GetPenaltyPercent()" [ref=e578]:
+              - code [ref=e579]: GetPenaltyPercent()
+            - cell "获取惩罚百分比" [ref=e580]
+          - row "RecalculatePenalty() 已废弃" [ref=e581]:
+            - cell "RecalculatePenalty()" [ref=e582]:
+              - code [ref=e583]: RecalculatePenalty()
+            - cell "已废弃" [ref=e584]:
+              - strong [ref=e585]: 已废弃
+      - heading "生命恢复" [level=3] [ref=e586]:
+        - link "生命恢复" [ref=e587] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e7%94%9f%e5%91%bd%e6%81%a2%e5%a4%8d"
+      - table [ref=e588]:
+        - rowgroup [ref=e589]:
+          - row "方法 说明" [ref=e590]:
+            - columnheader "方法" [ref=e591]
+            - columnheader "说明" [ref=e592]
+        - rowgroup [ref=e593]:
+          - row "StartRegen(amount, period, interruptcurrentregen) 开始持续回血" [ref=e594]:
+            - cell "StartRegen(amount, period, interruptcurrentregen)" [ref=e595]:
+              - code [ref=e596]: StartRegen(amount, period, interruptcurrentregen)
+            - cell "开始持续回血" [ref=e597]
+          - row "StopRegen() 停止回血" [ref=e598]:
+            - cell "StopRegen()" [ref=e599]:
+              - code [ref=e600]: StopRegen()
+            - cell "停止回血" [ref=e601]
+          - row "AddRegenSource(source, amount, period, key) 添加回血来源（支持多个来源叠加）" [ref=e602]:
+            - cell "AddRegenSource(source, amount, period, key)" [ref=e603]:
+              - code [ref=e604]: AddRegenSource(source, amount, period, key)
+            - cell "添加回血来源（支持多个来源叠加）" [ref=e605]
+          - row "RemoveRegenSource(source, key) 移除回血来源" [ref=e606]:
+            - cell "RemoveRegenSource(source, key)" [ref=e607]:
+              - code [ref=e608]: RemoveRegenSource(source, key)
+            - cell "移除回血来源" [ref=e609]
+      - heading "月灼" [level=3] [ref=e610]:
+        - link "月灼" [ref=e611] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e6%9c%88%e7%81%bc"
+      - table [ref=e612]:
+        - rowgroup [ref=e613]:
+          - row "方法 说明" [ref=e614]:
+            - columnheader "方法" [ref=e615]
+            - columnheader "说明" [ref=e616]
+        - rowgroup [ref=e617]:
+          - row "RegisterLunarBurnSource(source, flags) 注册月灼来源" [ref=e618]:
+            - cell "RegisterLunarBurnSource(source, flags)" [ref=e619]:
+              - code [ref=e620]: RegisterLunarBurnSource(source, flags)
+            - cell "注册月灼来源" [ref=e621]
+          - row "UnregisterLunarBurnSource(source) 取消注册月灼来源" [ref=e622]:
+            - cell "UnregisterLunarBurnSource(source)" [ref=e623]:
+              - code [ref=e624]: UnregisterLunarBurnSource(source)
+            - cell "取消注册月灼来源" [ref=e625]
+          - row "GetLunarBurnFlags() 获取月灼标记" [ref=e626]:
+            - cell "GetLunarBurnFlags()" [ref=e627]:
+              - code [ref=e628]: GetLunarBurnFlags()
+            - cell "获取月灼标记" [ref=e629]
+          - row "CalcLunarBurnFlags() 计算当前月灼标记组合" [ref=e630]:
+            - cell "CalcLunarBurnFlags()" [ref=e631]:
+              - code [ref=e632]: CalcLunarBurnFlags()
+            - cell "计算当前月灼标记组合" [ref=e633]
+      - heading "吸收" [level=3] [ref=e634]:
+        - link "吸收" [ref=e635] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e5%90%b8%e6%94%b6"
+      - table [ref=e636]:
+        - rowgroup [ref=e637]:
+          - row "方法 说明" [ref=e638]:
+            - columnheader "方法" [ref=e639]
+            - columnheader "说明" [ref=e640]
+        - rowgroup [ref=e641]:
+          - row "SetAbsorptionAmount(amount) 已废弃 — 设置吸收值" [ref=e642]:
+            - cell "SetAbsorptionAmount(amount)" [ref=e643]:
+              - code [ref=e644]: SetAbsorptionAmount(amount)
+            - cell "已废弃 — 设置吸收值" [ref=e645]:
+              - strong [ref=e646]: 已废弃
+              - text: — 设置吸收值
+          - row "SetAbsorptionAmountFromPlayer(amount) 已废弃 — 设置玩家吸收值" [ref=e647]:
+            - cell "SetAbsorptionAmountFromPlayer(amount)" [ref=e648]:
+              - code [ref=e649]: SetAbsorptionAmountFromPlayer(amount)
+            - cell "已废弃 — 设置玩家吸收值" [ref=e650]:
+              - strong [ref=e651]: 已废弃
+              - text: — 设置玩家吸收值
+      - heading "其他" [level=3] [ref=e652]:
+        - link "其他" [ref=e653] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e5%85%b6%e4%bb%96"
+      - table [ref=e654]:
+        - rowgroup [ref=e655]:
+          - row "方法 说明" [ref=e656]:
+            - columnheader "方法" [ref=e657]
+            - columnheader "说明" [ref=e658]
+        - rowgroup [ref=e659]:
+          - row "CanFadeOut() 死亡时是否可渐隐消失" [ref=e660]:
+            - cell "CanFadeOut()" [ref=e661]:
+              - code [ref=e662]: CanFadeOut()
+            - cell "死亡时是否可渐隐消失" [ref=e663]
+          - row "GetDebugString() 获取调试字符串" [ref=e664]:
+            - cell "GetDebugString()" [ref=e665]:
+              - code [ref=e666]: GetDebugString()
+            - cell "获取调试字符串" [ref=e667]
+      - heading "事件" [level=2] [ref=e668]:
+        - link "事件" [ref=e669] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e4%ba%8b%e4%bb%b6"
+      - table [ref=e670]:
+        - rowgroup [ref=e671]:
+          - row "事件名 触发时机 参数" [ref=e672]:
+            - columnheader "事件名" [ref=e673]
+            - columnheader "触发时机" [ref=e674]
+            - columnheader "参数" [ref=e675]
+        - rowgroup [ref=e676]:
+          - 'row "healthdelta 生命值变化时 { oldpercent, newpercent, cause, afflicter, amount }" [ref=e677]':
+            - cell "healthdelta" [ref=e678]:
+              - code [ref=e679]: healthdelta
+            - cell "生命值变化时" [ref=e680]
+            - 'cell "{ oldpercent, newpercent, cause, afflicter, amount }" [ref=e681]':
+              - code [ref=e682]: "{ oldpercent, newpercent, cause, afflicter, amount }"
+          - 'row "invincibletoggle 无敌状态切换时 { invincible = bool }" [ref=e683]':
+            - cell "invincibletoggle" [ref=e684]:
+              - code [ref=e685]: invincibletoggle
+            - cell "无敌状态切换时" [ref=e686]
+            - 'cell "{ invincible = bool }" [ref=e687]':
+              - code [ref=e688]: "{ invincible = bool }"
+          - 'row "startfiredamage 开始受火伤 { low = bool }" [ref=e689]':
+            - cell "startfiredamage" [ref=e690]:
+              - code [ref=e691]: startfiredamage
+            - cell "开始受火伤" [ref=e692]
+            - 'cell "{ low = bool }" [ref=e693]':
+              - code [ref=e694]: "{ low = bool }"
+          - row "stopfiredamage 停止受火伤 —" [ref=e695]:
+            - cell "stopfiredamage" [ref=e696]:
+              - code [ref=e697]: stopfiredamage
+            - cell "停止受火伤" [ref=e698]
+            - cell "—" [ref=e699]
+          - 'row "changefiredamage 火伤强度变化 { low = bool }" [ref=e700]':
+            - cell "changefiredamage" [ref=e701]:
+              - code [ref=e702]: changefiredamage
+            - cell "火伤强度变化" [ref=e703]
+            - 'cell "{ low = bool }" [ref=e704]':
+              - code [ref=e705]: "{ low = bool }"
+          - row "firedamage 受到一次火伤 —" [ref=e706]:
+            - cell "firedamage" [ref=e707]:
+              - code [ref=e708]: firedamage
+            - cell "受到一次火伤" [ref=e709]
+            - cell "—" [ref=e710]
+          - row "startlunarburn 开始月灼 flags" [ref=e711]:
+            - cell "startlunarburn" [ref=e712]:
+              - code [ref=e713]: startlunarburn
+            - cell "开始月灼" [ref=e714]
+            - cell "flags" [ref=e715]:
+              - code [ref=e716]: flags
+          - row "stoplunarburn 停止月灼 —" [ref=e717]:
+            - cell "stoplunarburn" [ref=e718]:
+              - code [ref=e719]: stoplunarburn
+            - cell "停止月灼" [ref=e720]
+            - cell "—" [ref=e721]
+      - heading "使用示例" [level=2] [ref=e722]:
+        - link "使用示例" [ref=e723] [cursor=pointer]:
+          - /url: "#/02-components/combat/health?id=%e4%bd%bf%e7%94%a8%e7%a4%ba%e4%be%8b"
+      - generic [ref=e724]:
+        - code [ref=e725]: "-- 设置生命值 inst.components.health:SetMaxHealth(200) -- 造成伤害 inst.components.health:DoDelta(-30, false, \"monster\", nil, attacker) -- 治疗 inst.components.health:DoDelta(20) -- 检查死亡 if inst.components.health:IsDead() then inst:Remove() end -- 设置无敌 inst.components.health:SetInvincible(true) -- 添加持续回血 inst.components.health:AddRegenSource(\"my_source\", 1, 1) -- 设置生命惩罚（最大生命减少25%） inst.components.health:SetPenalty(0.25)"
+        - text: lua

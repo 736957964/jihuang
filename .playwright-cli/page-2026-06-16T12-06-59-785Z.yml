@@ -1,0 +1,414 @@
+- generic [active] [ref=e1]:
+  - link "View source on Github" [ref=e2] [cursor=pointer]:
+    - /url: https://github.com/736957964/jihuang
+    - img [ref=e3]
+  - main [ref=e7]:
+    - button "Menu" [ref=e8] [cursor=pointer]
+    - complementary [ref=e13]:
+      - searchbox "Search text" [ref=e16]
+      - heading "随笔" [level=1] [ref=e17]:
+        - link "随笔" [ref=e18] [cursor=pointer]:
+          - /url: /
+      - list [ref=e982]:
+        - listitem [ref=e983]:
+          - text: 前言
+          - list [ref=e984]:
+            - listitem [ref=e985]:
+              - link "Mod相关信息" [ref=e986] [cursor=pointer]:
+                - /url: "#/README"
+        - listitem [ref=e987]:
+          - text: 01 核心系统
+          - list [ref=e988]:
+            - listitem [ref=e989]:
+              - link "01-core 总览" [ref=e990] [cursor=pointer]:
+                - /url: "#/01-core/index"
+            - listitem [ref=e991]:
+              - link "EntityScript 实体脚本" [ref=e992] [cursor=pointer]:
+                - /url: "#/01-core/entity"
+            - listitem [ref=e993]:
+              - link "Prefab 预制体系统" [ref=e994] [cursor=pointer]:
+                - /url: "#/01-core/prefab"
+            - listitem [ref=e995]:
+              - link "Class 类系统" [ref=e996] [cursor=pointer]:
+                - /url: "#/01-core/class"
+            - listitem [ref=e997]:
+              - link "全局函数" [ref=e998] [cursor=pointer]:
+                - /url: "#/01-core/mainfunctions"
+            - listitem [ref=e999]:
+              - link "全局变量" [ref=e1000] [cursor=pointer]:
+                - /url: "#/01-core/globals"
+            - listitem [ref=e1001]:
+              - link "simutil 工具函数" [ref=e1002] [cursor=pointer]:
+                - /url: "#/01-core/simutil"
+        - listitem [ref=e1003]:
+          - text: 02 Components 组件
+          - list [ref=e1004]:
+            - listitem [ref=e1005]:
+              - link "02-components 总览" [ref=e1006] [cursor=pointer]:
+                - /url: "#/02-components/index"
+            - listitem [ref=e1007]:
+              - text: 战斗 Combat
+              - list [ref=e1008]:
+                - listitem [ref=e1009]:
+                  - link "combat 总览" [ref=e1010] [cursor=pointer]:
+                    - /url: "#/02-components/combat/index"
+                  - list [ref=e1011]:
+                    - listitem [ref=e1012]:
+                      - text: "-"
+                      - link "详细文档" [ref=e1013] [cursor=pointer]:
+                        - /url: "#/02-components/combat/index?id=%e8%af%a6%e7%bb%86%e6%96%87%e6%a1%a3"
+                - listitem [ref=e1014]:
+                  - link "combat 战斗" [ref=e1015] [cursor=pointer]:
+                    - /url: "#/02-components/combat/combat"
+                - listitem [ref=e1016]:
+                  - link "health 生命值" [ref=e1017] [cursor=pointer]:
+                    - /url: "#/02-components/combat/health"
+                - listitem [ref=e1018]:
+                  - link "weapon 武器" [ref=e1019] [cursor=pointer]:
+                    - /url: "#/02-components/combat/weapon"
+                - listitem [ref=e1020]:
+                  - link "armor 盔甲" [ref=e1021] [cursor=pointer]:
+                    - /url: "#/02-components/combat/armor"
+            - listitem [ref=e1022]:
+              - text: 生存 Survival
+              - list [ref=e1023]:
+                - listitem [ref=e1024]:
+                  - link "survival 总览" [ref=e1025] [cursor=pointer]:
+                    - /url: "#/02-components/survival/index"
+                - listitem [ref=e1026]:
+                  - link "hunger 饥饿" [ref=e1027] [cursor=pointer]:
+                    - /url: "#/02-components/survival/hunger"
+                - listitem [ref=e1028]:
+                  - link "sanity 理智" [ref=e1029] [cursor=pointer]:
+                    - /url: "#/02-components/survival/sanity"
+            - listitem [ref=e1030]:
+              - text: 背包 Inventory
+              - list [ref=e1031]:
+                - listitem [ref=e1032]:
+                  - link "inventory 总览" [ref=e1033] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/index"
+                - listitem [ref=e1034]:
+                  - link "inventory 背包" [ref=e1035] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/inventory"
+                - listitem [ref=e1036]:
+                  - link "container 容器" [ref=e1037] [cursor=pointer]:
+                    - /url: "#/02-components/inventory/container"
+            - listitem [ref=e1038]:
+              - text: 工作 Work
+              - list [ref=e1039]:
+                - listitem [ref=e1040]:
+                  - link "work 总览" [ref=e1041] [cursor=pointer]:
+                    - /url: "#/02-components/work/index"
+                - listitem [ref=e1042]:
+                  - link "workable 可工作" [ref=e1043] [cursor=pointer]:
+                    - /url: "#/02-components/work/workable"
+            - listitem [ref=e1044]:
+              - text: 食物 Edible
+              - list [ref=e1045]:
+                - listitem [ref=e1046]:
+                  - link "edible 总览" [ref=e1047] [cursor=pointer]:
+                    - /url: "#/02-components/edible/index"
+                - listitem [ref=e1048]:
+                  - link "edible 可食用" [ref=e1049] [cursor=pointer]:
+                    - /url: "#/02-components/edible/edible"
+                - listitem [ref=e1050]:
+                  - link "perishable 易腐" [ref=e1051] [cursor=pointer]:
+                    - /url: "#/02-components/edible/perishable"
+            - listitem [ref=e1052]:
+              - text: 建造 Builder
+              - list [ref=e1053]:
+                - listitem [ref=e1054]:
+                  - link "builder 总览" [ref=e1055] [cursor=pointer]:
+                    - /url: "#/02-components/builder/index"
+                - listitem [ref=e1056]:
+                  - link "builder 建造" [ref=e1057] [cursor=pointer]:
+                    - /url: "#/02-components/builder/builder"
+            - listitem [ref=e1058]:
+              - text: 燃烧 Burnable
+              - list [ref=e1059]:
+                - listitem [ref=e1060]:
+                  - link "burnable 总览" [ref=e1061] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/index"
+                - listitem [ref=e1062]:
+                  - link "burnable 可燃" [ref=e1063] [cursor=pointer]:
+                    - /url: "#/02-components/burnable/burnable"
+            - listitem [ref=e1064]:
+              - text: 生物 Creature
+              - list [ref=e1065]:
+                - listitem [ref=e1066]:
+                  - link "creature 总览" [ref=e1067] [cursor=pointer]:
+                    - /url: "#/02-components/creature/index"
+                - listitem [ref=e1068]:
+                  - link "childspawner 子生物生成" [ref=e1069] [cursor=pointer]:
+                    - /url: "#/02-components/creature/childspawner"
+            - listitem [ref=e1070]:
+              - text: 其他 Other
+              - list [ref=e1071]:
+                - listitem [ref=e1072]:
+                  - link "other 总览" [ref=e1073] [cursor=pointer]:
+                    - /url: "#/02-components/other/index"
+                - listitem [ref=e1074]:
+                  - link "finiteuses 耐久度" [ref=e1075] [cursor=pointer]:
+                    - /url: "#/02-components/other/finiteuses"
+            - listitem [ref=e1076]:
+              - text: 航海 Sailing
+              - list [ref=e1077]:
+                - listitem [ref=e1078]:
+                  - link "sailing 总览" [ref=e1079] [cursor=pointer]:
+                    - /url: "#/02-components/sailing/index"
+        - listitem [ref=e1080]:
+          - text: 03 Actions 动作
+          - list [ref=e1081]:
+            - listitem [ref=e1082]:
+              - link "03-actions 总览" [ref=e1083] [cursor=pointer]:
+                - /url: "#/03-actions/index"
+            - listitem [ref=e1084]:
+              - link "动作列表" [ref=e1085] [cursor=pointer]:
+                - /url: "#/03-actions/detail/action-list"
+        - listitem [ref=e1086]:
+          - text: 04 Tags 标签
+          - list [ref=e1087]:
+            - listitem [ref=e1088]:
+              - link "04-tags 总览" [ref=e1089] [cursor=pointer]:
+                - /url: "#/04-tags/index"
+        - listitem [ref=e1090]:
+          - text: 05 Events 事件
+          - list [ref=e1091]:
+            - listitem [ref=e1092]:
+              - link "05-events 总览" [ref=e1093] [cursor=pointer]:
+                - /url: "#/05-events/index"
+        - listitem [ref=e1094]:
+          - text: 06 Stategraphs 状态图
+          - list [ref=e1095]:
+            - listitem [ref=e1096]:
+              - link "06-stategraphs 总览" [ref=e1097] [cursor=pointer]:
+                - /url: "#/06-stategraphs/index"
+            - listitem [ref=e1098]:
+              - link "常用 SG 参考" [ref=e1099] [cursor=pointer]:
+                - /url: "#/06-stategraphs/sg-reference"
+        - listitem [ref=e1100]:
+          - text: 07 Brains 行为大脑
+          - list [ref=e1101]:
+            - listitem [ref=e1102]:
+              - link "07-brains 总览" [ref=e1103] [cursor=pointer]:
+                - /url: "#/07-brains/index"
+            - listitem [ref=e1104]:
+              - link "常用 Brain 参考" [ref=e1105] [cursor=pointer]:
+                - /url: "#/07-brains/brain-reference"
+        - listitem [ref=e1106]:
+          - text: 08 Prefabs 预设
+          - list [ref=e1107]:
+            - listitem [ref=e1108]:
+              - link "08-prefabs 总览" [ref=e1109] [cursor=pointer]:
+                - /url: "#/08-prefabs/index"
+            - listitem [ref=e1110]:
+              - link "Prefab 分类参考" [ref=e1111] [cursor=pointer]:
+                - /url: "#/08-prefabs/prefabs-reference"
+        - listitem [ref=e1112]:
+          - text: 09 Tuning 调参
+          - list [ref=e1113]:
+            - listitem [ref=e1114]:
+              - link "09-tuning 总览" [ref=e1115] [cursor=pointer]:
+                - /url: "#/09-tuning/index"
+        - listitem [ref=e1116]:
+          - text: 10 Networking 网络
+          - list [ref=e1117]:
+            - listitem [ref=e1118]:
+              - link "10-networking 总览" [ref=e1119] [cursor=pointer]:
+                - /url: "#/10-networking/index"
+        - listitem [ref=e1120]:
+          - text: 11 Modding Mod开发
+          - list [ref=e1121]:
+            - listitem [ref=e1122]:
+              - link "11-modding 总览" [ref=e1123] [cursor=pointer]:
+                - /url: "#/11-modding/index"
+        - listitem [ref=e1124]:
+          - text: 12 Cooking 烹饪
+          - list [ref=e1125]:
+            - listitem [ref=e1126]:
+              - link "12-cooking 总览" [ref=e1127] [cursor=pointer]:
+                - /url: "#/12-cooking/index"
+        - listitem [ref=e1128]:
+          - text: 13 World 世界
+          - list [ref=e1129]:
+            - listitem [ref=e1130]:
+              - link "13-world 总览" [ref=e1131] [cursor=pointer]:
+                - /url: "#/13-world/index"
+            - listitem [ref=e1132]:
+              - link "地图生成系统" [ref=e1133] [cursor=pointer]:
+                - /url: "#/13-world/worldgen"
+        - listitem [ref=e1134]:
+          - text: 14 Skilltree 技能树
+          - list [ref=e1135]:
+            - listitem [ref=e1136]:
+              - link "14-skilltree 总览" [ref=e1137] [cursor=pointer]:
+                - /url: "#/14-skilltree/index"
+        - listitem [ref=e1138]:
+          - text: 15 UI 界面
+          - list [ref=e1139]:
+            - listitem [ref=e1140]:
+              - link "15-ui 总览" [ref=e1141] [cursor=pointer]:
+                - /url: "#/15-ui/index"
+        - listitem [ref=e1142]:
+          - text: 16 Constants 常量
+          - list [ref=e1143]:
+            - listitem [ref=e1144]:
+              - link "16-constants 总览" [ref=e1145] [cursor=pointer]:
+                - /url: "#/16-constants/index"
+        - listitem [ref=e1146]:
+          - text: 17 Standard Components 标准组件
+          - list [ref=e1147]:
+            - listitem [ref=e1148]:
+              - link "17-standardcomponents 总览" [ref=e1149] [cursor=pointer]:
+                - /url: "#/17-standardcomponents/index"
+        - listitem [ref=e1150]:
+          - text: 18 Behaviours 行为树
+          - list [ref=e1151]:
+            - listitem [ref=e1152]:
+              - link "18-behaviours 总览" [ref=e1153] [cursor=pointer]:
+                - /url: "#/18-behaviours/index"
+        - listitem [ref=e1154]:
+          - text: 19 FX 特效
+          - list [ref=e1155]:
+            - listitem [ref=e1156]:
+              - link "19-fx 总览" [ref=e1157] [cursor=pointer]:
+                - /url: "#/19-fx/index"
+        - listitem [ref=e1158]:
+          - text: 案例
+          - list [ref=e1159]:
+            - listitem [ref=e1160]:
+              - link "小案例" [ref=e1161] [cursor=pointer]:
+                - /url: "#/anli/smallAn"
+        - listitem [ref=e1162]:
+          - text: 数据提取
+          - list [ref=e1163]:
+            - listitem [ref=e1164]:
+              - link "数据提取1" [ref=e1165] [cursor=pointer]:
+                - /url: "#/xiazai/tq1"
+            - listitem [ref=e1166]:
+              - link "数据提取2" [ref=e1167] [cursor=pointer]:
+                - /url: "#/xiazai/tq2"
+            - listitem [ref=e1168]:
+              - link "数据提取3" [ref=e1169] [cursor=pointer]:
+                - /url: "#/xiazai/tq3"
+            - listitem [ref=e1170]:
+              - link "数据提取4" [ref=e1171] [cursor=pointer]:
+                - /url: "#/xiazai/tq4"
+            - listitem [ref=e1172]:
+              - link "数据提取5" [ref=e1173] [cursor=pointer]:
+                - /url: "#/xiazai/tq5"
+            - listitem [ref=e1174]:
+              - link "字典" [ref=e1175] [cursor=pointer]:
+                - /url: "#/xiazai/tq6"
+    - article [ref=e212]:
+      - heading "战斗相关组件" [level=1] [ref=e1176]:
+        - link "战斗相关组件" [ref=e1177] [cursor=pointer]:
+          - /url: "#/02-components/combat/index?id=%e6%88%98%e6%96%97%e7%9b%b8%e5%85%b3%e7%bb%84%e4%bb%b6"
+      - table [ref=e1178]:
+        - rowgroup [ref=e1179]:
+          - row "组件名 文件 说明" [ref=e1180]:
+            - columnheader "组件名" [ref=e1181]
+            - columnheader "文件" [ref=e1182]
+            - columnheader "说明" [ref=e1183]
+        - rowgroup [ref=e1184]:
+          - row "combat combat.lua 战斗系统核心，攻击/伤害/目标管理" [ref=e1185]:
+            - cell "combat" [ref=e1186]:
+              - code [ref=e1187]: combat
+            - cell "combat.lua" [ref=e1188]
+            - cell "战斗系统核心，攻击/伤害/目标管理" [ref=e1189]
+          - row "health health.lua 生命值管理" [ref=e1190]:
+            - cell "health" [ref=e1191]:
+              - code [ref=e1192]: health
+            - cell "health.lua" [ref=e1193]
+            - cell "生命值管理" [ref=e1194]
+          - row "weapon weapon.lua 武器属性（伤害/范围/投射物）" [ref=e1195]:
+            - cell "weapon" [ref=e1196]:
+              - code [ref=e1197]: weapon
+            - cell "weapon.lua" [ref=e1198]
+            - cell "武器属性（伤害/范围/投射物）" [ref=e1199]
+          - row "armor armor.lua 防具属性（吸收率/耐久/弱点）" [ref=e1200]:
+            - cell "armor" [ref=e1201]:
+              - code [ref=e1202]: armor
+            - cell "armor.lua" [ref=e1203]
+            - cell "防具属性（吸收率/耐久/弱点）" [ref=e1204]
+          - row "combat_replica combat_replica.lua 客户端战斗同步" [ref=e1205]:
+            - cell "combat_replica" [ref=e1206]:
+              - code [ref=e1207]: combat_replica
+            - cell "combat_replica.lua" [ref=e1208]
+            - cell "客户端战斗同步" [ref=e1209]
+          - row "aoeweapon_base aoeweapon_base.lua AOE武器基类" [ref=e1210]:
+            - cell "aoeweapon_base" [ref=e1211]:
+              - code [ref=e1212]: aoeweapon_base
+            - cell "aoeweapon_base.lua" [ref=e1213]
+            - cell "AOE武器基类" [ref=e1214]
+          - row "aoeweapon_leap aoeweapon_leap.lua 跳跃AOE武器" [ref=e1215]:
+            - cell "aoeweapon_leap" [ref=e1216]:
+              - code [ref=e1217]: aoeweapon_leap
+            - cell "aoeweapon_leap.lua" [ref=e1218]
+            - cell "跳跃AOE武器" [ref=e1219]
+          - row "aoeweapon_lunge aoeweapon_lunge.lua 冲刺AOE武器" [ref=e1220]:
+            - cell "aoeweapon_lunge" [ref=e1221]:
+              - code [ref=e1222]: aoeweapon_lunge
+            - cell "aoeweapon_lunge.lua" [ref=e1223]
+            - cell "冲刺AOE武器" [ref=e1224]
+          - row "aoeweapon_mace aoeweapon_mace.lua 锤类AOE武器" [ref=e1225]:
+            - cell "aoeweapon_mace" [ref=e1226]:
+              - code [ref=e1227]: aoeweapon_mace
+            - cell "aoeweapon_mace.lua" [ref=e1228]
+            - cell "锤类AOE武器" [ref=e1229]
+          - row "attackdodger attackdodger.lua 闪避能力" [ref=e1230]:
+            - cell "attackdodger" [ref=e1231]:
+              - code [ref=e1232]: attackdodger
+            - cell "attackdodger.lua" [ref=e1233]
+            - cell "闪避能力" [ref=e1234]
+          - row "damagereflect damagereflect.lua 反伤效果" [ref=e1235]:
+            - cell "damagereflect" [ref=e1236]:
+              - code [ref=e1237]: damagereflect
+            - cell "damagereflect.lua" [ref=e1238]
+            - cell "反伤效果" [ref=e1239]
+          - row "damagetypebonus damagetypebonus.lua 伤害类型加成" [ref=e1240]:
+            - cell "damagetypebonus" [ref=e1241]:
+              - code [ref=e1242]: damagetypebonus
+            - cell "damagetypebonus.lua" [ref=e1243]
+            - cell "伤害类型加成" [ref=e1244]
+          - row "damagetyperesist damagetyperesist.lua 伤害类型抗性" [ref=e1245]:
+            - cell "damagetyperesist" [ref=e1246]:
+              - code [ref=e1247]: damagetyperesist
+            - cell "damagetyperesist.lua" [ref=e1248]
+            - cell "伤害类型抗性" [ref=e1249]
+          - row "electricattacks electricattacks.lua 电击攻击能力" [ref=e1250]:
+            - cell "electricattacks" [ref=e1251]:
+              - code [ref=e1252]: electricattacks
+            - cell "electricattacks.lua" [ref=e1253]
+            - cell "电击攻击能力" [ref=e1254]
+          - row "projectile projectile.lua 投射物（飞行道具）" [ref=e1255]:
+            - cell "projectile" [ref=e1256]:
+              - code [ref=e1257]: projectile
+            - cell "projectile.lua" [ref=e1258]
+            - cell "投射物（飞行道具）" [ref=e1259]
+          - row "complexprojectile complexprojectile.lua 复杂投射物" [ref=e1260]:
+            - cell "complexprojectile" [ref=e1261]:
+              - code [ref=e1262]: complexprojectile
+            - cell "complexprojectile.lua" [ref=e1263]
+            - cell "复杂投射物" [ref=e1264]
+          - row "spdamageutil spdamageutil.lua 特殊伤害工具" [ref=e1265]:
+            - cell "spdamageutil" [ref=e1266]:
+              - code [ref=e1267]: spdamageutil
+            - cell "spdamageutil.lua" [ref=e1268]
+            - cell "特殊伤害工具" [ref=e1269]
+      - heading "详细文档" [level=2] [ref=e1270]:
+        - link "详细文档" [ref=e1271] [cursor=pointer]:
+          - /url: "#/02-components/combat/index?id=%e8%af%a6%e7%bb%86%e6%96%87%e6%a1%a3"
+      - list [ref=e1272]:
+        - listitem [ref=e1273]:
+          - link "Health 生命值" [ref=e1274] [cursor=pointer]:
+            - /url: "#/02-components/combat/health"
+        - listitem [ref=e1275]:
+          - link "Combat 战斗" [ref=e1276] [cursor=pointer]:
+            - /url: "#/02-components/combat/combat"
+        - listitem [ref=e1277]:
+          - link "Weapon 武器" [ref=e1278] [cursor=pointer]:
+            - /url: "#/02-components/combat/weapon"
+        - listitem [ref=e1279]:
+          - link "Armor 防具" [ref=e1280] [cursor=pointer]:
+            - /url: "#/02-components/combat/armor"
