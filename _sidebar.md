@@ -1,4 +1,5 @@
-﻿- 前言
+﻿* [🌟 核心架构决策与源码哲学](01-core/architecture_philosophy.md)
+- 前言
   * [Mod相关信息](/README)
 - 01 核心系统
   * [01-core 总览](/01-core/index)
