@@ -99,8 +99,68 @@
             "skillDoc": "anli/skills/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md",
             "completedAt": "2026-10-30 13:16:00",
             "keyTags": ["Client-Only", "Coroutine-ActionThread", "SelectionBox-Geometry", "Manual-Walk-Interrupt", "Deploy-Spacing"]
+        },
+        {
+            "id": "836583293",
+            "name": "Item Info",
+            "author": "Ryuu",
+            "version": "0.54",
+            "studyDoc": "docs/workshop_studies/study_836583293_item_info.md",
+            "skillDoc": "anli/skills/skill_workshop_836583293_Item_Metadata_Snapshot.md",
+            "completedAt": "2026-10-30 13:28:00",
+            "keyTags": ["Client-Only", "Metadata-Snapshot-Cache", "Action-Silent-Guard", "Planar-Damage-Defense", "HUD-Embedding"]
+        },
+        {
+            "id": "375850593",
+            "name": "Extra Equip Slots",
+            "author": "xVars",
+            "version": "1.8.0",
+            "studyDoc": "docs/workshop_studies/study_375850593_extra_equip_slots.md",
+            "skillDoc": "anli/skills/skill_workshop_375850593_Extra_Equip_Slots_Architecture.md",
+            "completedAt": "2026-10-30 13:42:00",
+            "keyTags": ["EQUIPSLOTS-Extension", "inventory_classified-Hook", "Setoverflow-Event", "Resurrectable-Redirect"]
+        },
+        {
+            "id": "462434129",
+            "name": "Restart",
+            "author": "Skull & Orange",
+            "version": "0.3.2",
+            "studyDoc": "docs/workshop_studies/study_462434129_restart.md",
+            "skillDoc": "anli/skills/skill_workshop_462434129_Chat_Command_And_Despawn.md",
+            "completedAt": "2026-10-30 13:50:00",
+            "keyTags": ["Networking_Say-Hook", "ms_playerdespawnanddelete", "MapExplorer-Inheritance", "Ghost-Resurrect"]
+        },
+        {
+            "id": "1418746242",
+            "name": "Chinese++",
+            "author": "EvenMr",
+            "version": "1.2.1",
+            "studyDoc": "docs/workshop_studies/study_1418746242_chinese_plus_plus.md",
+            "skillDoc": "anli/skills/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md",
+            "completedAt": "2026-10-30 14:02:00",
+            "keyTags": ["Font-Pipeline-HotSwap", "Path-Based-Upvalue", "Mergeinfo-Engine", "Pattern-Match-Chinese-Patch"]
+        },
+        {
+            "id": "1530801499",
+            "name": "Fast Travel (GUI)",
+            "author": "SoraYuki",
+            "version": "1.10",
+            "studyDoc": "docs/workshop_studies/study_1530801499_fast_travel_gui.md",
+            "skillDoc": "anli/skills/skill_workshop_1530801499_Replicable_Component_Topology.md",
+            "completedAt": "2026-10-30 14:15:00",
+            "keyTags": ["Replicable-Component", "Global-Topology-Registry", "OpenScreenUnderPause", "Danger-Escape-Guard", "Distance-Cost-Model"]
+        },
+        {
+            "id": "458940297",
+            "name": "Food Values - Item Tooltips",
+            "author": "gregdwilson",
+            "version": "2.5",
+            "studyDoc": "docs/workshop_studies/study_458940297_food_values_item_tooltips.md",
+            "skillDoc": "anli/skills/skill_workshop_458940297_ItemTile_Tooltip_OnDemand.md",
+            "completedAt": "2026-10-30 14:26:00",
+            "keyTags": ["On-Demand-RPC", "ItemTile-Tooltip-Hook", "No-Leak-Listener-Guard", "Wet-Color-Palette"]
         }
     ],
     "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-    "lastUpdated": "2026-10-30 13:16:00"
+    "lastUpdated": "2026-10-30 14:26:00"
 }
