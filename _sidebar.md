@@ -1,4 +1,20 @@
-﻿* [🌟 核心架构决策与源码哲学](01-core/architecture_philosophy.md)
+- 🌟 创意工坊权威模组研读库
+  * [研读库总览与账本](/docs/workshop_studies/README)
+  * UI 与 HUD 类别
+    * [小地图 HUD (345692228)](/docs/workshop_studies/UI与HUD类/study_345692228_minimap_hud)
+    * [几何种植 (351325790)](/docs/workshop_studies/UI与HUD类/study_351325790_geometric_placement)
+    * [五维状态显示 (376333686)](/docs/workshop_studies/UI与HUD类/study_376333686_combined_status)
+  * 网络与 RPC 同步类
+    * [全球定位 Global Positions (378160973)](/docs/workshop_studies/study_378160973_global_positions)
+  * 实体与 Prefabs 机制类
+    * [地窖模组 Storm Cellar (382177939)](/docs/workshop_studies/study_382177939_storm_cellar)
+    * [虫洞标记 Wormhole Marks (362175979)](/docs/workshop_studies/study_362175979_wormhole_marks)
+  * 组件与数据持久化类
+    * [物品堆叠上限 Increased Stack (374550642)](/docs/workshop_studies/study_374550642_increased_stack_size)
+    * [显伤/属性透视 Show Me (666155465)](/docs/workshop_studies/study_666155465_show_me)
+  * 大型内容拓展与世界类
+    * [海难联机版 Island Adventures (1467214795)](/docs/workshop_studies/study_1467214795_island_adventures)
+* [🌟 核心架构决策与源码哲学](01-core/architecture_philosophy.md)
 - 前言
   * [Mod相关信息](/README)
 - 01 核心系统
