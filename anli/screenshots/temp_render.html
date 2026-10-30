@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 24px;
+    width: 860px;
+    box-sizing: border-box;
+  }
+  .card {
+    background-color: #181825;
+    border: 1px solid #313244;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #89b4fa;
+    border-bottom: 2px solid #313244;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    background: #a6e3a1;
+    color: #11111b;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  h3 { color: #f9e2af; margin-top: 18px; margin-bottom: 8px; font-size: 16px; }
+  p, li { font-size: 14px; line-height: 1.6; color: #bac2de; }
+  ul { padding-left: 20px; margin: 6px 0; }
+  pre {
+    background-color: #11111b;
+    border: 1px solid #313244;
+    border-radius: 8px;
+    padding: 14px;
+    color: #a6e3a1;
+    font-family: "Cascadia Code", Consolas, Courier, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: auto;
+  }
+  .highlight { color: #fab387; font-weight: bold; }
+  .conclusion {
+    background-color: rgba(137, 180, 250, 0.1);
+    border-left: 4px solid #89b4fa;
+    padding: 10px 14px;
+    margin-top: 16px;
+    border-radius: 0 6px 6px 0;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="title"><span>饥荒题目评审：利用鼠标 RPC 绕过 Busy 检查防掉装方案可行性分析</span> <span class="badge">技术方案深度评审</span></div>
+  
+  <h3>一、核心原理与可行性判定</h3>
+  <div class="conclusion">
+    <strong>判定结果：<span style="color:#a6e3a1">【完全可行，且是高玩/连击防掉装的最佳解法】</span></strong>
+  </div>
+  <p>在���饥荒联机版》中，麋鹿鹅（Moose/Goose）吼叫武器震落、以及普通玩家被冰冻/硬直时，角色状态机（StateGraph）会被打上 <span class="highlight">"busy"</span> 标签。</p>
+  <ul>
+    <li><strong>常规行为 RPC（如 ACTIONS.UNEQUIP / USEITEM）</strong>：服务端在 <code>bufferedaction</code> 执行前必须校验 <code>not inst.sg:HasStateTag("busy")</code>，因此硬直中发出的普通切装动作会被底层抛弃或延迟；</li>
+    <li><strong>鼠标背包 RPC（如 TakeActiveItemFromAll / MoveItemFromAllContainer）</strong>：属于<strong>客户端原生 UI 级网络同步通道</strong>，它是直接对玩家 <code>inventory</code> / <code>activeitem</code> 进行原子化状态迁��，<strong>原生不经过 StateGraph 的 busy 动作拦截！</strong></li>
+  </ul>
+
+  <h3>二、一帧完成全部操作的时序链（防鼠标占用）</h3>
+  <pre>
+-- 客户端同一渲染帧/网络Tick内连续发送的原子操作：
+1. 发送 RPC.TakeActiveItemFromAll(equip_slot)  --> 将手部即将被震落的武器拿起至光标 (ActiveItem)
+2. 发送 RPC.MoveItemFromAllContainer(target_empty_slot) --> 立即将 ActiveItem 放入背包指定空位
+3. 校验并还原：光标恢复清空，武器已安全避入背包，0帧占用鼠标！
+  </pre>
+
+  <h3>三、工程落地的 3 个关键避坑点</h3>
+  <ul>
+    <li><strong>1. 网络延时丢包与重发时序</strong>：同一帧连发多个网络包必须顺序到达，否则服务端先收到放下后收到拿起会导致空操作，建议使用标准封装的同步包；</li>
+    <li><strong>2. 客户端预测状态保护</strong>：拿起武器到光标的瞬间，如果客户端自身有 UI 刷新，要拦截 <code>SetCursorItem</code> 产生的视觉抽搐；</li>
+    <li><strong>3. 背包满格异常兜底</strong>：执行前必须本地先嗅探 <code>inst.replica.inventory</code> 确定有且仅有可用空位，否则 ActiveItem 悬在鼠标上反而会导致无法走位。</li>
+  </ul>
+
+</div>
+</body>
+</html>

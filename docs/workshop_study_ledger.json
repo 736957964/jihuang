@@ -8,7 +8,13 @@
             "studyDoc": "docs/workshop_studies/study_351325790_geometric_placement.md",
             "skillDoc": "anli/skills/skill_workshop_351325790_Geometric_Placement_Core.md",
             "completedAt": "2026-10-30 04:38:00",
-            "keyTags": ["Client-Only", "Affine-Projection", "Placer-Hook", "Entity-Pool", "Time-Budget"]
+            "keyTags": [
+                "Client-Only",
+                "Affine-Projection",
+                "Placer-Hook",
+                "Entity-Pool",
+                "Time-Budget"
+            ]
         },
         {
             "id": "345692228",
@@ -18,7 +24,13 @@
             "studyDoc": "docs/workshop_studies/study_345692228_minimap_hud.md",
             "skillDoc": "anli/skills/skill_workshop_345692228_HUD_Responsive_Matrix.md",
             "completedAt": "2026-10-30 11:25:00",
-            "keyTags": ["Client-Only", "MiniMap-Native-Texture", "Matrix-Unscale", "Resize-Listener", "Camera-Focus-Lock"]
+            "keyTags": [
+                "Client-Only",
+                "MiniMap-Native-Texture",
+                "Matrix-Unscale",
+                "Resize-Listener",
+                "Camera-Focus-Lock"
+            ]
         },
         {
             "id": "376333686",
@@ -28,7 +40,13 @@
             "studyDoc": "docs/workshop_studies/study_376333686_combined_status.md",
             "skillDoc": "anli/skills/skill_workshop_376333686_Combined_Status_Architecture.md",
             "completedAt": "2026-10-30 11:32:00",
-            "keyTags": ["Cross-Platform-DLC", "Badge-Decorator", "Event-Driven-Delta", "Client-Safe-Getter", "Insight-Contract"]
+            "keyTags": [
+                "Cross-Platform-DLC",
+                "Badge-Decorator",
+                "Event-Driven-Delta",
+                "Client-Safe-Getter",
+                "Insight-Contract"
+            ]
         },
         {
             "id": "378160973",
@@ -38,7 +56,13 @@
             "studyDoc": "docs/workshop_studies/study_378160973_global_positions.md",
             "skillDoc": "anli/skills/skill_workshop_378160973_Global_Positions_Beacon.md",
             "completedAt": "2026-10-30 11:40:00",
-            "keyTags": ["Classified-Proxy", "CanSleep-False", "WorldMapExplorer", "Tactical-Ping", "TargetIndicator-Hook"]
+            "keyTags": [
+                "Classified-Proxy",
+                "CanSleep-False",
+                "WorldMapExplorer",
+                "Tactical-Ping",
+                "TargetIndicator-Hook"
+            ]
         },
         {
             "id": "666155465",
@@ -48,7 +72,13 @@
             "studyDoc": "docs/workshop_studies/study_666155465_show_me.md",
             "skillDoc": "anli/skills/skill_workshop_666155465_Show_Me_Protocol.md",
             "completedAt": "2026-10-30 12:15:00",
-            "keyTags": ["Compact-ASCII-Protocol", "Hoverer-Interception", "Mod-Conflict-Sniffing", "CrockPot-Diagnosis", "Rate-Limiting"]
+            "keyTags": [
+                "Compact-ASCII-Protocol",
+                "Hoverer-Interception",
+                "Mod-Conflict-Sniffing",
+                "CrockPot-Diagnosis",
+                "Rate-Limiting"
+            ]
         },
         {
             "id": "1467214795",
@@ -58,7 +88,13 @@
             "studyDoc": "docs/workshop_studies/study_1467214795_island_adventures.md",
             "skillDoc": "anli/skills/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md",
             "completedAt": "2026-10-30 12:31:00",
-            "keyTags": ["DLC-Porting", "Upvalue-Hacker", "Shore-Ocean-ArriveDist", "Tile-Remapping", "HotReload-Defense"]
+            "keyTags": [
+                "DLC-Porting",
+                "Upvalue-Hacker",
+                "Shore-Ocean-ArriveDist",
+                "Tile-Remapping",
+                "HotReload-Defense"
+            ]
         },
         {
             "id": "374550642",
@@ -68,7 +104,12 @@
             "studyDoc": "docs/workshop_studies/study_374550642_increased_stack_size.md",
             "skillDoc": "anli/skills/skill_workshop_374550642_Stack_Tuning_Approximation.md",
             "completedAt": "2026-10-30 12:43:00",
-            "keyTags": ["TUNING-Tier-Overwrite", "AddPrefabPostInitAny", "Discrete-Approximation", "Performance-Shortcircuit"]
+            "keyTags": [
+                "TUNING-Tier-Overwrite",
+                "AddPrefabPostInitAny",
+                "Discrete-Approximation",
+                "Performance-Shortcircuit"
+            ]
         },
         {
             "id": "362175979",
@@ -78,7 +119,12 @@
             "studyDoc": "docs/workshop_studies/study_362175979_wormhole_marks.md",
             "skillDoc": "anli/skills/skill_workshop_362175979_Dual_Topology_Wormhole_Mark.md",
             "completedAt": "2026-10-30 12:55:00",
-            "keyTags": ["Dual-Topology", "MiniMap-Dynamic-Icon", "Draw-Over-Fog", "Singleton-Counter"]
+            "keyTags": [
+                "Dual-Topology",
+                "MiniMap-Dynamic-Icon",
+                "Draw-Over-Fog",
+                "Singleton-Counter"
+            ]
         },
         {
             "id": "382177939",
@@ -88,7 +134,12 @@
             "studyDoc": "docs/workshop_studies/study_382177939_storm_cellar.md",
             "skillDoc": "anli/skills/skill_workshop_382177939_Large_Container_Grid_Matrix.md",
             "completedAt": "2026-10-30 13:05:00",
-            "keyTags": ["MAXITEMSLOTS-Expansion", "WidgetSetup-Proxy", "Slotpos-Grid-Algorithm", "Fridge-Tag"]
+            "keyTags": [
+                "MAXITEMSLOTS-Expansion",
+                "WidgetSetup-Proxy",
+                "Slotpos-Grid-Algorithm",
+                "Fridge-Tag"
+            ]
         },
         {
             "id": "1608191708",
@@ -98,7 +149,13 @@
             "studyDoc": "docs/workshop_studies/study_1608191708_action_queue_reborn.md",
             "skillDoc": "anli/skills/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md",
             "completedAt": "2026-10-30 13:16:00",
-            "keyTags": ["Client-Only", "Coroutine-ActionThread", "SelectionBox-Geometry", "Manual-Walk-Interrupt", "Deploy-Spacing"]
+            "keyTags": [
+                "Client-Only",
+                "Coroutine-ActionThread",
+                "SelectionBox-Geometry",
+                "Manual-Walk-Interrupt",
+                "Deploy-Spacing"
+            ]
         },
         {
             "id": "836583293",
@@ -108,7 +165,13 @@
             "studyDoc": "docs/workshop_studies/study_836583293_item_info.md",
             "skillDoc": "anli/skills/skill_workshop_836583293_Item_Metadata_Snapshot.md",
             "completedAt": "2026-10-30 13:28:00",
-            "keyTags": ["Client-Only", "Metadata-Snapshot-Cache", "Action-Silent-Guard", "Planar-Damage-Defense", "HUD-Embedding"]
+            "keyTags": [
+                "Client-Only",
+                "Metadata-Snapshot-Cache",
+                "Action-Silent-Guard",
+                "Planar-Damage-Defense",
+                "HUD-Embedding"
+            ]
         },
         {
             "id": "375850593",
@@ -118,7 +181,12 @@
             "studyDoc": "docs/workshop_studies/study_375850593_extra_equip_slots.md",
             "skillDoc": "anli/skills/skill_workshop_375850593_Extra_Equip_Slots_Architecture.md",
             "completedAt": "2026-10-30 13:42:00",
-            "keyTags": ["EQUIPSLOTS-Extension", "inventory_classified-Hook", "Setoverflow-Event", "Resurrectable-Redirect"]
+            "keyTags": [
+                "EQUIPSLOTS-Extension",
+                "inventory_classified-Hook",
+                "Setoverflow-Event",
+                "Resurrectable-Redirect"
+            ]
         },
         {
             "id": "462434129",
@@ -128,7 +196,12 @@
             "studyDoc": "docs/workshop_studies/study_462434129_restart.md",
             "skillDoc": "anli/skills/skill_workshop_462434129_Chat_Command_And_Despawn.md",
             "completedAt": "2026-10-30 13:50:00",
-            "keyTags": ["Networking_Say-Hook", "ms_playerdespawnanddelete", "MapExplorer-Inheritance", "Ghost-Resurrect"]
+            "keyTags": [
+                "Networking_Say-Hook",
+                "ms_playerdespawnanddelete",
+                "MapExplorer-Inheritance",
+                "Ghost-Resurrect"
+            ]
         },
         {
             "id": "1418746242",
@@ -138,7 +211,12 @@
             "studyDoc": "docs/workshop_studies/study_1418746242_chinese_plus_plus.md",
             "skillDoc": "anli/skills/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md",
             "completedAt": "2026-10-30 14:02:00",
-            "keyTags": ["Font-Pipeline-HotSwap", "Path-Based-Upvalue", "Mergeinfo-Engine", "Pattern-Match-Chinese-Patch"]
+            "keyTags": [
+                "Font-Pipeline-HotSwap",
+                "Path-Based-Upvalue",
+                "Mergeinfo-Engine",
+                "Pattern-Match-Chinese-Patch"
+            ]
         },
         {
             "id": "1530801499",
@@ -148,7 +226,13 @@
             "studyDoc": "docs/workshop_studies/study_1530801499_fast_travel_gui.md",
             "skillDoc": "anli/skills/skill_workshop_1530801499_Replicable_Component_Topology.md",
             "completedAt": "2026-10-30 14:15:00",
-            "keyTags": ["Replicable-Component", "Global-Topology-Registry", "OpenScreenUnderPause", "Danger-Escape-Guard", "Distance-Cost-Model"]
+            "keyTags": [
+                "Replicable-Component",
+                "Global-Topology-Registry",
+                "OpenScreenUnderPause",
+                "Danger-Escape-Guard",
+                "Distance-Cost-Model"
+            ]
         },
         {
             "id": "458940297",
@@ -158,9 +242,74 @@
             "studyDoc": "docs/workshop_studies/study_458940297_food_values_item_tooltips.md",
             "skillDoc": "anli/skills/skill_workshop_458940297_ItemTile_Tooltip_OnDemand.md",
             "completedAt": "2026-10-30 14:26:00",
-            "keyTags": ["On-Demand-RPC", "ItemTile-Tooltip-Hook", "No-Leak-Listener-Guard", "Wet-Color-Palette"]
+            "keyTags": [
+                "On-Demand-RPC",
+                "ItemTile-Tooltip-Hook",
+                "No-Leak-Listener-Guard",
+                "Wet-Color-Palette"
+            ]
+        },
+        {
+            "id": "1595631294",
+            "name": "Epic Healthbar",
+            "category": "UI与HUD类",
+            "studyDoc": "docs/workshop_studies/study_1595631294_epic_healthbar.md",
+            "skillDoc": "anli/skills/skill_workshop_1595631294_Epic_Healthbar.md",
+            "completedAt": "2026-10-30 14:32:13",
+            "keyTags": [
+                "UI与HUD类",
+                "Epic_Healthbar"
+            ]
+        },
+        {
+            "id": "758532836",
+            "name": "Insight (Show Me+)",
+            "category": "网络与RPC类",
+            "studyDoc": "docs/workshop_studies/study_758532836_insight_protocol.md",
+            "skillDoc": "anli/skills/skill_workshop_758532836_Insight_Protocol.md",
+            "completedAt": "2026-10-30 14:32:13",
+            "keyTags": [
+                "网络与RPC类",
+                "Insight_Protocol"
+            ]
+        },
+        {
+            "id": "1185229307",
+            "name": "Display Food Values",
+            "category": "组件持久化类",
+            "studyDoc": "docs/workshop_studies/study_1185229307_food_values_display.md",
+            "skillDoc": "anli/skills/skill_workshop_1185229307_Food_Values_Display.md",
+            "completedAt": "2026-10-30 14:32:13",
+            "keyTags": [
+                "组件持久化类",
+                "Food_Values_Display"
+            ]
+        },
+        {
+            "id": "1991746508",
+            "name": "Myth Words",
+            "category": "大型DLC类",
+            "studyDoc": "docs/workshop_studies/study_1991746508_myth_words_architecture.md",
+            "skillDoc": "anli/skills/skill_workshop_1991746508_Myth_Words_Architecture.md",
+            "completedAt": "2026-10-30 14:32:13",
+            "keyTags": [
+                "大型DLC类",
+                "Myth_Words_Architecture"
+            ]
+        },
+        {
+            "id": "1207269292",
+            "name": "Simple Health Bar Server",
+            "category": "实体机制类",
+            "studyDoc": "docs/workshop_studies/study_1207269292_simple_health_bar_server.md",
+            "skillDoc": "anli/skills/skill_workshop_1207269292_Simple_Health_Bar_Server.md",
+            "completedAt": "2026-10-30 14:32:13",
+            "keyTags": [
+                "实体机制类",
+                "Simple_Health_Bar_Server"
+            ]
         }
     ],
     "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-    "lastUpdated": "2026-10-30 14:26:00"
+    "lastUpdated": "2026-10-30 14:32:13"
 }
