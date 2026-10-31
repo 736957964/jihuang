@@ -12989,3 +12989,1470 @@ end)
 
 ```
 
+
+
+### 变体演进：null (Mod 3773139595)
+- **变体场景与切面**：收录来自工坊 Mod 3773139595 (`null`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3773139595)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", function(self)
+    local old_EvaluateTechTrees = self.EvaluateTechTrees
+    function self:EvaluateTechTrees(...)
+        local active_terminal = self.inst.txk_ae_active_terminal
+        local connector = active_terminal ~= nil and active_terminal:IsValid() and
+            active_terminal.components.txk_ae_terminalconnector or nil
+        local terminal_prototyper, terminal_trees
+
+        -- 合成卡保留远端科技，同时接入玩家所在位置的可用科技站。
+        if connector ~= nil and connector:HasCard("me_card_crafting") and
+            self.inst.IsUsingTXKAppliedEnergistics ~= nil and
+            self.inst:IsUsingTXKAppliedEnergistics()
+        then
+            self.override_current_prototyper = active_terminal
+            local prototyper = active_terminal.components.prototyper
+            local classified = self.inst.player_classified
+            if (classified == nil or classified.iscraftingenabled:value()) and
+                not active_terminal:HasOneOfTags(self.exclude_tags) and
+                (prototyper.restrictedtag == nil or self.inst:HasTag(prototyper.restrictedtag)) and
+                prototyper:CanUsePrototyper(self.inst)
+            then
+                -- 先让终端刷新自身科技，再准备仅供本次计算使用的副本。
+                prototyper:TurnOn(self.inst)
+                local trees = prototyper:GetTechTrees()
+                local x, y, z = self.inst.Transform:GetWorldPosition()
+                local nearby = TheSim:FindEntities(x, y, z, TUNING.RESEARCH_MACHINE_DIST,
+                    { "prototyper" }, self.exclude_tags)
+                for _, station in ipairs(nearby) do
+                    local component = station.components.prototyper
+                    if station ~= active_terminal and component ~= nil and
+                        (component.restrictedtag == nil or self.inst:HasTag(component.restrictedtag)) and
+                        component:CanUsePrototyper(self.inst)
+                    then
+                        for tech, level in pairs(component:GetTechTrees()) do
+                            trees[tech] = math.max(trees[tech] or 0, level)
+                        end
+                    end
+                end
+                terminal_prototyper = prototyper
+                terminal_trees = prototyper.trees
+                prototyper.trees = trees
+            end
+        elseif self.override_current_prototyper ~= nil and
+            self.override_current_prototyper.prefab == "txk_ae_terminalconnector"
+        then
+            self.override_current_prototyper = nil
+        end
+
+        -- 原版统一处理人物加成和客户端同步，计算后立即恢复共享终端的科技。
+        local ret_tbl = {pcall(old_EvaluateTechTrees, self, ...)}
+        if terminal_prototyper ~= nil then
+            terminal_prototyper.trees = terminal_trees
+        end
+        if not ret_tbl[1] then
+            error(ret_tbl[2], 0)
+        end
+
+        -- 下一次仍由原版检查距离与终端使用状态。
+        local prototyper = self.current_prototyper
+        if prototyper and prototyper.prefab == "txk_ae_terminalconnector" then
+            self.override_current_prototyper = prototyper
+        end
+
+        return unpack(ret_tbl, 2)
+    end
+end)
+
+--------------------------------------------------------------------------
+-- 终端打开时修改动作收集
+--------------------------------------------------------------------------
+
+AddComponentPostInit("playeractionpicker", function(self)
+    local old_GetSceneActions = self.GetSceneActions
+    function self:GetSceneActions(useitem, right, ...)
+        local sorted_acts = old_GetSceneActions(self, useitem, right, ...) or {}
+        local act = sorted_acts[1]
+
+        if act and act.action == ACTIONS.RUMMAGE and self.inst:IsUsingTXKAppliedEnergistics() and CanTXKAEConnect(act.target) then
+            table.remove(sorted_acts, 1)
+        end
+
+        return sorted_acts
+    end
+end)
+
+--------------------------------------------------------------------------
+-- 这些函数需要获取terminalcontainers
+--------------------------------------------------------------------------
+
+local function NeedTerminalContainers(self, fn_name)
+    local old_fn = self[fn_name]
+    if old_fn == nil then return end
+
+    self[fn_name] = function(self, ...)
+        local inventory = ThePlayer and ThePlayer.replica.inventory
+        if inventory == nil then return old_fn(self, ...) end
+
+        if inventory.txk_ae_need_terminal_containers == nil then
+            inventory.txk_ae_need_terminal_containers = fn_name
+        end
+
+        -- 避免old_fn函数内部修改need_terminal_containers
+        local ret_tbl = {old_fn(self, ...)}
+
+        if inventory.txk_ae_need_terminal_containers == fn_name then
+            inventory.txk_ae_need_terminal_containers = nil
+        end
+
+        return unpack(ret_tbl)
+    end
+end
+
+AddClassPostConstruct("widgets/invslot", function(self)
+    self.inst:DoStaticTaskInTime(0, function()
+        NeedTerminalContainers(self, "TradeItem")
+    end)
+end)
+
+AddClassPostConstruct("widgets/itemtile", function(self)
+    local function UpdateEncodedPatternMark()
+        if self.txk_ae_encoded_pattern_mark ~= nil then
+            local configured = self.item ~= nil and self.item._me_pattern_configured ~= nil and
+                self.item._me_pattern_configured:value()
+            if configured then
+                self.txk_ae_encoded_pattern_mark:Show()
+            else
+                self.txk_ae_encoded_pattern_mark:Hide()
+            end
+        end
+    end
+
+    if self.item ~= nil and self.item.prefab == "me_blank_pattern" and self.image ~= nil then
+        self.txk_ae_encoded_pattern_mark = self.image:AddChild(Image("images/ui.xml", "checkmark.tex"))
+        self.txk_ae_encoded_pattern_mark:SetScale(0.22)
+        self.txk_ae_encoded_pattern_mark:SetTint(0.25, 1, 0.35, 1)
+        self.txk_ae_encoded_pattern_mark:SetClickable(false)
+        UpdateEncodedPatternMark()
+        self.inst:ListenForEvent("me_pattern_configured_dirty", UpdateEncodedPatternMark, self.item)
+    end
+
+    self.inst:DoStaticTaskInTime(0, function()
+        NeedTerminalContainers(self, "GetDescriptionString")
+    end)
+end)
+
+--------------------------------------------------------------------------
+-- 背包修改
+--------------------------------------------------------------------------
+
+AddClassPostConstruct("components/inventory_replica", function(self)
+
+    -- 目标容器IsFake处理
+    local old_MoveItemFromAllOfSlot = self.MoveItemFromAllOfSlot
+    function self:MoveItemFromAllOfSlot(slot, container)
+        if container and container.IsTXKAEFake then
+            if container.remote_shard_id ~= nil then
+                SendModRPCToServer(
+                    MOD_RPC[RPC_NAMESPACE]["CrossShardPutInventorySlot"],
+                    container.remote_shard_id,
+                    container.GUID,
+                    slot,
+                    false
+                )
+            elseif TheWorld.ismastersim then
+                container = Ents[container.GUID]
+                if container and container:IsValid() then
+                    TerminalContainer.WithComponent(container, function()
+                        TerminalContainer.MoveItemFromAllOfSlot(self.inst.components.inventory, slot, container)
+                    end)
+                end
+            else
+                local guid = container.GUID
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Inventory:TXKAEMoveItemFromAllOfSlot"], slot, guid)
+            end
+            return
+        end
+        return old_MoveItemFromAllOfSlot ~= nil
+            and old_MoveItemFromAllOfSlot(self, slot, container)
+    end
+    local old_MoveItemFromHalfOfSlot = self.MoveItemFromHalfOfSlot
+    function self:MoveItemFromHalfOfSlot(slot, container)
+        if container and container.IsTXKAEFake then
+            if container.remote_shard_id ~= nil then
+                SendModRPCToServer(
+                    MOD_RPC[RPC_NAMESPACE]["CrossShardPutInventorySlot"],
+                    container.remote_shard_id,
+                    container.GUID,
+                    slot,
+                    true
+                )
+            elseif TheWorld.ismastersim then
+                container = Ents[container.GUID]
+                if container and container:IsValid() then
+                    TerminalContainer.WithComponent(container, function()
+                        TerminalContainer.MoveItemFromHalfOfSlot(self.inst.components.inventory, slot, container)
+                    end)
+                end
+            else
+                local guid = container.GUID
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Inventory:TXKAEMoveItemFromHalfOfSlot"], slot, guid)
+            end
+            return
+        end
+        return old_MoveItemFromHalfOfSlot ~= nil
+            and old_MoveItemFromHalfOfSlot(self, slot, container)
+    end
+
+    -- 目标物品IsFake处理
+    local old_UseItemFromInvTile = self.UseItemFromInvTile
+    function self:UseItemFromInvTile(item)
+        if item and item.IsTXKAEFake then
+            if TheWorld.ismastersim then
+                item = Ents[item.GUID]
+                if item and item:IsValid() then
+                    TerminalContainer.UseItemFromInvTile(self.inst.components.inventory, item)
+                end
+            else
+                local guid = item.GUID
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Inventory:TXKAEUseItemFromInvTile"], guid)
+            end
+            return
+        end
+        return old_UseItemFromInvTile ~= nil
+            and old_UseItemFromInvTile(self, item)
+    end
+
+    local old_DropItemFromInvTile = self.DropItemFromInvTile
+    function self:DropItemFromInvTile(item, single)
+        if item and item.IsTXKAEFake then
+            if TheWorld.ismastersim then
+                item = Ents[item.GUID]
+                if item and item:IsValid() then
+                    TerminalContainer.DropItemFromInvTile(self.inst.components.inventory, item, single)
+                end
+            else
+                local guid = item.GUID
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Inventory:TXKAEDropItemFromInvTile"], guid, single)
+            end
+            return
+        end
+        return old_DropItemFromInvTile ~= nil
+            and old_DropItemFromInvTile(self, item, single)
+    end
+
+    -- 拥有材料判断
+    local old_Has = self.Has
+    function self:Has(prefab, amount, checkallcontainers, ...)
+        local enough, num_found = old_Has(self, prefab, amount, checkallcontainers, ...)
+        -- 主机会直接走inventory组件，在那里已经做了处理
+        if TheWorld.ismastersim then
+            return enough, num_found
+        end
+
+        if checkallcontainers then
+            local txk_ae_terminalwidget = self.inst.HUD and self.inst.HUD.txk_ae_terminalwidget
+            if txk_ae_terminalwidget and txk_ae_terminalwidget.isopen then
+                local num_add = txk_ae_terminalwidget:CalcItemNum(prefab)
+                num_found = num_found + num_add
+                enough = enough or (num_found >= amount)
+            end
+        end
+
+        return enough, num_found
+    end
+
+    -- 获取终端的容器
+    local old_GetOpenContainers = self.GetOpenContainers
+    function self:GetOpenContainers(...)
+        local containers = old_GetOpenContainers ~= nil
+            and old_GetOpenContainers(self, ...) or {}
+        if self.txk_ae_need_terminal_containers == nil then
+            return containers
+        end
+
+        local ret = shallowcopy(containers)
+        local txk_ae_terminalwidget = self.inst.HUD and self.inst.HUD.txk_ae_terminalwidget
+        if txk_ae_terminalwidget then
+            for guid, container in pairs(txk_ae_terminalwidget.containers) do
+                ret[container] = true
+            end
+        end
+        return ret
+    end
+
+    -- 宝石核心兼容
+    self.inst:DoTaskInTime(0, function()
+        NeedTerminalContainers(self, "FindCraftingItems")
+    end)
+
+    -- 两个新接口函数
+    -- 移动单个active_item
+    function self:TXKAEMoveItemFromOneOfActive(container)
+        if container and container.IsTXKAEFake then
+            if container.remote_shard_id ~= nil then
+                SendModRPCToServer(
+                    MOD_RPC[RPC_NAMESPACE]["CrossShardPutActive"],
+                    container.remote_shard_id,
+                    container.GUID,
+                    true
+                )
+            elseif TheWorld.ismastersim then
+                container = Ents[container.GUID]
+                if container and container:IsValid() then
+                    TerminalContainer.WithComponent(container, function()
+                        self.inst.components.inventory:TXKAEMoveItemFromOneOfActive(container)
+                    end)
+                end
+            else
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Inventory:TXKAEMoveItemFromOneOfActive"], container.GUID)
+            end
+            return
+        end
+    end
+
+    -- 移动全部active_item
+    function self:TXKAEMoveItemFromAllOfActive(container)
+        if container and container.IsTXKAEFake then
+            if container.remote_shard_id ~= nil then
+                SendModRPCToServer(
+                    MOD_RPC[RPC_NAMESPACE]["CrossShardPutActive"],
+                    container.remote_shard_id,
+                    container.GUID,
+                    false
+                )
+            elseif TheWorld.ismastersim then
+                container = Ents[container.GUID]
+                if container and container:IsValid() then
+                    TerminalContainer.WithComponent(container, function()
+                        self.inst.components.inventory:TXKAEMoveItemFromAllOfActive(container)
+                    end)
+                end
+            else
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Inventory:TXKAEMoveItemFromAllOfActive"], container.GUID)
+            end
+            return
+        end
+    end
+
+    -- 预览activeitem，用于客机文本和图形提前显示
+    function self:GetTXKAEActiveItemWithPreview()
+        if TheWorld.ismastersim or self.classified == nil then
+            return self:GetActiveItem()
+        end
+        return self.classified:GetTXKAEActiveItemWithPreview()
+    end
+end)
+
+AddComponentPostInit("inventory",function(self)
+
+    self.txk_ae_fake_opencontainers = {}
+
+    -- hook opencontainers函数
+    local function hook_opencontainers(fn_name)
+        local old_fn = self[fn_name]
+        if old_fn == nil then return end
+
+        self[fn_name] = function(self, ...)
+            local txk_ae_fake_opencontainers = shallowcopy(self.txk_ae_fake_opencontainers)
+            local temporary_adapters = {}
+            for k, _ in pairs(txk_ae_fake_opencontainers) do
+                self.opencontainers[k] = true
+                if k.components.container == nil and k.txk_ae_container_adapter ~= nil then
+                    k.components.container = k.txk_ae_container_adapter
+                    temporary_adapters[k] = true
+                end
+            end
+
+            local ret_tbl = {old_fn(self, ...)}
+
+            for k, _ in pairs(txk_ae_fake_opencontainers) do
+                self.opencontainers[k] = nil
+                if temporary_adapters[k] then
+                    k.components.container = nil
+                end
+            end
+
+            return unpack(ret_tbl)
+        end
+    end
+
+    local hooklist = {
+        "FindCraftingItems", -- 兼容宝石核心
+        "GetCraftingIngredient",
+        "GetItemByName",
+        "RemoveItem",
+    }
+
+    -- 延迟以避免被覆盖
+    self.inst:DoTaskInTime(0, function()
+        for i, fn_name in ipairs(hooklist) do
+            hook_opencontainers(fn_name)
+        end
+    end)
+
+    -- Crafting recipe checks call Has very frequently. Query remote containers
+    -- directly and stop as soon as the requested amount is found, instead of
+    -- injecting every terminal container into opencontainers for every recipe.
+    local old_Has = self.Has
+    function self:Has(prefab, amount, checkallcontainers, ...)
+        local enough, num_found = old_Has(self, prefab, amount, checkallcontainers, ...)
+        if enough or not checkallcontainers or next(self.txk_ae_fake_opencontainers) == nil then
+            return enough, num_found
+        end
+
+        local terminal = self.inst.txk_ae_active_terminal
+        local connector = terminal ~= nil and terminal:IsValid() and
+            terminal.components.txk_ae_terminalconnector or nil
+        local index = connector ~= nil and connector:GetStorageIndex() or nil
+        if index == nil and TXKAppliedEnergisticsGetCrossShardSession ~= nil then
+            local session = TXKAppliedEnergisticsGetCrossShardSession(self.inst)
+            index = session ~= nil and session.storage_index or nil
+        end
+        if index ~= nil and index.GetCount ~= nil then
+            local needed = math.max(amount - num_found, 0)
+            num_found = num_found + math.min(index:GetCount(prefab), needed)
+            return num_found >= amount, num_found
+        end
+
+        for inst in pairs(self.txk_ae_fake_opencontainers) do
+            local container = TerminalContainer.Get(inst)
+            if container ~= nil and not container.excludefromcrafting and not container.readonlycontainer then
+                local needed = math.max(amount - num_found, 0)
+                local _, found = container:Has(prefab, needed, true)
+                num_found = num_found + math.min(found or 0, needed)
+                if num_found >= amount then
+                    return true, num_found
+                end
+            end
+        end
+        return false, num_found
+    end
+
+    -- 背包关闭时CloseTerminal
+    local old_Close = self.Close
+    function self:Close(keepactiveitem, ...)
+        if self.isopen and self.inst:HasTag("player") and self.inst:IsUsingTXKAppliedEnergistics() then
+            local playercontroller = self.inst.components.playercontroller
+            if playercontroller then
+                playercontroller:DoCloseTXKAETerminalAction()
+            end
+        end
+        return old_Close(self, keepactiveitem, ...)
+    end
+
+    -- 两个新接口函数
+    -- 移动单个active_item
+    function self:TXKAEMoveItemFromOneOfActive(container)
+        local item = self:GetActiveItem()
+        if item ~= nil and container ~= nil then
+            container = container.components.container
+            if container ~= nil and
+                container:IsOpenedBy(self.inst) and
+                item.components.stackable ~= nil and
+                item.components.stackable:IsStack() then
+
+                container.currentuser = self.inst
+
+                if container:CanTakeItemInSlot(item) then
+                    local onestack = item.components.stackable:Get()
+                    onestack.prevcontainer = nil
+                    onestack.prevslot = nil
+                    if not container:GiveItem(onestack) then
+                        item.components.stackable:Put(onestack)
+                    end
+                end
+
+                container.currentuser = nil
+            end
+        end
+    end
+
+    -- 移动全部active_item
+    function self:TXKAEMoveItemFromAllOfActive(container)
+        local item = self:GetActiveItem()
+        if item ~= nil and container ~= nil then
+            container = container.components.container
+            if container ~= nil and container:IsOpenedBy(self.inst) then
+                container.currentuser = self.inst
+
+                if container:CanTakeItemInSlot(item) then
+
+                    self:RemoveItem(item, true)
+                    if not container:GiveItem(item, nil, nil, false) then
+                        self:GiveActiveItem(item)
+                    end
+                end
+
+                container.currentuser = nil
+            end
+        end
+    end
+
+end)
+
+--------------------------------------------------------------------------
+-- 容器修改
+--------------------------------------------------------------------------
+
+AddClassPostConstruct("components/container_replica", function(self)
+    -- 目标容器IsFake处理
+    local old_MoveItemFromAllOfSlot = self.MoveItemFromAllOfSlot
+    function self:MoveItemFromAllOfSlot(slot, container)
+        if container and container.IsTXKAEFake then
+            if TheWorld.ismastersim and ThePlayer then
+                container = Ents[container.GUID]
+                if container and container:IsValid() then
+                    TerminalContainer.WithComponent(container, function()
+                        TerminalContainer.MoveItemFromAllOfSlot(self.inst.components.container, slot, container, ThePlayer)
+                    end)
+                end
+            else
+                local source = self.inst
+                local dest = container.GUID
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Container:TXKAEMoveItemFromAllOfSlot"], source, slot, dest)
+            end
+            return
+        end
+        return old_MoveItemFromAllOfSlot ~= nil
+            and old_MoveItemFromAllOfSlot(self, slot, container)
+    end
+
+    local old_MoveItemFromHalfOfSlot = self.MoveItemFromHalfOfSlot
+    function self:MoveItemFromHalfOfSlot(slot, container)
+        if container and container.IsTXKAEFake then
+            if TheWorld.ismastersim and ThePlayer then
+                container = Ents[container.GUID]
+                if container and container:IsValid() then
+                    TerminalContainer.WithComponent(container, function()
+                        TerminalContainer.MoveItemFromHalfOfSlot(self.inst.components.container, slot, container, ThePlayer)
+                    end)
+                end
+            else
+                local source = self.inst
+                local dest = container.GUID
+                SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["Container:TXKAEMoveItemFromHalfOfSlot"], source, slot, dest)
+            end
+            return
+        end
+        return old_MoveItemFromHalfOfSlot ~= nil
+            and old_MoveItemFromHalfOfSlot(self, slot, container)
+    end
+end)
+
+AddComponentPostInit("container",function(self)
+    if self.txk_ae_remote_container_hooked then
+        return
+    end
+    self.txk_ae_remote_container_hooked = true
+    -- 远程开关容器
+    self.txk_ae_fake_openlist = {}
+    self.txk_ae_refresh_revision = self.txk_ae_refresh_revision or 0
+    self.txk_ae_sent_revisions = {}
+    self.txk_ae_snapshot_sent = {}
+    self.txk_ae_dirty_slots = {}
+    self.txk_ae_force_full_refresh = false
+
+    function self:TXKAERemoteSubscribe(doer)
+        local inventory = doer ~= nil and doer.components.inventory or nil
+        if inventory == nil then
+            return false
+        end
+        inventory.txk_ae_fake_opencontainers[self.inst] = true
+        self.txk_ae_fake_openlist[doer] = true
+        self.txk_ae_sent_revisions[doer] = self.txk_ae_refresh_revision
+        self.txk_ae_snapshot_sent[doer] = false
+        return true
+    end
+
+    function self:TXKAESendSnapshot(doer)
+        if doer == nil or not doer:IsValid() or not self.txk_ae_fake_openlist[doer] then
+            return false
+        end
+        local encodedata = TheSim:ZipAndEncodeString(json.encode(FakeContainer(self.inst)))
+        SendModRPCToClient(CLIENT_MOD_RPC[RPC_NAMESPACE]["OpenTXKAEFakeContainer"], doer.userid, encodedata)
+        self.txk_ae_sent_revisions[doer] = self.txk_ae_refresh_revision
+        self.txk_ae_snapshot_sent[doer] = true
+        return true
+    end
+
+    function self:TXKAERemoteOpen(doer)
+        return self:TXKAERemoteSubscribe(doer) and self:TXKAESendSnapshot(doer)
+    end
+
+    self.txk_ae_old_close = self.Close
+    function self:Close(doer, ...)
+        if doer == nil then
+            self:TXKAERemoteCloseAll()
+        end
+        return self.txk_ae_old_close(self, doer, ...)
+    end
+
+    local function CloseRemoteViewsOnRemove(component, old_callback, ...)
+        component:TXKAERemoteCloseAll()
+        if component.txk_ae_terminal_refresh_task ~= nil then
+            component.txk_ae_terminal_refresh_task:Cancel()
+            component.txk_ae_terminal_refresh_task = nil
+        end
+        component.txk_ae_dirty_slots = {}
+        component.txk_ae_force_full_refresh = false
+        component.txk_ae_sent_revisions = {}
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+
+AddComponentPostInit("playeractionpicker", function(self)
+    local old_GetSceneActions = self.GetSceneActions
+    function self:GetSceneActions(useitem, right, ...)
+        local sorted_acts = old_GetSceneActions(self, useitem, right, ...) or {}
+        local act = sorted_acts[1]
+
+        if act and act.action == ACTIONS.RUMMAGE and self.inst:IsUsingTXKAppliedEnergistics() and CanTXKAEConnect(act.target) then
+            table.remove(sorted_acts, 1)
+        end
+
+        return sorted_acts
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory",function(self)
+
+    self.txk_ae_fake_opencontainers = {}
+
+    -- hook opencontainers函数
+    local function hook_opencontainers(fn_name)
+        local old_fn = self[fn_name]
+        if old_fn == nil then return end
+
+        self[fn_name] = function(self, ...)
+            local txk_ae_fake_opencontainers = shallowcopy(self.txk_ae_fake_opencontainers)
+            local temporary_adapters = {}
+            for k, _ in pairs(txk_ae_fake_opencontainers) do
+                self.opencontainers[k] = true
+                if k.components.container == nil and k.txk_ae_container_adapter ~= nil then
+                    k.components.container = k.txk_ae_container_adapter
+                    temporary_adapters[k] = true
+                end
+            end
+
+            local ret_tbl = {old_fn(self, ...)}
+
+            for k, _ in pairs(txk_ae_fake_opencontainers) do
+                self.opencontainers[k] = nil
+                if temporary_adapters[k] then
+                    k.components.container = nil
+                end
+            end
+
+            return unpack(ret_tbl)
+        end
+    end
+
+    local hooklist = {
+        "FindCraftingItems", -- 兼容宝石核心
+        "GetCraftingIngredient",
+        "GetItemByName",
+        "RemoveItem",
+    }
+
+    -- 延迟以避免被覆盖
+    self.inst:DoTaskInTime(0, function()
+        for i, fn_name in ipairs(hooklist) do
+            hook_opencontainers(fn_name)
+        end
+    end)
+
+    -- Crafting recipe checks call Has very frequently. Query remote containers
+    -- directly and stop as soon as the requested amount is found, instead of
+    -- injecting every terminal container into opencontainers for every recipe.
+    local old_Has = self.Has
+    function self:Has(prefab, amount, checkallcontainers, ...)
+        local enough, num_found = old_Has(self, prefab, amount, checkallcontainers, ...)
+        if enough or not checkallcontainers or next(self.txk_ae_fake_opencontainers) == nil then
+            return enough, num_found
+        end
+
+        local terminal = self.inst.txk_ae_active_terminal
+        local connector = terminal ~= nil and terminal:IsValid() and
+            terminal.components.txk_ae_terminalconnector or nil
+        local index = connector ~= nil and connector:GetStorageIndex() or nil
+        if index == nil and TXKAppliedEnergisticsGetCrossShardSession ~= nil then
+            local session = TXKAppliedEnergisticsGetCrossShardSession(self.inst)
+            index = session ~= nil and session.storage_index or nil
+        end
+        if index ~= nil and index.GetCount ~= nil then
+            local needed = math.max(amount - num_found, 0)
+            num_found = num_found + math.min(index:GetCount(prefab), needed)
+            return num_found >= amount, num_found
+        end
+
+        for inst in pairs(self.txk_ae_fake_opencontainers) do
+            local container = TerminalContainer.Get(inst)
+            if container ~= nil and not container.excludefromcrafting and not container.readonlycontainer then
+                local needed = math.max(amount - num_found, 0)
+                local _, found = container:Has(prefab, needed, true)
+                num_found = num_found + math.min(found or 0, needed)
+                if num_found >= amount then
+                    return true, num_found
+                end
+            end
+        end
+        return false, num_found
+    end
+
+    -- 背包关闭时CloseTerminal
+    local old_Close = self.Close
+    function self:Close(keepactiveitem, ...)
+        if self.isopen and self.inst:HasTag("player") and self.inst:IsUsingTXKAppliedEnergistics() then
+            local playercontroller = self.inst.components.playercontroller
+            if playercontroller then
+                playercontroller:DoCloseTXKAETerminalAction()
+            end
+        end
+        return old_Close(self, keepactiveitem, ...)
+    end
+
+    -- 两个新接口函数
+    -- 移动单个active_item
+    function self:TXKAEMoveItemFromOneOfActive(container)
+        local item = self:GetActiveItem()
+        if item ~= nil and container ~= nil then
+            container = container.components.container
+            if container ~= nil and
+                container:IsOpenedBy(self.inst) and
+                item.components.stackable ~= nil and
+                item.components.stackable:IsStack() then
+
+                container.currentuser = self.inst
+
+                if container:CanTakeItemInSlot(item) then
+                    local onestack = item.components.stackable:Get()
+                    onestack.prevcontainer = nil
+                    onestack.prevslot = nil
+                    if not container:GiveItem(onestack) then
+                        item.components.stackable:Put(onestack)
+                    end
+                end
+
+                container.currentuser = nil
+            end
+        end
+    end
+
+    -- 移动全部active_item
+    function self:TXKAEMoveItemFromAllOfActive(container)
+        local item = self:GetActiveItem()
+        if item ~= nil and container ~= nil then
+            container = container.components.container
+            if container ~= nil and container:IsOpenedBy(self.inst) then
+                container.currentuser = self.inst
+
+                if container:CanTakeItemInSlot(item) then
+
+                    self:RemoveItem(item, true)
+                    if not container:GiveItem(item, nil, nil, false) then
+                        self:GiveActiveItem(item)
+                    end
+                end
+
+                container.currentuser = nil
+            end
+        end
+    end
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+
+AddComponentPostInit("container",function(self)
+    if self.txk_ae_remote_container_hooked then
+        return
+    end
+    self.txk_ae_remote_container_hooked = true
+    -- 远程开关容器
+    self.txk_ae_fake_openlist = {}
+    self.txk_ae_refresh_revision = self.txk_ae_refresh_revision or 0
+    self.txk_ae_sent_revisions = {}
+    self.txk_ae_snapshot_sent = {}
+    self.txk_ae_dirty_slots = {}
+    self.txk_ae_force_full_refresh = false
+
+    function self:TXKAERemoteSubscribe(doer)
+        local inventory = doer ~= nil and doer.components.inventory or nil
+        if inventory == nil then
+            return false
+        end
+        inventory.txk_ae_fake_opencontainers[self.inst] = true
+        self.txk_ae_fake_openlist[doer] = true
+        self.txk_ae_sent_revisions[doer] = self.txk_ae_refresh_revision
+        self.txk_ae_snapshot_sent[doer] = false
+        return true
+    end
+
+    function self:TXKAESendSnapshot(doer)
+        if doer == nil or not doer:IsValid() or not self.txk_ae_fake_openlist[doer] then
+            return false
+        end
+        local encodedata = TheSim:ZipAndEncodeString(json.encode(FakeContainer(self.inst)))
+        SendModRPCToClient(CLIENT_MOD_RPC[RPC_NAMESPACE]["OpenTXKAEFakeContainer"], doer.userid, encodedata)
+        self.txk_ae_sent_revisions[doer] = self.txk_ae_refresh_revision
+        self.txk_ae_snapshot_sent[doer] = true
+        return true
+    end
+
+    function self:TXKAERemoteOpen(doer)
+        return self:TXKAERemoteSubscribe(doer) and self:TXKAESendSnapshot(doer)
+    end
+
+    self.txk_ae_old_close = self.Close
+    function self:Close(doer, ...)
+        if doer == nil then
+            self:TXKAERemoteCloseAll()
+        end
+        return self.txk_ae_old_close(self, doer, ...)
+    end
+
+    local function CloseRemoteViewsOnRemove(component, old_callback, ...)
+        component:TXKAERemoteCloseAll()
+        if component.txk_ae_terminal_refresh_task ~= nil then
+            component.txk_ae_terminal_refresh_task:Cancel()
+            component.txk_ae_terminal_refresh_task = nil
+        end
+        component.txk_ae_dirty_slots = {}
+        component.txk_ae_force_full_refresh = false
+        component.txk_ae_sent_revisions = {}
+        component.txk_ae_snapshot_sent = {}
+
+        -- A plain DST container generally has no removal callback. Preserve
+        -- the prior behaviour of this hook in that case by closing the native
+        -- container through the saved, unwrapped Close method.
+        if old_callback ~= nil then
+            return old_callback(component, ...)
+        end
+        return component.txk_ae_old_close(component, nil, ...)
+    end
+
+    self.txk_ae_old_onremoveentity = self.OnRemoveEntity
+    self.OnRemoveEntity = function(component, ...)
+        return CloseRemoteViewsOnRemove(component, component.txk_ae_old_onremoveentity, ...)
+    end
+
+    self.txk_ae_old_onremovefromentity = self.OnRemoveFromEntity
+    self.OnRemoveFromEntity = function(component, ...)
+        return CloseRemoteViewsOnRemove(component, component.txk_ae_old_onremovefromentity, ...)
+    end
+
+    function self:TXKAERemoteClose(doer)
+        local inventory = doer and doer.components and doer.components.inventory or nil
+        if inventory ~= nil and inventory.txk_ae_fake_opencontainers ~= nil then
+            inventory.txk_ae_fake_opencontainers[self.inst] = nil
+        end
+        self.txk_ae_fake_openlist[doer] = nil
+        self.txk_ae_sent_revisions[doer] = nil
+        self.txk_ae_snapshot_sent[doer] = nil
+    end
+
+    function self:TXKAERemoteCloseAll()
+        for doer in pairs(self.txk_ae_fake_openlist) do
+            if doer and doer:IsValid() then
+                self:TXKAERemoteClose(doer)
+                -- 仅该情况下单独通知客机
+                SendModRPCToClient(CLIENT_MOD_RPC[RPC_NAMESPACE]["CloseFakeContainer"], doer.userid, self.inst.GUID)
+            end
+        end
+        self.txk_ae_fake_openlist = {}
+        self.txk_ae_sent_revisions = {}
+        self.txk_ae_snapshot_sent = {}
+    end
+
+    local function PushTerminalRefresh(slot, target_player, immediate, force_full)
+        if target_player ~= nil then
+            if not target_player:IsValid() or not self.txk_ae_fake_openlist[target_player] then
+                return
+            end
+        elseif next(self.txk_ae_fake_openlist) == nil then
+            return
+        end
+
+        local base_revision = target_player ~= nil and self.txk_ae_sent_revisions[target_player] or nil
+        local slots = {}
+        for dirty_slot in pairs(self.txk_ae_dirty_slots) do
+            table.insert(slots, dirty_slot)
+        end
+        table.sort(slots)
+        force_full = force_full or self.txk_ae_force_full_refresh
+        local fake = not force_full and type(base_revision) == "number" and #slots > 0 and
+            FakeContainerSlots(self.inst, slots, base_revision) or FakeContainer(self.inst)
+        local rpc_name = fake ~= nil and fake.updates ~= nil and
+            "RefreshFakeContainerSlots" or "RefreshFakeContainer"
+        if fake == nil then
+            return
+        end
+        local encodedata = json.encode(fake)
+        encodedata = TheSim:ZipAndEncodeString(encodedata)
+
+        local function SendRefresh(player)
+            if player and player:IsValid() then
+                if fake.updates ~= nil then
+                    SendModRPCToClient(
+                        CLIENT_MOD_RPC[RPC_NAMESPACE][rpc_name],
+                        player.userid,
+                        encodedata,
+                        immediate == true
+                    )
+                else
+                    SendModRPCToClient(
+                        CLIENT_MOD_RPC[RPC_NAMESPACE][rpc_name],
+                        player.userid,
+                        encodedata,
+                        slot or 0,
+                        immediate == true
+                    )
+                end
+            else
+                self.txk_ae_fake_openlist[player] = nil
+            end
+        end
+        if target_player ~= nil then
+            SendRefresh(target_player)
+            self.txk_ae_sent_revisions[target_player] = self.txk_ae_refresh_revision
+        else
+            for player in pairs(self.txk_ae_fake_openlist) do
+                SendRefresh(player)
+                self.txk_ae_sent_revisions[player] = self.txk_ae_refresh_revision
+            end
+        end
+    end
+
+    local function PushTerminalBatch(slots, force_full)
+        local current_revision = self.txk_ae_refresh_revision or 0
+        for player in pairs(self.txk_ae_fake_openlist) do
+            if player ~= nil and player:IsValid() then
+                if self.txk_ae_snapshot_sent[player] then
+                    local base_revision = self.txk_ae_sent_revisions[player]
+                    if type(base_revision) ~= "number" then
+                        base_revision = current_revision
+                        self.txk_ae_sent_revisions[player] = current_revision
+                    elseif base_revision < current_revision then
+                        local update = not force_full and
+                            FakeContainerSlots(self.inst, slots, base_revision) or FakeContainer(self.inst)
+                        if update ~= nil then
+                            local rpc_name = update.updates ~= nil and
+                                "RefreshFakeContainerSlots" or "RefreshFakeContainer"
+                            local encoded = TheSim:ZipAndEncodeString(json.encode(update))
+                            SendModRPCToClient(
+                                CLIENT_MOD_RPC[RPC_NAMESPACE][rpc_name],
+                                player.userid,
+                                encoded,
+                                0,
+                                false
+                            )
+                            self.txk_ae_sent_revisions[player] = current_revision
+                        end
+                    end
+                end
+            else
+                self.txk_ae_fake_openlist[player] = nil
+                self.txk_ae_sent_revisions[player] = nil
+                self.txk_ae_snapshot_sent[player] = nil
+            end
+        end
+    end
+
+    -- Interactive changes are confirmed to their actor immediately; all
+    -- observers receive the coalesced authoritative snapshot below.
+    self.txk_ae_terminal_refresh = function(inst, data)
+        local own_connector = self.inst.components.txk_ae_terminalconnector
+        if own_connector ~= nil and own_connector.QueueAutomationWake ~= nil then
+            own_connector:QueueAutomationWake()
+        end
+        WakeConnectedTerminalAutomation(self.inst)
+
+        self.txk_ae_refresh_revision = (self.txk_ae_refresh_revision or 0) + 1
+        data = data or {}
+        local slot = data.slot or self:GetItemSlot(data.item) or nil
+        StorageIndex.NotifyContainerChanged(self.inst, slot)
+        if type(slot) == "number" then
+            self.txk_ae_dirty_slots[slot] = true
+        else
+            self.txk_ae_force_full_refresh = true
+        end
+        local actor = self.currentuser
+        if actor ~= nil and self.txk_ae_fake_openlist[actor] then
+            PushTerminalRefresh(slot, actor, true)
+        end
+
+        local has_local_listener = next(self.txk_ae_fake_openlist) ~= nil
+        local has_cross_shard_listener =
+            TXKAppliedEnergisticsHasCrossShardRefreshListener ~= nil and
+            TXKAppliedEnergisticsHasCrossShardRefreshListener(self.inst)
+        if not has_local_listener and not has_cross_shard_listener then
+            self.txk_ae_dirty_slots = {}
+            self.txk_ae_force_full_refresh = false
+            return
+        end
+
+        if self.txk_ae_terminal_refresh_task == nil then
+            self.txk_ae_terminal_refresh_task = self.inst:DoTaskInTime(6 * FRAMES, function()
+                self.txk_ae_terminal_refresh_task = nil
+                local slots = {}
+                for dirty_slot in pairs(self.txk_ae_dirty_slots) do
+                    table.insert(slots, dirty_slot)
+                end
+                table.sort(slots)
+                local force_full = self.txk_ae_force_full_refresh
+                self.txk_ae_dirty_slots = {}
+                self.txk_ae_force_full_refresh = false
+                PushTerminalBatch(slots, force_full)
+                if TXKAppliedEnergisticsCrossShardRefreshContainer ~= nil then
+                    TXKAppliedEnergisticsCrossShardRefreshContainer(self.inst, slots, force_full)
+                end
+            end)
+        end
+    end
+
+    self.inst:ListenForEvent("itemlose", self.txk_ae_terminal_refresh)
+    self.inst:ListenForEvent("itemget", self.txk_ae_terminal_refresh)
+    self.inst:ListenForEvent("stacksizechange", self.txk_ae_terminal_refresh)
+    self.inst:ListenForEvent("txk_ae_refresh", self.txk_ae_terminal_refresh)
+
+    -- 容器是否被打开
+    local old_IsOpenedBy = self.IsOpenedBy
+    function self:IsOpenedBy(player)
+        if self.txk_ae_fake_openlist[player] then
+            return true
+        end
+        return old_IsOpenedBy ~= nil
+            and old_IsOpenedBy(self, player) or false
+    end
+
+    -- 记录widgetprefab
+    local old_WidgetSetup = self.WidgetSetup
+    function self:WidgetSetup(prefab, ...)
+        self.txk_ae_widgetprefab = prefab or self.inst.prefab
+        return old_WidgetSetup(self, prefab, ...)
+    end
+
+end)
+
+--------------------------------------------------------------------------
+-- 终端打开状态
+--------------------------------------------------------------------------
+
+-- 青衢纳宝箱阵列会随成员数隐藏/恢复尾部格位。通知终端走完整刷新，
+-- 使服务端索引、同世界假容器和跨世界快照同时采用新的有效容量。
+local function RefreshNearbyHMRArrayTerminals(array)
+    if not TheWorld.ismastersim or array == nil or not array:IsValid() then
+        return
+    end
+
+    local terminals = TheWorld.txk_ae_terminalconnectors
+    if terminals == nil then
+        return
+    end
+
+    for _, terminal in pairs(terminals) do
+        local connector = terminal ~= nil and terminal:IsValid() and
+            terminal.components.txk_ae_terminalconnector or nil
+        if connector ~= nil and terminal:IsNear(array, TUNING.TXK_AE_LINKRADIUS) and
+            connector.RefreshHMRArrayTopology ~= nil
+        then
+            connector:RefreshHMRArrayTopology()
+        end
+    end
+end
+
+AddComponentPostInit("hmrcontainermanager", function(self)
+    if self.inst == nil or self.inst.prefab ~= "hmr_chest_store_array" or
+        self.SetSlotDisplay == nil
+    then
+        return
+    end
+
+    local old_SetSlotDisplay = self.SetSlotDisplay
+    function self:SetSlotDisplay(slots, ...)
+        old_SetSlotDisplay(self, slots, ...)
+        if TheWorld.ismastersim then
+            self.inst:PushEvent("txk_ae_refresh")
+            -- Defer until HMR has completed the member add/remove operation.
+            -- This coalesces the initial nine SetSlotDisplay calls into one
+            -- topology scan and also handles an array dissolving below nine.
+            if self.inst.txk_ae_hmr_topology_task == nil then
+                self.inst.txk_ae_hmr_topology_task = self.inst:DoTaskInTime(0, function(inst)
+                    inst.txk_ae_hmr_topology_task = nil
+                    RefreshNearbyHMRArrayTerminals(inst)
+                end)
+            end
+        end
+    end
+end)
+
+AddPlayerPostInit(function(inst)
+
+    -- 接口函数
+    function inst:IsUsingTXKAppliedEnergistics()
+        local classified = inst.player_classified
+        return classified and classified.using_txk_ae:value()
+    end
+
+    function inst:SetUsingTXKAppliedEnergistics(using)
+        local classified = inst.player_classified
+        if classified and TheWorld.ismastersim then
+            classified.using_txk_ae:set_local(using)
+            classified.using_txk_ae:set(using)
+        end
+    end
+
+end)
+
+AddPrefabPostInit("player_classified" ,function(inst)
+
+    inst.using_txk_ae = net_bool(inst.GUID, "using_txk_ae", "using_txk_ae")
+
+    -- 玩家关闭终端UI
+    if not TheNet:IsDedicated() then
+        inst:ListenForEvent("using_txk_ae",function()
+            local player = inst._parent
+            if player == nil or TheFocalPoint.entity:GetParent() ~= player then return end
+
+            local using = inst.using_txk_ae:value()
+
+            if player.HUD and not using then
+                player.HUD:CloseTXKAETerminalWidget()
+            end
+        end)
+    end
+
+end)
+
+--------------------------------------------------------------------------
+-- 关闭终端接口
+--------------------------------------------------------------------------
+
+AddComponentPostInit("playercontroller", function(self)
+    function self:DoCloseTXKAETerminalAction()
+        if TheWorld.ismastersim then
+            BufferedAction(self.inst, nil, ACTIONS.TXK_AE_REMOTE_CLOSE_TERMINAL):Do()
+        else
+            SendModRPCToServer(MOD_RPC[RPC_NAMESPACE]["DoCloseTXKAETerminalAction"])
+        end
+    end
+end)
+
+--------------------------------------------------------------------------
+-- 通知容器刷新物品
+--------------------------------------------------------------------------
+
+AddComponentPostInit("inventoryitem", function(self)
+
+    self.txk_ae_last_notify_time = 0
+
+    self.txk_ae_notify_terminal_refresh = function(inst, data)
+        if self.owner and not data.overtime then
+            local time = GetTime()
+            if time - self.txk_ae_last_notify_time > 1.5 then
+                self.owner:PushEvent("txk_ae_refresh", {item = inst})
+                self.txk_ae_last_notify_time = time
+            end
+        end
+    end
+
+    self.inst:ListenForEvent("percentusedchange", self.txk_ae_notify_terminal_refresh)
+    self.inst:ListenForEvent("rechargechange", self.txk_ae_notify_terminal_refresh)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:hmrcontainermanager
+
+AddComponentPostInit("hmrcontainermanager", function(self)
+    if self.inst == nil or self.inst.prefab ~= "hmr_chest_store_array" or
+        self.SetSlotDisplay == nil
+    then
+        return
+    end
+
+    local old_SetSlotDisplay = self.SetSlotDisplay
+    function self:SetSlotDisplay(slots, ...)
+        old_SetSlotDisplay(self, slots, ...)
+        if TheWorld.ismastersim then
+            self.inst:PushEvent("txk_ae_refresh")
+            -- Defer until HMR has completed the member add/remove operation.
+            -- This coalesces the initial nine SetSlotDisplay calls into one
+            -- topology scan and also handles an array dissolving below nine.
+            if self.inst.txk_ae_hmr_topology_task == nil then
+                self.inst.txk_ae_hmr_topology_task = self.inst:DoTaskInTime(0, function(inst)
+                    inst.txk_ae_hmr_topology_task = nil
+                    RefreshNearbyHMRArrayTerminals(inst)
+                end)
+            end
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：modlanguage (Mod 3815691645)
+- **变体场景与切面**：收录来自工坊 Mod 3815691645 (`modlanguage`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3815691645)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:harvestable
+
+AddComponentPostInit(
+    "harvestable",
+    function(self)
+        local oldHarvest = self.Harvest
+        self.Harvest = function(self, picker, ...)
+            if picker and picker:HasTag("yamcheb") then
+                if self:CanBeHarvested() then
+                    local produce = self.produce
+                    self.produce = 0
+
+                    local pos = self.inst:GetPosition()
+
+                    if self.onharvestfn ~= nil then
+                        self.onharvestfn(self.inst, picker, produce)
+                    end
+
+                    if self.product ~= nil then
+                        if picker ~= nil and picker.components.container ~= nil then
+                            picker:PushEvent("harvestsomething", {object = self.inst})
+                        end
+
+                        for i = 1, produce, 1 do
+                            local loot = SpawnPrefab(self.product)
+                            if loot ~= nil then
+                                if loot.components.inventoryitem ~= nil then
+                                    loot.components.inventoryitem:InheritMoisture(TheWorld.state.wetness, TheWorld.state.iswet)
+                                end
+                                if picker ~= nil and picker.components.container ~= nil then
+                                    picker.components.container:GiveItem(loot, nil, pos)
+                                else
+                                    LaunchAt(loot, self.inst, nil, 1, 1)
+                                end
+                            end
+                        end
+                    end
+                    self:StartGrowing()
+                    return true
+                end
+            else
+                return oldHarvest(self, picker, ...)
+            end
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:pickable
+
+AddComponentPostInit(
+    "pickable",
+    function(self)
+        local oldPick = self.Pick
+        self.Pick = function(self, picker, ...)
+            if picker and picker:HasTag("yamcheb") then
+				if self.canbepicked and self.caninteractwith then
+					if self.transplanted and self.cycles_left ~= nil then
+						self.cycles_left = math.max(0, self.cycles_left - 1)
+					end
+
+					if self.protected_cycles ~= nil then
+						self.protected_cycles = self.protected_cycles - 1
+						if self.protected_cycles <= 0 then
+							self.protected_cycles = nil
+							if self.inst.components.witherable ~= nil then
+								self.inst.components.witherable:Enable(true)
+							end
+						end
+					end
+
+					local loot = nil
+					if picker ~= nil and picker.components.container ~= nil and (self.product ~= nil or self.use_lootdropper_for_product ~= nil) then
+						if self.droppicked and self.inst.components.lootdropper ~= nil then
+							local pt = self.inst:GetPosition()
+							pt.y = pt.y + (self.dropheight or 0)
+							if self.use_lootdropper_for_product then
+								self.inst.components.lootdropper:DropLoot(pt)
+							else
+								local num = self.numtoharvest or 1
+								for i = 1, num do
+									self.inst.components.lootdropper:SpawnLootPrefab(self.product, pt)
+								end
+							end
+						else
+							if self.use_lootdropper_for_product then
+								loot = {}
+								for _, prefab in ipairs(self.inst.components.lootdropper:GenerateLoot()) do
+									table.insert(loot, self.inst.components.lootdropper:SpawnLootPrefab(prefab))
+								end
+								if not IsTableEmpty(loot) then
+									picker:PushEvent("picksomething", { object = self.inst, loot = loot })
+								end
+								for i, item in ipairs(loot) do
+									if item.components.inventoryitem ~= nil then
+										picker.components.container:GiveItem(item, nil, self.inst:GetPosition())
+									end
+								end
+							else
+								loot = SpawnPrefab(self.product)
+								if loot ~= nil then
+									if loot.components.inventoryitem ~= nil then
+										loot.components.inventoryitem:InheritMoisture(TheWorld.state.wetness, TheWorld.state.iswet)
+									end
+									if self.numtoharvest > 1 and loot.components.stackable ~= nil then
+										loot.components.stackable:SetStackSize(self.numtoharvest)
+									end
+									picker:PushEvent("picksomething", { object = self.inst, loot = loot })
+									picker.components.container:GiveItem(loot, nil, self.inst:GetPosition())
+								end
+							end
+						end
+					end
+
+					if self.onpickedfn ~= nil then
+						self.onpickedfn(self.inst, picker, loot)
+					end
+
+					self.canbepicked = false
+
+					if self.baseregentime ~= nil and not (self.paused or self:IsBarren() or self.inst:HasTag("withered")) then
+						if TheWorld.state.isspring then
+							self.regentime = self.baseregentime * TUNING.SPRING_GROWTH_MODIFIER
+						end
+
+						if not self.useexternaltimer then
+							if self.task ~= nil then
+								self.task:Cancel()
+							end
+							self.task = self.inst:DoTaskInTime(self.regentime, OnRegen)
+							self.targettime = GetTime() + self.regentime
+						else
+							self.stopregentimer(self.inst)
+							self.startregentimer(self.inst, self.regentime)
+						end
+					end
+
+					self.inst:PushEvent("picked", { picker = picker, loot = loot, plant = self.inst })
+
+					return true
+				end
+            else
+                return oldPick(self, picker, ...)
+            end
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:musha_small
+end
+AddPrefabPostInit("musha_small", BabyPostInit) 
+]]
+-----------------------------------------------
+-----------------------------------------------
+local function visual_cos(inst)
+    ----------------------------------------------
+    inst.writing = false
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local ents = TheSim:FindEntities(x, y, z, 1, {"_writeable"},{"medal"})
+    for k, v in pairs(ents) do
+        inst.writing = true
+    end
+    if not inst.writing and not inst.visual_cos then
+        inst.musha_full = false
+        inst.musha_normal = false
+        inst.musha_battle = false
+        inst.musha_hunger = false
+
+        inst.visual_cos = true
+        inst.components.talker:Say(STRINGS.MUSHA_VISUAL_BASE)
+        inst.soundsname = "willow"
+        inst.set_on = false
+        inst.visual_hold = false
+
+        inst.visual_hold2 = false
+        inst.visual_hold3 = false
+        inst.visual_hold4 = false
+        inst.full_hold = false
+        inst.normal_hold = false
+        inst.valkyrie_hold = false
+        inst.berserk_hold = false
+        inst.hold_old1 = false
+        inst.hold_old2 = false
+        inst.hold_old3 = false
+        inst.hold_old4 = false
+        inst.hold_old5 = false
+        inst.hold_old6 = false
+        inst.hold_old7 = false
+        inst.hold_old8 = false
+        inst.full_k_hold = false
+        inst.normal_k_hold = false
+        inst.valkyrie_k_hold = false
+        inst.berserk_k_hold = false
+        inst.willow = false
+        inst.wigfred = false
+        inst.change_visual = false
+		
+		inst.Appearance_Saber = false
+		inst.Appearance_Caster = false 
+		-- inst.Appearance_Full = false 
+		-- inst.Appearance_Normal = false 
+		-- inst.Appearance_Valkyrie = false 
+		-- inst.Appearance_Berserk = false 
+		-- inst.Appearance_1 = false 
+		-- inst.Appearance_2 = false
+		-- inst.Appearance_3 = false
+		-- inst.Appearance_4 = false
+		-- inst.Appearance_5 = false
+		-- inst.Appearance_6 = false
+		-- inst.Appearance_7 = false
+		-- inst.Appearance_8 = false
+		-- inst.Appearance_9 = false
+		-- inst.Appearance_10 = false
+		-- inst.Appearance_11 = false
+		-- inst.Appearance_12 = false
+    end
+    inst.visual_cos = false
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:excaribur
+--咖喱棒相关设置
+AddPrefabPostInit("excaribur",function(inst)
+	
+	inst:AddComponent("weapon")
+    inst.components.weapon:SetDamage(68)
+    inst.components.weapon:SetRange(1.2,1.2)
+	
+	if inst.components.equippable then 
+		inst.components.equippable.walkspeedmult =1.25
+	end
+	inst.mater=0
+	inst.components.weapon:SetOnAttack(onattack)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragon_scales
+
+AddPrefabPostInit("dragon_scales",function(inst)
+	if not inst.components.tradable then
+		inst:AddComponent("tradable")
+    end
+end)
+
+```
+

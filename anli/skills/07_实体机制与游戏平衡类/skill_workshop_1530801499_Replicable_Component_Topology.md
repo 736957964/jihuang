@@ -3650,3 +3650,120 @@ end)
 
 ```
 
+
+
+### 变体演进：绝望石剑 (Mod 3771294586)
+- **变体场景与切面**：收录来自工坊 Mod 3771294586 (`绝望石剑`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3771294586)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:dreadstone_sword
+
+AddPrefabPostInit("dreadstone_sword", function(inst)
+    if DURABILITY == 0 then
+        if inst.components.finiteuses ~= nil then inst:RemoveComponent("finiteuses") end
+    else
+        if inst.components.finiteuses == nil then inst:AddComponent("finiteuses") end
+        inst.components.finiteuses:SetMaxUses(DURABILITY)
+        inst.components.finiteuses:SetUses(DURABILITY)
+    end
+
+       -- 攻击范围与位面伤害
+    inst:DoTaskInTime(0.5, function()
+        if inst.components.weapon ~= nil then
+            if ATTACK_RANGE == "default" then
+                inst.components.weapon:SetRange(1, 3)
+            else
+                inst.components.weapon:SetRange(0.5,1)
+            end
+        end
+        if PLANAR_DAMAGE > 0 and inst.components.planardamage ~= nil then
+            inst.components.planardamage:SetBaseDamage(PLANAR_DAMAGE)
+        end
+    end)
+
+    -- 可砍树功能
+    if CHOP_ENABLED then
+        -- 添加工具组件
+        if inst.components.tool == nil then
+            inst:AddComponent("tool")
+        end
+        inst.components.tool:SetAction(GLOBAL.ACTIONS.CHOP, 1.5)  -- 砍树效率
+        inst.components.tool:EnableToughWork(true)  -- 可以砍硬质树木
+        
+        -- 设置砍树耐久消耗
+        if inst.components.finiteuses ~= nil then
+            inst.components.finiteuses:SetConsumption(GLOBAL.ACTIONS.CHOP, 1)
+        end
+    end
+
+    -- 自动恢复耐久
+    if REGEN_ENABLED then
+        local function DoRegen()
+            if inst.components.finiteuses ~= nil and inst.components.finiteuses.current <= 0 then return end
+            local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner
+            if owner == nil or not owner:IsValid() then return end
+            local finiteuses = inst.components.finiteuses
+            if finiteuses == nil or finiteuses.current >= finiteuses.total then return end
+            if owner.components.sanity ~= nil and owner.components.sanity.current > 0 then
+                local rate = 1 / Lerp(1 / TUNING.ARMOR_DREADSTONE_REGEN_MAXRATE, 1 / TUNING.ARMOR_DREADSTONE_REGEN_MINRATE, owner.components.sanity:GetPercent())
+                finiteuses:SetUses(math.min(finiteuses.current + finiteuses.total * rate, finiteuses.total))
+            end
+        end
+
+        inst:DoPeriodicTask(1, function()
+            if inst.components.equippable and inst.components.equippable:IsEquipped() then
+                if (GetTime() - (inst._last_attack_time or 0)) > 2 then
+                    DoRegen()
+                end
+            end
+        end)
+    end
+
+    -- 绝望石修复
+    if DREADSTONE_REPAIR then
+        inst:AddComponent("trader")
+        inst.components.trader:SetAcceptTest(function(inst, item)
+            return item.prefab == "dreadstone"
+        end)
+        inst.components.trader.onaccept = function(inst, giver, item)
+            local current = inst.components.finiteuses.current
+            local max = inst.components.finiteuses.total
+            inst.components.finiteuses:SetUses(math.min(current + max * 0.5, max))
+        end
+    end
+
+    -- 耐久归零删除
+    inst:DoPeriodicTask(0.5, function()
+        if inst.components.finiteuses ~= nil and inst.components.finiteuses.current <= 0 then
+            inst:Remove()
+        end
+    end)
+
+    -- 掉血速度
+    inst:DoTaskInTime(0.5, function()
+        if inst.components.equippable == nil then return end
+        inst:ListenForEvent("equipped", function(inst, data)
+            if inst._health_task ~= nil then inst._health_task:Cancel(); inst._health_task = nil end
+            if BLEED_INTERVAL > 0 then
+                local owner = data.owner
+                inst._health_task = inst:DoPeriodicTask(BLEED_INTERVAL, function()
+                    if owner:IsValid() and owner.components.health ~= nil then
+                        local hp = owner.components.health:GetPercent()
+                        if hp >= 0.25 then owner.components.health:DoDelta(-1) end
+                    end
+                end)
+            end
+        end)
+        inst:ListenForEvent("unequipped", function(inst)
+            if inst._health_task ~= nil then inst._health_task:Cancel(); inst._health_task = nil end
+        end)
+    end)
+end)
+
+```
+

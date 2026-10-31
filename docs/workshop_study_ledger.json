@@ -4638,8 +4638,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 05:41:55",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3771294586",
+      "name": "绝望石剑",
+      "author": "江雨落",
+      "version": "3.2.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 05:48:37",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3773139595",
+      "name": "null",
+      "author": "唐小可",
+      "version": "26.10.26.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:48:37",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3815691645",
+      "name": "modlanguage",
+      "author": "Sunnyyyyholic、凍心、萌萌哒女王Yao、恒子while(1)",
+      "version": "16.12",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:48:37",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:41:55"
+  "lastUpdated": "2026-11-01 05:48:37"
 }
