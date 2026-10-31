@@ -3784,3 +3784,46 @@ AddPrefabPostInit("yellowamulet", KeepYellowAmuletWhenEmpty)
 
 ```
 
+
+
+### 变体演进：Disable/Config Weed Self Sprouting and Spreading (Mod 2464239430)
+- **变体场景与切面**：收录来自工坊 Mod 2464239430 (`Disable/Config Weed Self Sprouting and Spreading`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2464239430)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:farming_manager
+
+AddComponentPostInit("farming_manager", function(self, inst) 
+	if not can_spawn then
+		self:StopWatchingWorldState("season", 1)
+		self._UpdateWeedSpawning = function() end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:weed_plants
+if not any_spread or not sprouted_spread or nutrient_consumption ~= GLOBAL.TUNING.FARM_PLANT_CONSUME_NUTRIENT_LOW then
+	AddPrefabPostInit("weed_plants", function(inst)
+		inst:ListenForEvent("on_planted", function(inst, data)
+			if inst.weed_def then
+				if not data.doer then
+					if not sprouted_spread then
+						inst.weed_def.spread = nil
+					end
+					if inst.weed_def.nutrient_consumption then
+						inst.weed_def.nutrient_consumption = nutrient_consumption
+					end
+				end
+				else if not any_spread then
+					inst.weed_def.spread = nil
+				end
+			end
+		end) 
+	end)
+
+```
+
