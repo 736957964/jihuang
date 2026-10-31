@@ -4665,3 +4665,638 @@ end)
 
 ```
 
+
+
+### 变体演进：Ice Flingomatic Overhaul (Mod 3795134964)
+- **变体场景与切面**：收录来自工坊 Mod 3795134964 (`Ice Flingomatic Overhaul`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3795134964)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:firesuppressor_placer
+
+AddPrefabPostInit(
+    "firesuppressor_placer",
+
+    function(inst)
+
+        if inst.AnimState ~= nil then
+
+            inst.AnimState:SetScale(
+                RANGE_VISUAL_MULTIPLIER,
+                RANGE_VISUAL_MULTIPLIER
+            )
+
+        end
+
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:firesuppressor
+
+AddPrefabPostInit(
+    "firesuppressor",
+
+    function(inst)
+
+        if GLOBAL.TheNet:IsDedicated() then
+            return
+        end
+
+
+        inst:DoTaskInTime(
+            0,
+
+            function()
+
+                local deployhelper =
+                    inst.components.deployhelper
+
+
+                if deployhelper == nil then
+                    return
+                end
+
+
+                deployhelper.onenablehelper =
+                    function(flingo, enabled)
+
+
+                        --------------------------------------------------
+                        -- SHOW RANGE
+                        --------------------------------------------------
+
+                        if enabled then
+
+                            if flingo.helper ~= nil then
+                                return
+                            end
+
+
+                            local helper =
+                                CreateEntity()
+
+
+                            helper.entity:SetCanSleep(false)
+                            helper.persists = false
+
+                            helper.entity:AddTransform()
+                            helper.entity:AddAnimState()
+
+
+                            helper:AddTag("CLASSIFIED")
+                            helper:AddTag("NOCLICK")
+                            helper:AddTag("placer")
+
+
+                            helper.Transform:SetScale(
+                                VANILLA_HELPER_TRANSFORM_SCALE,
+                                VANILLA_HELPER_TRANSFORM_SCALE,
+                                VANILLA_HELPER_TRANSFORM_SCALE
+                            )
+
+
+                            helper.AnimState:SetBank(
+                                "firefighter_placement"
+                            )
+
+                            helper.AnimState:SetBuild(
+                                "firefighter_placement"
+                            )
+
+                            helper.AnimState:PlayAnimation(
+                                "idle"
+                            )
+
+
+                            helper.AnimState:SetScale(
+                                RANGE_VISUAL_MULTIPLIER,
+                                RANGE_VISUAL_MULTIPLIER
+                            )
+
+
+                            helper.AnimState:SetLightOverride(1)
+
+
+                            helper.AnimState:SetOrientation(
+                                GLOBAL.ANIM_ORIENTATION.OnGround
+                            )
+
+
+                            helper.AnimState:SetLayer(
+                                GLOBAL.LAYER_BACKGROUND
+                            )
+
+
+                            helper.AnimState:SetSortOrder(1)
+
+
+                            helper.AnimState:SetAddColour(
+                                0,
+                                0.2,
+                                0.5,
+                                0
+                            )
+
+
+                            helper.entity:SetParent(
+                                flingo.entity
+                            )
+
+
+                            flingo.helper =
+                                helper
+
+
+                        --------------------------------------------------
+                        -- HIDE RANGE
+                        --------------------------------------------------
+
+                        elseif flingo.helper ~= nil then
+
+                            flingo.helper:Remove()
+
+                            flingo.helper =
+                                nil
+
+                        end
+
+                    end
+
+            end
+        )
+
+    end
+)
+
+
+--------------------------------------------------
+-- MARKER RANGE CHECK
+--------------------------------------------------
+
+local function IsMarkerInRange(
+    inst,
+    marker,
+    range
+)
+
+    if marker == nil
+        or not marker:IsValid()
+        or not marker:HasTag(MARKER_TAG) then
+
+        return false
+
+    end
+
+
+    local x, y, z =
+        inst.Transform:GetWorldPosition()
+
+
+    local mx, my, mz =
+        marker.Transform:GetWorldPosition()
+
+
+    local dx =
+        mx - x
+
+    local dz =
+        mz - z
+
+
+    return
+        (dx * dx + dz * dz)
+        <=
+        (range * range)
+
+end
+
+
+--------------------------------------------------
+-- FIND / MAINTAIN MARKER LOCK
+--------------------------------------------------
+
+local function FindNearestMarker(inst)
+
+    local detector =
+        inst.components.firedetector
+
+
+    if detector == nil
+        or detector.range == nil then
+
+        return nil
+
+    end
+
+
+    local range =
+        detector.range
+
+
+    --------------------------------------------------
+    -- KEEP CURRENT MARKER LOCK
+    --------------------------------------------------
+
+    if IsMarkerInRange(
+        inst,
+        inst._flingomatic_marker_target,
+        range
+    ) then
+
+        return
+            inst._flingomatic_marker_target
+
+    end
+
+
+    --------------------------------------------------
+    -- CURRENT MARKER INVALID / OUT OF RANGE
+    --------------------------------------------------
+
+    inst._flingomatic_marker_target =
+        nil
+
+
+    --------------------------------------------------
+    -- FIND MARKERS IN RANGE
+    --------------------------------------------------
+
+    local x, y, z =
+        inst.Transform:GetWorldPosition()
+
+
+    local markers =
+        TheSim:FindEntities(
+            x,
+            y,
+            z,
+            range,
+            {
+                MARKER_TAG
+            }
+        )
+
+
+    local nearest =
+        nil
+
+    local nearest_distsq =
+        nil
+
+
+    --------------------------------------------------
+    -- SELECT NEAREST MARKER
+    --------------------------------------------------
+
+    for _, marker in ipairs(markers) do
+
+        if marker ~= nil
+            and marker:IsValid() then
+
+
+            local mx, my, mz =
+                marker.Transform:GetWorldPosition()
+
+
+            local dx =
+                mx - x
+
+            local dz =
+                mz - z
+
+
+            local distsq =
+                dx * dx +
+                dz * dz
+
+
+            if nearest == nil
+                or distsq < nearest_distsq then
+
+
+                nearest =
+                    marker
+
+                nearest_distsq =
+                    distsq
+
+            end
+
+        end
+
+    end
+
+
+    --------------------------------------------------
+    -- SAVE NEW MARKER LOCK
+    --------------------------------------------------
+
+    if nearest ~= nil then
+
+        inst._flingomatic_marker_target =
+            nearest
+
+    end
+
+
+    return nearest
+
+end
+
+
+--------------------------------------------------
+-- TARGET MARKER
+--------------------------------------------------
+
+local function TargetMarker(
+    inst,
+    marker
+)
+
+    if marker == nil
+        or not marker:IsValid()
+        or inst.sg == nil
+        or not inst.sg:HasStateTag("idle") then
+
+        return false
+
+    end
+
+
+    inst:PushEvent(
+        "putoutfire",
+        {
+            firePos =
+                marker:GetPosition()
+        }
+    )
+
+
+    return true
+
+end
+
+
+--------------------------------------------------
+-- PROJECTILE DISTANCE
+--------------------------------------------------
+
+local function GetHorizontalDistance(
+    x,
+    z,
+    targetpos
+)
+
+    local dx =
+        targetpos.x - x
+
+    local dz =
+        targetpos.z - z
+
+
+    return math.sqrt(
+        dx * dx +
+        dz * dz
+    )
+
+end
+
+
+--------------------------------------------------
+-- MAKE SURE PROJECTILE CAN REACH TARGET
+--------------------------------------------------
+
+local function SetReachableSpeed(
+    cp,
+    base_speed,
+    distance
+)
+
+    local required_speed =
+        cp:CalculateMinimumSpeedForDistance(
+            distance
+        )
+
+
+    if required_speed ~= nil then
+
+        required_speed =
+            required_speed *
+            PROJECTILE_SPEED_SAFETY
+
+
+        cp:SetHorizontalSpeed(
+            math.max(
+                base_speed,
+                required_speed
+            )
+        )
+
+    else
+
+        cp:SetHorizontalSpeed(
+            base_speed
+        )
+
+    end
+
+end
+
+
+--------------------------------------------------
+-- FLINGOMATIC MODIFICATIONS
+--------------------------------------------------
+
+AddPrefabPostInit(
+    "firesuppressor",
+
+    function(inst)
+
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+
+        inst:DoTaskInTime(
+            0,
+
+            function()
+
+
+                --------------------------------------------------
+                -- RANGE
+                --------------------------------------------------
+
+                local detector =
+                    inst.components.firedetector
+
+
+                if detector ~= nil then
+
+                    detector.range =
+                        FLINGOMATIC_RANGE
+
+                end
+
+
+                --------------------------------------------------
+                -- INFINITE FUEL
+                --------------------------------------------------
+
+                if INFINITE_FUEL then
+
+                    local fueled =
+                        inst.components.fueled
+
+
+                    if fueled ~= nil then
+
+                        fueled:SetPercent(1)
+
+                        fueled:StopConsuming()
+
+
+                        fueled.StartConsuming =
+                            function(self)
+
+                                self:SetPercent(1)
+
+                                self:StopConsuming()
+
+                            end
+
+                    end
+
+                end
+
+
+                --------------------------------------------------
+                -- MARKER TARGETING
+                --------------------------------------------------
+
+                if detector ~= nil then
+
+
+                    local old_onfindfire =
+                        detector.onfindfire
+
+
+                    local old_detect_fire =
+                        detector.DetectFire
+
+
+                    detector:SetOnFindFireFn(
+
+                        function(
+                            flingo,
+                            normal_target_position
+                        )
+
+
+                            local marker =
+                                FindNearestMarker(
+                                    flingo
+                                )
+
+
+                            if marker ~= nil then
+
+                                if old_onfindfire ~= nil then
+
+                                    old_onfindfire(
+                                        flingo,
+                                        marker:GetPosition()
+                                    )
+
+                                end
+
+
+                                return
+
+                            end
+
+
+                            if old_onfindfire ~= nil then
+
+                                old_onfindfire(
+                                    flingo,
+                                    normal_target_position
+                                )
+
+                            end
+
+                        end
+                    )
+
+
+                    --------------------------------------------------
+                    -- DETECT MARKERS EVEN WITHOUT FIRE
+                    --------------------------------------------------
+
+                    detector.DetectFire =
+                        function(self)
+
+
+                            local marker =
+                                FindNearestMarker(
+                                    self.inst
+                                )
+
+
+                            if marker ~= nil then
+
+                                if self.onfindfire ~= nil then
+
+                                    self.onfindfire(
+                                        self.inst,
+                                        marker:GetPosition()
+                                    )
+
+                                end
+
+
+                                return
+
+                            end
+
+
+                            old_detect_fire(
+                                self
+                            )
+
+                        end
+
+
+                    --------------------------------------------------
+                    -- PERIODIC MARKER TARGETING
+                    --------------------------------------------------
+
+                    inst._flingomatic_marker_task =
+                        inst:DoPeriodicTask(
+
+                            MARKER_CHECK_PERIOD,
+
+                            function(flingo)
+
+
+                                if flingo.components.machine ~= nil
+                                    and
+                                    not flingo.components.machine:IsOn() then
+
+                                    return
+
+                                end
+
+
+                                local marker =
+                                    FindNearestMarker(
+                                        flingo
+                                    )
+
+
+```
+

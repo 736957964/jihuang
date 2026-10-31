@@ -5151,8 +5151,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 06:42:58",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3686051763",
+      "name": "lucy_damage",
+      "author": "中二的太狼",
+      "version": "1.1.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 06:47:46",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3693009250",
+      "name": "Critters Starve to Death",
+      "author": "KoreanWaffles",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:47:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3772689819",
+      "name": "远古远古战争机器人",
+      "author": "卖女孩小火柴",
+      "version": "6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:47:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3795134964",
+      "name": "Ice Flingomatic Overhaul",
+      "author": "Creeirdo",
+      "version": "3.1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 06:47:46",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 06:42:58"
+  "lastUpdated": "2026-11-01 06:47:46"
 }

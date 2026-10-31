@@ -5097,3 +5097,240 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：lucy_damage (Mod 3686051763)
+- **变体场景与切面**：收录来自工坊 Mod 3686051763 (`lucy_damage`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3686051763)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddRecipePostInit:wathgrithr_shield
+if CRAFT_SHIELD then
+    AddRecipePostInit("wathgrithr_shield", function(recipe)
+        recipe.builder_tag = nil
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:spear_wathgrithr
+if CRAFT_SPEAR then
+    AddRecipePostInit("spear_wathgrithr", function(recipe)
+        recipe.builder_tag = nil
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lucy
+end
+AddPrefabPostInit("lucy", function(inst)
+    if not TheWorld.ismastersim then return end
+    if inst.components.tool ~= nil then
+        inst.components.tool:SetAction(ACTIONS.CHOP, 3)
+    end
+    inst:AddTag("chop_attack")
+    if LUCY_SUMMON_TREE then
+
+        if inst.components.spellcaster == nil then
+            inst:AddComponent("spellcaster")
+        end
+
+        inst.components.spellcaster:SetSpellFn(SpawnTreeguard)
+        inst.components.spellcaster.canuseonpoint = true
+        inst.components.spellcaster.canonlyuseonpoint = true
+
+    end
+    if inst.components.equippable ~= nil then
+        inst.components.equippable.dapperness = 0.1
+    end
+    if not inst.components.weapon then inst:AddComponent("weapon") end
+    inst.components.weapon:SetDamage(LUCY_DAMAGE)
+    inst.components.weapon:SetRange(LUCY_RANGE, LUCY_RANGE)
+    if not inst.components.planardamage then inst:AddComponent("planardamage") end
+    inst.components.planardamage:SetBaseDamage(LUCY_PLANAR)
+    inst.fire_atk_enabled = false
+    inst.ice_atk_enabled = false
+    inst.shield_enabled = false
+    local base_lifesteal = LUCY_LIFESTEAL
+    local function OnAttack(inst, attacker, target)
+        local current_lifesteal = base_lifesteal
+        if inst.up_lv and inst.up_lv.batbat then
+            current_lifesteal = current_lifesteal + (inst.up_lv.batbat * 0.5)
+        end
+        if current_lifesteal > 0 and attacker and attacker.components.health and not attacker.components.health:IsDead() then
+            attacker.components.health:DoDelta(current_lifesteal)
+        end
+        if inst.fire_atk_enabled then
+            if math.random(1,100) <= 30 then
+                if target.fx_fire_atk == nil then
+                    target.fx_fire_atk = SpawnPrefab('campfirefire')
+                    target.fx_fire_atk.entity:SetParent(target.entity)
+                    target.fx_fire_atk.entity:AddFollower()
+                    target.fx_fire_atk.Follower:FollowSymbol(target.GUID, nil, 0,-20,0)
+                end
+                if target.task_fire_atk == nil then
+                    target.task_fire_atk = target:DoPeriodicTask(1,function()
+                        if target and target.components and target.components.combat and target.components.health and not target.components.health:IsDead() then
+                            target.components.combat:GetAttacked(attacker, 10)
+                        end
+                    end)
+                    target:DoTaskInTime(5,function()
+                        if target.task_fire_atk ~= nil then
+                            target.task_fire_atk:Cancel()
+                            target.task_fire_atk = nil
+                        end
+                        if target.fx_fire_atk ~= nil then
+                            target.fx_fire_atk:Remove()
+                            target.fx_fire_atk = nil
+                        end
+                    end)
+                end
+            end
+        end
+        if inst.ice_atk_enabled then
+            if math.random(1,100) <= 25 then
+                if target.components.freezable then
+                    target.components.freezable:AddColdness(1)
+                    target.components.freezable:SpawnShatterFX()
+                end
+            end
+        end
+    end
+    inst.components.weapon:SetOnAttack(OnAttack)
+    if inst.components.equippable then inst.components.equippable.walkspeedmult = LUCY_SPEED end
+    if LUCY_ARMOR > 0 then
+        if not inst.components.armor then inst:AddComponent("armor") inst:AddTag("hide_percentage") end
+        inst.components.armor:InitIndestructible(LUCY_ARMOR)
+    end
+    if LUCY_PLANAR_DEF > 0 then
+        if not inst.components.planardefense then inst:AddComponent("planardefense") end
+        inst.components.planardefense:SetBaseDefense(LUCY_PLANAR_DEF)
+    end
+    if LUCY_MINE then
+        if not inst.components.tool then inst:AddComponent("tool") end
+        inst.components.tool:SetAction(ACTIONS.MINE, 3)
+        if LUCY_HEAVY_MINE then
+            inst.components.tool:EnableToughWork(true)
+        end
+    end
+    if LUCY_UPGRADE_ENABLE then
+        inst.up_lv = { spear=0, boomerang=0, wathgrithr_spear=0, hambat=0, whip=0, batbat=0, tentaclespike=0, gunpowder=0, glasscutter=0, nightsword=0, brightsword=0, shadow_reaper=0, firestaff=false, icestaff=false, morningstar=false, shield=false }
+        local function UpdateLucyStats(inst)
+            local bonus_dmg = (inst.up_lv.spear * 1) + (inst.up_lv.wathgrithr_spear * 2) + (inst.up_lv.hambat * 2) + (inst.up_lv.gunpowder * 0.5) + (inst.up_lv.tentaclespike * 2) + (inst.up_lv.glasscutter * 3) + (inst.up_lv.nightsword * 3) + (inst.up_lv.shadow_reaper * 1)
+            local bonus_planar = (inst.up_lv.gunpowder * 0.5) + (inst.up_lv.brightsword * 4) + (inst.up_lv.shadow_reaper * 3)
+            local bonus_range = (inst.up_lv.boomerang * 0.1) + (inst.up_lv.whip * 0.2)
+            inst.components.weapon:SetDamage(LUCY_DAMAGE + bonus_dmg)
+            inst.components.planardamage:SetBaseDamage(LUCY_PLANAR + bonus_planar)
+            inst.components.weapon:SetRange(LUCY_RANGE + bonus_range, LUCY_RANGE + bonus_range)
+        end
+        if not inst.components.trader then inst:AddComponent("trader") end
+        local up_mats = { spear="spear", boomerang="boomerang", spear_wathgrithr="wathgrithr_spear", hambat="hambat", whip="whip", batbat="batbat", tentaclespike="tentaclespike", gunpowder="gunpowder", glasscutter="glasscutter", nightsword="nightsword", sword_lunarplant="brightsword", voidcloth_scythe="shadow_reaper", firestaff="firestaff", icestaff="icestaff", wathgrithr_shield="shield" }
+        local up_limits = { spear=LUCY_UP_SPEAR, boomerang=LUCY_UP_BOOMERANG, wathgrithr_spear=LUCY_UP_WATHGRITHR_SPEAR, hambat=LUCY_UP_HAMBAT, whip=LUCY_UP_WHIP, batbat=LUCY_UP_BATBAT, tentaclespike=LUCY_UP_TENTACLESPIKE, gunpowder=LUCY_UP_GUNPOWDER, glasscutter=LUCY_UP_GLASSCUTTER, nightsword=LUCY_UP_NIGHTSWORD, brightsword=LUCY_UP_BRIGHTSWORD, shadow_reaper=LUCY_UP_SHADOW_REAPER, firestaff=LUCY_UP_FIRESTAFF, icestaff=LUCY_UP_ICESTAFF, shield=LUCY_UP_SHIELD }
+        local up_names = { spear="长矛", boomerang="回旋镖", wathgrithr_spear="战斗长矛", hambat="火腿棒", whip="三尾猫鞭", batbat="蝙蝠棒", tentaclespike="触手尖刺", gunpowder="火药", glasscutter="玻璃刀", nightsword="暗夜剑", brightsword="亮茄剑", shadow_reaper="暗影收割者", firestaff="火魔杖", icestaff="冰魔杖", shield="战斗圆盾" }
+        inst.components.trader:SetAcceptTest(function(inst, item)
+            if not up_mats[item.prefab] then return false end
+            local key = up_mats[item.prefab]
+            if key == "firestaff" or key == "icestaff" or key == "shield" then
+                return up_limits[key] and not inst.up_lv[key]
+            else
+                return true
+            end
+        end)
+        inst.components.trader.onaccept = function(inst, giver, item)
+            local key = up_mats[item.prefab]
+            if key == "firestaff" then
+                if up_limits.firestaff and not inst.up_lv.firestaff then
+                    inst.up_lv.firestaff = true
+                    inst.fire_atk_enabled = true
+                    if giver.components.talker then giver.components.talker:Say("解锁火焰攻击！") end
+                else
+                    if giver.components.talker then giver.components.talker:Say("已经升级过了！") end
+                end
+            elseif key == "icestaff" then
+                if up_limits.icestaff and not inst.up_lv.icestaff then
+                    inst.up_lv.icestaff = true
+                    inst.ice_atk_enabled = true
+                    if giver.components.talker then giver.components.talker:Say("解锁冰冻攻击！") end
+                else
+                    if giver.components.talker then giver.components.talker:Say("已经升级过了！") end
+                end
+            elseif key == "shield" then
+                if up_limits.shield and not inst.up_lv.shield then
+                    inst.up_lv.shield = true
+                    inst.shield_enabled = true
+                    if giver.components.talker then giver.components.talker:Say("解锁格挡功能！按Z键格挡") end
+                else
+                    if giver.components.talker then giver.components.talker:Say("已经升级过了！") end
+                end
+            else
+                if inst.up_lv[key] < up_limits[key] then
+                    inst.up_lv[key] = inst.up_lv[key] + 1
+                    UpdateLucyStats(inst)
+                    if giver.components.talker then giver.components.talker:Say(up_names[key].."等级: "..inst.up_lv[key].."/"..up_limits[key]) end
+                else
+                    if giver.components.talker then giver.components.talker:Say(up_names[key].."等级已满！") end
+                end
+            end
+        end
+        inst.OnSave = function(inst, data)
+            data.up_lv = inst.up_lv
+            data.fire_atk_enabled = inst.fire_atk_enabled
+            data.ice_atk_enabled = inst.ice_atk_enabled
+            data.shield_enabled = inst.shield_enabled
+        end
+        inst.OnPreLoad = function(inst, data)
+            if data and data.up_lv then
+                inst.up_lv = data.up_lv
+                UpdateLucyStats(inst)
+                inst.fire_atk_enabled = data.fire_atk_enabled or false
+                inst.ice_atk_enabled = data.ice_atk_enabled or false
+                inst.shield_enabled = data.shield_enabled or false
+            end
+        end
+    end
+end)
+local function OnParryKeyPressed(player)
+    if not TheWorld.ismastersim then return end
+    if not player or not player:HasTag("player") then return end
+    local weapon = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if not weapon or weapon.prefab ~= "lucy" or not weapon.shield_enabled then
+        if player.components.talker then player.components.talker:Say("需要装备已升级的露西斧") end
+        return
+    end
+    if not weapon.components.aoetargeting then
+        weapon:AddComponent("aoetargeting")
+        weapon.components.aoetargeting:SetAlwaysValid(true)
+        weapon.components.aoetargeting:SetAllowRiding(false)
+        weapon.components.aoetargeting.reticule.reticuleprefab = "reticulearc"
+        weapon.components.aoetargeting.reticule.pingprefab = "reticulearcping"
+        weapon.components.aoetargeting.reticule.validcolour = { 1, .75, 0, 1 }
+        weapon.components.aoetargeting.reticule.invalidcolour = { .5, 0, 0, 1 }
+        weapon.components.aoetargeting.reticule.ease = true
+        weapon.components.aoetargeting.reticule.mouseenabled = true
+    end
+    if not weapon.components.parryweapon then
+        weapon:AddComponent("parryweapon")
+        weapon.components.parryweapon:SetParryArc(120)
+    end
+    weapon.components.aoetargeting:SetEnabled(true)
+    if player.components.talker then player.components.talker:Say("准备格挡！") end
+end
+AddPlayerPostInit(function(inst)
+    if not TheWorld.ismastersim then return end
+    if not inst.components.timer then inst:AddComponent("timer") end
+end)
+if TheInput then
+    TheInput:AddKeyDownHandler(KEY_Z, function()
+        local player = ThePlayer
+        if player then SendModRPCToServer(MOD_RPC["lucy_parry"]["parry"]) end
+    end)
+end
+AddModRPCHandler("lucy_parry", "parry", function(player) OnParryKeyPressed(player) end)
+local mats_to_init = {"spear", "boomerang", "spear_wathgrithr", "hambat", "whip", "batbat", "tentaclespike", "gunpowder", "glasscutter", "nightsword", "sword_lunarplant", "voidcloth_scythe", "firestaff", "icestaff", "wathgrithr_shield"}
+for _, m in ipairs(mats_to_init) do
+    AddPrefabPostInit(m, function(inst) if not inst.components.tradable then inst:AddComponent("tradable") end end)
+end
+
+```
+

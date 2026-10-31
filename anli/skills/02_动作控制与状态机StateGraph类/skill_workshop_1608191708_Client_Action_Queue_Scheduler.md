@@ -18654,3 +18654,51 @@ end)
 
 ```
 
+
+
+### 变体演进：Critters Starve to Death (Mod 3693009250)
+- **变体场景与切面**：收录来自工坊 Mod 3693009250 (`Critters Starve to Death`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3693009250)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+-- The critter_adopt_cooldown component tracks 
+AddPrefabPostInit("world", function(inst)
+    inst:AddComponent("critter_adopt_cooldown")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+-- 
+AddComponentPostInit("builder", function(self)
+    local _DoBuild = self.DoBuild
+    function self:DoBuild(recname, pt, rotation, skin, ...)
+        local recipe = GetValidRecipe(recname)
+        local is_on_cooldown = TheWorld.components.critter_adopt_cooldown:IsOnCooldown(self.inst.userid)
+        if recipe.level.ORPHANAGE > 0 and is_on_cooldown then
+            return false
+        end
+        return _DoBuild(self, recname, pt, rotation, skin, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：远古远古战争机器人 (Mod 3772689819)
+- **变体场景与切面**：收录来自工坊 Mod 3772689819 (`远古远古战争机器人`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3772689819)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
