@@ -2022,3 +2022,28 @@ end)
 
 ```
 
+
+
+### 变体演进：自动切手杖武器 Auto Switch Cane and Weapon (Mod 2781167240)
+- **变体场景与切面**：收录来自工坊 Mod 2781167240 (`自动切手杖武器 Auto Switch Cane and Weapon`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2781167240)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst:DoTaskInTime(0.5, function(inst)
+        if GLOBAL.ThePlayer then
+            GLOBAL.ThePlayer:AddComponent("autoswitch")
+            GLOBAL.ThePlayer.components.autoswitch:SetChipSlot(CHIP_SLOT)
+            GLOBAL.ThePlayer.components.autoswitch:SetWeaponList(WEAPON_LIST)
+        end
+    end)
+end)
+
+```
+
