@@ -1,4 +1,3 @@
-* [🌟 饥荒工坊研读与流水线维护规范](docs/饥荒工坊研读与流水线维护规范.md)
 * 🌟 创意工坊全文模组研读库
   * 01 UI 与 HUD 界面交互类
     * [网格吸附与对象池引擎 (351325790)](anli/skills/01_UI与HUD界面交互类/skill_workshop_351325790_Geometric_Placement_Core.md)
