@@ -16293,3 +16293,134 @@ end)
 
 ```
 
+
+
+### 变体演进：Title (Mod 2601796546)
+- **变体场景与切面**：收录来自工坊 Mod 2601796546 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2601796546)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:healer
+--无法治疗
+AddComponentPostInit("healer",function(self)
+	local old = self.Heal
+	self.Heal = function(self,target)
+		if target:HasTag("asakiri") and target.components.health ~= nil  and not target.components.health:IsDead() then
+			if target.components.talker then
+				target.components.talker:Say("它修复不了我的躯体。")
+			end
+			return false
+		end
+		return old(self,target)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:maxhealer
+--无法打针
+AddComponentPostInit("maxhealer",function(self)
+	local old = self.Heal
+	self.Heal = function(self,target)
+		if target:HasTag("asakiri") and target.components.health ~= nil  and not target.components.health:IsDead() then
+			return false
+		end
+		return old(self,target)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self, inst)
+    local oldGetAttacked = self.GetAttacked
+    function self:GetAttacked(attacker, damage, weapon, stimuli, spdamage)
+		if self.inst:HasTag("player") then
+			if self.inst:HasTag("asakiri") then
+				if self.inst.asa_invincible and self.inst.asa_invincible:value() then
+					return
+				end
+				if self.inst.maxskill:value() == 2 then
+					Asa_Repelling(inst, attacker, damage)
+					damage = 0
+				end
+			end
+			--面甲、无人机减伤
+			local inv = self.inst.components.inventory
+			if inv then
+				if inv:GetEquippedItem(EQUIPSLOTS.HEAD) and inv:GetEquippedItem(EQUIPSLOTS.HEAD):HasTag("asa_vizard") then
+					damage = damage * 0.8
+				end
+				if self.inst:HasTag("asa_shielded") then
+					damage = damage * 0.4
+					if (inv:GetEquippedItem(EQUIPSLOTS.NECK) and inv:GetEquippedItem(EQUIPSLOTS.NECK):HasTag("asa_shield_drone"))
+							or (inv:GetEquippedItem(EQUIPSLOTS.BODY) and inv:GetEquippedItem(EQUIPSLOTS.BODY):HasTag("asa_shield_drone")) then
+						local drone = inv:GetEquippedItem(EQUIPSLOTS.NECK) or inv:GetEquippedItem(EQUIPSLOTS.BODY)
+						drone.components.fueled:DoDelta(- 1.5 * damage)
+						SpawnPrefab("asa_shield_fx"):SetInit(self.inst, attacker)
+						self.inst.SoundEmitter:PlaySound("asakiri_sfx/asakiri_sfx/equip2")
+					end
+				end
+			end
+		end
+        return oldGetAttacked(self, attacker, damage, weapon, stimuli, spdamage)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit('wilson',function(sg)
+	local old_broke = sg.events["toolbroke"].fn
+    sg.events["toolbroke"] = EventHandler("toolbroke", function(inst, data,...)
+		if data.tool:HasTag("asa_axe") then
+			return
+		end
+		return old_broke(inst, data,...)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:hauntable
+local gamemode = TheNet:GetServerGameMode()
+AddComponentPostInit("hauntable",function(self)
+	local old_DoHaunt = self.DoHaunt
+	function self:DoHaunt(doer,...)
+		if doer and doer.prefab == "asakiri" then
+			if self.onhaunt ~= nil then
+				self.haunted = self.onhaunt(self.inst, doer)
+				if self.haunted then
+				if doer ~= nil then
+						if GetPortalRez(gamemode) and self.hauntvalue == TUNING.HAUNT_INSTANT_REZ and doer:HasTag("playerghost") then 
+							doer:PushEvent("respawnfromghost", { source = self.inst })
+						end
+						if self.inst.prefab == "asa_shop" and doer:HasTag("playerghost") then
+							doer:PushEvent("respawnfromghost", { source = self.inst })
+						end
+					end
+					if self.cooldown_on_successful_haunt then
+						self.cooldowntimer = self.cooldown or TUNING.HAUNT_COOLDOWN_MEDIUM
+						self:StartFX(true)
+						self:StartShaderFx()
+						self.inst:StartUpdatingComponent(self)
+					end
+				else
+					self.haunted = true
+					self.cooldowntimer = self.cooldown or TUNING.HAUNT_COOLDOWN_SMALL
+					self:StartFX(true)
+					self:StartShaderFx()
+					self.inst:StartUpdatingComponent(self)
+				end
+			end
+		else
+			old_DoHaunt(self,doer,...)
+		end
+	end
+
+end)
+
+```
+

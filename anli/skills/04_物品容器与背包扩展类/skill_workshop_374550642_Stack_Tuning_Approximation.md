@@ -633,3 +633,65 @@ end)
 
 ```
 
+
+
+### 变体演进：Backpack Amulet Drop (Mod 2844520721)
+- **变体场景与切面**：收录来自工坊 Mod 2844520721 (`Backpack Amulet Drop`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2844520721)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:amulet
+
+AddPrefabPostInit("amulet", newtag)
+AddPrefabPostInit("backpack", onhauntfn)
+AddPrefabPostInit("krampus_sack", onhauntfn)
+AddPrefabPostInit("piggyback", onhauntfn)
+AddPrefabPostInit("treasurechest", onhauntfn)
+AddPrefabPostInit("dragonflychest", onhauntfn)
+AddPrefabPostInit("hutch", onhauntfn)
+AddPrefabPostInit("chester", onhauntfn)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:backpack
+AddPrefabPostInit("amulet", newtag)
+AddPrefabPostInit("backpack", onhauntfn)
+AddPrefabPostInit("krampus_sack", onhauntfn)
+AddPrefabPostInit("piggyback", onhauntfn)
+AddPrefabPostInit("treasurechest", onhauntfn)
+AddPrefabPostInit("dragonflychest", onhauntfn)
+AddPrefabPostInit("hutch", onhauntfn)
+AddPrefabPostInit("chester", onhauntfn)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+AddPrefabPostInit("backpack", onhauntfn)
+AddPrefabPostInit("krampus_sack", onhauntfn)
+AddPrefabPostInit("piggyback", onhauntfn)
+AddPrefabPostInit("treasurechest", onhauntfn)
+AddPrefabPostInit("dragonflychest", onhauntfn)
+AddPrefabPostInit("hutch", onhauntfn)
+AddPrefabPostInit("chester", onhauntfn)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:piggyback
+AddPrefabPostInit("krampus_sack", onhauntfn)
+AddPrefabPostInit("piggyback", onhauntfn)
+AddPrefabPostInit("treasurechest", onhauntfn)
+AddPrefabPostInit("dragonflychest", onhauntfn)
+AddPrefabPostInit("hutch", onhauntfn)
+AddPrefabPostInit("chester", onhauntfn)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:treasurechest
+AddPrefabPostInit("piggyback", onhauntfn)
+AddPrefabPostInit("treasurechest", onhauntfn)
+AddPrefabPostInit("dragonflychest", onhauntfn)
+AddPrefabPostInit("hutch", onhauntfn)
+AddPrefabPostInit("chester", onhauntfn)
+
+```
+

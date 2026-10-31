@@ -4822,3 +4822,26 @@
 [2026-11-01 06:14:57] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 06:14:57] Reducer: 成功将 Mod 3816773664 (Mod 3816773664) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 06:14:57] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 06:15:04] Git 自动提交并推送成功！
+[2026-11-01 06:15:04] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 06:15:04] 【批次结算】：本批归约出 2 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 06:15:34] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3460341711', '2859033292', '3699691567', '2601796546', '3393090979', '2844520721']
+[2026-11-01 06:15:34] SteamCMD 下载 3460341711 ...
+[2026-11-01 06:15:34] SteamCMD 下载 2859033292 ...
+[2026-11-01 06:15:34] SteamCMD 下载 3699691567 ...
+[2026-11-01 06:15:34] SteamCMD 下载 2601796546 ...
+[2026-11-01 06:15:34] SteamCMD 下载 3393090979 ...
+[2026-11-01 06:15:34] SteamCMD 下载 2844520721 ...
+[2026-11-01 06:15:50] Worker [3460341711] 过滤拦截: 花花世界-排位系统 (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 06:16:42] Worker [2859033292] 过滤拦截: CULT OF THE LAMB Music Pack (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 06:18:05] Worker [3699691567] 成功解析入库暂存区 -> 骑牛状态显示 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 06:19:19] Worker [2601796546] 成功解析入库暂存区 -> Title (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 06:20:12] Worker [3393090979] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 06:20:55] Worker [2844520721] 成功解析入库暂存区 -> Backpack Amulet Drop (类别: 04_物品容器与背包扩展类)
+[2026-11-01 06:20:55] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 06:20:56] Reducer: 成功将 Mod 2601796546 (Title) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 06:20:56] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 06:20:56] Reducer: 成功将 Mod 2844520721 (Backpack Amulet Drop) 增量归约合入既有权威母本 -> anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md
+[2026-11-01 06:20:56] Reducer: 完成母本归约并清理草稿 -> anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md
+[2026-11-01 06:20:56] Reducer: 成功将 Mod 3699691567 (骑牛状态显示) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 06:20:56] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
