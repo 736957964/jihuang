@@ -97,3 +97,42 @@ return ResponsiveContainer
    - 如果用户在悬停该 UI 的瞬间按下了 ESC 键切出菜单，或者切回桌面，可能会跳过 `OnLoseFocus`。建议在控件的 `Kill` 和 `Hide` 方法中，同样加入对 `TheCamera:SetControllable(true)` 的安全恢复调用，防止玩家摄像机被永久锁死。
 2. **`controls.OnUpdate` 增量轻量比较**：
    - 监听窗口分辨率变化时，切忌每帧去调用复杂的布局计算。只在 `w ~= last_w or h ~= last_h` 时才触发一次 `Reposition`。
+
+
+## 五、进阶拓扑演进与变体分支
+
+### 变体演进：Mod 2880540712 (Mod 2880540712)
+- **变体场景与切面**：收录来自工坊 Mod 2880540712 (`Mod 2880540712`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2880540712)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+AddComponentPostInit("inventory", function(self,inst)
+    local original_Equip = self.Equip
+    self.Equip = function(self, item, old_to_active, no_animation)
+        local eslot = item.components.equippable.equipslot
+        if item ~= nil and
+            self.equipslots[eslot] ~= nil and
+            item.components.inventoryitem.owner ~= nil then --可执行
+            if item.components.inventoryitem.owner.components.container ~= nil then --存放在背包/其他容器内
+                self.equipslots[eslot].prevcontainer = item.components.inventoryitem.owner.components.container
+                if item.components.inventoryitem.owner.components.inventoryitem ~= nil then --背包
+                    self.equipslots[eslot].prevslot = item.components.inventoryitem.owner.components.container:GetItemSlot(item)
+                else --其他
+                    self.equipslots[eslot].prevslot = item.components.inventoryitem.owner.components.container:GetItemSlot(item)
+                end
+            else --存放在物品栏中
+                self.equipslots[eslot].prevcontainer = item.prevcontainer
+                self.equipslots[eslot].prevslot = self:GetItemSlot(item)
+            end
+        end
+        return original_Equip(self, item, old_to_active, no_animation)
+    end
+end)
+
+```
+

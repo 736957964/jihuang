@@ -3621,8 +3621,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 03:41:14",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2880540712",
+      "name": "Mod 2880540712",
+      "author": "ξ",
+      "version": "3.0",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 03:42:15",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "2954835265",
+      "name": "熔炉武器汉化版",
+      "author": "Aire_Ayquaza",
+      "version": "1.1.12.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:42:15",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2993464051",
+      "name": "海钓随机物品RR",
+      "author": "月",
+      "version": "1.5.33",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:42:15",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:41:14"
+  "lastUpdated": "2026-11-01 03:42:15"
 }
