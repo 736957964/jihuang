@@ -4530,8 +4530,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 05:31:30",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3425984772",
+      "name": "左轮手枪(死亡舞步)",
+      "author": "qhc",
+      "version": "1.0.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:32:59",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3762229232",
+      "name": "血狩灵枪",
+      "author": "y_ron & Codex",
+      "version": "2.4.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:33:00",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:31:30"
+  "lastUpdated": "2026-11-01 05:33:00"
 }

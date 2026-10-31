@@ -10880,3 +10880,135 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：左轮手枪(死亡舞步) (Mod 3425984772)
+- **变体场景与切面**：收录来自工坊 Mod 3425984772 (`左轮手枪(死亡舞步)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3425984772)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+function dst_lan:_hookCombat()
+    AddComponentPostInit("combat", function(self)
+        self.dstlan_atkperiodmodifiers = SourceModifierList(self.inst)
+        self.dstlan_orig_min_attack_period = self.min_attack_period
+        local p = rawget(self, "_")["min_attack_period"]
+        local old_on_map = p[2]
+        p[2] = function(self, map)
+            if old_on_map ~= nil then
+                old_on_map(self, map)
+            end
+            if self.inst.replica.combat and self.inst.replica.combat.dstlan_atkperiodmult then
+                self.inst.replica.combat.dstlan_atkperiodmult:set(self.dstlan_atkperiodmodifiers:Get())
+            end
+        end
+
+        function self:SetAttackPeriod(val)
+            self.dstlan_orig_min_attack_period = val
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:SetAtkPeriodModifier(source, mult, key)
+            self.dstlan_atkperiodmodifiers:SetModifier(source, mult, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:RemoveAtkPeriodModifier(source, key)
+            self.dstlan_atkperiodmodifiers:RemoveModifier(source, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+function dst_lan:_hookSG()
+    AddStategraphPostInit("wilson", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local combat = inst.components.combat
+            local timeout = (math.floor(13/(combat.dstlan_atkperiodmodifiers:Get())))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(combat.dstlan_atkperiodmodifiers:Get())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+function dst_lan:_hookSGClient()
+    AddStategraphPostInit("wilson_client", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local timeout = (math.floor(13/inst.replica.combat.dstlan_atkperiodmult:value()))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(inst.replica.combat.dstlan_atkperiodmult:value())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformPreviewBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+
+AddComponentPostInit("health",
+---comment
+---@param self component_health
+function(self)
+    local old_SetVal = self.SetVal
+    function self:SetVal(val,cause,afflicter,...)
+        local res = {old_SetVal(self,val,cause,afflicter,...)}
+
+        local victim = self.inst
+        -- 当死亡
+        if self:IsDead() then
+            local wp = afflicter and afflicter.last_atk_weapon
+            -- 是收集者击杀
+            if wp and wp.prefab and wp.prefab == 'qhc_revolver_pistol' then
+                -- 筛选
+                if not victim:HasTag('wall') and not victim:HasTag('structure') then
+                    if afflicter and S_QHC_REVOLVER:checkAlive(afflicter) and afflicter.components.sanity then
+                        afflicter.components.sanity:DoDelta(db.kill_regen_san)
+                    end
+                end
+            end
+        end
+
+        return unpack(res)
+    end
+end)
+
+```
+
