@@ -35,13 +35,16 @@
     * [大容量地窖矩阵网格与持久化 (382177939)](anli/skills/04_物品容器与背包扩展类/skill_workshop_382177939_Large_Container_Grid_Matrix.md)
   * 05 战斗 AI 行为树与 Boss 机制类
     * [Boss 状态机与仇恨追击算法](anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md)
+    * [附魔拓展补丁](anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_3605108247_3605108247.md)
     * [高性能波次生成器与 GC 防御](anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_high_perf_wave_spawner_and_gc.md)
   * 06 世界生成与生态系统类
     * [上值劫持与海洋距离判定 (1467214795)](anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md)
+    * [Nat](anli/skills/06_世界生成与生态系统类/skill_workshop_3661375684_nat.md)
     * [Backrooms alpha-v-0.](anli/skills/06_世界生成与生态系统类/skill_workshop_3786215888_backrooms_alpha_v_0_1.md)
     * [共享位置](anli/skills/06_世界生成与生态系统类/skill_workshop_3789721701_3789721701.md)
   * 07 实体机制与游戏平衡类
     * [聊天指令拦截与生命周期重置 (母本)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_player_lifecycle_and_command_restart.md)
+    * [自定义沃拓克斯 / Customize ](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3627955500_customize_wortox.md)
     * [HOWLS唱片](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3716634921_howls.md)
     * [大霜鲨更多交易次数](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3771598087_3771598087.md)
     * [Mod 3808236333](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3808236333_mod_3808236333.md)

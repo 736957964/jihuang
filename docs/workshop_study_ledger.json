@@ -3207,8 +3207,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-10-31 19:35:39",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3705975335_3705975335.md"
+    },
+    {
+      "id": "3605108247",
+      "name": "附魔拓展补丁",
+      "author": "小疯兔",
+      "version": "0.39",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-10-31 19:37:08",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_3605108247_3605108247.md"
+    },
+    {
+      "id": "3627955500",
+      "name": "自定义沃拓克斯 / Customize Wortox",
+      "author": "Pantes_Same",
+      "version": "2.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:37:08",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3627955500_customize_wortox.md"
+    },
+    {
+      "id": "3661375684",
+      "name": "Nat",
+      "author": "KoreanWaffles",
+      "version": "1.2.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-10-31 19:37:08",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_3661375684_nat.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:35:39"
+  "lastUpdated": "2026-10-31 19:37:08"
 }
