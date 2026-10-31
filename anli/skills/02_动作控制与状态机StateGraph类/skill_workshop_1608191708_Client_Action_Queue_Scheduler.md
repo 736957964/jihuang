@@ -21340,3 +21340,540 @@ if not GLOBAL.TheNet:GetIsClient() then
 
 ```
 
+
+
+### 变体演进：Black Rock Shooter (Mod 3188205406)
+- **变体场景与切面**：收录来自工坊 Mod 3188205406 (`Black Rock Shooter`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3188205406)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:brs
+-- Stuff for BRS
+AddPrefabPostInit("brs", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then 
+	return 
+	end
+	-- Critical hit chance with custom weapons
+	if inst.components.combat ~= nil then
+		local critchance = .30
+		local clawcrit = .30
+	
+		local oldCalcDamage = inst.components.combat.CalcDamage
+		inst.components.combat.CalcDamage = function(self, target, weapon, multiplier)
+			if not weapon and weapon == nil then
+				return oldCalcDamage(self, target, nil, multiplier)
+			end
+			local x, y, z = target.Transform:GetWorldPosition()
+			multiplier = multiplier or self.damagemultiplier or 1
+		
+			if (weapon.prefab == "bladeclaw" or weapon.prefab == "blackblade") and target ~= nil and not (target:HasTag("wall") or target:HasTag("structure")) then
+				local fx = SpawnPrefab("slash_impact")
+				fx.Transform:SetPosition(x, y, z)
+				if (weapon.prefab == "bladeclaw" and math.random() <= clawcrit) or (weapon.prefab == "blackblade" and math.random() <= critchance) then
+					if enable_sounds then
+						if target.SoundEmitter ~= nil then target.SoundEmitter:PlaySound("brs/brs/critical", nil, .75) end
+						fx = SpawnPrefab("critical_impact")
+						fx.Transform:SetPosition(x, y+2, z)
+					end
+					multiplier = multiplier*2
+				end
+			end
+			return oldCalcDamage(self, target, weapon, multiplier)
+		end
+	end
+
+	-- Gain or lose sanity from killing things
+	local function onkilledother(inst, data)
+	local victim = data.victim
+	local x, y, z = victim.Transform:GetWorldPosition() 
+	
+	if victim.components.lootdropper then
+		if math.random() <= kpchance then
+            victim.components.lootdropper:SpawnLootPrefab("energy_particle")
+		end
+		if victim:HasTag("epic") and not victim:HasTag("smallepic") then
+		    victim.components.lootdropper:AddChanceLoot("giantsoul", souldrop)
+		end
+    end
+		
+	if inst.strength == "normal" then
+		if not victim:HasTag("epic") then
+				if victim:HasTag("shadow") then
+                    inst.components.sanity:DoDelta(15)
+                elseif not victim:HasTag("hostile") then
+                    inst.components.sanity:DoDelta(-5)
+                else
+                    inst.components.sanity:DoDelta(5)
+	            end
+		elseif victim:HasTag("epic") then
+		        inst.components.sanity:DoDelta(100)
+		end
+    end
+	
+	if inst.strength == "insane" then
+		if not victim:HasTag("epic") then
+				if victim:HasTag("shadow") then
+                    inst.components.sanity:DoDelta(15)
+                elseif not victim:HasTag("hostile") then
+                    inst.components.health:DoDelta(1)
+                else
+                    inst.components.health:DoDelta(5)
+	            end
+		elseif victim:HasTag("epic") then
+		        inst.components.health:DoDelta(20)
+		        inst.components.sanity:DoDelta(50)
+		end
+	end
+	
+	end
+	-- Gain particles from working
+	local function onworked(inst, data)
+		local x, y, z = inst.Transform:GetWorldPosition() 
+		if math.random() <= wpchance then
+			SpawnPrefab("energy_particle").Transform:SetPosition(x+math.random(),y+math.random(),z+math.random())
+		end
+	end
+	
+	inst:ListenForEvent("finishedwork", onworked)
+	inst:ListenForEvent("killed", onkilledother)
+end)
+
+--freezable
+AddComponentPostInit("freezable", function(self)
+    local OldAddColdness = self.AddColdness
+	self.AddColdness = function(s,...)
+		if self.inst and s.inst:HasTag("brs") and s.inst:HasTag("insane") then
+			return false
+		end
+		return OldAddColdness(s,...)
+	end
+    local OldFreeze = self.Freeze
+    self.Freeze = function(self, freezetime, ...)
+        if self.inst and self.inst:HasTag("brs") and self.inst:HasTag("insane") then
+            return
+        end
+        return OldFreeze(self, freezetime, ...)
+    end
+end)
+
+--endure
+AddStategraphPostInit("wilson",function(sg)
+    if sg.events and sg.events.attacked then
+        local oldattackedfn = sg.events.attacked.fn
+        sg.events.attacked.fn = function(inst, data)
+            if inst and inst:HasTag("brs") and inst:HasTag("insane") then
+                return
+            elseif oldattackedfn then
+                return oldattackedfn(inst, data)
+            end
+        end
+    end
+end
+)
+
+--sleep
+AddComponentPostInit("grogginess", function(self)
+    for k, v in pairs({"AddGrogginess", "GoToSleep"}) do
+        local old = self[v]
+        self[v] = function(s, ...)
+            local inst = s.inst
+            if inst and inst:HasTag("brs") and inst:HasTag("insane") then
+                return
+            end
+            return old(s, ...)
+        end
+    end
+end)
+
+AddStategraphPostInit("wilson", function(sg)
+    if sg.events and sg.events['yawn'] then
+        local old = sg.events['yawn'].fn
+        sg.events['yawn'].fn = function(inst, ...)
+            if inst and inst:HasTag("brs") and inst:HasTag("insane") then
+                return true
+            end
+            return old(inst, ...)
+        end
+    end
+end)
+
+
+-- Only BRS can equip her equippables (Weapon Lock)
+local function BRS_Equippable(inst)
+	if GLOBAL.TheWorld and not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	if inst and inst.components.equippable then
+		if is_weapon_locked then
+			inst.components.equippable.restrictedtag = "brs"
+		else
+			inst.components.equippable.restrictedtag = nil
+		end
+	end
+end
+
+AddPrefabPostInit("bladeclaw", BRS_Equippable)
+AddPrefabPostInit("rockcannon", BRS_Equippable)
+AddPrefabPostInit("blackblade", BRS_Equippable)
+AddPrefabPostInit("cannonlance", BRS_Equippable)
+
+
+-- The character select screen lines
+STRINGS.CHARACTER_TITLES.brs = "Black Rock Shooter"
+STRINGS.CHARACTER_NAMES.brs = "Black Rock Shooter"
+STRINGS.CHARACTER_DESCRIPTIONS.brs = "*Feels lonely at night\n*Easily goes insane\n*Brings her own arsenal"
+STRINGS.CHARACTER_QUOTES.brs = "\"Tiny bird and the colors...\""
+
+-- Custom speech strings
+STRINGS.CHARACTERS.BRS = require "speech_brs"
+
+-- The character's name as appears in-game 
+STRINGS.NAMES.BRS = "Black Rock Shooter"
+
+-- The default responses of examining the character
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.BRS = 
+{
+	GENERIC = "It's Black Rock Shooter!",
+	ATTACKER = "That Black Rock Shooter looks shifty...",
+	MURDERER = "Murderer!",
+	REVIVER = "Black Rock Shooter, friend of ghosts.",
+	GHOST = "Black Rock Shooter could use a heart.",
+}
+
+AddMinimapAtlas("images/map_icons/brs.xml")
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("brs", "FEMALE")
+
+local cb_offset_def = -57
+local cb_scale_def = .28
+GLOBAL.CHARACTER_BUTTON_OFFSET.brs = cb_offset_def + 15
+GLOBAL.CHARACTER_BUTTON_SCALE.brs = cb_scale_def -.04
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:freezable
+--freezable
+AddComponentPostInit("freezable", function(self)
+    local OldAddColdness = self.AddColdness
+	self.AddColdness = function(s,...)
+		if self.inst and s.inst:HasTag("brs") and s.inst:HasTag("insane") then
+			return false
+		end
+		return OldAddColdness(s,...)
+	end
+    local OldFreeze = self.Freeze
+    self.Freeze = function(self, freezetime, ...)
+        if self.inst and self.inst:HasTag("brs") and self.inst:HasTag("insane") then
+            return
+        end
+        return OldFreeze(self, freezetime, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+--endure
+AddStategraphPostInit("wilson",function(sg)
+    if sg.events and sg.events.attacked then
+        local oldattackedfn = sg.events.attacked.fn
+        sg.events.attacked.fn = function(inst, data)
+            if inst and inst:HasTag("brs") and inst:HasTag("insane") then
+                return
+            elseif oldattackedfn then
+                return oldattackedfn(inst, data)
+            end
+        end
+    end
+end
+)
+
+--sleep
+AddComponentPostInit("grogginess", function(self)
+    for k, v in pairs({"AddGrogginess", "GoToSleep"}) do
+        local old = self[v]
+        self[v] = function(s, ...)
+            local inst = s.inst
+            if inst and inst:HasTag("brs") and inst:HasTag("insane") then
+                return
+            end
+            return old(s, ...)
+        end
+    end
+end)
+
+AddStategraphPostInit("wilson", function(sg)
+    if sg.events and sg.events['yawn'] then
+        local old = sg.events['yawn'].fn
+        sg.events['yawn'].fn = function(inst, ...)
+            if inst and inst:HasTag("brs") and inst:HasTag("insane") then
+                return true
+            end
+            return old(inst, ...)
+        end
+    end
+end)
+
+
+-- Only BRS can equip her equippables (Weapon Lock)
+local function BRS_Equippable(inst)
+	if GLOBAL.TheWorld and not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	if inst and inst.components.equippable then
+		if is_weapon_locked then
+			inst.components.equippable.restrictedtag = "brs"
+		else
+			inst.components.equippable.restrictedtag = nil
+		end
+	end
+end
+
+AddPrefabPostInit("bladeclaw", BRS_Equippable)
+AddPrefabPostInit("rockcannon", BRS_Equippable)
+AddPrefabPostInit("blackblade", BRS_Equippable)
+AddPrefabPostInit("cannonlance", BRS_Equippable)
+
+
+-- The character select screen lines
+STRINGS.CHARACTER_TITLES.brs = "Black Rock Shooter"
+STRINGS.CHARACTER_NAMES.brs = "Black Rock Shooter"
+STRINGS.CHARACTER_DESCRIPTIONS.brs = "*Feels lonely at night\n*Easily goes insane\n*Brings her own arsenal"
+STRINGS.CHARACTER_QUOTES.brs = "\"Tiny bird and the colors...\""
+
+-- Custom speech strings
+STRINGS.CHARACTERS.BRS = require "speech_brs"
+
+-- The character's name as appears in-game 
+STRINGS.NAMES.BRS = "Black Rock Shooter"
+
+-- The default responses of examining the character
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.BRS = 
+{
+	GENERIC = "It's Black Rock Shooter!",
+	ATTACKER = "That Black Rock Shooter looks shifty...",
+	MURDERER = "Murderer!",
+	REVIVER = "Black Rock Shooter, friend of ghosts.",
+	GHOST = "Black Rock Shooter could use a heart.",
+}
+
+AddMinimapAtlas("images/map_icons/brs.xml")
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("brs", "FEMALE")
+
+local cb_offset_def = -57
+local cb_scale_def = .28
+GLOBAL.CHARACTER_BUTTON_OFFSET.brs = cb_offset_def + 15
+GLOBAL.CHARACTER_BUTTON_SCALE.brs = cb_scale_def -.04
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:grogginess
+--sleep
+AddComponentPostInit("grogginess", function(self)
+    for k, v in pairs({"AddGrogginess", "GoToSleep"}) do
+        local old = self[v]
+        self[v] = function(s, ...)
+            local inst = s.inst
+            if inst and inst:HasTag("brs") and inst:HasTag("insane") then
+                return
+            end
+            return old(s, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bladeclaw
+
+AddPrefabPostInit("bladeclaw", BRS_Equippable)
+AddPrefabPostInit("rockcannon", BRS_Equippable)
+AddPrefabPostInit("blackblade", BRS_Equippable)
+AddPrefabPostInit("cannonlance", BRS_Equippable)
+
+
+-- The character select screen lines
+STRINGS.CHARACTER_TITLES.brs = "Black Rock Shooter"
+STRINGS.CHARACTER_NAMES.brs = "Black Rock Shooter"
+STRINGS.CHARACTER_DESCRIPTIONS.brs = "*Feels lonely at night\n*Easily goes insane\n*Brings her own arsenal"
+STRINGS.CHARACTER_QUOTES.brs = "\"Tiny bird and the colors...\""
+
+-- Custom speech strings
+STRINGS.CHARACTERS.BRS = require "speech_brs"
+
+-- The character's name as appears in-game 
+STRINGS.NAMES.BRS = "Black Rock Shooter"
+
+-- The default responses of examining the character
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.BRS = 
+{
+	GENERIC = "It's Black Rock Shooter!",
+	ATTACKER = "That Black Rock Shooter looks shifty...",
+	MURDERER = "Murderer!",
+	REVIVER = "Black Rock Shooter, friend of ghosts.",
+	GHOST = "Black Rock Shooter could use a heart.",
+}
+
+AddMinimapAtlas("images/map_icons/brs.xml")
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("brs", "FEMALE")
+
+local cb_offset_def = -57
+local cb_scale_def = .28
+GLOBAL.CHARACTER_BUTTON_OFFSET.brs = cb_offset_def + 15
+GLOBAL.CHARACTER_BUTTON_SCALE.brs = cb_scale_def -.04
+
+
+```
+
+
+
+### 变体演进：龙心 (Mod 3599053792)
+- **变体场景与切面**：收录来自工坊 Mod 3599053792 (`龙心`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3599053792)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skinner
+-- 人物皮肤的init_fn 和 clear_fn
+AddComponentPostInit("skinner", function(self)
+    local oldfn = self.SetSkinName
+    if oldfn then
+        function self.SetSkinName(s, skinname, ...)
+            local old = s.skin_name
+            local new = skinname
+            if characterskins[old] and characterskins[old].clear_fn then characterskins[old].clear_fn(s.inst, old) end
+            if characterskins[new] and characterskins[new].init_fn then characterskins[new].init_fn(s.inst, new) end
+            oldfn(s, skinname, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+function dst_lan:_hookCombat()
+    AddComponentPostInit("combat", function(self)
+        self.dstlan_atkperiodmodifiers = SourceModifierList(self.inst)
+        self.dstlan_orig_min_attack_period = self.min_attack_period
+        local p = rawget(self, "_")["min_attack_period"]
+        local old_on_map = p[2]
+        p[2] = function(self, map)
+            if old_on_map ~= nil then
+                old_on_map(self, map)
+            end
+            if self.inst.replica.combat and self.inst.replica.combat.dstlan_atkperiodmult then
+                self.inst.replica.combat.dstlan_atkperiodmult:set(self.dstlan_atkperiodmodifiers:Get())
+            end
+        end
+
+        function self:SetAttackPeriod(val)
+            self.dstlan_orig_min_attack_period = val
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:SetAtkPeriodModifier(source, mult, key)
+            self.dstlan_atkperiodmodifiers:SetModifier(source, mult, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:RemoveAtkPeriodModifier(source, key)
+            self.dstlan_atkperiodmodifiers:RemoveModifier(source, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+function dst_lan:_hookSG()
+    AddStategraphPostInit("wilson", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local combat = inst.components.combat
+            local timeout = (math.floor(13/(combat.dstlan_atkperiodmodifiers:Get())))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(combat.dstlan_atkperiodmodifiers:Get())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+function dst_lan:_hookSGClient()
+    AddStategraphPostInit("wilson_client", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local timeout = (math.floor(13/inst.replica.combat.dstlan_atkperiodmult:value()))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(inst.replica.combat.dstlan_atkperiodmult:value())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformPreviewBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cook_certificate
+    --------------------------------------------
+    AddPrefabPostInit('cook_certificate',function (inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        local old_HarvestFoodFn = inst.HarvestFoodFn
+        ---@diagnostic disable-next-line: inject-field
+        inst.HarvestFoodFn = function(inst,foodname,harvester,cookpotname,...)
+            local fuelnum = GetThisMODDishConsume(foodname)
+            if foodname and fuelnum > 0 and not table.contains(inst.foodlist,foodname) then
+                --消耗耐久
+                if inst.components.finiteuses then
+                    inst.components.finiteuses:Use(fuelnum)
+                    inst.foodlist[#inst.foodlist+1]=foodname
+                    setFoodList(inst,harvester)--同步料理列表
+                    if not RewardToiler(harvester,0.1) then--天道酬勤
+                        SpawnMedalTips(harvester,fuelnum,10)--弹幕提示
+                    end
+                end
+            end
+            return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
+        end
+    end)
+
+```
+

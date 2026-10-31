@@ -5439,8 +5439,35 @@
       "category": "06_世界生成与生态系统类",
       "studied_at": "2026-11-01 07:30:48",
       "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3188205406",
+      "name": "Black Rock Shooter",
+      "author": "Tirimiru",
+      "version": "3.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:35:04",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3517115798",
+      "name": "Laru",
+      "author": "Kabedoru",
+      "version": "2.0.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 07:35:04",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3599053792",
+      "name": "龙心",
+      "author": "作者",
+      "version": "1.0.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:35:05",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:30:48"
+  "lastUpdated": "2026-11-01 07:35:05"
 }
