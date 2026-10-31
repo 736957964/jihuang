@@ -5215,3 +5215,28 @@
 [2026-11-01 07:29:00] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 07:29:00] Reducer: 成功将 Mod 3768627730 (Popo) 增量归约合入既有权威母本 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
 [2026-11-01 07:29:00] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-01 07:29:03] Git 自动提交并推送成功！
+[2026-11-01 07:29:04] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 07:29:04] 【批次结算】：本批归约出 2 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 07:29:34] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['2421109049', '2904374520', '3787884168', '3760230465', '3753018527', '3672713533']
+[2026-11-01 07:29:34] SteamCMD 下载 2421109049 ...
+[2026-11-01 07:29:34] SteamCMD 下载 2904374520 ...
+[2026-11-01 07:29:34] SteamCMD 下载 3787884168 ...
+[2026-11-01 07:29:34] SteamCMD 下载 3753018527 ...
+[2026-11-01 07:29:34] SteamCMD 下载 3672713533 ...
+[2026-11-01 07:29:34] SteamCMD 下载 3760230465 ...
+[2026-11-01 07:29:43] Worker [2421109049] 成功解析入库暂存区 -> Language (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 07:29:54] Worker [2904374520] 成功解析入库暂存区 -> 卡尼猫（改） (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 07:30:03] Worker [3787884168] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 07:30:13] Worker [3753018527] 过滤拦截: ambient_light_smooth (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 07:30:22] Worker [3672713533] 成功解析入库暂存区 -> 时钟险境 (类别: 06_世界生成与生态系统类)
+[2026-11-01 07:30:48] Worker [3760230465] 成功解析入库暂存区 -> Fabin (类别: 06_世界生成与生态系统类)
+[2026-11-01 07:30:48] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 07:30:48] Reducer: 成功将 Mod 2421109049 (Language) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:30:48] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:30:48] Reducer: 成功将 Mod 2904374520 (卡尼猫（改）) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:30:48] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:30:48] Reducer: 成功将 Mod 3672713533 (时钟险境) 增量归约合入既有权威母本 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-01 07:30:48] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-01 07:30:48] Reducer: 成功将 Mod 3760230465 (Fabin) 增量归约合入既有权威母本 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-01 07:30:48] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md

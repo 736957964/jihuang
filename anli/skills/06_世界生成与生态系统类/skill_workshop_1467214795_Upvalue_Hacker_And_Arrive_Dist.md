@@ -1118,3 +1118,592 @@ end)
 
 ```
 
+
+
+### 变体演进：时钟险境 (Mod 3672713533)
+- **变体场景与切面**：收录来自工坊 Mod 3672713533 (`时钟险境`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3672713533)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest_network
+
+AddPrefabPostInit("forest_network", OnWorldNetworkPostInit)
+AddPrefabPostInit("cave_network", OnWorldNetworkPostInit)
+
+AddPrefabPostInit("world", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    local _orig_OnSave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        if _orig_OnSave then
+            _orig_OnSave(inst, data)
+        end
+        local save_data = Server.OnSave()
+        if save_data then
+            data.clock_peril = save_data
+        end
+    end
+
+    local _orig_OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data)
+        if _orig_OnLoad then
+            _orig_OnLoad(inst, data)
+        end
+        if data and data.clock_peril then
+            Server.OnLoad(data.clock_peril)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave_network
+AddPrefabPostInit("forest_network", OnWorldNetworkPostInit)
+AddPrefabPostInit("cave_network", OnWorldNetworkPostInit)
+
+AddPrefabPostInit("world", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    local _orig_OnSave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        if _orig_OnSave then
+            _orig_OnSave(inst, data)
+        end
+        local save_data = Server.OnSave()
+        if save_data then
+            data.clock_peril = save_data
+        end
+    end
+
+    local _orig_OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data)
+        if _orig_OnLoad then
+            _orig_OnLoad(inst, data)
+        end
+        if data and data.clock_peril then
+            Server.OnLoad(data.clock_peril)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    local _orig_OnSave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        if _orig_OnSave then
+            _orig_OnSave(inst, data)
+        end
+        local save_data = Server.OnSave()
+        if save_data then
+            data.clock_peril = save_data
+        end
+    end
+
+    local _orig_OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data)
+        if _orig_OnLoad then
+            _orig_OnLoad(inst, data)
+        end
+        if data and data.clock_peril then
+            Server.OnLoad(data.clock_peril)
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：Fabin (Mod 3760230465)
+- **变体场景与切面**：收录来自工坊 Mod 3760230465 (`Fabin`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3760230465)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:dynamicmusic
+	local TRIGGERED_DANGER_MUSIC
+	env.AddComponentPostInit("dynamicmusic", function(self) 
+		local inst, source, OnPlayerActivated = self.inst, "scripts/components/dynamicmusic.lua", nil
+		for i, func in ipairs(inst.event_listeners["playeractivated"][inst]) do
+			if _G.debug.getinfo(func, "S").source == source then
+				OnPlayerActivated = inst.event_listeners["playeractivated"][inst][i]
+				break
+			end
+		end
+		
+		local StartPlayerListeners 		= UpvalueHacker.GetUpvalue(OnPlayerActivated, "StartPlayerListeners")
+		local StartTriggeredDanger 		= UpvalueHacker.GetUpvalue(StartPlayerListeners, "StartTriggeredDanger")
+			  TRIGGERED_DANGER_MUSIC 	= UpvalueHacker.GetUpvalue(StartTriggeredDanger, "TRIGGERED_DANGER_MUSIC")
+		
+		if not (StartPlayerListeners and StartTriggeredDanger and TRIGGERED_DANGER_MUSIC) then return end
+		
+		----------------------------------------
+		
+		local shadowchess = 
+		{
+			"dontstarve/music/music_danger_ruins",						-- level 1 (Phase 1 Battle)
+			"shadowchess/music/music_epicfight_shadowchess_2_stinger", 	-- level 2 (Phase 1->2 Intermission)
+			"shadowchess/music/music_epicfight_shadowchess_2",			-- level 3 (Phase 2 Battle)
+			"shadowchess/music/music_epicfight_shadowchess_3_stinger",  -- level 4 (Phase 2->3 Intermission)
+			"shadowchess/music/music_epicfight_shadowchess_3",			-- level 5 (Phase 3 Battle)
+		}
+		
+		local twinsofterror = {
+			"dst_twins/music/music_main_tot"
+		}
+		
+		local moonmaw = {
+			"dst_moonmaw/music/music_epicfight_moonmaw"
+		}
+		--------------------
+		
+		TRIGGERED_DANGER_MUSIC.shadowchess = shadowchess
+		TRIGGERED_DANGER_MUSIC.twinsofterror = twinsofterror
+		TRIGGERED_DANGER_MUSIC.moonmaw = moonmaw
+		table.insert(TRIGGERED_DANGER_MUSIC.wagboss, "dstust/music/music_epicfight_alterguardian_lunarrift")
+		table.insert(TRIGGERED_DANGER_MUSIC.vault, "dstust/music/music_epicfight_pillarguard_intense")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadow_bishop
+
+	env.AddPrefabPostInit("shadow_bishop", ForceMusic)
+	env.AddPrefabPostInit("shadow_knight", ForceMusic)
+	env.AddPrefabPostInit("shadow_rook", ForceMusic)
+
+	--	[[			Twins Of Terror			]]
+
+	local function TwinsPushMusic(inst)
+		if _G.ThePlayer == nil or inst:HasTag("INLIMBO") then
+			inst._playingmusic = false
+		elseif _G.ThePlayer:IsNear(inst, inst._playingmusic and 60 or 20) then
+			inst._playingmusic = true
+			_G.ThePlayer:PushEvent("triggeredevent", { name = inst:HasTag("mech") and "twinsofterror" or "eyeofterror" })
+		elseif inst._playingmusic and not _G.ThePlayer:IsNear(inst, 64) then
+			inst._playingmusic = false
+		end
+	end
+
+	local function TwinsOnMusicDirty(inst)
+		if not _G.TheNet:IsDedicated() then
+			if inst._musictask ~= nil then
+				inst._musictask:Cancel()
+			end
+			inst._musictask = inst:DoPeriodicTask(1, TwinsPushMusic, 0.5)
+		end
+	end
+	
+	--	[[			Celestial Revenant			]]
+
+	local function RevenantPushMusic(inst)
+		if _G.ThePlayer == nil or inst:HasTag("nomusic") then
+			inst._playingmusic = false
+			return
+		end
+
+		if _G.ThePlayer:IsNear(inst, inst._playingmusic and 40 or 20) then
+			inst._playingmusic = true
+			local is_rift = inst.AnimState:GetBuild() == "alterguardian_phase1_lunarrift"
+			
+			local event = is_rift
+				and { name = "wagboss", level = 4 }
+				or  { name = "alterguardian_phase1", duration = 2 }
+				
+			_G.ThePlayer:PushEvent("triggeredevent", event)
+		elseif inst._playingmusic and not _G.ThePlayer:IsNear(inst, 50) then
+			inst._playingmusic = false
+		end
+	end
+	
+	--	[[			Pillar Guards			]]
+	-- this one's really simple, since its just a component i can hook into!
+	
+	env.AddComponentPostInit("vaultmusiclistener", function(self)
+		local OldOnUpdate = self.OnUpdate
+		self.OnUpdate = function(self, dt)
+			if dt < self.delay then
+				OldOnUpdate(self, dt)
+				return
+			end
+
+			local isaggro = false
+			if self.lastaggrotime then
+				if self.lastaggrotime + 1.5 > _G.GetTime() then
+					isaggro = true
+				else
+					self.lastaggrotime = nil
+				end
+			end
+
+			if isaggro then
+				local x, y, z = self.inst.Transform:GetWorldPosition()
+				
+				local guards = _G.TheSim:FindEntities(x, y, z, 80, { "vault_pillar_guard" }, { "INLIMBO" })
+				local guard_count = 0
+				for _, guard in ipairs(guards) do
+					if guard:IsValid() and not (guard.replica.health and guard.replica.health:IsDead()) then
+						guard_count = guard_count + 1
+					end
+				end
+
+				local SHADOW_MUSTHAVE_TAGS = { "shadowcreature", "monster", "hostile", "shadow" }
+				local monsters = _G.TheSim:FindEntities(x, y, z, 80, SHADOW_MUSTHAVE_TAGS, { "INLIMBO" })
+				local shadow_count = 0
+				for _, monster in ipairs(monsters) do
+					if monster:IsValid() and not (monster.replica.health and monster.replica.health:IsDead()) then
+						shadow_count = shadow_count + 1
+					end
+				end
+
+				if guard_count <= 2 or shadow_count >= 2 then
+					if self.level == 3 then
+						-- transition thru silence first??
+						self.level = 2
+						self.delay = 1
+					else
+						self.level = 4
+						self.delay = 1
+					end
+					self.inst:PushEvent("triggeredevent", { name = "vault", level = self.level })
+				else
+					OldOnUpdate(self, dt)
+				end
+			else
+				OldOnUpdate(self, dt)
+			end
+		end
+	end)
+
+	--	[[			Function Hacking			]]
+
+	env.AddPrefabPostInit("world", function(inst)
+		UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_bishop.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		-- UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_knight.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		-- UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_rook.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		
+		UpvalueHacker.SetUpvalue(_G.Prefabs.eyeofterror.fn, TwinsPushMusic, "common_fn", "OnMusicDirty", "PushMusic")
+		
+		UpvalueHacker.SetUpvalue(_G.Prefabs.alterguardian_phase1.fn, RevenantPushMusic, "commonfn", "OnMusicDirty", "PushMusic")
+	end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadow_knight
+	env.AddPrefabPostInit("shadow_bishop", ForceMusic)
+	env.AddPrefabPostInit("shadow_knight", ForceMusic)
+	env.AddPrefabPostInit("shadow_rook", ForceMusic)
+
+	--	[[			Twins Of Terror			]]
+
+	local function TwinsPushMusic(inst)
+		if _G.ThePlayer == nil or inst:HasTag("INLIMBO") then
+			inst._playingmusic = false
+		elseif _G.ThePlayer:IsNear(inst, inst._playingmusic and 60 or 20) then
+			inst._playingmusic = true
+			_G.ThePlayer:PushEvent("triggeredevent", { name = inst:HasTag("mech") and "twinsofterror" or "eyeofterror" })
+		elseif inst._playingmusic and not _G.ThePlayer:IsNear(inst, 64) then
+			inst._playingmusic = false
+		end
+	end
+
+	local function TwinsOnMusicDirty(inst)
+		if not _G.TheNet:IsDedicated() then
+			if inst._musictask ~= nil then
+				inst._musictask:Cancel()
+			end
+			inst._musictask = inst:DoPeriodicTask(1, TwinsPushMusic, 0.5)
+		end
+	end
+	
+	--	[[			Celestial Revenant			]]
+
+	local function RevenantPushMusic(inst)
+		if _G.ThePlayer == nil or inst:HasTag("nomusic") then
+			inst._playingmusic = false
+			return
+		end
+
+		if _G.ThePlayer:IsNear(inst, inst._playingmusic and 40 or 20) then
+			inst._playingmusic = true
+			local is_rift = inst.AnimState:GetBuild() == "alterguardian_phase1_lunarrift"
+			
+			local event = is_rift
+				and { name = "wagboss", level = 4 }
+				or  { name = "alterguardian_phase1", duration = 2 }
+				
+			_G.ThePlayer:PushEvent("triggeredevent", event)
+		elseif inst._playingmusic and not _G.ThePlayer:IsNear(inst, 50) then
+			inst._playingmusic = false
+		end
+	end
+	
+	--	[[			Pillar Guards			]]
+	-- this one's really simple, since its just a component i can hook into!
+	
+	env.AddComponentPostInit("vaultmusiclistener", function(self)
+		local OldOnUpdate = self.OnUpdate
+		self.OnUpdate = function(self, dt)
+			if dt < self.delay then
+				OldOnUpdate(self, dt)
+				return
+			end
+
+			local isaggro = false
+			if self.lastaggrotime then
+				if self.lastaggrotime + 1.5 > _G.GetTime() then
+					isaggro = true
+				else
+					self.lastaggrotime = nil
+				end
+			end
+
+			if isaggro then
+				local x, y, z = self.inst.Transform:GetWorldPosition()
+				
+				local guards = _G.TheSim:FindEntities(x, y, z, 80, { "vault_pillar_guard" }, { "INLIMBO" })
+				local guard_count = 0
+				for _, guard in ipairs(guards) do
+					if guard:IsValid() and not (guard.replica.health and guard.replica.health:IsDead()) then
+						guard_count = guard_count + 1
+					end
+				end
+
+				local SHADOW_MUSTHAVE_TAGS = { "shadowcreature", "monster", "hostile", "shadow" }
+				local monsters = _G.TheSim:FindEntities(x, y, z, 80, SHADOW_MUSTHAVE_TAGS, { "INLIMBO" })
+				local shadow_count = 0
+				for _, monster in ipairs(monsters) do
+					if monster:IsValid() and not (monster.replica.health and monster.replica.health:IsDead()) then
+						shadow_count = shadow_count + 1
+					end
+				end
+
+				if guard_count <= 2 or shadow_count >= 2 then
+					if self.level == 3 then
+						-- transition thru silence first??
+						self.level = 2
+						self.delay = 1
+					else
+						self.level = 4
+						self.delay = 1
+					end
+					self.inst:PushEvent("triggeredevent", { name = "vault", level = self.level })
+				else
+					OldOnUpdate(self, dt)
+				end
+			else
+				OldOnUpdate(self, dt)
+			end
+		end
+	end)
+
+	--	[[			Function Hacking			]]
+
+	env.AddPrefabPostInit("world", function(inst)
+		UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_bishop.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		-- UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_knight.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		-- UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_rook.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		
+		UpvalueHacker.SetUpvalue(_G.Prefabs.eyeofterror.fn, TwinsPushMusic, "common_fn", "OnMusicDirty", "PushMusic")
+		
+		UpvalueHacker.SetUpvalue(_G.Prefabs.alterguardian_phase1.fn, RevenantPushMusic, "commonfn", "OnMusicDirty", "PushMusic")
+	end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadow_rook
+	env.AddPrefabPostInit("shadow_knight", ForceMusic)
+	env.AddPrefabPostInit("shadow_rook", ForceMusic)
+
+	--	[[			Twins Of Terror			]]
+
+	local function TwinsPushMusic(inst)
+		if _G.ThePlayer == nil or inst:HasTag("INLIMBO") then
+			inst._playingmusic = false
+		elseif _G.ThePlayer:IsNear(inst, inst._playingmusic and 60 or 20) then
+			inst._playingmusic = true
+			_G.ThePlayer:PushEvent("triggeredevent", { name = inst:HasTag("mech") and "twinsofterror" or "eyeofterror" })
+		elseif inst._playingmusic and not _G.ThePlayer:IsNear(inst, 64) then
+			inst._playingmusic = false
+		end
+	end
+
+	local function TwinsOnMusicDirty(inst)
+		if not _G.TheNet:IsDedicated() then
+			if inst._musictask ~= nil then
+				inst._musictask:Cancel()
+			end
+			inst._musictask = inst:DoPeriodicTask(1, TwinsPushMusic, 0.5)
+		end
+	end
+	
+	--	[[			Celestial Revenant			]]
+
+	local function RevenantPushMusic(inst)
+		if _G.ThePlayer == nil or inst:HasTag("nomusic") then
+			inst._playingmusic = false
+			return
+		end
+
+		if _G.ThePlayer:IsNear(inst, inst._playingmusic and 40 or 20) then
+			inst._playingmusic = true
+			local is_rift = inst.AnimState:GetBuild() == "alterguardian_phase1_lunarrift"
+			
+			local event = is_rift
+				and { name = "wagboss", level = 4 }
+				or  { name = "alterguardian_phase1", duration = 2 }
+				
+			_G.ThePlayer:PushEvent("triggeredevent", event)
+		elseif inst._playingmusic and not _G.ThePlayer:IsNear(inst, 50) then
+			inst._playingmusic = false
+		end
+	end
+	
+	--	[[			Pillar Guards			]]
+	-- this one's really simple, since its just a component i can hook into!
+	
+	env.AddComponentPostInit("vaultmusiclistener", function(self)
+		local OldOnUpdate = self.OnUpdate
+		self.OnUpdate = function(self, dt)
+			if dt < self.delay then
+				OldOnUpdate(self, dt)
+				return
+			end
+
+			local isaggro = false
+			if self.lastaggrotime then
+				if self.lastaggrotime + 1.5 > _G.GetTime() then
+					isaggro = true
+				else
+					self.lastaggrotime = nil
+				end
+			end
+
+			if isaggro then
+				local x, y, z = self.inst.Transform:GetWorldPosition()
+				
+				local guards = _G.TheSim:FindEntities(x, y, z, 80, { "vault_pillar_guard" }, { "INLIMBO" })
+				local guard_count = 0
+				for _, guard in ipairs(guards) do
+					if guard:IsValid() and not (guard.replica.health and guard.replica.health:IsDead()) then
+						guard_count = guard_count + 1
+					end
+				end
+
+				local SHADOW_MUSTHAVE_TAGS = { "shadowcreature", "monster", "hostile", "shadow" }
+				local monsters = _G.TheSim:FindEntities(x, y, z, 80, SHADOW_MUSTHAVE_TAGS, { "INLIMBO" })
+				local shadow_count = 0
+				for _, monster in ipairs(monsters) do
+					if monster:IsValid() and not (monster.replica.health and monster.replica.health:IsDead()) then
+						shadow_count = shadow_count + 1
+					end
+				end
+
+				if guard_count <= 2 or shadow_count >= 2 then
+					if self.level == 3 then
+						-- transition thru silence first??
+						self.level = 2
+						self.delay = 1
+					else
+						self.level = 4
+						self.delay = 1
+					end
+					self.inst:PushEvent("triggeredevent", { name = "vault", level = self.level })
+				else
+					OldOnUpdate(self, dt)
+				end
+			else
+				OldOnUpdate(self, dt)
+			end
+		end
+	end)
+
+	--	[[			Function Hacking			]]
+
+	env.AddPrefabPostInit("world", function(inst)
+		UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_bishop.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		-- UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_knight.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		-- UpvalueHacker.SetUpvalue(_G.Prefabs.shadow_rook.fn, OnMusicDirty, "commonfn", "OnMusicDirty")
+		
+		UpvalueHacker.SetUpvalue(_G.Prefabs.eyeofterror.fn, TwinsPushMusic, "common_fn", "OnMusicDirty", "PushMusic")
+		
+		UpvalueHacker.SetUpvalue(_G.Prefabs.alterguardian_phase1.fn, RevenantPushMusic, "commonfn", "OnMusicDirty", "PushMusic")
+	end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:vaultmusiclistener
+	
+	env.AddComponentPostInit("vaultmusiclistener", function(self)
+		local OldOnUpdate = self.OnUpdate
+		self.OnUpdate = function(self, dt)
+			if dt < self.delay then
+				OldOnUpdate(self, dt)
+				return
+			end
+
+			local isaggro = false
+			if self.lastaggrotime then
+				if self.lastaggrotime + 1.5 > _G.GetTime() then
+					isaggro = true
+				else
+					self.lastaggrotime = nil
+				end
+			end
+
+			if isaggro then
+				local x, y, z = self.inst.Transform:GetWorldPosition()
+				
+				local guards = _G.TheSim:FindEntities(x, y, z, 80, { "vault_pillar_guard" }, { "INLIMBO" })
+				local guard_count = 0
+				for _, guard in ipairs(guards) do
+					if guard:IsValid() and not (guard.replica.health and guard.replica.health:IsDead()) then
+						guard_count = guard_count + 1
+					end
+				end
+
+				local SHADOW_MUSTHAVE_TAGS = { "shadowcreature", "monster", "hostile", "shadow" }
+				local monsters = _G.TheSim:FindEntities(x, y, z, 80, SHADOW_MUSTHAVE_TAGS, { "INLIMBO" })
+				local shadow_count = 0
+				for _, monster in ipairs(monsters) do
+					if monster:IsValid() and not (monster.replica.health and monster.replica.health:IsDead()) then
+						shadow_count = shadow_count + 1
+					end
+				end
+
+				if guard_count <= 2 or shadow_count >= 2 then
+					if self.level == 3 then
+						-- transition thru silence first??
+						self.level = 2
+						self.delay = 1
+					else
+						self.level = 4
+						self.delay = 1
+					end
+					self.inst:PushEvent("triggeredevent", { name = "vault", level = self.level })
+				else
+					OldOnUpdate(self, dt)
+				end
+			else
+				OldOnUpdate(self, dt)
+			end
+		end
+	end)
+
+```
+
