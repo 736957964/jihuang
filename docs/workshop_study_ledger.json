@@ -3549,8 +3549,26 @@
       "category": "05_战斗AI行为树与Boss机制类",
       "studied_at": "2026-11-01 03:37:58",
       "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "3702321518",
+      "name": "欧皇模拟器 随机海钓 综合补丁",
+      "author": "我好慌",
+      "version": "1.17",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 03:38:58",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3717445564",
+      "name": "字如其名的野餐篮",
+      "author": "银九~",
+      "version": "3.04",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:38:58",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:37:58"
+  "lastUpdated": "2026-11-01 03:38:58"
 }

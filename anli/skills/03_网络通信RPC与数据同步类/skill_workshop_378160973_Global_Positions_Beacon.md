@@ -1695,3 +1695,103 @@ AddPlayerPostInit(function(inst)
 
 ```
 
+
+
+### 变体演进：欧皇模拟器 随机海钓 综合补丁 (Mod 3702321518)
+- **变体场景与切面**：收录来自工坊 Mod 3702321518 (`欧皇模拟器 随机海钓 综合补丁`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3702321518)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+-- 注入金币爆率倍率逻辑
+AddPrefabPostInit("world", function(inst)
+    inst:DoTaskInTime(0, function()
+        if dh_coins_explosion_rate_mult ~= 1.0 then
+            if GLOBAL.TUNING.SLOTMACHINE_MODCONFIGDATA and GLOBAL.TUNING.SLOTMACHINE_MODCONFIGDATA["CoinsExplosionRate"] then
+                GLOBAL.TUNING.SLOTMACHINE_MODCONFIGDATA["CoinsExplosionRate"] = GLOBAL.TUNING.SLOTMACHINE_MODCONFIGDATA["CoinsExplosionRate"] * dh_coins_explosion_rate_mult
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:lootdropper
+if kill_to_deposit_enabled then
+    AddComponentPostInit("lootdropper", function(self)
+        -- 用于缓存同一帧内拦截到的金币总数
+        self._intercepted_count = 0
+        self._deposit_batch_task = nil
+        
+        -- 先定义变量名，确保闭包可以引用到
+        local old_FlingItem = nil
+
+        local function queue_intercept(amount)
+            self._intercepted_count = self._intercepted_count + amount
+            if not self._deposit_batch_task then
+                -- 必须在当前帧获取参与者，因为下一帧生物实体可能就被移除了
+                local participants = GetCombatParticipants(self.inst)
+                local victim_pos = self.inst:GetPosition()
+
+                -- 使用 TheWorld 发起任务，确保即使生物实体消失也能完成结算
+                self._deposit_batch_task = GLOBAL.TheWorld:DoTaskInTime(0, function()
+                    if self._intercepted_count > 0 then
+                        local has_rewarded = false
+                        if #participants > 0 then
+                            for _, player in ipairs(participants) do
+                                if player:IsValid() and player.components.moneymanager then
+                                    player.components.moneymanager:AddFunds("击杀掉落", self._intercepted_count)
+                                    has_rewarded = true
+                                end
+                            end
+                        end
+
+                        -- 如果没人领（参与者都不在线或无效），则回退到原地掉落实体金币
+                        if not has_rewarded then
+                            for i = 1, self._intercepted_count do
+                                local loot = GLOBAL.SpawnPrefab("dubloon")
+                                if loot then
+                                    -- 这里引用闭包内的 old_FlingItem
+                                    if old_FlingItem then
+                                        old_FlingItem(self, loot, victim_pos)
+                                    else
+                                        self.inst:DoTaskInTime(0, function() loot:Remove() end) -- 彻底兜底
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    self._intercepted_count = 0
+                    self._deposit_batch_task = nil
+                end)
+            end
+        end
+
+        -- 拦截 FlingItem (处理某些 BOSS 直接使用 SpawnPrefab + FlingItem 抛出金币的情况)
+        old_FlingItem = self.FlingItem
+        self.FlingItem = function(self, loot, pt, dropper)
+            if loot and loot.prefab == "dubloon" then
+                local stacksize = (loot.components.stackable and loot.components.stackable:StackSize()) or 1
+                queue_intercept(stacksize)
+                loot:Remove() -- 直接移除实体，杜绝渲染和物理计算产生的卡顿
+                return
+            end
+            return old_FlingItem(self, loot, pt, dropper)
+        end
+
+        -- 拦截 SpawnLootPrefab (处理大多数基于 LootTable 的常规掉落)
+        local old_SpawnLootPrefab = self.SpawnLootPrefab
+        self.SpawnLootPrefab = function(self, loot, pt)
+            if loot == "dubloon" then
+                queue_intercept(1)
+                return nil -- 返回 nil 表示不生成 Prefab，从源头上删去产出过程
+            end
+            return old_SpawnLootPrefab(self, loot, pt)
+        end
+    end)
+
+```
+

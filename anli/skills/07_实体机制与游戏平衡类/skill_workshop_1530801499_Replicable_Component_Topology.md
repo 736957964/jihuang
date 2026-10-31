@@ -1456,3 +1456,102 @@ end)
 
 ```
 
+
+
+### 变体演进：字如其名的野餐篮 (Mod 3717445564)
+- **变体场景与切面**：收录来自工坊 Mod 3717445564 (`字如其名的野餐篮`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3717445564)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:elixir_container
+
+AddPrefabPostInit("elixir_container", function(inst)
+    inst:AddTag("fridge")
+
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    inst.cold = false
+    inst.Cold = function(self)
+        self.cold = true
+        self:AddTag("iscold")
+        if self.components.preserver == nil then
+            self:AddComponent("preserver")
+        end
+        self.components.preserver:SetPerishRateMultiplier(TUNING.BEARGERFUR_SACK_PRESERVER_RATE or 0.5)
+    end
+
+    local old_onsave = inst.OnSave
+    inst.OnSave = function(self, data)
+        if old_onsave ~= nil then
+            old_onsave(self, data)
+        end
+        data.cold = self.cold
+    end
+
+    local old_onload = inst.OnLoad
+    inst.OnLoad = function(self, data)
+        if old_onload ~= nil then
+            old_onload(self, data)
+        end
+        if data ~= nil and data.cold then
+            self:Cold()
+        end
+    end
+
+    if inst.components.container ~= nil then
+        local old_onopen = inst.components.container.onopenfn
+        inst.components.container.onopenfn = function(self)
+            if old_onopen ~= nil then
+                old_onopen(self)
+            end
+            if not self:HasTag("burnt") and self.cold then
+                self._frostfx = SpawnPrefab("beargerfur_sack_frost_fx")
+                if self._frostfx ~= nil then
+                    self._frostfx.entity:SetParent(self.entity)
+                    self._frostfx.Follower:FollowSymbol(self.GUID, "ground", -25, -15, 0)
+                end
+            end
+        end
+
+        local old_onclose = inst.components.container.onclosefn
+        inst.components.container.onclosefn = function(self)
+            if old_onclose ~= nil then
+                old_onclose(self)
+            end
+            if self._frostfx ~= nil then
+                if self._frostfx:IsValid() then
+                    self._frostfx:Remove()
+                end
+                self._frostfx = nil
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sisturn
+
+AddPrefabPostInit("sisturn", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    if inst.components.preserver == nil then
+        inst:AddComponent("preserver")
+    end
+    inst:DoTaskInTime(0, function()
+        if inst.components.preserver ~= nil then
+            inst.components.preserver.GetPerishRateMultiplier = function(self, item)
+                return 0
+            end
+        end
+    end)
+end)
+
+```
+
