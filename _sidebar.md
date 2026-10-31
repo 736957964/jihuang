@@ -8,6 +8,10 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
+    * [Cook](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3829489944_cook.md)
+    * [Real Witch](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3828396407_real_witch.md)
+    * [[DST] Montfluv（the S](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3825012187_dst_montfluv_the_sealed_abyss.md)
+    * [Move!!Dragonfly](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3670669065_move_dragonfly.md)
     * [咒终对决拓展](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3825229017_3825229017.md)
     * [远野汉娜 漂浮魔法](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3811163578_3811163578.md)
     * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)

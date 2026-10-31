@@ -3036,8 +3036,44 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-10-31 19:11:46",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3828908041_no_more_cave_bug.md"
+    },
+    {
+      "id": "3670669065",
+      "name": "Move!!Dragonfly",
+      "author": "WIGFRID、Guto、jerry457",
+      "version": "26.07.29",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:20:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3670669065_move_dragonfly.md"
+    },
+    {
+      "id": "3825012187",
+      "name": "[DST] Montfluv（the Sealed Abyss）",
+      "author": "你要帮帮威吊",
+      "version": "1.3.06",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:20:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3825012187_dst_montfluv_the_sealed_abyss.md"
+    },
+    {
+      "id": "3828396407",
+      "name": "Real Witch",
+      "author": "Cutlass",
+      "version": "1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:20:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3828396407_real_witch.md"
+    },
+    {
+      "id": "3829489944",
+      "name": "Cook",
+      "author": "salt510",
+      "version": "1.5.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:20:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3829489944_cook.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:11:46"
+  "lastUpdated": "2026-10-31 19:20:48"
 }
