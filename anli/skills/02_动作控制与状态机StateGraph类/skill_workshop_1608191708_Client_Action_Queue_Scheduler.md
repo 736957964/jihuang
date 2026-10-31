@@ -2971,3 +2971,183 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod 3826330138 (Mod 3826330138)
+- **变体场景与切面**：收录来自工坊 Mod 3826330138 (`Mod 3826330138`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3826330138)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wathgrithr
+
+AddPrefabPostInit("wathgrithr", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    inst:ListenForEvent("inspirationdelta", function(player, data)
+        local insp = player.components.singinginspiration
+        if insp == nil or not player:HasTag("wvmscoreuser") then
+            return
+        end
+        local newslots = (data ~= nil and data.slots_available) or insp.available_slots
+        local last = player.wvm_last_slots
+        player.wvm_last_slots = newslots
+        if last ~= nil and newslots > last then
+            -- 上升穿越刻度：每穿一格唱一首（从左到右第一首未激活）
+            for _ = 1, newslots - last do
+                if not SingFirstInactive(player) then
+                    break
+                end
+            end
+        end
+    end)
+
+    inst:ListenForEvent("playeractivated", function(player)
+        GLOBAL.WVM_ScoreSheetSync(player)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+
+AddComponentPostInit("locomotor", function(self)
+    local function MarkNoLocomote(ba)
+        if ba ~= nil and ba.action ~= nil and ba.action.id == "WVM_SPEAR_ALIGNED"
+            and ba.target ~= nil and ba.target.components.inventoryitem ~= nil
+            and ba.target.components.inventoryitem:IsHeld() then
+            -- 原版对"目标已持有"的处理：distance=huge → 跳过寻路，原地起动作（有动画）
+            ba.distance = math.huge
+        end
+    end
+    local OldPush = self.PushAction
+    self.PushAction = function(self, ba, run, try_instant)
+        MarkNoLocomote(ba)
+        return OldPush(self, ba, run, try_instant)
+    end
+    local OldPreview = self.PreviewAction
+    self.PreviewAction = function(self, ba, run, try_instant)
+        MarkNoLocomote(ba)
+        return OldPreview(self, ba, run, try_instant)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Papapav (Mod 3829211964)
+- **变体场景与切面**：收录来自工坊 Mod 3829211964 (`Papapav`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3829211964)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:grassgekko
+    end
+    env.AddPrefabPostInit("grassgekko", Server(AttachGecko))
+    env.AddPrefabPostInit("smallbird", Server(AttachSmallbird))
+    for _, name in ipairs({ "forest", "savanna", "deciduous", "marsh", "grass", "rocky", "desert", "moon", "yot" }) do
+        env.AddPrefabPostInit("kitcoon_" .. name, Server(AttachKitcoon))
+    end
+end
+
+return M
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:smallbird
+    env.AddPrefabPostInit("grassgekko", Server(AttachGecko))
+    env.AddPrefabPostInit("smallbird", Server(AttachSmallbird))
+    for _, name in ipairs({ "forest", "savanna", "deciduous", "marsh", "grass", "rocky", "desert", "moon", "yot" }) do
+        env.AddPrefabPostInit("kitcoon_" .. name, Server(AttachKitcoon))
+    end
+end
+
+return M
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:kitcoon_
+    for _, name in ipairs({ "forest", "savanna", "deciduous", "marsh", "grass", "rocky", "desert", "moon", "yot" }) do
+        env.AddPrefabPostInit("kitcoon_" .. name, Server(AttachKitcoon))
+    end
+end
+
+return M
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+    local function Server(fn) return function(c) if G.TheWorld and G.TheWorld.ismastersim then fn(c) end end end
+    env.AddComponentPostInit("combat", Server(AttachCombat))
+    env.AddComponentPostInit("sanityaura", Server(function(self)
+        local old = self.GetAura
+        if old then self.GetAura = function(self, observer, ...)
+            local result = Pack(old(self, observer, ...))
+            if Defs.Finite(result[1]) and result[1] < 0 and Comp(self.inst, "combat") ~= nil then
+                result[1] = result[1] * (1 - Clamp(Effect(observer, "enemy_sanity_resist"), 0, 1))
+            end
+            return unpack(result, 1, result.n)
+        end end
+    end))
+    env.AddComponentPostInit("lootdropper", Server(function(self)
+        local old = self.GenerateLoot
+        if old then self.GenerateLoot = function(self, ...)
+            local result = Pack(old(self, ...))
+            local hp, combat = Comp(self.inst, "health"), Comp(self.inst, "combat")
+            local killer = hp and hp.causeofdeath or nil
+            if Comp(killer, "papapav_skilltree") == nil then killer = combat and combat.lastattacker end
+            if hp and hp:IsDead() and not self.inst:HasTag("player") and not self.inst._papapav_inventory_hunter
+                and not self._papapav_extra_rolled and type(result[1]) == "table" and #result[1] > 0 then
+                self._papapav_extra_rolled = true
+                if math.random() < Effect(killer, "extra_kill_loot") then
+                    result[1][#result[1] + 1] = result[1][math.random(#result[1])]
+                end
+            end
+            return unpack(result, 1, result.n)
+        end end
+    end))
+end
+
+return M
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:sanityaura
+    env.AddComponentPostInit("combat", Server(AttachCombat))
+    env.AddComponentPostInit("sanityaura", Server(function(self)
+        local old = self.GetAura
+        if old then self.GetAura = function(self, observer, ...)
+            local result = Pack(old(self, observer, ...))
+            if Defs.Finite(result[1]) and result[1] < 0 and Comp(self.inst, "combat") ~= nil then
+                result[1] = result[1] * (1 - Clamp(Effect(observer, "enemy_sanity_resist"), 0, 1))
+            end
+            return unpack(result, 1, result.n)
+        end end
+    end))
+    env.AddComponentPostInit("lootdropper", Server(function(self)
+        local old = self.GenerateLoot
+        if old then self.GenerateLoot = function(self, ...)
+            local result = Pack(old(self, ...))
+            local hp, combat = Comp(self.inst, "health"), Comp(self.inst, "combat")
+            local killer = hp and hp.causeofdeath or nil
+            if Comp(killer, "papapav_skilltree") == nil then killer = combat and combat.lastattacker end
+            if hp and hp:IsDead() and not self.inst:HasTag("player") and not self.inst._papapav_inventory_hunter
+                and not self._papapav_extra_rolled and type(result[1]) == "table" and #result[1] > 0 then
+                self._papapav_extra_rolled = true
+                if math.random() < Effect(killer, "extra_kill_loot") then
+                    result[1][#result[1] + 1] = result[1][math.random(#result[1])]
+                end
+            end
+            return unpack(result, 1, result.n)
+        end end
+    end))
+end
+
+return M
+
+```
+

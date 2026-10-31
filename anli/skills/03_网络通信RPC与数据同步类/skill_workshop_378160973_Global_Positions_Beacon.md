@@ -1795,3 +1795,106 @@ if kill_to_deposit_enabled then
 
 ```
 
+
+
+### 变体演进：GrimWorld - Colony Simulator [Fork] (Mod 3828850166)
+- **变体场景与切面**：收录来自工坊 Mod 3828850166 (`GrimWorld - Colony Simulator [Fork]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3828850166)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:grim_colonist
+
+AddPrefabPostInit("grim_colonist", function(inst)
+    table.insert(_G.GrimPawns, inst)
+    inst:ListenForEvent("onremove", function()
+        for i, v in ipairs(_G.GrimPawns) do
+            if v == inst then
+                table.remove(_G.GrimPawns, i)
+                break
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:grim_colonist_ghost
+
+AddPrefabPostInit("grim_colonist_ghost", function(inst)
+    table.insert(_G.GrimGhosts, inst)
+    inst:ListenForEvent("onremove", function()
+        for i, v in ipairs(_G.GrimGhosts) do
+            if v == inst then
+                table.remove(_G.GrimGhosts, i)
+                break
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:firesuppressor
+
+AddPrefabPostInit("firesuppressor", function(inst)
+    local fd = inst.components ~= nil and inst.components.firedetector or nil
+    if fd == nil or fd.onfindfire == nil then
+        return
+    end
+    local oldfind = fd.onfindfire
+    fd.onfindfire = function(self, pos, ...)
+        if GrimIsCampFire(pos) then
+            return -- leave the colony's own fire alone
+        end
+        return oldfind(self, pos, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winona_catapult
+
+AddPrefabPostInit("winona_catapult", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+    inst:DoPeriodicTask(1, function()
+        local combat = inst.components.combat
+        if combat == nil or combat:HasTarget()
+            or (inst.IsActiveMode ~= nil and not inst:IsActiveMode()) then
+            return
+        end
+        local x, y, z = inst.Transform:GetWorldPosition()
+        local range = (_G.TUNING.WINONA_CATAPULT_MAX_RANGE or 15) + 3
+        for _, c in ipairs(_G.TheSim:FindEntities(x, y, z, range, { "grim_colonist" })) do
+            local t = c.components.combat ~= nil and c.components.combat.target or nil
+            if t ~= nil and t:IsValid() and combat:CanTarget(t)
+                and not (inst.IsTargetTooClose ~= nil and inst:IsTargetTooClose(t)) then
+                combat:SuggestTarget(t)
+                return
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lucy
+-- which no client is -- retarget to nil so everyone hears her quips.
+AddPrefabPostInit("lucy", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+    inst:ListenForEvent("onputininventory", function(inst, owner)
+        if owner ~= nil and owner.components.inventoryitem ~= nil
+            and owner.components.inventoryitem.owner ~= nil then
+            owner = owner.components.inventoryitem.owner -- held inside a container
+        end
+        if owner ~= nil and owner:HasTag("grim_colonist") and inst.lucy_classified ~= nil then
+            inst.lucy_classified:SetTarget(nil)
+        end
+    end)
+end)
+
+```
+

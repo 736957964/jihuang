@@ -3675,8 +3675,35 @@
       "category": "06_世界生成与生态系统类",
       "studied_at": "2026-11-01 03:44:44",
       "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3826330138",
+      "name": "Mod 3826330138",
+      "author": "柔情光环",
+      "version": "1.0.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:45:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3828850166",
+      "name": "GrimWorld - Colony Simulator [Fork]",
+      "author": "谎乐 (fork maintenance) | PopoSoHappy (original)",
+      "version": "0.25.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 03:45:48",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3829211964",
+      "name": "Papapav",
+      "author": "Papapav",
+      "version": "0.1.13",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:45:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:44:44"
+  "lastUpdated": "2026-11-01 03:45:48"
 }
