@@ -8,6 +8,7 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
+    * [宁恩](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3814062294_3814062294.md)
     * [Cook](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3829489944_cook.md)
     * [Real Witch](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3828396407_real_witch.md)
     * [[DST] Montfluv（the S](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3825012187_dst_montfluv_the_sealed_abyss.md)
@@ -32,6 +33,8 @@
     * [上值劫持与海洋距离判定 (1467214795)](anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md)
   * 07 实体机制与游戏平衡类
     * [聊天指令拦截与生命周期重置 (母本)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_player_lifecycle_and_command_restart.md)
+    * [Geometric Drop (fixe](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3813858106_geometric_drop_fixed.md)
+    * [智能矿工帽 Smart Miner Ha](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3813163216_smart_miner_hat.md)
     * [网络副本组件拓扑注入 (1530801499)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md)
     * [虫洞双向拓扑标记与着色 (362175979)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_362175979_Dual_Topology_Wormhole_Mark.md)
   * 08 语言本地化与字体渲染类
