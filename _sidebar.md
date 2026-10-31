@@ -1,9 +1,9 @@
 - 🌟 创意工坊权威模组研读库
-  * [研读库总览与账本](/docs/workshop_studies/README)
-  * [UI 与 HUD 交互规范](/docs/workshop_studies/UI与HUD类/study_351325790_geometric_placement)
-  * [网络与 RPC 同步规范](/docs/workshop_studies/study_378160973_global_positions)
-  * [实体机制与容器持久化](/docs/workshop_studies/study_382177939_storm_cellar)
-  * [大型 DLC 级模组专卷案例](/docs/workshop_studies/study_1467214795_island_adventures)
+  * [研读库总览与账本](/docs/workshop_studies/README.md)
+  * [UI 与 HUD 交互规范](/docs/workshop_studies/UI与HUD类/study_351325790_geometric_placement.md)
+  * [网络与 RPC 同步规范](/docs/workshop_studies/study_378160973_global_positions.md)
+  * [实体机制与容器持久化](/docs/workshop_studies/study_382177939_storm_cellar.md)
+  * [大型 DLC 级模组专卷案例](/docs/workshop_studies/study_1467214795_island_adventures.md)
 * [🌟 核心架构决策与源码哲学](01-core/architecture_philosophy.md)
 - 前言
   * [Mod相关信息](/README)
