@@ -1327,3 +1327,30 @@ end)
 
 ```
 
+
+
+### 变体演进：月影薇洛 (Mod 3810965914)
+- **变体场景与切面**：收录来自工坊 Mod 3810965914 (`月影薇洛`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3810965914)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:flamethrower_fx
+if lunar_freeze then
+    AddPrefabPostInit("flamethrower_fx", function(inst)
+        if not TheWorld.ismastersim then return end
+        if inst.components.weapon then
+            inst.components.weapon:SetOnAttack(function(inst, attacker, target)
+                if target ~= nil and target.components.freezable ~= nil then
+                    target.components.freezable:AddColdness(lunar_freeze_coldness)
+                    target.components.freezable:SpawnShatterFX()
+                end
+            end)
+        end
+    end)
+
+```
+

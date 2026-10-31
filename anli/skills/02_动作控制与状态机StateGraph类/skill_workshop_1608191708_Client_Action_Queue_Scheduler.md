@@ -1700,3 +1700,120 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod 3808356713 (Mod 3808356713)
+- **变体场景与切面**：收录来自工坊 Mod 3808356713 (`Mod 3808356713`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3808356713)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:vault_pillar_guard_dormant
+
+AddPrefabPostInit("vault_pillar_guard_dormant", function(inst)
+    if not G.TheWorld.ismastersim then
+        return
+    end
+    local old_save, old_load = inst.OnSave, inst.OnLoad
+    inst.OnSave = function(body, data, ...)
+        if old_save ~= nil then old_save(body, data, ...) end
+        data.xingui_guard_rebuilt = body:HasTag(REBUILT_TAG) or nil
+    end
+    inst.OnLoad = function(body, data, ...)
+        if old_load ~= nil then old_load(body, data, ...) end
+        if data ~= nil and data.xingui_guard_rebuilt then
+            body:AddTag(REBUILT_TAG)
+                                                                            
+                                                                           
+                                                                          
+            body:DoTaskInTime(0, function(old)
+                if not old:IsValid() then return end
+                local guard = G.ReplacePrefab(old, "vault_pillar_guard")
+                if guard ~= nil then
+                    guard:MakeCrafted()
+                    guard.sg:GoToState("activate")
+                end
+            end)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:vault_pillar_guard
+
+AddStategraphPostInit("vault_pillar_guard", function(sg)
+    Safety.PatchStategraph(sg)
+    Wreck.PatchStategraph(sg)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if not G.TheNet:IsDedicated() then
+        PatrolIndicator.Install(inst)                                           
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:vault_pillar_guard
+
+AddPrefabPostInit("vault_pillar_guard", function(inst)
+    if not G.TheWorld.ismastersim then
+                                                                           
+                                                                             
+                                                    
+        if not Mobility.Apply(inst) then
+            local attempts = 0
+            local task
+            task = inst:DoPeriodicTask(.5, function()
+                attempts = attempts + 1
+                if Mobility.Apply(inst) or attempts >= 60 then
+                    task:Cancel()
+                end
+            end)
+        end
+        return
+    end
+
+                                                                            
+    if inst.components.entitytracker == nil then
+        inst:AddComponent("entitytracker")
+    end
+    inst:AddComponent("xingui_guardcontrol")
+
+    local original_makecrafted = inst.MakeCrafted
+    if type(original_makecrafted) ~= "function" then
+        print("[Guard Control] missing MakeCrafted; refusing to alter guard")
+        return
+    end
+    inst.MakeCrafted = function(guard, ...)
+        local result = original_makecrafted(guard, ...)
+        local control = guard.components.xingui_guardcontrol
+        if control ~= nil and Threat.IsCraftedGuard(guard) then
+                                                                       
+                                                                             
+                                                                        
+            guard:AddTag("companion")
+            Mobility.Apply(guard)
+            control:ActivateCrafted(Brain, Threat)
+        end
+        return result
+    end
+
+                                                                             
+    inst:DoTaskInTime(0, function(guard)
+        local control = guard.components.xingui_guardcontrol
+        if control ~= nil and Threat.IsCraftedGuard(guard) then
+            guard:AddTag("companion")
+            Mobility.Apply(guard)
+            control:ActivateCrafted(Brain, Threat)
+        end
+    end)
+end)
+
+```
+
