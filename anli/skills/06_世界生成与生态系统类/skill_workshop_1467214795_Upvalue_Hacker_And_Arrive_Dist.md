@@ -214,3 +214,26 @@ local function GetRealPlayer(userid)
 end
 `
 
+
+
+### 变体演进：RoseN Farm Blueprints (Mod 3823475990)
+- **变体场景与切面**：收录来自工坊 Mod 3823475990 (`RoseN Farm Blueprints`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823475990)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+if not G.TheNet:IsDedicated() then
+    AddPrefabPostInit("world", function(world)
+        world:WatchWorldState("season", function(_, season) ApplySeason(season) end)
+        -- oyuncu ve HUD hazir olunca bir kez daha (menu ilk acildiginda dogru sirada olsun)
+        world:DoTaskInTime(0, function() ApplySeason(world.state.season) end)
+        world:ListenForEvent("playeractivated", function() world:DoTaskInTime(0.5, function() ApplySeason(world.state.season) end) end)
+    end)
+end
+
+```
+

@@ -721,3 +721,136 @@ end
 
 ```
 
+
+
+### 变体演进：RoseN Attack Warnings (Mod 3824108366)
+- **变体场景与切面**：收录来自工坊 Mod 3824108366 (`RoseN Attack Warnings`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3824108366)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:fossilspike
+-- Fuelweaver kafes dikeni: RestartSpike(gecikme) ile kalkar ve aninda vurur
+AddPrefabPostInit("fossilspike", function(inst)
+    local restart = inst.RestartSpike
+    if restart == nil then return end
+    inst.RestartSpike = function(inst, delay, ...)
+        G.pcall(function()
+            local x, y, z = inst.Transform:GetWorldPosition()
+            Make(nil, { kind = "circle", r = 0.2 + BODY, delay = math.max(0.05, delay or 0), x = x, z = z })
+        end)
+        return restart(inst, delay, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardian_phase3
+local METEOR_R = 2.25 + BODY
+AddPrefabPostInit("alterguardian_phase3", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local dotraps = inst.DoTraps
+    if dotraps == nil then return end
+    inst.DoTraps = function(inst, ...)
+        -- oyun konumlari secer ve ilk meteoru 0.5 sn sonraya kurar: o listeyi yakala
+        local orig = inst.DoTaskInTime
+        local captured
+        inst.DoTaskInTime = function(self, t, fn, list, ...)
+            if captured == nil and type(list) == "table" and list[1] ~= nil and type(list[1]) == "table"
+                and list[1].x ~= nil then
+                captured = { t = t, list = {} }
+                for i, p in ipairs(list) do captured.list[i] = { p.x, p.z } end
+            end
+            return orig(self, t, fn, list, ...)
+        end
+        local ok, a, b, c = G.pcall(dotraps, inst, ...)
+        inst.DoTaskInTime = orig
+        G.pcall(function()
+            if captured == nil then return end
+            local n = #captured.list
+            for j = 1, n do
+                -- oyun listenin sonundan baslar: j. meteor 0.5*j sn sonra duser, 31 kare sonra vurur
+                local p = captured.list[n - j + 1]
+                Make(nil, { kind = "circle", r = METEOR_R, x = p[1], z = p[2],
+                    delay = captured.t + 0.5 * (j - 1) + 31 * FRAMES })
+            end
+        end)
+        if not ok then G.error(a, 0) end
+        return a, b, c
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardian_phase3trap
+-- yerdeki tuzak: uyutan dalgalar basladiginda dalga suresince halka
+AddPrefabPostInit("alterguardian_phase3trap", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    inst:ListenForEvent("timerdone", function(inst, data)
+        G.pcall(function()
+            if data == nil or data.name ~= "start_pulse" then return end
+            local timer = inst.components.timer
+            if timer == nil then return end
+            local first = timer:GetTimeLeft("pulse")
+            local finish = timer:GetTimeLeft("finish_pulse")
+            if first == nil or finish == nil then return end
+            local x, y, z = inst.Transform:GetWorldPosition()
+            Make(inst, { kind = "circle", r = (G.TUNING.ALTERGUARDIAN_PHASE3_TRAP_AOERANGE or 3) + BODY,
+                x = x, z = z, delay = first, period = 24 * FRAMES, continuous = true,
+                life = math.max(0, finish - first), keep = true })
+        end)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:junkball_fx
+}
+AddPrefabPostInit("junkball_fx", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local setup = inst.SetupJunkTossAttack
+    if setup == nil then return end
+    inst.SetupJunkTossAttack = function(inst, ...)
+        local r1, r2 = setup(inst, ...)
+        G.pcall(function()
+            if inst.x == nil or inst.dir == nil or inst.dist == nil then return end
+            local c, sn = math.cos(inst.dir), -math.sin(inst.dir)
+            Make(inst, { kind = "path", r = 1.5 + BODY, x = inst.x, z = inst.z,
+                pts = { { inst.x, inst.z }, { inst.x + c * inst.dist, inst.z + sn * inst.dist } },
+                delay = AnimLen(inst), hold = 0.5, keep = true })
+        end)
+        return r1, r2
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardian_phase2spiketrail
+local SPIKE_R = 1.1 + 0.25 + BODY
+AddPrefabPostInit("alterguardian_phase2spiketrail", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local setowner = inst.SetOwner
+    if setowner == nil then return end
+    inst.SetOwner = function(inst, ...)
+        setowner(inst, ...)
+        G.pcall(function()
+            local T = 0.75
+            local task = inst._emerge_task
+            if task ~= nil and task.NextTime ~= nil then
+                T = math.max(0.05, task:NextTime() - G.GetTime())
+            end
+            local x, y, z = inst.Transform:GetWorldPosition()
+            local a = inst.Transform:GetRotation() * DEGREES
+            local fx, fz = math.cos(a), -math.sin(a)
+            local px, pz = fz, -fx
+            local ex, ez = x + fx * 20 * T, z + fz * 20 * T
+            local W, B = 6 * 1.35, 6 * 0.4
+            Make(inst, { kind = "path", r = SPIKE_R, x = ex, z = ez,
+                pts = { { ex + px * W - fx * B, ez + pz * W - fz * B }, { ex, ez },
+                    { ex - px * W - fx * B, ez - pz * W - fz * B } },
+                delay = T, hold = 6 * 5 * FRAMES, keep = true })
+        end)
+    end
+end)
+
+```
+
