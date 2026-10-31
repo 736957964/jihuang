@@ -194,3 +194,38 @@ AddPrefabPostInit("killerbee", function(inst)
 end)
 `
 
+
+
+### 变体演进：移除BOSS间仇恨 (Mod 2819087689)
+- **变体场景与切面**：收录来自工坊 Mod 2819087689 (`移除BOSS间仇恨`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2819087689)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat",CombatPostInit)
+
+-- 大触手不打BOSS
+AddPrefabPostInit("bigshadowtentacle", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	inst:AddTag("epic")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bigshadowtentacle
+-- 大触手不打BOSS
+AddPrefabPostInit("bigshadowtentacle", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	inst:AddTag("epic")
+end)
+
+```
+

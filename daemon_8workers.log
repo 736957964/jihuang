@@ -3450,3 +3450,28 @@
 [2026-11-01 03:24:38] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 03:24:38] Reducer: 成功将 Mod 3753657277 (Nice Utils) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
 [2026-11-01 03:24:38] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 03:24:44] Git 自动提交并推送成功！
+[2026-11-01 03:24:44] 已向老爹私聊推送批次进度播报 (HTTP 401)
+[2026-11-01 03:24:44] 【批次结算】：本批归约出 2 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 03:25:14] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['2819087689', '2803081505', '2795222906', '2723078309', '2071037011', '1673729468']
+[2026-11-01 03:25:14] SteamCMD 下载 2819087689 ...
+[2026-11-01 03:25:14] SteamCMD 下载 2803081505 ...
+[2026-11-01 03:25:14] SteamCMD 下载 2723078309 ...
+[2026-11-01 03:25:14] SteamCMD 下载 2795222906 ...
+[2026-11-01 03:25:14] SteamCMD 下载 2071037011 ...
+[2026-11-01 03:25:14] SteamCMD 下载 1673729468 ...
+[2026-11-01 03:25:23] Worker [2819087689] 成功解析入库暂存区 -> 移除BOSS间仇恨 (类别: 05_战斗AI行为树与Boss机制类)
+[2026-11-01 03:25:35] Worker [2803081505] 过滤拦截: 小恐龙表情包 (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 03:25:54] Worker [2723078309] 成功解析入库暂存区 -> FF6 Death Sound (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 03:26:04] Worker [2071037011] 成功解析入库暂存区 -> 杂草战争增强版 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 03:26:13] Worker [2795222906] 成功解析入库暂存区 -> 便携雕塑 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 03:26:22] Worker [1673729468] 过滤拦截: DST Path Lights (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 03:26:22] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 03:26:22] Reducer: 成功将 Mod 2071037011 (杂草战争增强版) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 03:26:22] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 03:26:22] Reducer: 成功将 Mod 2723078309 (FF6 Death Sound) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 03:26:22] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 03:26:22] Reducer: 成功将 Mod 2795222906 (便携雕塑) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 03:26:22] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 03:26:22] Reducer: 成功将 Mod 2819087689 (移除BOSS间仇恨) 增量归约合入既有权威母本 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md
+[2026-11-01 03:26:22] Reducer: 完成母本归约并清理草稿 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md

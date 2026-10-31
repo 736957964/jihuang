@@ -3324,8 +3324,44 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 03:24:38",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2071037011",
+      "name": "杂草战争增强版",
+      "author": "DT",
+      "version": "2.2.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:26:22",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2723078309",
+      "name": "FF6 Death Sound",
+      "author": "Exumer",
+      "version": "1.03f",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:26:22",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2795222906",
+      "name": "便携雕塑",
+      "author": "铭之所名",
+      "version": "1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:26:22",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2819087689",
+      "name": "移除BOSS间仇恨",
+      "author": "nanahara",
+      "version": "1.31",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 03:26:22",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:24:38"
+  "lastUpdated": "2026-11-01 03:26:22"
 }

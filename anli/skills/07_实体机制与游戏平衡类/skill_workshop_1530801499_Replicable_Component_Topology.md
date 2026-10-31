@@ -1074,3 +1074,60 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：便携雕塑 (Mod 2795222906)
+- **变体场景与切面**：收录来自工坊 Mod 2795222906 (`便携雕塑`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2795222906)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:crabking
+local function xietianfn(inst) if inst.prefab == "malbatross" then if not inst.MiniMapEntity then inst.entity:AddMiniMapEntity() end inst.MiniMapEntity:SetIcon(tubiao_xietianweng1..".png") end tubiao_diaosufn(inst) if inst.prefab == "malbatross" then inst.components.maprevealer.revealperiod = 1 end end
+if tubiao_diwangxie then AddPrefabPostInit("crabking",tubiao_diaosufn) end
+if tubiao_shuizhongmu then AddPrefabPostInit("watertree_pillar",tubiao_diaosufn) end
+if tubiao_yuangukeji then AddPrefabPostInit("ancient_altar",tubiao_diaosufn) end
+if tubiao_chanchu then AddPrefabPostInit("toadstool_cap",tubiao_diaosufn) end
+if tubiao_yuangudamen then AddPrefabPostInit("atrium_gate",tubiao_diaosufn) end
+if tubiao_dalishi then AddPrefabPostInit("sculpture_rookbody",tubiao_diaosufn) end
+if tubiao_xietianweng == 1 then AddPrefabPostInit("malbatross",xietianfn) elseif tubiao_xietianweng == 2 then for _,v in pairs(xietianweng_ming) do AddPrefabPostInit(v,xietianfn) end end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:watertree_pillar
+if tubiao_diwangxie then AddPrefabPostInit("crabking",tubiao_diaosufn) end
+if tubiao_shuizhongmu then AddPrefabPostInit("watertree_pillar",tubiao_diaosufn) end
+if tubiao_yuangukeji then AddPrefabPostInit("ancient_altar",tubiao_diaosufn) end
+if tubiao_chanchu then AddPrefabPostInit("toadstool_cap",tubiao_diaosufn) end
+if tubiao_yuangudamen then AddPrefabPostInit("atrium_gate",tubiao_diaosufn) end
+if tubiao_dalishi then AddPrefabPostInit("sculpture_rookbody",tubiao_diaosufn) end
+if tubiao_xietianweng == 1 then AddPrefabPostInit("malbatross",xietianfn) elseif tubiao_xietianweng == 2 then for _,v in pairs(xietianweng_ming) do AddPrefabPostInit(v,xietianfn) end end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ancient_altar
+if tubiao_shuizhongmu then AddPrefabPostInit("watertree_pillar",tubiao_diaosufn) end
+if tubiao_yuangukeji then AddPrefabPostInit("ancient_altar",tubiao_diaosufn) end
+if tubiao_chanchu then AddPrefabPostInit("toadstool_cap",tubiao_diaosufn) end
+if tubiao_yuangudamen then AddPrefabPostInit("atrium_gate",tubiao_diaosufn) end
+if tubiao_dalishi then AddPrefabPostInit("sculpture_rookbody",tubiao_diaosufn) end
+if tubiao_xietianweng == 1 then AddPrefabPostInit("malbatross",xietianfn) elseif tubiao_xietianweng == 2 then for _,v in pairs(xietianweng_ming) do AddPrefabPostInit(v,xietianfn) end end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:toadstool_cap
+if tubiao_yuangukeji then AddPrefabPostInit("ancient_altar",tubiao_diaosufn) end
+if tubiao_chanchu then AddPrefabPostInit("toadstool_cap",tubiao_diaosufn) end
+if tubiao_yuangudamen then AddPrefabPostInit("atrium_gate",tubiao_diaosufn) end
+if tubiao_dalishi then AddPrefabPostInit("sculpture_rookbody",tubiao_diaosufn) end
+if tubiao_xietianweng == 1 then AddPrefabPostInit("malbatross",xietianfn) elseif tubiao_xietianweng == 2 then for _,v in pairs(xietianweng_ming) do AddPrefabPostInit(v,xietianfn) end end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:atrium_gate
+if tubiao_chanchu then AddPrefabPostInit("toadstool_cap",tubiao_diaosufn) end
+if tubiao_yuangudamen then AddPrefabPostInit("atrium_gate",tubiao_diaosufn) end
+if tubiao_dalishi then AddPrefabPostInit("sculpture_rookbody",tubiao_diaosufn) end
+if tubiao_xietianweng == 1 then AddPrefabPostInit("malbatross",xietianfn) elseif tubiao_xietianweng == 2 then for _,v in pairs(xietianweng_ming) do AddPrefabPostInit(v,xietianfn) end end
+
+```
+

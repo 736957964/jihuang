@@ -481,3 +481,825 @@ if GetModConfigData("Fish") then
     end)
 `
 
+
+
+### 变体演进：杂草战争增强版 (Mod 2071037011)
+- **变体场景与切面**：收录来自工坊 Mod 2071037011 (`杂草战争增强版`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2071037011)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:healthtrigger
+AddReplicableComponent("scaler")
+AddComponentPostInit("healthtrigger", function(self)
+    self.AddTrigger = function(self, amount, fn, override)
+        if self.triggers[amount] and not override then
+            local _oldTriggerFN = self.triggers[amount]
+            self.triggers[amount] = function(inst)
+                _oldTriggerFN(inst)
+                fn(inst)
+            end
+        else
+            self.triggers[amount] = fn
+        end
+    end
+    self.RemoveTrigger = function(self, amount)
+        self.triggers[amount] = nil
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:scaler
+end)
+AddComponentPostInit("scaler", function(self)
+    self.base_scale = 1
+    self.damage_mult = 1
+    self.current_scale = 1
+    -- Physics Parameters
+    self.base_rad = nil
+    self.current_rad = nil
+    self.current_height = nil
+    self.base_mass = nil
+    self.current_mass = nil
+    self.base_shadow = nil
+    self.current_shadow = nil
+    self.source = nil
+
+    -- Controls the rate at which these increase based on the given scale. Default is 1 to 1 with the scalar.
+    self.rad_rate = 1
+    self.height_rate = 1
+    self.mass_rate = 1
+    self.shadow_rate = 1
+    self.inst.replica.scaler:SetScale(1)
+
+    self.ApplyScale = function(self)
+        local mults, adds, flats = self:GetScalerBuffs()
+        self.scale = mults * adds -- + flats -- Not supporting flats for now
+        self.inst.replica.scaler:SetScale(self.scale)
+        self.current_scale = self.base_scale * self.scale
+        self.inst.Transform:SetScale(self.current_scale,self.current_scale,self.current_scale)
+
+        if self.base_rad then
+            self.current_rad = self.base_rad * self.scale * self.rad_rate
+            self.current_height = (self.base_height or 2) * self.scale * self.height_rate
+            local pos = self.inst:GetPosition()
+            self.inst.Physics:SetCapsule(self.current_rad, self.current_height)
+            self.inst.Transform:SetPosition(pos:Get())
+        end
+
+        if self.base_mass then
+            self.current_mass = self.base_mass * self.scale * self.mass_rate
+            self.inst.Physics:SetMass(self.current_mass)
+        end
+
+        if self.base_shadow then
+            self.current_shadow = {self.base_shadow[1] * self.scale * self.shadow_rate, self.base_shadow[2] * self.scale * self.shadow_rate}
+            self.inst.DynamicShadow:SetSize(unpack(self.current_shadow))
+        end
+
+        if self.inst.components.combat then
+            --self.inst.components.combat:UpdateRange()
+            local weapon = self.inst.components.combat:GetWeapon()
+            if weapon then
+                weapon.components.weapon:UpdateAltAttackRange(nil, nil, self.inst)
+            end
+        end
+
+        if self.OnApplyScale then
+            self.OnApplyScale(self.inst, self.current_scale, self.scale)
+        end
+    end
+
+    self.GetScalerBuffs = function(self)
+        local source = self.source
+        local mults, adds, flats = self:GetSourceBuffs()
+        if self.inst.components.buffable then
+            local scaler_mults, scaler_adds, scaler_flats = self.inst.components.buffable:GetStatBuffs({"scaler"})
+            mults = mults * scaler_mults
+            adds = adds + scaler_adds - 1 -- Offset for the sources scaler buff
+            flats = flats + scaler_flats
+        end
+        return mults, adds, flats
+    end
+
+    self.GetSourceBuffs = function(self, checking_source)
+        local source = self.source
+        local mults = 1
+        local adds = 1
+        local flats = 0
+        if source then
+            -- Retrieve the sources source
+            if source.components.scaler and source.components.scaler.source then
+                return source.components.scaler:GetSourceBuffs()
+                -- Return the sources current scaler buffs
+            elseif source.components.buffable then
+                return source.components.buffable:GetStatBuffs({"scaler"})
+            end
+        end
+        return mults, adds, flats
+    end
+
+    -- force_update is true by default
+    self.SetSource = function(self, source, force_update)
+        self.source = source
+        if force_update == nil or force_update then
+            self:ApplyScale()
+        end
+    end
+    self.SetBaseScale = function(self, scale)
+        self.base_scale = scale or self.base_scale
+    end
+    self.SetBaseRadius = function(self, radius)
+        self.base_rad = radius or self.base_rad
+    end
+    self.SetBaseHeight = function(self, height)
+        self.base_height = height or self.base_height
+    end
+    self.SetBaseMass = function(self, mass)
+        self.base_mass = mass or self.base_mass
+    end
+    self.SetBaseShadow = function(self, shadow)
+        self.base_shadow = shadow or self.base_shadow
+    end
+    self.SetRadiusRate = function(self, rate)
+        self.rad_rate = rate or self.rad_rate
+    end
+    self.SetHeightRate = function(self, rate)
+        self.height_rate = rate or self.height_rate
+    end
+    self.SetMassRate = function(self, rate)
+        self.mass_rate = rate or self.mass_rate
+    end
+    self.SetShadowRate = function(self, rate)
+        self.shadow_rate = rate or self.shadow_rate
+    end
+end)
+AddComponentPostInit("revivablecorpse", function(self)
+    self.revivable = _G.net_bool(self.inst.GUID, "revivablecorpse.revivable")
+    self.SetRevivable = function(self, val)
+        self.revivable:set(val)
+    end
+    self:SetRevivable(true)
+
+    local _oldCanBeRevivedBy = self.CanBeRevivedBy
+    self.CanBeRevivedBy = function(self, reviver)
+        return self.revivable:value() and _oldCanBeRevivedBy(self, reviver)
+    end
+
+    self.base_revive_health_percent = 1
+    self.SetBaseReviveHealthPercent = function(self, percent)
+        if self.ismastersim then
+            self.base_revive_health_percent = percent or self.base_revive_health_percent
+        end
+    end
+
+    self.revivers_mult = 1
+    self.GetReviveHealthPercent = function(self)
+        if self.ismastersim then
+            return self.health_override or self.revive_health_percet * self.base_revive_health_percent * (self.revivers_mult or 1)
+        end
+    end
+
+    local _oldSetCorpse = self.SetCorpse
+    self.SetCorpse = function(self, corpse)
+        if self.ismastersim and not corpse then
+            self.reviving = false
+            self.health_override = nil
+            self.revivers_mult = 1
+            self.inst:PushEvent("revived")
+        end
+        _oldSetCorpse(self, corpse)
+    end
+
+    local _oldRevive = self.Revive
+    self.Revive = function(self, reviver, health_override)
+        if not self:IsReviving() then
+            _oldRevive(self, reviver)
+            if self.ismastersim then
+                self.reviving = true
+                self.health_override = health_override
+                self.revivers_mult = reviver and reviver.components.corpsereviver and reviver.components.corpsereviver:GetReviveHealthPercentMult() or 1
+            end
+        end
+    end
+
+    self.reviving = false
+    self.IsReviving = function(self)
+        return self.reviving
+    end
+
+    self.IsCorpse = function(self)
+        return self.inst:HasTag("corpse")
+    end
+
+    self.revive_charges = {}
+    self.revive_priority = {}
+    self.AddCharge = function(self, source, health, on_revive_fn, priority)
+        if not self.revive_charges[source] then
+            self.revive_charges[source] = true
+            table.insert(self.revive_priority, {source = source, health = health, on_revive_fn = on_revive_fn, priority = priority})
+            table.sort(self.revive_priority, function(a, b)
+                return a.priority < b.priority
+            end)
+            -- Check to see if charge should be immediately used.
+            self:ConsumeCharge()
+        end
+    end
+
+    self.RemoveCharge = function(self, source)
+        if self.revive_charges[source] then
+            self.revive_charges[source] = nil
+            for i,data in pairs(self.revive_priority) do
+                if data.source == source then
+                    table.remove(self.revive_priority, i)
+                    break
+                end
+            end
+        end
+    end
+
+    self.HasReviveCharges = function(self)
+        return #self.revive_priority > 0
+    end
+
+    local REVIVE_DELAY = 3 -- Ensure the owner is completely dead before attempting to revive.
+    self.ConsumeCharge = function(self)
+        if self.inst.components.health:IsDead() and not self:IsReviving() and #self.revive_priority > 0 then
+            self.inst:DoTaskInTime(self.inst.sg.currentstate.name ~= "corpse" and REVIVE_DELAY or 0, function()
+                local revive_data = table.remove(self.revive_priority, 1)
+                self:Revive(revive_data.source, revive_data.health)
+                if revive_data.on_revive_fn then
+                    revive_data.on_revive_fn(self.inst)
+                end
+                self.revive_charges[revive_data.source] = nil
+            end)
+        end
+    end
+
+    self.inst:ListenForEvent("death", function()
+        self:ConsumeCharge()
+    end)
+end)
+
+local Image = require("widgets/image")
+local Text = require("widgets/text")
+UI = nil
+
+
+
+MonstWork={--设置生物对月台造成的伤害
+    ["rook"]={work=2},
+    --["hollow_knight"]={work=2},
+    ["deerclops"]={work=3},
+    ["moose"]={work=2},
+    ["bearger"]={work=4},
+    ["minotaur"]={work=9},
+    ["dragonfly"]={work=5},
+    ["shadow_rook"]={work=2},
+    ["shadow_knight"]={work=2},
+    ["malbatross"]={work=3},
+    ["beequeen"]={work=5},
+    ["klaus"]={work=5},
+    ["boarilla"]={work=5},
+
+}
+
+CHANCES={
+    CHANCE_Base={
+        rock1=1,--岩石
+        rock2=1,--岩石
+        rocks=5,--石头
+        flint=5,--燧石
+        townportaltalisman = 2 ,--沙之石
+        cutgrass=5,--草
+        twigs=5,--树枝
+
+    },
+    CHANCE_Weapon={
+        nightstick=5,--晨星锤
+        armorwood=5,--木甲
+        hambat = 5 , --火腿棒
+        armormarble=5,--大理石甲
+
+    },
+    CHANCE_Food={
+        lightbulb=30, --荧光果
+        bananapop= 30 , --香蕉冻
+        meatballs=70,--肉丸
+        smallmeat_dried=70,--小风干肉
+        jellybean=20,--彩虹糖豆
+        stuffedeggplant=70,--酿茄子
+        voltgoatjelly= 30 , --伏特羊肉冻
+
+    },
+    CHANCE_Seed={
+        tillweed_seeds=5,--犁地草种子
+        firenettles_seeds=5,--火荨麻种子
+        forgetmelots_seeds=5,--忘我草种子
+        ivy_seeds=5,--针刺旋花种子
+        seeds=5,--普通种子
+    },
+    CHANCE_rare={
+        gift=5,--礼物包裹
+        wetpouch=5,--绿洲包裹
+        greenstaff=5,--拆解魔杖
+        sunkenchest=5,--沉底宝箱
+    },
+    CHANCE_Biuld={
+        build_icebox=30,--冰箱
+        build_cookpot=30,--锅
+        build_birdcage=30,--鸟笼
+        build_lightning_rod=30,--避雷针
+        build_firesuppressor=30,--a
+        build_saltbox=30,--盐盒
+        build_wardrobe=30,--衣柜
+        build_firepit=30,
+        build_researchlab3=30,--魔法科技
+        build_pighouse=30,--猪房
+    },
+    CHANCE_Animal={
+        smallbird= 10,--小鸟
+        snurtle=10,--蜗牛龟
+        slurtle=10,--蜗牛龟
+        pigman=10,--鱼人
+        spore_medium = 5 ,--红色孢子
+        spore_small = 5 ,--绿色孢子
+        spore_tall = 5 ,--蓝色孢子
+        lureplant = 5 ,--食人花
+        lightflier = 5 , --球状光虫
+        fireflies = 5 ,--萤火虫
+        rabbit = 3 ,--兔子
+        mole = 2 ,--鼹鼠
+        moonbutterfly = 1, --月娥
+    },
+    CHANCE_Other={
+        silk=5,--蜘蛛丝
+        minerhat=20,--矿工帽
+        book_tentacles=10,--触手的召唤
+        book_horticulture=10,--园艺学
+        book_birds=10,--世界鸟类大全
+        heatrock=   10 ,--暖石
+        portabletent_item = 10   , --帐篷卷
+        sleepbomb= 10   , --睡袋
+        sewing_tape	= 10   ,--可靠的胶布
+        waterballoon	= 10   ,--水球
+        miniboatlantern = 10   ,--漂浮灯笼
+        miniflare = 10   ,-- 信号弹
+        soil_amender=10,--瓶装肥料
+        hore=10,--牛角
+        shell_cluster=10,--贝壳堆
+        magic_blueprint=10,--空白蓝图
+        firecrackers=10,--红鞭炮
+        spidergland=10,--蜘蛛腺
+        amulet=10,--重生
+        torch=10,--火把
+        redlantern  = 10   ,--红灯笼
+        sleepbomb = 10 ,--催眠袋
+    },
+    CHANCE_Monster={
+        shark=1,--"鲨鱼"
+        deerclops=2,--巨鹿
+       -- bearger=1,--熊
+        ghost=50,--幽灵
+        merm=50,--鱼人
+        spider=50,--蜘蛛
+        beefalo=50,--牛
+        --leif=20,--树精
+        leif_sparse=20,--树精2
+        worm=30,--蠕虫
+        deciduoustree=8,--桦栗树
+        gingerbreadwarg=8,--狼
+    }
+}
+CHANCE_Type={
+    CHANCE_Base=80,
+    CHANCE_Weapon=15,
+    CHANCE_Food=5,
+    CHANCE_Seed=10,
+    CHANCE_rare=7,
+    CHANCE_Biuld=20,
+    CHANCE_Animal=5,
+    CHANCE_Other=10,
+    CHANCE_Monster=5,
+}
+TSCHEST={
+    --怪物和武器
+    deerAndruins={"armorruins","ruins_bat","deerclops","ruinshat"},	--巨鹿和三件套
+    bearAndruins={"armorruins","ruins_bat","bearger","ruinshat"},--熊大和三件套
+    mooseAndruins={"armorruins","ruins_bat","ruinshat","moose"},--鹿鸭和三件套
+    monkeyChest={"palmcone_seed","dock_kit_blueprint","boat_cannon_kit_blueprint","cannonball_rock_item_blueprint"},--猴子岛蓝图包
+    --武器
+    ruins={"armorruins","ruins_bat","ruinshat"},--三件套
+    --怪物
+
+    shark={"shark"},
+    Hat={"hivehat","walrushat","beefalohat","watermelonhat"},--帽子
+    --种子包
+    Seeds={"tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds","tillweed_seeds"},
+    Seeds2={"firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds","firenettles_seeds"},
+    Seeds3={"ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds","ivy_seeds"},
+
+    --其它
+    slot_cap = {"red_cap","green_cap","blue_cap"},
+    waterplant_pack={"waterplant_bomb","waterplant_bomb","waterplant_bomb","waterplant_bomb","waterplant_bomb","waterplant_bomb","waterplant_bomb"},
+    gemPack={"redgem","redgem","redgem","redgem","purplegem","purplegem","purplegem","purplegem","bluegem","bluegem","bluegem","bluegem"},
+}
+TSCHEST_LOOT={
+    monkeyChest=5,
+    deerAndruins=1,
+    bearAndruins=1,
+    mooseAndruins=1,
+    shark=2,
+
+    ruins=5,
+    sunkenchest=5,
+    gift=5,
+    gemPack=5,
+    Seeds=5,
+    Seeds2=5,
+    Seeds3=5,
+    Hat=5,
+    waterplant_pack=5,
+    ----------OK LIST
+    slot_cap = 1,
+
+}
+Gifts={
+    BasePack={
+        maxwell_smoke=1,
+        cutreeds=8,
+        cutgrass=10,
+        rocks=8,--石头
+        flint=8,--燧石
+        log=10,--木头
+        silk=20,--蜘蛛丝
+    },
+    farm_Pack={
+        maxwell_smoke=1,
+        farm_plow_item=6,
+        golden_farm_hoe=3,
+    },
+    moonrocknugget={
+        maxwell_smoke=1,
+        moonrocknugget=5,
+
+    },
+    staffPack={
+        maxwell_smoke=1,
+        telestaff=1,--传送魔杖
+        orangestaff=1,--懒人魔杖
+        yellowstaff=1,--唤星者魔杖
+    },
+    amuletPack={
+        maxwell_smoke=1,
+        amulet=1,
+        blueamulet=1,
+        greenamulet=1,--建造护符
+        purpleamulet=1,--梦魇护符
+        yellowamulet=1,--魔光护符
+    },
+    mushroombomb_dark={--炸弹礼物
+        maxwell_smoke=1,
+        mushroombomb_dark=10
+    },
+    poop={
+        toadstool_cap_absorbfx=1,
+        poop=20,
+    },
+    flower={
+        flower=20,
+        ghostflower=20,
+    },
+    madscience_lab={
+        sleepbomb_burst=1,
+        --madscience_lab=1,
+    },
+    ancient_altar={
+        stalker_shield3=1,
+        ancient_altar=1,
+    },
+    beemine_maxwell={
+        beemine_maxwell=3,
+    },
+    engineerPack={
+        sewing_tape=10,
+        fireflies=5,
+        bugnet=1,
+    },
+    monkeyPack1={
+        dock_kit_blueprint=1,
+    },
+    monkeyPack2={
+        boat_cannon_kit_blueprint=1,
+    },
+    monkeyPack3={
+        cannonball_rock_item_blueprint=1,
+    },
+    monkeyPack4={
+        palmcone_scale=1,
+    },
+    --[[TODO:
+    Buff_YellowAsh={
+        "nofollow_mushroomsprout_glow",--头皮屑
+        "nofollow_small_puff",--移动速度
+        "attackbf_sleepbomb_burst",--范围攻击
+        "yefollow_ghostlyelixir_fastregen"--爱心buff
+    },
+    ]]--
+}
+Gifts_Random={
+    monkeyPack1=10,
+    monkeyPack2=10,
+    monkeyPack3=10,
+    monkeyPack4=10,
+    BasePack=10,
+    farm_Pack=10,
+    sunkenchest=10,
+    gift=10,
+    krampus_sack=10,--小偷背包
+    amuletPack=5,--护符
+    eyebrellahat=5,--眼球伞
+    statue_marble=2,--大理石雕像
+    mushroombomb_dark=10,--炸弹礼物
+    ancient_altar=1,--远古科技
+    klaus_sack=10,--赃物袋
+    poop=2,--大便
+    flower=3,--花
+    moonrocknugget=5,--月石
+    beemine_maxwell=5,--蚊子礼物
+    engineerPack=5,--工程师包
+    terrarium=20,--泰拉瑞亚眼球boss召唤物
+}
+
+local function updateTwinHealth()
+    local Days=TheWorld.state.cycles + 1 --天数
+    print("~~~~~~~~~Days:"..tostring(Days))
+    --普通眼球一天加5000
+    TUNING.EYEOFTERROR_HEALTH = 5000 * Days
+    --双子魔眼血量一天加一万
+    TUNING.TWIN1_HEALTH = 10000 * Days
+    TUNING.TWIN2_HEALTH = 10000 * Days
+    --勿忘我价格递减
+    local price = 1000 - (Days-1) * 50
+    if price < 0 then
+        price = 20
+    end
+    RecoveryList["forgetmelots"] = price
+end
+
+local function addHelloWidget(self)
+
+	self.ui_bg = self:AddChild(Image("images/ui_coin.xml", "ui_coin_bg.tex"))
+	self.ui_bg:SetScale(0.7)
+	self.ui_bg:SetVAnchor(1)
+	self.ui_bg:SetHAnchor(1)
+	self.ui_bg:SetPosition(100, -40, 0)
+	--self.ui_bg:SetScaleMode(SCALEMODE_PROPORTIONAL)
+
+	self.ui_tx = self.ui_bg:AddChild(Text(BODYTEXTFONT, 40))
+	self.ui_tx:SetVAnchor(1)
+	self.ui_tx:SetHAnchor(1)
+	self.ui_tx:SetPosition(135, -40, 0)
+	self.ui_tx:SetString("没金币")
+	UI = self
+
+end
+AddClassPostConstruct("widgets/controls", addHelloWidget)
+
+--这是一个小土堆出货概率表
+
+STRINGS.NAMES.FIRENETTLES_SEEDS="火荨麻种子"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.FIRENETTLES_SEEDS = "老木糖给你喝岩浆的温度"
+
+STRINGS.NAMES.FORGETMELOTS_SEEDS="必忘我种子"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.FORGETMELOTS_SEEDS = "忘了老木糖吧"
+
+STRINGS.NAMES.TILLWEED_SEEDS="犁地草种子"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.TILLWEED_SEEDS = "犁出很多老木糖"
+
+STRINGS.NAMES.IVY_SEEDS="针刺旋花种子"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.IVY_SEEDS = "困住木糖"
+
+STRINGS.NAMES.MONSTSPAWNER1="传送门1"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.MONSTSPAWNER1="全是狗"
+
+STRINGS.NAMES.MONSTSPAWNER2="传送门2"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.MONSTSPAWNER1="全是狗"
+
+STRINGS.NAMES.MONSTSPAWNER3="传送门3"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.MONSTSPAWNER1="全是狗"
+
+STRINGS.NAMES.MONSTSPAWNER4="传送门4"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.MONSTSPAWNER1="全是狗"
+
+STRINGS.NAMES.MYMOONBASE="以前那个月台？"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.MYMOONBASE = "守住它"
+
+STRINGS.NAMES.SNORTOISE="王八"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SNORTOISE = "王八"
+
+
+
+local function JudgeIsWall(x,y,z)
+	local target_ents = TheSim:FindEntities(x,y,z, 1,nil,nil,{"wall"})
+	if #target_ents>=1 then return true
+	else return false end
+end
+
+local function Fly(inst)
+	local point1 = inst:GetPosition()
+	local vec = inst.Forward/inst.timeaa
+	if not TheWorld.Map:IsOceanTileAtPoint(point1.x+vec.x,0,point1.z+vec.z) and not JudgeIsWall(point1.x+vec.x,0,point1.z+vec.z) then
+		inst.Transform:SetPosition(point1.x+vec.x,0,point1.z+vec.z)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:revivablecorpse
+end)
+AddComponentPostInit("revivablecorpse", function(self)
+    self.revivable = _G.net_bool(self.inst.GUID, "revivablecorpse.revivable")
+    self.SetRevivable = function(self, val)
+        self.revivable:set(val)
+    end
+    self:SetRevivable(true)
+
+    local _oldCanBeRevivedBy = self.CanBeRevivedBy
+    self.CanBeRevivedBy = function(self, reviver)
+        return self.revivable:value() and _oldCanBeRevivedBy(self, reviver)
+    end
+
+    self.base_revive_health_percent = 1
+    self.SetBaseReviveHealthPercent = function(self, percent)
+        if self.ismastersim then
+            self.base_revive_health_percent = percent or self.base_revive_health_percent
+        end
+    end
+
+    self.revivers_mult = 1
+    self.GetReviveHealthPercent = function(self)
+        if self.ismastersim then
+            return self.health_override or self.revive_health_percet * self.base_revive_health_percent * (self.revivers_mult or 1)
+        end
+    end
+
+    local _oldSetCorpse = self.SetCorpse
+    self.SetCorpse = function(self, corpse)
+        if self.ismastersim and not corpse then
+            self.reviving = false
+            self.health_override = nil
+            self.revivers_mult = 1
+            self.inst:PushEvent("revived")
+        end
+        _oldSetCorpse(self, corpse)
+    end
+
+    local _oldRevive = self.Revive
+    self.Revive = function(self, reviver, health_override)
+        if not self:IsReviving() then
+            _oldRevive(self, reviver)
+            if self.ismastersim then
+                self.reviving = true
+                self.health_override = health_override
+                self.revivers_mult = reviver and reviver.components.corpsereviver and reviver.components.corpsereviver:GetReviveHealthPercentMult() or 1
+            end
+        end
+    end
+
+    self.reviving = false
+    self.IsReviving = function(self)
+        return self.reviving
+    end
+
+    self.IsCorpse = function(self)
+        return self.inst:HasTag("corpse")
+    end
+
+    self.revive_charges = {}
+    self.revive_priority = {}
+    self.AddCharge = function(self, source, health, on_revive_fn, priority)
+        if not self.revive_charges[source] then
+            self.revive_charges[source] = true
+            table.insert(self.revive_priority, {source = source, health = health, on_revive_fn = on_revive_fn, priority = priority})
+            table.sort(self.revive_priority, function(a, b)
+                return a.priority < b.priority
+            end)
+            -- Check to see if charge should be immediately used.
+            self:ConsumeCharge()
+        end
+    end
+
+    self.RemoveCharge = function(self, source)
+        if self.revive_charges[source] then
+            self.revive_charges[source] = nil
+            for i,data in pairs(self.revive_priority) do
+                if data.source == source then
+                    table.remove(self.revive_priority, i)
+                    break
+                end
+            end
+        end
+    end
+
+    self.HasReviveCharges = function(self)
+        return #self.revive_priority > 0
+    end
+
+    local REVIVE_DELAY = 3 -- Ensure the owner is completely dead before attempting to revive.
+    self.ConsumeCharge = function(self)
+        if self.inst.components.health:IsDead() and not self:IsReviving() and #self.revive_priority > 0 then
+            self.inst:DoTaskInTime(self.inst.sg.currentstate.name ~= "corpse" and REVIVE_DELAY or 0, function()
+                local revive_data = table.remove(self.revive_priority, 1)
+                self:Revive(revive_data.source, revive_data.health)
+                if revive_data.on_revive_fn then
+                    revive_data.on_revive_fn(self.inst)
+                end
+                self.revive_charges[revive_data.source] = nil
+            end)
+        end
+    end
+
+    self.inst:ListenForEvent("death", function()
+        self:ConsumeCharge()
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:snortoise
+end
+AddStategraphPostInit("snortoise", HitFly) --让牌子可以击飞任何怪物
+
+
+
+LastWave={--记录上一个并重置它
+	day = nil,
+	waves={}
+}
+
+
+local function qianghua(inst,Size)--怪物增加体积
+
+	local Scale = inst.Transform:GetScale()
+	inst.Transform:SetScale(Scale*Size, Scale*Size, Scale*Size)
+
+	if inst.components.aura and Size > 1 then
+		inst.components.aura.radius = inst.components.aura.radius *Size
+	end
+
+	if inst.components.health ~= nil then
+		if inst.myscale == nil and inst.components.health then
+			if Size<=0.2 then Size=0.2 end
+			inst.components.health.maxhealth=inst.components.health.maxhealth*(Size-0.15)
+			inst.components.health.currenthealth=inst.components.health.maxhealth
+		end
+
+	end
+
+
+	if inst.components.combat then
+		inst.components.combat.hitrange = inst.components.combat.hitrange * Size
+		inst.components.combat.attackrange = inst.components.combat.attackrange * Size
+		if inst.components.domesticatable ~= nil and  inst.components.domesticatable:IsDomesticated() then
+			Size = math.min(Size,2)
+		end
+		inst.components.combat.defaultdamage =  math.ceil(inst.components.combat.defaultdamage * Size)
+	end
+
+	if inst.Physics ~= nil then
+		local radius = inst.Physics:GetRadius() or 0
+		local height = inst.Physics:GetHeight() or 2
+		inst.Physics:SetCapsule(radius * Size, height)
+	end
+	if inst.components.locomotor ~= nil then
+		inst.components.locomotor.runspeed = inst.components.locomotor.runspeed/inst.Transform:GetScale()
+	end
+
+	inst.myscale = Size
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:weed_firenettle
+
+AddPrefabPostInit("weed_firenettle",AddMove)-------------------定位-这里却是正常的还有这里
+AddPrefabPostInit("fossil_stalker",function(inst) --骨头碎片没有碰撞
+	inst.Physics:ClearCollisionMask()
+	inst.Physics:CollidesWith(COLLISION.GROUND)
+end)
+
+```
+
+
+
+### 变体演进：FF6 Death Sound (Mod 2723078309)
+- **变体场景与切面**：收录来自工坊 Mod 2723078309 (`FF6 Death Sound`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2723078309)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
