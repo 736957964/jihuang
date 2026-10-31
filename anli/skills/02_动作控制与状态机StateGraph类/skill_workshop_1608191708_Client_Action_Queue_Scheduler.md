@@ -3337,3 +3337,781 @@ end)
 
 ```
 
+
+
+### 变体演进：Ma Pháp Khai Nguyên (Mod 3814992771)
+- **变体场景与切面**：收录来自工坊 Mod 3814992771 (`Ma Pháp Khai Nguyên`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3814992771)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", WrapMap)   -- components/map.lua da nap xong (server lan may nguoi choi)
+AddSimPostInit(WrapMap)               -- du phong
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(world)
+    local lit = false
+    local ramp = nil
+    local current = nil   -- mau dang day (nil = game tu lo)
+    local function Push(c)
+        current = c
+        world:PushEvent("overrideambientlighting", c ~= nil and G.Point(c[1], c[2], c[3]) or nil)
+    end
+    -- chuyen dan tu `from` sang `to` trong MPKN_BLOODMOON_FADE giay; xong goi done()
+    local function Ramp(from, to, done)
+        if ramp ~= nil then
+            ramp:Cancel()
+            ramp = nil
+        end
+        local steps = math.max(1, math.floor(TUNING.MPKN_BLOODMOON_FADE / 0.1))
+        local i = 0
+        ramp = world:DoPeriodicTask(0.1, function()
+            i = i + 1
+            if i >= steps then
+                ramp:Cancel()
+                ramp = nil
+                Push(to)
+                if done ~= nil then
+                    done()
+                end
+                return
+            end
+            local k = i / steps
+            Push({ from[1] + (to[1] - from[1]) * k, from[2] + (to[2] - from[2]) * k, from[3] + (to[3] - from[3]) * k })
+        end)
+    end
+    local function Update(force)
+        local night = CurrentPhase() == "night"
+        if night == lit and not force then
+            return
+        end
+        lit = night
+        if night then
+            -- vao dem: tu mau chieu cua game (luc nay anh sang dang la mau chieu) do dan sang anh sang dem do
+            Ramp(current or SeasonColour("MPKN_BLOODMOON_DUSK_AMBIENT"), TUNING.MPKN_BLOODMOON_NIGHT_AMBIENT)
+        elseif current ~= nil then
+            -- het dem: chuyen dan sang mau ban ngay roi tra lai cho game
+            Ramp(current, SeasonColour("MPKN_BLOODMOON_DAY_AMBIENT"), function() Push(nil) end)
+        end
+    end
+    relight = function() Update(true) end
+    world:DoPeriodicTask(0.5, function() Update(false) end, 0)
+end)
+
+-- Tao trong PlayerHud:CreateOverlays (luc nhan vat vao game): ham nay xoa sach overlayroot roi tao lai
+-- cac lop phu cua game => tao lop phu huyet nguyet SAU do (tao trong constructor se bi xoa mat).
+local function SetupClient(self, owner)
+    if owner == nil or self.overlayroot == nil then
+        return
+    end
+    if self.mpkn_bloodmoon_task ~= nil then
+        self.mpkn_bloodmoon_task:Cancel()
+        self.mpkn_bloodmoon_task = nil
+    end
+    local Image = G.require("widgets/image")
+    local img = self.overlayroot:AddChild(Image("images/global.xml", "square.tex"))
+    img:SetVRegPoint(G.ANCHOR_MIDDLE)
+    img:SetHRegPoint(G.ANCHOR_MIDDLE)
+    img:SetVAnchor(G.ANCHOR_MIDDLE)
+    img:SetHAnchor(G.ANCHOR_MIDDLE)
+    img:SetScaleMode(G.SCALEMODE_FILLSCREEN)
+    img:SetClickable(false)
+    img:SetTint(1, 0, 0, 0)
+    img:Hide()
+    self.mpkn_bloodmoon_overlay = img
+
+    local shown = nil
+    self.mpkn_bloodmoon_refresh = function() shown = false end   -- console c_mpkn_bloodmoon_colour: ve lai
+    if owner.components.playervision ~= nil then
+        -- ban cu bat "nhin trong toi" o day; gio anh sang dem lam o phan "Anh sang dem huyet nguyet" phia tren
+        owner.components.playervision:PopForcedNightVision(KEY)
+    end
+    local function Update()
+        local phase = CurrentPhase()
+        if phase == shown then
+            return
+        end
+        shown = phase
+        local fade = TUNING.MPKN_BLOODMOON_FADE
+        if phase == "dusk" then
+            Tint(img, TUNING.MPKN_BLOODMOON_DUSK_TINT, fade)
+        elseif phase == "night" then
+            Tint(img, TUNING.MPKN_BLOODMOON_NIGHT_TINT, fade)
+        else
+            local c = TUNING.MPKN_BLOODMOON_NIGHT_TINT
+            Tint(img, { c[1], c[2], c[3], 0 }, fade)
+        end
+    end
+    self.mpkn_bloodmoon_task = self.inst:DoPeriodicTask(0.5, Update, 0)
+end
+
+AddClassPostConstruct("screens/playerhud", function(self)
+    local old = self.CreateOverlays
+    self.CreateOverlays = function(hud, owner, ...)
+        local r = old(hud, owner, ...)
+        SetupClient(hud, owner)
+        return r
+    end
+end)
+
+local mpkn = G.rawget(G, "MPKN")
+if mpkn ~= nil then
+    mpkn.BloodMoon = {
+        IsDay = MPKN_IsBloodMoonDay, Phase = CurrentPhase, OnPhase = OnPhase, Scan = Scan,
+        ApplyBuff = ApplyBuff, RemoveBuff = RemoveBuff, IsOwned = IsOwned,
+        GetActive = function() return active end,
+    }
+end
+
+--------------------------------------------------------------------------
+-- Dong ho: cham mat trang nho (UIClock._moonanim - Combined Status thu nho / dat canh dong ho) hien moi buoi chieu
+-- + dem. Ngay huyet nguyet (chieu + dem cua ngay do) => doi hinh mat trang sang ban MAU DO, vien go nau giu nguyen.
+--   * Hinh mat trang cua game (build "moon_phases", 8 pha) ve lien vien go nau trong cung 1 hinh => khong to mau rieng
+--     ruot duoc bang code. Mod co build rieng "mpkn_moon_phases_blood" (anim/mpkn_moon_phases_blood.zip): chep y het
+--     moon_phases, chi to do phan mat trang ben trong vien (cung ten symbol tung pha) => chi doi build khi gan symbol.
+--   * Chi khi dong ho dang dung hinh mat trang thuong (moon_phases); kieu mat trang Thuy tinh (Celestial) giu nguyen.
+--   * Chi phia may nguoi choi, tu tinh tu TheWorld.state. Hang dong khong co mat trang (_moonanim = nil) => bo qua.
+
+local BLOOD_MOON_BUILD = "mpkn_moon_phases_blood"
+table.insert(Assets, G.Asset("ANIM", "anim/" .. BLOOD_MOON_BUILD .. ".zip"))
+
+-- = moon_syms trong UIClock:ShowMoon cua game
+local function MoonSymbol(clock)
+    local p, waxing = clock._moonphase, clock._mooniswaxing
+    if p == "quarter" then
+        return waxing and "moon_quarter_wax" or "moon_quarter"
+    elseif p == "threequarter" then
+        return waxing and "moon_three_quarter_wax" or "moon_three_quarter"
+    elseif p == "half" then
+        return waxing and "moon_half_wax" or "moon_half"
+    elseif p == "new" then
+        return "moon_new"
+    end
+    return "moon_full"
+end
+
+AddClassPostConstruct("widgets/uiclock", function(self)
+    if self._moonanim == nil then
+        return
+    end
+    local function IsBloodMoonNow()
+        local ws = G.TheWorld ~= nil and G.TheWorld.state or nil
+        -- doc ws.phase (KHONG dung ws.isdusk / ws.isnight): game bao "phase" TRUOC khi cap nhat isdusk / isnight
+        local phase = ws ~= nil and ws.phase or nil
+        return (phase == "dusk" or phase == "night") and MPKN_IsBloodMoonDay(ws.cycles)
+    end
+    local function Apply()
+        local anim = self._moonanim ~= nil and self._moonanim:GetAnimState() or nil
+        if anim == nil or self._moonphasebuild ~= "moon_phases" then
+            return
+        end
+        local build = IsBloodMoonNow() and BLOOD_MOON_BUILD or self._moonphasebuild
+        anim:OverrideSymbol("swap_moon", build, MoonSymbol(self))
+    end
+    -- game gan lai hinh mat trang moi khi doi pha trang / hien trang => gan lai ban do sau no
+    local _ShowMoon = self.ShowMoon
+    self.ShowMoon = function(clock, ...)
+        local r = _ShowMoon(clock, ...)
+        Apply()
+        return r
+    end
+    self.inst:WatchWorldState("phase", Apply)
+    self.inst:WatchWorldState("cycles", Apply)
+    self.inst:DoTaskInTime(0, Apply)
+    Apply()
+end)
+
+--------------------------------------------------------------------------
+-- Console (thu mau khong can sua file): c_mpkn_bloodmoon_colour(r, g, b, dem, chieu)
+--   r, g, b  = anh sang dem (0..1), vd 0.66, 0.32, 0.32
+--   dem      = do dam lop phu man hinh ban dem (0..1), vd 0.08
+--   chieu    = do dam lop phu man hinh buoi chieu (0..1), vd 0.08
+--   Bo trong tham so nao thi giu gia tri cu. Chi doi tren may go lenh (host khong dedicated: ca server + man hinh),
+--   mat khi thoat game => thay mau ung y thi ghi vao common/constants.lua.
+G.global("c_mpkn_bloodmoon_colour")
+G.c_mpkn_bloodmoon_colour = function(r, g, b, night_alpha, dusk_alpha)
+    local a = TUNING.MPKN_BLOODMOON_NIGHT_AMBIENT
+    TUNING.MPKN_BLOODMOON_NIGHT_AMBIENT = { r or a[1], g or a[2], b or a[3] }
+    if night_alpha ~= nil then
+        local c = TUNING.MPKN_BLOODMOON_NIGHT_TINT
+        TUNING.MPKN_BLOODMOON_NIGHT_TINT = { c[1], c[2], c[3], night_alpha }
+    end
+    if dusk_alpha ~= nil then
+        local c = TUNING.MPKN_BLOODMOON_DUSK_TINT
+        TUNING.MPKN_BLOODMOON_DUSK_TINT = { c[1], c[2], c[3], dusk_alpha }
+    end
+    if relight ~= nil then
+        relight()
+    end
+    local hud = G.ThePlayer ~= nil and G.ThePlayer.HUD or nil
+    if hud ~= nil and hud.mpkn_bloodmoon_refresh ~= nil then
+        hud.mpkn_bloodmoon_refresh()
+    end
+    local n, d = TUNING.MPKN_BLOODMOON_NIGHT_AMBIENT, TUNING.MPKN_BLOODMOON_NIGHT_TINT
+    print(string.format("[MPKN] Huyet nguyet: anh sang dem {%.2f, %.2f, %.2f}, lop phu dem %.3f, chieu %.3f",
+        n[1], n[2], n[3], d[4], TUNING.MPKN_BLOODMOON_DUSK_TINT[4]))
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", function(self)
+    BlockWhileFlying(self, { "MakeRecipeFromMenu", "MakeRecipeAtPoint", "BufferBuild", "MakeRecipe" })
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+-- Hinh cuoi choi cua game chi bat khi tay cam vat co tag "flyingbroom" (SGwilson ConfigureRunState) => dang bay coi nhu co
+AddComponentPostInit("inventory", function(self, inst)
+    local _EquipHasTag = self.EquipHasTag
+    self.EquipHasTag = function(s, tag, ...)
+        if tag == "flyingbroom" and Util.IsFlying(s.inst) then
+            return true
+        end
+        return _EquipHasTag(s, tag, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+-- Toc do co dinh (server + may nguoi choi du doan)
+AddComponentPostInit("locomotor", function(self, inst)
+    if not inst:HasTag("player") then
+        return
+    end
+    local _RunSpeed = self.RunSpeed
+    self.RunSpeed = function(s, ...)
+        if Util.IsFlying(s.inst) then
+            return G.TheWorld.state.israining and TUNING.MPKN_BROOM_RAIN_SPEED or TUNING.MPKN_BROOM_SPEED
+        end
+        return _RunSpeed(s, ...)
+    end
+    local _GetSpeedMultiplier = self.GetSpeedMultiplier
+    self.GetSpeedMultiplier = function(s, ...)
+        if Util.IsFlying(s.inst) then
+            -- chi giu phan LAM CHAM tu ngoai (ru ngu, ngay ngat, ho sut, bao...): buff tang toc / mat dat (bun, mang nhen,
+            -- duong...) / do mac khong tinh
+            local ext = s.ExternalSpeedMultiplier ~= nil and s:ExternalSpeedMultiplier() or 1
+            return math.min(1, ext)
+        end
+        return _GetSpeedMultiplier(s, ...)
+    end
+    if Util.IsFlying(inst) then
+        Util.ApplyLocal(inst, true)   -- may nguoi choi: locomotor co sau (vao game dang bay)
+    end
+end)
+
+-- Dang bay: khong chet duoi / roi vuc
+AddComponentPostInit("drownable", function(self, inst)
+    local _ShouldDrown = self.ShouldDrown
+    self.ShouldDrown = function(s, ...)
+        if Util.IsFlying(s.inst) then
+            return false
+        end
+        return _ShouldDrown(s, ...)
+    end
+    local _ShouldFallInVoid = self.ShouldFallInVoid
+    self.ShouldFallInVoid = function(s, ...)
+        if Util.IsFlying(s.inst) then
+            return false
+        end
+        return _ShouldFallInVoid(s, ...)
+    end
+end)
+
+-- Dang bay: mat nhiet nhanh hon 25% (chi luc dang lanh di)
+AddComponentPostInit("temperature", function(self, inst)
+    if not inst:HasTag("player") then
+        return
+    end
+    local _OnUpdate = self.OnUpdate
+    self.OnUpdate = function(s, dt, ...)
+        local before = s.current
+        _OnUpdate(s, dt, ...)
+        if Util.IsFlying(s.inst) and s.current < before then
+            local x, _, z = s.inst.Transform:GetWorldPosition()
+            local getat = G.rawget(G, "GetTemperatureAtXZ")
+            local ambient = getat ~= nil and getat(x, z) or G.TheWorld.state.temperature
+            local floor = math.max(s.mintemp or TUNING.MIN_ENTITY_TEMP, math.min(s.current, ambient))
+            local target = before + (s.current - before) * TUNING.MPKN_BROOM_COLD_MULT
+            if target < s.current then
+                s:SetTemperature(math.max(target, floor))
+            end
+        end
+    end
+end)
+
+-- Chuot trai vao mat nuoc (vung bay duoc) => di toi do (game: chi di toi o dat)
+local function MakeMapProxy(inst, map)
+    local proxy = {}
+    proxy.IsPassableAtPoint = function(_, x, y, z, ...)
+        if x ~= nil and z ~= nil and Util.IsFlying(inst) and Util.Allowed(x, z) then
+            return true
+        end
+        return map:IsPassableAtPoint(x, y, z, ...)
+    end
+    return G.setmetatable(proxy, {
+        __index = function(t, k)
+            local v = map[k]
+            if type(v) == "function" then
+                local f = function(_, ...)
+                    return v(map, ...)
+                end
+                G.rawset(t, k, f)
+                return f
+            end
+            return v
+        end,
+    })
+end
+
+for _, name in ipairs({ "playeractionpicker", "playercontroller" }) do
+    AddComponentPostInit(name, function(self, inst)
+        if self.map ~= nil then
+            self.map = MakeMapProxy(inst, self.map)
+        end
+        if name == "playercontroller" then
+            BlockWhileFlying(self, { "StartBuildPlacementMode" })   -- khong hien bong cong trinh de dat
+            -- F / Ctrl+F / nut danh tay cam: dang bay => khong danh, nhac xuong choi
+            for _, fname in ipairs({ "DoAttackButton", "DoControllerAttackButton" }) do
+                local fn = self[fname]
+                if fn ~= nil then
+                    self[fname] = function(s, ...)
+                        if Util.IsFlying(s.inst) then
+                            if s.inst == G.ThePlayer then
+                                SayDismountFirst(s.inst)
+                            end
+                            return
+                        end
+                        return fn(s, ...)
+                    end
+                end
+            end
+        end
+        if Util.IsFlying(inst) then
+            Util.ApplyLocal(inst, true)   -- loc hanh dong (component co sau netvar)
+        end
+    end)
+end
+
+--------------------------------------------------------------------------
+-- Hanh dong
+
+-- Leo len (chuot phai vao choi, phai dang cam ngoc cua choi do)
+AddAction("MPKN_BROOM_MOUNT", MPKN_TXT.ACTION.BROOM_MOUNT, function(act)
+    local doer, broom = act.doer, act.target
+    local rider = doer ~= nil and doer.components.mpkn_broomrider or nil
+    local bc = broom ~= nil and broom:IsValid() and broom.components.mpkn_broom or nil
+    if rider == nil or bc == nil then
+        return false
+    end
+    return rider:Mount(bc.gem, broom)
+end)
+ACTIONS.MPKN_BROOM_MOUNT.distance = 2
+ACTIONS.MPKN_BROOM_MOUNT.priority = 2
+
+-- doer leo len choi nay duoc khong (ca 2 phia): dang cam ngoc cua choi, ngoc chua can, khong dang bay / cuoi beefalo
+local function CanMountBroom(broom, doer)
+    if doer:HasTag("mpkn_broomflying") or doer:HasTag("playerghost") then
+        return false
+    end
+    if doer.replica.rider ~= nil and doer.replica.rider:IsRiding() then
+        return false
+    end
+    local gem = broom._gem ~= nil and broom._gem:value() or nil
+    -- ngoc can van hien "Leo lên": bam vao => nhan vat noi can nap nang luong (mpkn_broomrider:CanMount)
+    return gem ~= nil and gem.replica.inventoryitem ~= nil and gem.replica.inventoryitem:IsGrandOwner(doer)
+end
+
+AddComponentAction("SCENE", "mpkn_broom", function(inst, doer, actions, right)
+    if right and CanMountBroom(inst, doer) then
+        table.insert(actions, ACTIONS.MPKN_BROOM_MOUNT)
+    end
+end)
+
+-- Choi mong, kho tro trung => chuot phai XUONG DAT gan choi cua minh (TUNING.MPKN_BROOM_CLICK_RADIUS) cung la "Leo lên"
+-- (ca server: server tinh lai hanh dong chuot phai tu vi tri may nguoi choi gui len)
+local BROOM_MUST_TAGS = { "mpkn_broom" }
+local BROOM_CANT_TAGS = { "INLIMBO" }
+local function FindMountableBroom(doer, x, z)
+    local best, bestd
+    for _, broom in ipairs(G.TheSim:FindEntities(x, 0, z, TUNING.MPKN_BROOM_CLICK_RADIUS, BROOM_MUST_TAGS, BROOM_CANT_TAGS)) do
+        if CanMountBroom(broom, doer) then
+            local d = broom:GetDistanceSqToPoint(x, 0, z)
+            if bestd == nil or d < bestd then
+                best, bestd = broom, d
+            end
+        end
+    end
+    return best
+end
+
+AddComponentPostInit("playeractionpicker", function(self, inst)
+    local _GetRightClickActions = self.GetRightClickActions
+    self.GetRightClickActions = function(s, position, target, ...)
+        local actions = _GetRightClickActions(s, position, target, ...)
+        if position ~= nil and (actions == nil or #actions == 0) and (target == nil or target:HasTag("mpkn_broom")) then
+            local broom = FindMountableBroom(s.inst, position.x, position.z)
+            if broom ~= nil then
+                return { G.BufferedAction(s.inst, broom, ACTIONS.MPKN_BROOM_MOUNT) }
+            end
+        end
+        return actions
+    end
+end)
+
+-- Xuong choi (dang bay, chuot phai vao chinh minh - nhu xuong beefalo)
+AddAction("MPKN_BROOM_DISMOUNT", MPKN_TXT.ACTION.BROOM_DISMOUNT, function(act)
+    local rider = act.doer ~= nil and act.doer.components.mpkn_broomrider or nil
+    return rider ~= nil and rider:Dismount({ keepvisual = true, reason = "manual" }) or false
+end)
+ACTIONS.MPKN_BROOM_DISMOUNT.mount_valid = true
+ACTIONS.MPKN_BROOM_DISMOUNT.priority = 2
+
+AddComponentAction("SCENE", "mpkn_broomrider", function(inst, doer, actions, right)
+    if right and inst == doer and inst:HasTag("mpkn_broomflying") then
+        table.insert(actions, ACTIONS.MPKN_BROOM_DISMOUNT)
+    end
+end)
+
+-- Nap ngoc bang Ma thach
+local function ConsumeOne(item)
+    local one = item.components.inventoryitem ~= nil and item.components.inventoryitem:RemoveFromOwner(false) or item
+    one:Remove()
+end
+
+AddAction("MPKN_GEM_RECHARGE", MPKN_TXT.ACTION.GEM_RECHARGE, function(act)
+    local stone, gem = act.invobject, act.target
+    if stone == nil or gem == nil or not stone:IsValid() or not gem:IsValid() or not gem:HasTag("mpkn_broom_gem") then
+        return false
+    end
+    local fueled = gem.components.fueled
+    if fueled == nil or fueled:GetPercent() >= .999 then
+        return false
+    end
+    ConsumeOne(stone)
+    fueled:SetPercent(1)
+    if act.doer ~= nil and act.doer.SoundEmitter ~= nil then
+        act.doer.SoundEmitter:PlaySound("dontstarve/common/telebase_gemplace")
+    end
+    return true
+end)
+ACTIONS.MPKN_GEM_RECHARGE.mount_valid = true
+ACTIONS.MPKN_GEM_RECHARGE.priority = 2
+
+AddComponentAction("USEITEM", "mpkn_gemcharger", function(inst, doer, target, actions, right)
+    if target:HasTag("mpkn_broom_gem") and not target:HasTag("mpkn_gem_full") then
+        table.insert(actions, ACTIONS.MPKN_GEM_RECHARGE)
+    end
+end)
+
+AddPrefabPostInit("mpkn_mana_stone", function(inst)
+    if not G.TheWorld.ismastersim then
+        return
+    end
+    inst:AddComponent("mpkn_gemcharger")
+end)
+
+AddStategraphActionHandler("wilson", G.ActionHandler(ACTIONS.MPKN_BROOM_MOUNT, MOUNT_STATE))
+AddStategraphActionHandler("wilson", G.ActionHandler(ACTIONS.MPKN_BROOM_DISMOUNT, DISMOUNT_STATE))
+AddStategraphActionHandler("wilson", G.ActionHandler(ACTIONS.MPKN_GEM_RECHARGE, "doshortaction"))
+AddStategraphActionHandler("wilson_client", G.ActionHandler(ACTIONS.MPKN_BROOM_MOUNT, "doshortaction"))
+AddStategraphActionHandler("wilson_client", G.ActionHandler(ACTIONS.MPKN_BROOM_DISMOUNT, "doshortaction"))
+AddStategraphActionHandler("wilson_client", G.ActionHandler(ACTIONS.MPKN_GEM_RECHARGE, "doshortaction"))
+
+--------------------------------------------------------------------------
+-- Stategraph: lo lung / leo len / xuong
+
+local function HoverState(server)
+    return G.State{
+        name = HOVER,
+        tags = { "idle", "canrotate", "mpkn_broomhover" },
+
+        onenter = function(inst)
+            if inst.components.locomotor ~= nil then
+                inst.components.locomotor:StopMoving()
+            end
+            if not inst.AnimState:IsCurrentAnimation("run_witchbroom_loop") then
+                inst.AnimState:PlayAnimation("run_witchbroom_loop", true)
+            end
+            if server and Util.IsFlying(inst) then
+                inst:AddTag("notraptrigger")   -- state bay cua game go tag nay khi dung lai
+            end
+        end,
+
+        onupdate = function(inst)
+            if not Util.IsFlying(inst) then
+                inst.sg:GoToState("idle")
+            end
+        end,
+    }
+end
+
+-- Bay di chuyen: luon giu dang ngoi choi (khong doi sang chay ron ren / bao cat / ngay ngat... cua game)
+local function FlyState()
+    return G.State{
+        name = FLY_STATE,
+        tags = { "moving", "running", "canrotate", "flyingonbroom", "autopredict" },
+
+        onenter = function(inst)
+            if inst.components.locomotor ~= nil then
+                inst.components.locomotor:RunForward()
+            end
+            if not inst.AnimState:IsCurrentAnimation("run_witchbroom_loop") then
+                inst.AnimState:PlayAnimation("run_witchbroom_loop", true)
+            end
+            inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength())
+        end,
+
+        onupdate = function(inst)
+            if not Util.IsFlying(inst) then
+                inst.sg:GoToState("run")
+                return
+            end
+            if inst.components.locomotor ~= nil then
+                inst.components.locomotor:RunForward()
+            end
+        end,
+
+        ontimeout = function(inst)
+            inst.sg:GoToState(FLY_STATE)
+        end,
+    }
+end
+
+AddStategraphState("wilson", FlyState())
+AddStategraphState("wilson_client", FlyState())
+AddStategraphState("wilson", HoverState(true))
+AddStategraphState("wilson_client", HoverState(false))
+
+AddStategraphState("wilson", G.State{
+    name = MOUNT_STATE,
+    tags = { "doing", "busy", "nomorph" },
+
+    onenter = function(inst)
+        inst.components.locomotor:StopMoving()
+        if inst.components.playercontroller ~= nil then
+            inst.components.playercontroller:RemotePausePrediction()
+        end
+        local act = inst:GetBufferedAction()
+        local broom = act ~= nil and act.target or nil
+        if broom ~= nil and broom:IsValid() then
+            inst:ForceFacePoint(broom.Transform:GetWorldPosition())
+        end
+        if not inst:PerformBufferedAction() then
+            inst.sg:GoToState("idle")
+            return
+        end
+        inst.AnimState:PlayAnimation("run_witchbroom_pre")
+        PlayMountSound(inst)
+    end,
+
+    events =
+    {
+        G.EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")   -- dang bay => lo lung
+            end
+        end),
+    },
+})
+
+AddStategraphState("wilson", G.State{
+    name = DISMOUNT_STATE,
+    tags = { "doing", "busy", "nomorph", "dismounting" },
+
+    onenter = function(inst)
+        inst.components.locomotor:StopMoving()
+        if inst.components.playercontroller ~= nil then
+            inst.components.playercontroller:RemotePausePrediction()
+        end
+        if not inst:PerformBufferedAction() then
+            inst.sg:GoToState("idle")
+            return
+        end
+        inst.AnimState:PlayAnimation("run_witchbroom_pst")   -- choi van duoi nguoi toi het anim (FinishDismount o onexit)
+    end,
+
+    events =
+    {
+        G.EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        local rider = inst.components.mpkn_broomrider
+        if rider ~= nil then
+            rider:FinishDismount()
+        end
+    end,
+})
+
+-- Dang bay: dung yen => lo lung (khong buoc xuong choi), di chuyen => FLY_STATE
+local function PatchSG(sg)
+    local idle = sg.states.idle
+    if idle ~= nil then
+        local _onenter = idle.onenter
+        idle.onenter = function(inst, ...)
+            if Util.IsFlying(inst) then
+                inst.sg:GoToState(HOVER)
+                return
+            end
+            if _onenter ~= nil then
+                return _onenter(inst, ...)
+            end
+        end
+    end
+    local stop = sg.states.run_stop
+    if stop ~= nil then
+        local _onenter = stop.onenter
+        stop.onenter = function(inst, ...)
+            if Util.IsFlying(inst) then
+                inst.sg:GoToState(HOVER)
+                return
+            end
+            if _onenter ~= nil then
+                return _onenter(inst, ...)
+            end
+        end
+    end
+    -- moi state chay cua game => bay (bo qua chay ron ren / bao cat / ngay ngat / anim leo len cua choi cam tay)
+    for _, name in ipairs({ "run_start", "run", "run_flyingbroom_start", "run_flyingbroom" }) do
+        local st = sg.states[name]
+        if st ~= nil then
+            local _onenter = st.onenter
+            st.onenter = function(inst, ...)
+                if Util.IsFlying(inst) then
+                    inst.sg:GoToState(FLY_STATE)
+                    return
+                end
+                if _onenter ~= nil then
+                    return _onenter(inst, ...)
+                end
+            end
+        end
+    end
+end
+
+AddStategraphPostInit("wilson", PatchSG)
+AddStategraphPostInit("wilson_client", PatchSG)
+
+--------------------------------------------------------------------------
+-- Set: danh vao nguoi dang bay gan nhat (nhu cot thu loi)
+
+AddPrefabPostInit("forest", function(inst)
+    if not inst.ismastersim then
+        return
+    end
+    local _PushEvent = inst.PushEvent
+    inst.PushEvent = function(self, event, data, ...)
+        if event == "ms_sendlightningstrike" and type(data) == "table" and data.x ~= nil and data.z ~= nil then
+            local r = TUNING.MPKN_BROOM_LIGHTNING_RANGE
+            local best, bestd
+            for _, p in ipairs(G.AllPlayers) do
+                if p:IsValid() and p:HasTag("mpkn_broomflying") then
+                    local d = p:GetDistanceSqToPoint(data.x, 0, data.z)
+                    if d <= r * r and (bestd == nil or d < bestd) then
+                        best, bestd = p, d
+                    end
+                end
+            end
+            if best ~= nil then
+                local x, _, z = best.Transform:GetWorldPosition()
+                data = G.Vector3(x, 0, z)
+            end
+        end
+        return _PushEvent(self, event, data, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：影月重铸 | Shadow & Moon: Reforged (Mod 3817517238)
+- **变体场景与切面**：收录来自工坊 Mod 3817517238 (`影月重铸 | Shadow & Moon: Reforged`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3817517238)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:voidcloth_boomerang_proj
+end
+AddPrefabPostInit("voidcloth_boomerang_proj", hooks.BoomerangProjectile)
+AddPrefabPostInit("houndstooth_proj", hooks.ToothProjectile)
+AddPrefabPostInit("houndstooth_proj",ammo.Projectile)
+AddPrefabPostInit("stafflight",newgear.Star)
+AddPrefabPostInit("queen_torchlight",newgear.QueenLightPrefab)
+AddPrefabPostInit("beefalo", saddle_storage.Beefalo)
+AddComponentAction("POINT", "farmtiller", function(inst, doer, pt, actions, right)
+    if right and tilling.CanAreaTill(inst, pt) then
+        for _, action in ipairs(actions) do if action == G.ACTIONS.TILL then return end end
+        actions[#actions+1] = G.ACTIONS.TILL
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:houndstooth_proj
+AddPrefabPostInit("voidcloth_boomerang_proj", hooks.BoomerangProjectile)
+AddPrefabPostInit("houndstooth_proj", hooks.ToothProjectile)
+AddPrefabPostInit("houndstooth_proj",ammo.Projectile)
+AddPrefabPostInit("stafflight",newgear.Star)
+AddPrefabPostInit("queen_torchlight",newgear.QueenLightPrefab)
+AddPrefabPostInit("beefalo", saddle_storage.Beefalo)
+AddComponentAction("POINT", "farmtiller", function(inst, doer, pt, actions, right)
+    if right and tilling.CanAreaTill(inst, pt) then
+        for _, action in ipairs(actions) do if action == G.ACTIONS.TILL then return end end
+        actions[#actions+1] = G.ACTIONS.TILL
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:stafflight
+AddPrefabPostInit("houndstooth_proj",ammo.Projectile)
+AddPrefabPostInit("stafflight",newgear.Star)
+AddPrefabPostInit("queen_torchlight",newgear.QueenLightPrefab)
+AddPrefabPostInit("beefalo", saddle_storage.Beefalo)
+AddComponentAction("POINT", "farmtiller", function(inst, doer, pt, actions, right)
+    if right and tilling.CanAreaTill(inst, pt) then
+        for _, action in ipairs(actions) do if action == G.ACTIONS.TILL then return end end
+        actions[#actions+1] = G.ACTIONS.TILL
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:queen_torchlight
+AddPrefabPostInit("stafflight",newgear.Star)
+AddPrefabPostInit("queen_torchlight",newgear.QueenLightPrefab)
+AddPrefabPostInit("beefalo", saddle_storage.Beefalo)
+AddComponentAction("POINT", "farmtiller", function(inst, doer, pt, actions, right)
+    if right and tilling.CanAreaTill(inst, pt) then
+        for _, action in ipairs(actions) do if action == G.ACTIONS.TILL then return end end
+        actions[#actions+1] = G.ACTIONS.TILL
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beefalo
+AddPrefabPostInit("queen_torchlight",newgear.QueenLightPrefab)
+AddPrefabPostInit("beefalo", saddle_storage.Beefalo)
+AddComponentAction("POINT", "farmtiller", function(inst, doer, pt, actions, right)
+    if right and tilling.CanAreaTill(inst, pt) then
+        for _, action in ipairs(actions) do if action == G.ACTIONS.TILL then return end end
+        actions[#actions+1] = G.ACTIONS.TILL
+    end
+end)
+
+```
+

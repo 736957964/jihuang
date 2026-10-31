@@ -3738,8 +3738,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 03:47:49",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3814992771",
+      "name": "Ma Pháp Khai Nguyên",
+      "author": "Sang, Ken",
+      "version": "2.328.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:49:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3817517238",
+      "name": "影月重铸 | Shadow & Moon: Reforged",
+      "author": "Dual Forge Mod",
+      "version": "0.2.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:49:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:47:49"
+  "lastUpdated": "2026-11-01 03:49:23"
 }
