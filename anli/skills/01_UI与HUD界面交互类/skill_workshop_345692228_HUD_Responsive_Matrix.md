@@ -479,3 +479,33 @@ end)
 
 ```
 
+
+
+### 变体演进：Quicker Beefalo Domestication (Mod 2833026884)
+- **变体场景与切面**：收录来自工坊 Mod 2833026884 (`Quicker Beefalo Domestication`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2833026884)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+if GetModConfigData("domestication_nopoop") then
+    AddPrefabPostInit("beefalo", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then return inst end
+
+        if inst.components.periodicspawner ~= nil then
+            local _SetSpawnTestFn = inst.components.periodicspawner.SetSpawnTestFn
+            inst.components.periodicspawner:SetSpawnTestFn(function(inst)
+                if inst.components.domesticatable and inst.components.domesticatable:IsDomesticated() then
+                    return false
+                else
+                    return _SetSpawnTestFn(inst)
+                end
+            end)
+        end
+    end)
+
+```
+
