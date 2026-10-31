@@ -5348,3 +5348,232 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Telelocator Station Selector (Mod 3809953054)
+- **变体场景与切面**：收录来自工坊 Mod 3809953054 (`Telelocator Station Selector`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3809953054)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    Debug.Log("world side", inst.ismastersim and "server" or "client")
+    if not inst.ismastersim then
+        return
+    end
+
+    if inst.components.telelocatorstationregistry == nil then
+        inst:AddComponent(
+            "telelocatorstationregistry"
+        )
+    end
+    Debug.Log("world registry/component created")
+    inst:DoTaskInTime(0, function()
+        local registry = inst.components.telelocatorstationregistry
+        if not registry.rebuilt then registry:Rebuild() end
+    end)
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:telebase
+
+AddPrefabPostInit("telebase", function(inst)
+    -- Only the world owns ismastersim; ordinary prefab instances do not.
+    if not IsMasterSim() then
+        return
+    end
+
+    ---------------------------------------------------------------------------
+    -- Persistent station component
+    ---------------------------------------------------------------------------
+
+    if inst.components.telelocatorstation == nil then
+        inst:AddComponent(
+            "telelocatorstation"
+        )
+    end
+    Debug.Log("Focus server component added")
+
+    ---------------------------------------------------------------------------
+    -- Initialize station
+    ---------------------------------------------------------------------------
+
+    inst:DoTaskInTime(
+        0,
+        function()
+            if not inst:IsValid() then
+                return
+            end
+
+            local component =
+                inst.components.telelocatorstation
+
+            if component ~= nil then
+                component:Initialize()
+            end
+        end
+    )
+
+    -- Coalesce socket trade/pick notifications; never poll every frame.
+    local function StationChanged()
+        if inst._telelocator_notify_task == nil then
+            inst._telelocator_notify_task = inst:DoTaskInTime(0, function()
+                inst._telelocator_notify_task = nil
+                if inst:IsValid() then telelocator_teleport.NotifyStation(inst) end
+            end)
+        end
+    end
+    inst:ListenForEvent("telelocator_station_changed", function(_, data)
+        telelocator_teleport.NotifyStation(inst, data ~= nil and data.removed)
+    end)
+    inst:ListenForEvent("onremove", function()
+        telelocator_teleport.NotifyStation(inst, true)
+        if inst._telelocator_notify_task ~= nil then inst._telelocator_notify_task:Cancel() end
+    end)
+    local spawner = inst.components.objectspawner
+    if spawner ~= nil then
+        local original = spawner.onnewobjectfn
+        spawner.onnewobjectfn = function(base, socket, ...)
+            if original ~= nil then original(base, socket, ...) end
+            inst:ListenForEvent("trade", StationChanged, socket)
+            inst:ListenForEvent("picked", StationChanged, socket)
+            StationChanged()
+        end
+    end
+
+    ---------------------------------------------------------------------------
+    -- INFINITE FOCUS CHARGES
+    ---------------------------------------------------------------------------
+
+    if MOD_CONFIG.infinite_focus_charges then
+
+        local vanilla_onteleto =
+            inst.onteleto
+
+        if type(vanilla_onteleto) == "function" then
+
+            inst._telelocator_vanilla_onteleto =
+                vanilla_onteleto
+
+            inst.onteleto =
+                function(self)
+
+                    if not self:IsValid() then
+                        return
+                    end
+
+                    local disabled_destroy_functions =
+                        {}
+
+                    local objectspawner =
+                        self.components.objectspawner
+
+                    if objectspawner ~= nil
+                        and objectspawner.objects ~= nil then
+
+                        for _, socket in pairs(
+                            objectspawner.objects
+                        ) do
+
+                            if socket ~= nil
+                                and socket.DestroyGemFn ~= nil then
+
+                                disabled_destroy_functions[socket] =
+                                    socket.DestroyGemFn
+
+                                socket.DestroyGemFn =
+                                    function()
+                                        -- Infinite Focus charge.
+                                    end
+                            end
+                        end
+                    end
+
+                    local ok, err =
+                        pcall(
+                            vanilla_onteleto,
+                            self
+                        )
+
+                    ----------------------------------------------------------------
+                    -- Restore original DestroyGemFn functions.
+                    ----------------------------------------------------------------
+
+                    for socket, destroyfn in pairs(
+                        disabled_destroy_functions
+                    ) do
+
+                        if socket ~= nil
+                            and socket:IsValid() then
+
+                            socket.DestroyGemFn =
+                                destroyfn
+                        end
+                    end
+
+                    if not ok then
+                        print(
+                            "[TelelocatorSelector] "
+                            .. "vanilla telebase:onteleto error:",
+                            err
+                        )
+                    end
+                end
+        end
+    end
+end)
+
+-------------------------------------------------------------------------------
+-- TELELOCATOR STAFF
+-------------------------------------------------------------------------------
+
+AddPrefabPostInit("telestaff", function(inst)
+    if not IsMasterSim() then
+        return
+    end
+
+    inst:DoTaskInTime(
+        0,
+        function()
+            if inst ~= nil
+                and inst:IsValid() then
+
+                telelocator_teleport.WrapStaffSpellFn(
+                    inst
+                )
+            end
+        end
+    )
+end)
+Debug.Log("modmain loaded; world/Focus/staff hooks registered")
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:telestaff
+
+AddPrefabPostInit("telestaff", function(inst)
+    if not IsMasterSim() then
+        return
+    end
+
+    inst:DoTaskInTime(
+        0,
+        function()
+            if inst ~= nil
+                and inst:IsValid() then
+
+                telelocator_teleport.WrapStaffSpellFn(
+                    inst
+                )
+            end
+        end
+    )
+end)
+
+```
+

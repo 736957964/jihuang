@@ -19118,3 +19118,90 @@ end)
 
 ```
 
+
+
+### 变体演进：Skillbadge (Mod 3344692048)
+- **变体场景与切面**：收录来自工坊 Mod 3344692048 (`Skillbadge`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3344692048)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    inst:AddComponent("hua_internet_topology")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst.hua_internet_chosen_node = net_entity(inst.GUID, "hua_internet_chosen_node")
+    --[[inst.hua_internet_goto_travelling = net_uint(inst.GUID, "hua_internet_goto_travelling", "hua_internet_goto_travelling_dirty")
+
+    if TheNet:GetIsClient() then
+        inst:ListenForEvent("hua_internet_goto_travelling_dirty", ClientGoToTravelling)
+    end]]
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+-- 扫把变色
+AddPrefabPostInit("reskin_tool", function(inst)
+    if not inst.components.spellcaster then
+        return
+    end
+    local old_spell = inst.components.spellcaster.spell
+    local old_can_cast_fn = inst.components.spellcaster.can_cast_fn
+
+    local function spellCB(tool, target, pos)
+        if target and target.components.hua_dye_target then
+            target.components.hua_dye_target:ChangeDye()
+            return
+        end
+
+        return old_spell(tool, target, pos)
+    end
+
+    local function can_cast_fn(doer, target, pos)
+        if target and target.components.hua_dye_target then
+            return true
+        end
+
+        return old_can_cast_fn(doer, target, pos)
+    end
+
+    inst.components.spellcaster:SetSpellFn(spellCB)
+    inst.components.spellcaster:SetCanCastFn(can_cast_fn)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+-- 鞋子加速效果
+AddComponentPostInit("locomotor", function(self)
+    local old = self.UpdateGroundSpeedMultiplier
+    function self:UpdateGroundSpeedMultiplier()
+        local x, y, z = self.inst.Transform:GetWorldPosition()
+        local oncreep = TheWorld.GroundCreep:OnCreep(x, y, z)
+        if oncreep and TheHua:CheckIsGeneralSpiderMan(self.inst) and not (self.inst.components.rider and self.inst.components.rider:IsRiding()) then
+            self.groundspeedmultiplier = self.fastmultiplier
+            return
+        end
+        return old(self)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sporecloud
+--免疫毒云的攻击
+AddPrefabPostInit("sporecloud", function(inst) 
+	if inst.components.aura and inst.components.aura.auraexcludetags then
+        table.insert(inst.components.aura.auraexcludetags,"madameweb")
+	end
+end)
+
+```
+
