@@ -17981,3 +17981,676 @@ end)
 
 ```
 
+
+
+### 变体演进：set_idioma (Mod 1505270912)
+- **变体场景与切面**：收录来自工坊 Mod 1505270912 (`set_idioma`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1505270912)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+local player_classified_hacked = false
+AddPrefabPostInit("world",function(w)
+	if not player_classified_hacked then
+		player_classified_hacked = true
+		PlayerClassifiedHack()
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+local net_tinybyte = _G.net_tinybyte
+AddPrefabPostInit("player_classified",function(inst) --print("ADDPREFABPOSTINIT player_classified")
+	for tech_name,v in pairs(db_new_techs) do
+		inst[db_new_classified[tech_name] ] = net_tinybyte(inst.GUID, db_new_builder_name[tech_name], "techtreesdirty")
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        inst:AddComponent("parrotspawner")
+        inst:AddComponent("economy")
+        inst:AddComponent("shadowmanager")
+        inst:AddComponent("contador")
+
+        if TUNING.tropical.sealnado then
+            inst:AddComponent("twisterspawner")
+        end
+
+        if GetModConfigData("kindofworld") == 5 or GetModConfigData("Hamlet") ~= 5 then
+            inst:AddComponent("roottrunkinventory")
+        end
+
+        if GetModConfigData("kindofworld") ~= 10 and (GetModConfigData("kindofworld") == 5 or GetModConfigData("Hamlet") ~= 5 and GetModConfigData("pigruins") ~= 0 and GetModConfigData("aporkalypse") == true) then
+            inst:AddComponent("aporkalypse")
+        end
+
+        if GetModConfigData("kindofworld") ~= 10 and GetModConfigData("Hamlet") ~= 5 then inst:AddComponent("tropicalgroundspawner") end
+        if GetModConfigData("kindofworld") == 15 or GetModConfigData("kindofworld") == 10 or GetModConfigData("kindofworld") == 20 then
+            if GetModConfigData("aquaticcreatures") then
+                inst:AddComponent("tropicalspawner")
+                inst:AddComponent("whalehunter")
+                inst:AddComponent("rainbowjellymigration")
+            end
+        end
+        if GetModConfigData("kindofworld") == 5 then
+            inst:AddComponent("shadowmanager")
+            inst:AddComponent("rocmanager")
+        end
+
+
+
+        if GetModConfigData("kindofworld") ~= 10 then
+            inst:AddComponent("quaker_interior")
+        end
+
+        --if TUNING.tropical.springflood or TUNING.tropical.kindofworld == 10 then	inst:AddComponent("floodspawner") end				
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+
+AddPrefabPostInit("cave", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        inst:AddComponent("roottrunkinventory")
+        inst:AddComponent("quaker_interior")
+        inst:AddComponent("economy")
+        inst:AddComponent("contador")
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:colourcube
+
+	AddComponentPostInit("colourcube", function(self)
+		if GLOBAL.currentworld == "forest" then
+			for _,v in pairs(GLOBAL.TheWorld.event_listeners["playerdeactivated"][GLOBAL.TheWorld]) do
+				if getval(v,"OnOverrideCCTable") then
+				print("color")
+					setval(v, "OnOverrideCCTable.UpdateAmbientCCTable.SEASON_COLOURCUBES",{
+						autumn =
+						{
+							day = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							dusk = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							night = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							full_moon = "images/colour_cubes/pork_cold_bloodmoon_cc.tex"
+						},
+						winter =
+						{
+							day = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							dusk = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							night = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							full_moon = "images/colour_cubes/pork_cold_bloodmoon_cc.tex"
+						},
+						spring =
+						{
+							day = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							dusk = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							night = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							full_moon = "images/colour_cubes/pork_cold_bloodmoon_cc.tex"
+						},
+						summer =
+						{
+							day = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							dusk = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							night = resolvefilepath("images/colour_cubes/pork_cold_bloodmoon_cc.tex"),
+							full_moon = "images/colour_cubes/pork_cold_bloodmoon_cc.tex"
+						},
+					})
+					break
+				end
+			end
+		end
+	end)
+
+```
+
+
+
+### 变体演进：lml_magma_fix_fire_rings (Mod 3779015027)
+- **变体场景与切面**：收录来自工坊 Mod 3779015027 (`lml_magma_fix_fire_rings`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3779015027)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:cave
+        -- UM's Init() fires at DoTaskInTime(0.1)
+        AddPrefabPostInit("cave", function(inst)
+            inst:DoTaskInTime(0.05, function(inst)
+                local mgr = inst.components ~= nil and inst.components.um_magmamanager or nil
+                if mgr ~= nil and mgr.CreateMoltenLavaTiles ~= nil and mgr.__lml_empty_guard ~= true then
+                    mgr.__lml_empty_guard = true
+                    local old = mgr.CreateMoltenLavaTiles
+                    mgr.CreateMoltenLavaTiles = function(self, ...)
+                        if self.magma_tiles == nil or #self.magma_tiles == 0 then
+                            print("[UM Adjust] magma_tiles empty, skip CreateMoltenLavaTiles (UM cave magma fix)")
+                            return nil
+                        end
+                        return old(self, ...)
+                    end
+                end
+            end)
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:firesuppressor
+if KnownModIndex:IsModEnabled("workshop-3193922031") then
+    AddPrefabPostInit("firesuppressor", function(inst)
+        LmlGuardUmMagmatilesRemoval(inst, "firesuppressor")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:deerclopseyeball_sentryward
+
+    AddPrefabPostInit("deerclopseyeball_sentryward", function(inst)
+        LmlGuardUmMagmatilesRemoval(inst, "deerclopseyeball_sentryward")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:um_beehive_moon
+
+    AddPrefabPostInit("um_beehive_moon", function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+        -- UM's ListenForEvent runs inside the prefab fn, our postinit runs
+        -- after it; retry once next tick in case of load-order surprises
+        ReplaceUmBeehiveRevert(inst)
+        inst:DoTaskInTime(0, function(inst2)
+            ReplaceUmBeehiveRevert(inst2)
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:crabclaw
+    if GetModConfigData("lml_curse_master") then
+        AddPrefabPostInit("crabclaw", function(inst)
+            if not TheWorld.ismastersim then
+                return
+            end
+
+            local function DamageCalculation(inst, isattack)
+                local opalgem = #
+                    inst.components.container:FindItems(function(item) return item.prefab == "opalpreciousgem_cracked" end)
+
+                local redgem = #inst.components.container:FindItems(function(item) return item.prefab == "redgem_cracked" end)
+
+                local yellowgem = #inst.components.container:FindItems(function(item) return item.prefab ==
+                    "yellowgem_cracked" end)
+
+                local bluegem = #inst.components.container:FindItems(function(item) return item.prefab == "bluegem_cracked" end)
+
+                local greengem = #inst.components.container:FindItems(function(item) return item.prefab == "greengem_cracked" end)
+
+                local purplegem = #inst.components.container:FindItems(function(item) return item.prefab ==
+                    "purplegem_cracked" end)
+
+                local orangegem = #inst.components.container:FindItems(function(item) return item.prefab ==
+                    "orangegem_cracked" end)
+
+                local dmg = 40 + (5 * opalgem) + (5 * (redgem + bluegem + yellowgem + greengem + orangegem + purplegem))
+
+                inst.components.weapon:SetDamage(dmg)
+
+                if isattack then
+                    local item1 = inst.components.container.slots[1]
+                    local item2 = inst.components.container.slots[2]
+                    local item3 = inst.components.container.slots[3]
+                    local item4 = inst.components.container.slots[4]
+
+                    if item1 ~= nil and item1.components.finiteuses then
+                        item1.components.finiteuses:Use(1)
+                    end
+
+                    if item2 ~= nil and item2.components.finiteuses then
+                        item2.components.finiteuses:Use(1)
+                    end
+
+                    if item3 ~= nil and item3.components.finiteuses then
+                        item3.components.finiteuses:Use(1)
+                    end
+
+                    if item4 ~= nil and item4.components.finiteuses then
+                        item4.components.finiteuses:Use(1)
+                    end
+                end
+            end
+
+
+            local function AddGem(inst)
+                local owner = inst.components.inventoryitem.owner
+                local item1 = inst.components.container.slots[1]
+                local item2 = inst.components.container.slots[2]
+                local item3 = inst.components.container.slots[3]
+                local item4 = inst.components.container.slots[4]
+
+                if item1 ~= nil and owner ~= nil and not inst.slot1_inserted then
+                    if not item1.components.finiteuses then
+                        item1:AddComponent("perishable")
+                        item1.components.perishable.onperishreplacement = item1.prefab .. "_cracked"
+                        item1:DoTaskInTime(0, function(item1) item1.components.perishable:Perish() end)
+                    else
+                        inst.SoundEmitter:PlaySound("hookline_2/creatures/boss/crabking/gem_place")
+
+                        inst.shinefx_slot1 = SpawnPrefab(item1.prefab .. "_crabclaw")
+                        inst.shinefx_slot1.gem = inst
+                        --inst:ListenForEvent("onremove", onremovebody1, inst.shinefx_slot1)
+                        inst.shinefx_slot1.entity:SetParent(owner.entity)
+                        inst.shinefx_slot1.entity:AddFollower()
+                        inst.shinefx_slot1.Follower:FollowSymbol(owner.GUID, "swap_object", 48, -203, 0.1)
+                        inst.shinefx_slot1.Transform:SetScale(0.25, 0.25, 0.25)
+
+                        inst.slot1_inserted = true
+
+                        inst.shinefx2 = SpawnPrefab("crab_king_shine")
+                        inst.shinefx2.entity:SetParent(owner.entity)
+                        inst.shinefx2.entity:AddFollower()
+                        inst.shinefx2.Follower:FollowSymbol(owner.GUID, "swap_object", 48, -203, 0)
+                        inst.shinefx2.Transform:SetScale(0.25, 0.25, 0.25)
+                    end
+                end
+
+                if item2 ~= nil and owner ~= nil and not inst.slot2_inserted then
+                    if not item2.components.finiteuses then
+                        item2:AddComponent("perishable")
+                        item2.components.perishable.onperishreplacement = item2.prefab .. "_cracked"
+                        item2:DoTaskInTime(0, function(item2) item2.components.perishable:Perish() end)
+                    else
+                        inst.SoundEmitter:PlaySound("hookline_2/creatures/boss/crabking/gem_place")
+
+                        inst.shinefx_slot2 = SpawnPrefab(item2.prefab .. "_crabclaw")
+                        inst.shinefx_slot2.gem = inst
+                        --inst:ListenForEvent("onremove", onremovebody2, inst.shinefx_slot2)
+                        inst.shinefx_slot2.entity:SetParent(owner.entity)
+                        inst.shinefx_slot2.entity:AddFollower()
+                        inst.shinefx_slot2.Follower:FollowSymbol(owner.GUID, "swap_object", 63, -150, 0.1)
+                        inst.shinefx_slot2.Transform:SetScale(0.25, 0.25, 0.25)
+
+                        inst.slot2_inserted = true
+
+                        inst.shinefx2 = SpawnPrefab("crab_king_shine")
+                        inst.shinefx2.entity:SetParent(owner.entity)
+                        inst.shinefx2.entity:AddFollower()
+                        inst.shinefx2.Follower:FollowSymbol(owner.GUID, "swap_object", 63, -150, 0)
+                        inst.shinefx2.Transform:SetScale(0.25, 0.25, 0.25)
+                    end
+                end
+
+                if item3 ~= nil and owner ~= nil and not inst.slot3_inserted then
+                    if not item3.components.finiteuses then
+                        item3:AddComponent("perishable")
+                        item3.components.perishable.onperishreplacement = item3.prefab .. "_cracked"
+                        item3:DoTaskInTime(0, function(item3) item3.components.perishable:Perish() end)
+                    else
+                        inst.SoundEmitter:PlaySound("hookline_2/creatures/boss/crabking/gem_place")
+
+                        inst.shinefx_slot3 = SpawnPrefab(item3.prefab .. "_crabclaw")
+                        inst.shinefx_slot3.gem = inst
+                        --inst:ListenForEvent("onremove", onremovebody3, inst.shinefx_slot3)
+                        inst.shinefx_slot3.entity:SetParent(owner.entity)
+                        inst.shinefx_slot3.entity:AddFollower()
+                        inst.shinefx_slot3.Follower:FollowSymbol(owner.GUID, "swap_object", 48, -102, 0.1)
+                        inst.shinefx_slot3.Transform:SetScale(0.25, 0.25, 0.25)
+
+                        inst.slot3_inserted = true
+
+                        inst.shinefx2 = SpawnPrefab("crab_king_shine")
+                        inst.shinefx2.entity:SetParent(owner.entity)
+                        inst.shinefx2.entity:AddFollower()
+                        inst.shinefx2.Follower:FollowSymbol(owner.GUID, "swap_object", 48, -102, 0)
+                        inst.shinefx2.Transform:SetScale(0.25, 0.25, 0.25)
+                    end
+                end
+
+                if item4 ~= nil and owner ~= nil and not inst.slot4_inserted then
+                    if not item4.components.finiteuses then
+                        item4:AddComponent("perishable")
+                        item4.components.perishable.onperishreplacement = item4.prefab .. "_cracked"
+                        item4:DoTaskInTime(0, function(item4) item4.components.perishable:Perish() end)
+                    else
+                        inst.SoundEmitter:PlaySound("hookline_2/creatures/boss/crabking/gem_place")
+
+                        inst.shinefx_slot4 = SpawnPrefab(item4.prefab .. "_crabclaw")
+                        inst.shinefx_slot4.gem = inst
+                        --inst:ListenForEvent("onremove", onremovebody4, inst.shinefx_slot4)
+                        inst.shinefx_slot4.entity:SetParent(owner.entity)
+                        inst.shinefx_slot4.entity:AddFollower()
+                        inst.shinefx_slot4.Follower:FollowSymbol(owner.GUID, "swap_object", 23, -61, 0.1)
+                        inst.shinefx_slot4.Transform:SetScale(0.25, 0.25, 0.25)
+
+                        inst.slot4_inserted = true
+
+                        inst.shinefx2 = SpawnPrefab("crab_king_shine")
+                        inst.shinefx2.entity:SetParent(owner.entity)
+                        inst.shinefx2.entity:AddFollower()
+                        inst.shinefx2.Follower:FollowSymbol(owner.GUID, "swap_object", 23, -61, 0)
+                        inst.shinefx2.Transform:SetScale(0.25, 0.25, 0.25)
+                    end
+                end
+
+                DamageCalculation(inst)
+            end
+
+            local function onequip(inst, owner)
+                AddGem(inst)
+
+                owner.AnimState:OverrideSymbol("swap_object", "swap_crabclaw", "swap_crabclaw")
+
+                owner.AnimState:Show("ARM_carry")
+                owner.AnimState:Hide("ARM_normal")
+
+                if inst.components.container ~= nil then
+                    inst.components.container:Open(owner)
+                end
+            end
+
+            local equippable = inst.components.equippable
+            if equippable then
+                equippable:SetOnEquip(onequip)
+            end
+        end)
+
+```
+
+
+
+### 变体演进：xiaomo (Mod 3788530923)
+- **变体场景与切面**：收录来自工坊 Mod 3788530923 (`xiaomo`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3788530923)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+end
+AddStategraphPostInit("wilson", TalismanCastState)
+AddStategraphPostInit("wilson_client", TalismanCastState)
+
+local function IsXiaomoPistol(inst)
+    return inst ~= nil and inst:HasTag("xiaomo_pistol")
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", TalismanCastState)
+AddStategraphPostInit("wilson_client", TalismanCastState)
+
+local function IsXiaomoPistol(inst)
+    return inst ~= nil and inst:HasTag("xiaomo_pistol")
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:propagator
+
+AddComponentPostInit("propagator", function(self)
+    local oldAddHeat = self.AddHeat
+    function self:AddHeat(amount, source, ...)
+        if source ~= nil and source ~= self.inst and source.xiaomo_talisman_fire then
+            return
+        end
+        return oldAddHeat(self, amount, source, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:cursable
+
+AddComponentPostInit("cursable", function(self)
+	local oldIsCursable = self.IsCursable
+	function self:IsCursable(item)
+		if item and item.components.curseditem and item.components.curseditem.curse == "MONKEY"
+            and (self.inst.prefab == "xiaomo" or self.inst.prefab == "mojiu") then
+			return false
+		end
+		return oldIsCursable(self,item)
+	end
+	local oldApplyCurse = self.ApplyCurse
+	function self:ApplyCurse(item)
+		if item and item.components.curseditem and item.components.curseditem.curse == "MONKEY"
+            and (self.inst.prefab == "xiaomo" or self.inst.prefab == "mojiu") then
+			item:RemoveTag("applied_curse")
+        	item.components.curseditem.cursed_target = nil
+			return
+		end
+		return oldApplyCurse(self,item)
+	end
+	local oldForceOntoOwner = self.ForceOntoOwner
+	function self:ForceOntoOwner(item)
+		if item and item.components.curseditem and item.components.curseditem.curse == "MONKEY"
+            and (self.inst.prefab == "xiaomo" or self.inst.prefab == "mojiu") then
+			return
+		end
+		return oldForceOntoOwner(self,item)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+
+AddComponentPostInit("health", function(self)
+    local oldSetVal = self.SetVal
+    function self:SetVal(val, cause, ...)
+        local old_health = self.currenthealth
+        local shield = self.inst.components.xiaomo_chenxing_shield
+        if cause ~= "file_load" and val < old_health and shield ~= nil and shield.value > 0 then
+            val = val + shield:Absorb(old_health - val)
+        end
+        local min_health = self.minhealth or 0
+        if val <= min_health and not self.inst.xd_killself then
+            local holywing = self.inst.xiaomo_holywing
+            if holywing ~= nil
+                and holywing:IsValid()
+                and holywing.TriggerXiaomoHolyShield ~= nil
+                and holywing:TriggerXiaomoHolyShield(self.inst) then
+                val = old_health
+            end
+        end
+        return oldSetVal(self, val, cause, ...)
+    end
+
+	local oldDoDelta = self.DoDelta
+	function self:DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb,...)
+        if amount and amount < 0 and self.xiaomo_abosorb ~= nil then
+            amount = amount * (1 - self.xiaomo_abosorb)
+        end
+        -- 护甲结算后的每次扣血固定减免，不占用星阵护盾；强制处决仍按原逻辑处理。
+        if amount ~= nil and amount < 0 and not ignore_absorb and cause ~= "file_load"
+            and self.inst.xiaomo_bihufu_reduction ~= nil then
+            amount = math.min(0, amount + self.inst.xiaomo_bihufu_reduction)
+        end
+        return oldDoDelta(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
+	end
+	local old_DoFireDamage = self.DoFireDamage
+	function self:DoFireDamage(amount,...)
+		if isxiaomo(self.inst) then
+			return
+		end
+		return old_DoFireDamage(self,amount,...)
+	end
+end)
+
+```
+
+
+
+### 变体演进：愁云使者-薇古斯Vex (Mod 3796155639)
+- **变体场景与切面**：收录来自工坊 Mod 3796155639 (`愁云使者-薇古斯Vex`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3796155639)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:locomotor
+-- 飞行时免疫地面减速（蜘蛛网、道路等）
+AddComponentPostInit("locomotor", function(self)
+    local _SetExternalSpeedMultiplier = self.SetExternalSpeedMultiplier
+    function self:SetExternalSpeedMultiplier(source, key, m, ...)
+        if m ~= nil and m < 1 and self.inst:HasTag("vex_flying") then
+            return
+        end
+        return _SetExternalSpeedMultiplier(self, source, key, m, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:vex_shadow
+
+AddPrefabPostInit("vex_shadow", function(inst)
+    if not TheWorld.ismastersim then
+        inst.OnEntityReplicated = function(inst)
+            if inst.replica and inst.replica.container then
+                inst.replica.container:WidgetSetup("vex_shadow")
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+-- 在原版 GiveItem 执行前拦截：仅当主物品栏无可用格（含堆叠）且背包溢出也不可用时
+AddComponentPostInit("inventory", function(self)
+    local old_GiveItem = self.GiveItem
+    function self:GiveItem(inst, slot, src_pos, ...)
+        if slot == nil and inst ~= nil and inst:IsValid()
+            and inst.components.inventoryitem ~= nil
+            and self.inst:HasTag("vex")
+            and self:GetNextAvailableSlot(inst) == nil then
+            local overflow = self:GetOverflowContainer()
+            if overflow == nil or overflow:IsFull() then
+                local body = self:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
+                if body ~= nil and body.prefab == "vex_shadow" then
+                    local storage = body._open_storage
+                    if storage ~= nil and storage:IsValid()
+                            and storage.components.container ~= nil then
+                        -- 不用 IsFull 门禁(2026-10-09 实测):所有空格都占着时 IsFull 判"满",
+                        -- 但同种物品仍可并堆——容器 GiveItem 自身先并堆;
+                        -- drop_on_fail=false:真放不下才落回下方原版掉落路径
+                        if storage.components.container:GiveItem(inst, nil, nil, false) then
+                            return true
+                        end
+                    end
+                end
+            end
+        end
+        return old_GiveItem(self, inst, slot, src_pos, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+-- 继承到高一级模块),并从护甲升级槽正确取出(触发 itemlose 正常流程,避免乱序假移除)
+AddComponentPostInit("builder", function(self)
+    local old_RemoveIngredients = self.RemoveIngredients
+    function self:RemoveIngredients(ingredients, recname, discounted)
+        local owner = self.inst
+        if not self.freebuildmode and owner ~= nil and owner:IsValid() and owner:HasTag("vex") then
+            -- 阴郁度配方扣费（2026-09-30 用户要求：75阴郁度凝炼噩梦燃料；
+            -- 校验在配方 canbuild 里，此处扣费——原版 RemoveIngredients 处理角色代价的同位置）
+            if recname == "nightmarefuel" and owner.components.gloom ~= nil then
+                owner.components.gloom:DoDelta(-TUNING.VEX_GLOOMCRAFT_NIGHTMARE_COST)
+                print(string.format(">>> GloomCraft: nightmarefuel gloom -%d (current=%.0f)",
+                    TUNING.VEX_GLOOMCRAFT_NIGHTMARE_COST, owner.components.gloom.current))
+            end
+            for _, ents in pairs(ingredients or {}) do
+                for item, _ in pairs(ents) do
+                    if item ~= nil and item:IsValid() and item:HasTag("vex_upgrade_storage")
+                            and item.components.container ~= nil then
+                        -- 内容先转 stash(原版稍后 DropEverything,先搬走就倒不出东西)
+                        local stash = owner._vex_stash
+                        if stash ~= nil and stash:IsValid() and stash.components.container ~= nil then
+                            local src = item.components.container
+                            local dst = stash.components.container
+                            for slot = src:GetNumSlots(), 1, -1 do
+                                local sit = src:GetItemInSlot(slot)
+                                if sit ~= nil then
+                                    src:RemoveItemBySlot(slot)
+                                    if not dst:GiveItem(sit) then
+                                        src:GiveItem(sit)  -- 极端装不下:留回饰品
+                                    end
+                                end
+                            end
+                        end
+                        -- 从护甲升级槽正确取出(若在槽中):先关容器清 HUD/opener 状态、
+                        -- 清护甲侧引用,再移除(触发 itemlose 正常流程)
+                        local armor = owner.components.inventory ~= nil
+                            and owner.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY) or nil
+                        if armor ~= nil and armor.prefab == "vex_shadow" and armor.components.container ~= nil then
+                            local slot = armor.components.container:GetItemSlot(item)
+                            if slot ~= nil then
+                                if item.components.container:IsOpen() then
+                                    item.components.container:Close(owner)
+                                end
+                                if armor._open_storage == item then
+                                    armor._open_storage = nil
+                                end
+                                armor.components.container:RemoveItem(item, true)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        return old_RemoveIngredients(self, ingredients, recname, discounted)
+    end
+
+    -- 虚拟配料"vex_gloomcraft"仅用于配方显示(格温hundeng配料图集模式):
+    -- 服务端 GetIngredients 剥离它——合成有效性检查不受影响
+    -- (真正的阴郁度门控在 recipe.canbuild,扣费在 RemoveIngredients 上面)
+    local old_GetIngredients = self.GetIngredients
+    function self:GetIngredients(recname, ...)
+        local ingredients, discounted = old_GetIngredients(self, recname, ...)
+        if ingredients ~= nil then
+            ingredients.vex_gloomcraft = nil
+        end
+        return ingredients, discounted
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:edible
+--------------------------------------------------------------------------------
+AddComponentPostInit("edible", function(self)
+    local _GetHunger = self.GetHunger
+    local _GetSanity  = self.GetSanity
+    local _GetHealth  = self.GetHealth
+
+    function self:GetHunger(eater, ...)
+        if eater and eater.prefab == "vex" and self.inst.components.perishable
+            and self.inst.components.perishable:IsStale() then
+            return self.hungervalue
+        end
+        return _GetHunger(self, eater, ...)
+    end
+    function self:GetSanity(eater, ...)
+        if eater and eater.prefab == "vex" and self.inst.components.perishable
+            and self.inst.components.perishable:IsStale() then
+            return self.sanityvalue or 0
+        end
+        return _GetSanity(self, eater, ...)
+    end
+    function self:GetHealth(eater, ...)
+        if eater and eater.prefab == "vex" and self.inst.components.perishable
+            and self.inst.components.perishable:IsStale() then
+            return self.healthvalue or 0
+        end
+        return _GetHealth(self, eater, ...)
+    end
+end)
+
+```
+

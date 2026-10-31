@@ -4643,3 +4643,25 @@ end)
 
 ```
 
+
+
+### 变体演进：… (Mod 3662273952)
+- **变体场景与切面**：收录来自工坊 Mod 3662273952 (`…`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3662273952)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+-- 在玩家实体移除时保存数据（断开连接、退出游戏等场景）
+AddPrefabPostInit("player_classified", function(inst)
+    inst:ListenForEvent("onremove", function()
+        GLOBAL.SaveMusicPlayerSettings()
+        GLOBAL.SaveMusicFavorites()
+    end)
+end)
+
+```
+
