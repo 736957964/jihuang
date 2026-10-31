@@ -1151,3 +1151,77 @@ end
 
 ```
 
+
+
+### 变体演进：Jimbo Custom Rewards (Mod 3817088423)
+- **变体场景与切面**：收录来自工坊 Mod 3817088423 (`Jimbo Custom Rewards`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3817088423)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:balatro_machine
+
+AddPrefabPostInit("balatro_machine", function(inst)
+    if patched then return end
+    inst:DoTaskInTime(0, function()
+        if patched then return end
+
+        local handle = inst.ondoerremoved
+        if not handle then return end
+
+        local rewards = FindUpvalue(handle, "REWARDS")
+        if rewards then
+            patched = true
+            ApplyOverrides(rewards)
+
+            local srs, holder, idx = FindUpvalue(handle, "StartRewardsSequence")
+            if srs and holder and idx then
+                local original = srs
+                debug.setupvalue(holder, idx, function(inst, doer, score)
+                    if doer then
+                        local now = GLOBAL.GetTime()
+                        local last = doer._jimbo_last_win or 0
+                        local streak = doer._jimbo_streak or 0
+
+                        local is_win = score ~= nil and score >= 2 and score ~= 9
+
+                        if not is_win then
+                            if streak > 0 and doer.components.talker then
+                                doer.components.talker:Say("My streäk... bröken! Nööö!..")
+                            end
+                            doer._jimbo_streak = 0
+                        else
+                            if (now - last) <= 90 then
+                                streak = streak + 1
+                            else
+                                if streak > 0 and doer.components.talker then
+                                    doer.components.talker:Say("Too slöw... My hard eärned streäks.. Gone für nöthing!")
+                                end
+                                streak = 1
+                            end
+
+                            doer._jimbo_streak = streak
+                            doer._jimbo_last_win = now
+
+                            if doer.components.talker then
+                                doer.components.talker:Say("Win streäk: " .. streak)
+                            end
+
+                            if streak >= 3 then
+                                AwardGift(doer)
+                                doer._jimbo_streak = 0
+                            end
+                        end
+                    end
+                    return original(inst, doer, score)
+                end)
+            end
+        end
+    end)
+end)
+
+```
+

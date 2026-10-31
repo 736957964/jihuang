@@ -3396,8 +3396,26 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 03:29:42",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3817088423",
+      "name": "Jimbo Custom Rewards",
+      "author": "NS",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:30:44",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3821278255",
+      "name": "沃利技能树 WarlySkillTree",
+      "author": "下雨天",
+      "version": "1.2.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 03:30:44",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:29:42"
+  "lastUpdated": "2026-11-01 03:30:44"
 }

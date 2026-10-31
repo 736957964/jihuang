@@ -854,3 +854,844 @@ end)
 
 ```
 
+
+
+### 变体演进：沃利技能树 WarlySkillTree (Mod 3821278255)
+- **变体场景与切面**：收录来自工坊 Mod 3821278255 (`沃利技能树 WarlySkillTree`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3821278255)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", function(self)
+    local old_build = self.DoBuild
+    self.DoBuild = function(self2, recname, pt, rot, skin)
+        local previous = pending_craft_spice
+        if IsWarly(self2.inst) and GLOBAL.table.contains(SPICE_PREFABS, recname) then
+            pending_craft_spice = {
+                s2 = HasSkill(self2.inst, "warly_cooking_spice_2"),
+                s3 = HasSkill(self2.inst, "warly_cooking_spice_3"),
+            }
+        end
+        local ok, result, reason = GLOBAL.pcall(old_build, self2, recname, pt, rot, skin)
+        pending_craft_spice = previous
+        if not ok then GLOBAL.error(result, 0) end
+        return result, reason
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:monstermeat
+end
+AddPrefabPostInit("monstermeat", MakeMonsterMeatFuel)
+
+
+
+
+
+
+
+
+
+
+
+
+do
+    local old_addfuel = GLOBAL.ACTIONS.ADDFUEL.fn
+    GLOBAL.ACTIONS.ADDFUEL.fn = function(act)
+        local target    = act ~= nil and act.target or nil
+        local invobject = act ~= nil and act.invobject or nil
+        local doer      = act ~= nil and act.doer or nil
+
+
+
+
+
+        if target ~= nil and target.Warly_RepairWeapon ~= nil
+            and invobject ~= nil and invobject:HasTag("MAGIC_fuel")
+            and doer ~= nil and doer.components.inventory ~= nil
+            and IsWarly(doer)
+        then
+            local fuel = doer.components.inventory:RemoveItem(invobject)
+            if fuel ~= nil then
+                fuel:Remove()
+                target:Warly_RepairWeapon(1)
+                if target.SoundEmitter ~= nil then
+                    target.SoundEmitter:PlaySound("dontstarve/wilson/hambat_hit")
+                end
+                return true
+            end
+            return false
+        end
+        return old_addfuel(act)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:edible
+
+AddComponentPostInit("edible", function(self)
+
+
+
+
+
+
+    if pending_food_mark ~= nil then
+        self.warly_made          = true
+        self.warly_halved        = pending_food_mark.magic2 or pending_food_mark.halved or nil
+        self.warly_resolve_boost = pending_food_mark.resolve or nil
+        self.warly_magic1        = pending_food_mark.magic1  or nil
+        self.warly_self3         = pending_food_mark.self3   or nil
+        self.warly_spice2        = pending_food_mark.spice2  or nil
+        self.warly_spice3        = pending_food_mark.spice3  or nil
+    end
+
+
+
+
+
+
+    local old_save = self.OnSave
+    self.OnSave = function(self2)
+        local data = old_save ~= nil and old_save(self2) or nil
+        if self2.warly_made or self2.spice ~= nil or self2.warly_halved
+            or self2.warly_resolve_boost or self2.warly_magic1 or self2.warly_self3
+            or self2.warly_spice2 or self2.warly_spice3 then
+            data = data or {}
+            data.warly_made = self2.warly_made or nil
+            data.warly_spice = self2.spice
+            data.warly_halved = self2.warly_halved or nil
+            data.warly_resolve_boost = self2.warly_resolve_boost or nil
+            data.warly_magic1 = self2.warly_magic1 or nil
+            data.warly_self3 = self2.warly_self3 or nil
+            data.warly_spice2 = self2.warly_spice2 or nil
+            data.warly_spice3 = self2.warly_spice3 or nil
+        end
+        return data
+    end
+    local old_load = self.OnLoad
+    self.OnLoad = function(self2, data)
+        if old_load ~= nil then
+            old_load(self2, data)
+        end
+        if type(data) == "table" then
+            self2.warly_made = data.warly_made
+            self2.warly_halved = data.warly_halved
+            self2.warly_resolve_boost = data.warly_resolve_boost
+            self2.warly_magic1 = data.warly_magic1
+            self2.warly_self3 = data.warly_self3
+            self2.warly_spice2 = data.warly_spice2
+            self2.warly_spice3 = data.warly_spice3
+            if data.warly_spice ~= nil then
+                self2.spice = data.warly_spice
+            end
+        end
+    end
+
+
+    local old_oneaten = self.OnEaten
+    self.OnEaten = function(self2, eater)
+        local prior_mult = eater ~= nil and eater.warly_pending_buff_mult or nil
+        local prior_time = eater ~= nil and eater.warly_pending_buff_mult_time or nil
+        if eater ~= nil then
+            local spice = self2.spice
+            local mult = 1
+
+
+
+
+            if self2.warly_spice2 then
+                mult = mult * 1.5
+            end
+
+
+
+
+            if self2.warly_self3 and (spice ~= nil or self2.oneaten ~= nil) then
+                mult = mult * 2
+            end
+            eater.warly_pending_buff_mult = mult
+            eater.warly_pending_buff_mult_time = GetTime()
+
+
+            if spice ~= nil and self2.warly_spice3 then
+                ApplySpiceMastery(eater, spice, mult)
+            end
+        end
+        local temperature_duration = self2.temperatureduration
+        if self2.warly_self3 and type(temperature_duration) == "number" then
+            self2.temperatureduration = temperature_duration * 2
+        end
+        old_oneaten(self2, eater)
+        self2.temperatureduration = temperature_duration
+        if eater ~= nil then
+            eater.warly_pending_buff_mult = prior_mult
+            eater.warly_pending_buff_mult_time = prior_time
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stackable
+
+AddComponentPostInit("stackable", function(self)
+    local inst = self.inst
+
+
+    local old_get = self.Get
+    self.Get = function(self2, ...)
+        local split = old_get(self2, ...)
+        if split ~= nil and split ~= self2.inst and split:IsValid() then
+            local source = self2.inst
+            local a = source.components.edible
+            local b = split.components.edible
+            if a ~= nil and b ~= nil then
+                for _, key in ipairs({ "warly_made", "warly_halved", "warly_resolve_boost",
+                    "warly_magic1", "warly_self3", "warly_spice2", "warly_spice3" }) do
+                    b[key] = a[key]
+                end
+            end
+            split.warly_spice2 = source.warly_spice2
+            split.warly_spice3 = source.warly_spice3
+            local pa, pb = source.components.perishable, split.components.perishable
+            if pa ~= nil and pb ~= nil and pa.warly_perish_bonus then
+
+                local remaining = pb.perishremainingtime
+                pb:SetPerishTime(pa.perishtime)
+                pb.perishremainingtime = remaining
+                pb.warly_perish_bonus = true
+            end
+        end
+        return split
+    end
+    local old_canstack = inst.stackable_CanStackWithFn
+    inst.stackable_CanStackWithFn = function(item, other)
+        if old_canstack ~= nil and not old_canstack(item, other) then return false end
+        local a = item.components.edible
+        local b = other.components.edible
+        if a ~= nil and b ~= nil then
+            for _, key in ipairs({ "warly_halved", "warly_resolve_boost", "warly_magic1",
+                "warly_self3", "warly_spice2", "warly_spice3" }) do
+                if (a[key] == true) ~= (b[key] == true) then return false end
+            end
+        end
+        if (item.warly_spice2 == true) ~= (other.warly_spice2 == true)
+            or (item.warly_spice3 == true) ~= (other.warly_spice3 == true) then return false end
+        local pa, pb = item.components.perishable, other.components.perishable
+        if pa ~= nil and pb ~= nil and (pa.warly_perish_bonus or pb.warly_perish_bonus)
+            and pa.perishtime ~= pb.perishtime then return false end
+        return true
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer", function(self)
+    local old_save = self.OnSave
+    self.OnSave = function(self2, ...)
+        local data = old_save ~= nil and old_save(self2, ...) or nil
+        if self2.warly_mark ~= nil and self2.product ~= nil then
+            data = data or {}
+            data.warly_mark = shallowcopy(self2.warly_mark)
+        end
+        return data
+    end
+    local old_load = self.OnLoad
+    self.OnLoad = function(self2, data, ...)
+        if old_load ~= nil then old_load(self2, data, ...) end
+        self2.warly_mark = data ~= nil and type(data.warly_mark) == "table"
+            and shallowcopy(data.warly_mark) or nil
+    end
+    local old_startcooking = self.StartCooking
+
+    self.StartCooking = function(self2, doer)
+
+
+        local old_mult = self2.cooktimemult
+        if doer ~= nil
+            and self2.inst.prefab == "portablecookpot"
+            and HasSkill(doer, "warly_cooking_self_1") then
+            self2.cooktimemult = self2.cooktimemult * 0.7
+        end
+
+
+
+
+
+
+        if self2.targettime == nil and self2.inst.components.container ~= nil then
+            local ing = {}
+            for _, v in pairs(self2.inst.components.container.slots) do
+                table.insert(ing, v.prefab)
+            end
+            do
+                local wouldbe = cooking.CalculateRecipe(self2.inst.prefab, ing)
+
+
+                if wouldbe == nil or cooking.GetRecipe(self2.inst.prefab, wouldbe) == nil then
+                    self2.cooktimemult = old_mult
+                    print(string.format("[WarlySkillTree] 取消无配方制作：%s [%s]",
+                        self2.inst.prefab, table.concat(ing, ",")))
+                    if doer ~= nil and doer.components ~= nil and doer.components.talker ~= nil then
+                        doer.components.talker:Say("这组食材或调料还不能搭配。")
+                    end
+                    return
+                end
+                if doer ~= nil and SIGNATURE_DISHES[wouldbe]
+                    and not HasSkill(doer, "warly_cooking_signature") then
+
+                    self2.cooktimemult = old_mult
+                    return
+                end
+            end
+        end
+
+
+
+
+        local inherit2, inherit3 = false, false
+        local seasoning = self2.inst.prefab == "portablespicer"
+        local inherited_food = {}
+        if seasoning
+            and self2.inst.components.container ~= nil then
+            for _, v in pairs(self2.inst.components.container.slots) do
+                if v.warly_spice2 then inherit2 = true end
+                if v.warly_spice3 then inherit3 = true end
+                local edible = v.components ~= nil and v.components.edible or nil
+                if edible ~= nil and v:HasTag("preparedfood") then
+                    inherited_food.resolve = edible.warly_resolve_boost
+                    inherited_food.magic1 = edible.warly_magic1
+                    inherited_food.halved = edible.warly_halved
+                    inherited_food.self3 = edible.warly_self3
+                end
+            end
+        end
+
+        old_startcooking(self2, doer)
+        self2.cooktimemult = old_mult
+
+        if self2.targettime == nil or doer == nil then
+            return
+        end
+
+
+        if self2.product_spoilage ~= nil and HasSkill(doer, "warly_cooking_self_2") then
+            self2.product_spoilage = 1
+        end
+
+        local product = self2.product
+        if product == nil then
+            return
+        end
+
+
+
+
+        if HasSkill(doer, "warly_life_seasoning") and product ~= "warly_grandfeast" then
+            if not DishHasSpecialEffect(self2.inst.prefab, product)
+                and GetIngredientMeat(self2.ingredient_prefabs) >= 1
+                and math.random() < SEASONING_CHANCE then
+                EnsureGrandfeastRecipe(self2.inst.prefab)
+                self2.product = "warly_grandfeast"
+            end
+        end
+
+
+        if HasSkill(doer, "warly_life_love_2") then
+            doer:Warly_AddLoveSanityStack()
+        end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        do
+            local final = self2.product
+            if final == nil or type(final) ~= "string" then
+                self2.warly_mark = nil
+                return
+            end
+
+
+            local resolved = inherited_food.resolve or false
+            if not seasoning and HasSkill(doer, "warly_life_resolve") then
+                if final == "wetgoop" then
+                    doer.warly_resolve_pending = true
+                elseif doer.warly_resolve_pending then
+                    doer.warly_resolve_pending = nil
+                    resolved = true
+                end
+            end
+
+
+
+
+
+
+
+
+
+
+            local spiced = final:find("_spice_") ~= nil
+
+            local sfx = "_spice_stonefruit"
+            self2.warly_mark = {
+                resolve = resolved,
+                magic1  = inherited_food.magic1 or HasSkill(doer, "warly_life_magic_1"),
+
+                halved  = inherited_food.halved or nil,
+                magic2  = not seasoning and final ~= "wetgoop" and HasSkill(doer, "warly_life_magic_2")
+                          and MagicWheel.IsEnabled(doer),
+                self3   = inherited_food.self3 or (HasSkill(doer, "warly_cooking_self_3")
+                          and DishHasSpecialEffect(self2.inst.prefab, final)),
+                spice2  = spiced and (HasSkill(doer, "warly_cooking_spice_2") or inherit2) or nil,
+                spice3  = spiced and (HasSkill(doer, "warly_cooking_spice_3") or inherit3) or nil,
+                perishmult = (final:sub(-#sfx) == sfx
+                              and (HasSkill(doer, "warly_cooking_spice_3") or inherit3))
+                             and (CUSTOM_SPICE_PERISH_MULT_MAX / CUSTOM_SPICE_PERISH_MULT)
+                             or nil,
+            }
+        end
+    end
+
+
+
+
+
+
+
+
+
+    local old_harvest = self.Harvest
+    self.Harvest = function(self2, harvester)
+        local previous_food_mark = pending_food_mark
+        local product = self2.product
+        local mark = self2.warly_mark
+
+
+
+        if mark ~= nil and product ~= nil and type(product) == "string" then
+            pending_food_mark = mark
+        end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        local mastersim = GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim
+        local inv = (harvester ~= nil and harvester.components ~= nil)
+            and harvester.components.inventory or nil
+
+        local loot, loot_pos = nil, nil
+        local ok
+        local function RunHarvest(restore)
+            local success, result = GLOBAL.pcall(old_harvest, self2, harvester)
+            if restore ~= nil then restore() end
+            if not success then
+                pending_food_mark = previous_food_mark
+                GLOBAL.error(result, 0)
+            end
+            return result
+        end
+        local split_food = mark ~= nil and mark.magic2 and mastersim and product ~= "wetgoop"
+        if not split_food then
+            ok = RunHarvest()
+        elseif inv ~= nil then
+            local old_give = inv.GiveItem
+            inv.GiveItem = function(inv2, item, slot, pos)
+                if loot == nil and item ~= nil and item.prefab == product and pending_food_mark == mark then
+                    loot = item
+                    loot_pos = pos
+
+
+                    return false
+                end
+                return old_give(inv2, item, slot, pos)
+            end
+            ok = RunHarvest(function() inv.GiveItem = old_give end)
+        elseif GLOBAL.rawget(GLOBAL, "LaunchAt") ~= nil then
+
+
+            local old_launch = GLOBAL.LaunchAt
+            GLOBAL.LaunchAt = function(item, ...)
+                if loot == nil and item ~= nil and item.prefab == product and pending_food_mark == mark then
+                    loot = item
+                end
+                return old_launch(item, ...)
+            end
+            ok = RunHarvest(function() GLOBAL.LaunchAt = old_launch end)
+        else
+            ok = RunHarvest()
+        end
+
+
+
+
+
+
+        if mark ~= nil and mark.magic2 and mastersim and product ~= "wetgoop" then
+
+
+
+            if loot == nil or not loot:IsValid() or loot.components == nil
+                or loot.components.edible == nil then
+                print(string.format(
+                    "[WarlySkillTree] 魔术手法贰：没拿到成品实体，本盘不拆分（product=%s）",
+                    tostring(product)))
+            else
+
+
+
+                HalveEdible(loot)
+
+                local extra = SpawnPrefab(loot.prefab, loot.skinname, loot.skin_id, nil)
+                if extra ~= nil then
+                    local srcstack = loot.components.stackable
+                    if srcstack ~= nil and extra.components.stackable ~= nil then
+                        extra.components.stackable:SetStackSize(srcstack:StackSize())
+                    end
+                    local srcperish = loot.components.perishable
+                    if srcperish ~= nil and extra.components.perishable ~= nil then
+                        extra.components.perishable:SetPercent(srcperish:GetPercent())
+                    end
+                    HalveEdible(extra)
+
+
+
+
+                    if inv ~= nil then
+                        if not inv:GiveItem(extra) and extra:IsValid() then
+
+                            extra.Transform:SetPosition(harvester:GetPosition():Get())
+                        end
+                    else
+
+                        extra.Transform:SetPosition(self2.inst:GetPosition():Get())
+                    end
+                end
+
+
+
+                if inv ~= nil and loot:IsValid() then
+                    if not inv:GiveItem(loot, nil, loot_pos or harvester:GetPosition()) and loot:IsValid() then
+                        loot.Transform:SetPosition(harvester:GetPosition():Get())
+                    end
+                end
+            end
+        end
+
+        pending_food_mark = previous_food_mark
+        self2.warly_mark  = nil
+        return ok
+    end
+end)
+
+
+AddComponentPostInit("perishable", function(self)
+    local old_save = self.OnSave
+    self.OnSave = function(self2, ...)
+        local data = old_save ~= nil and old_save(self2, ...) or nil
+        if self2.warly_perish_bonus then
+            data = data or {}
+            data.warly_perishtime = self2.perishtime
+        end
+        return data
+    end
+    local old_load = self.OnLoad
+    self.OnLoad = function(self2, data, ...)
+        if data ~= nil and type(data.warly_perishtime) == "number"
+            and data.warly_perishtime > 0 then
+            self2.warly_perish_bonus = true
+            self2:SetPerishTime(data.warly_perishtime)
+        end
+        if old_load ~= nil then return old_load(self2, data, ...) end
+    end
+    if pending_food_mark == nil or pending_food_mark.perishmult == nil then
+        return
+    end
+    local mult = pending_food_mark.perishmult
+    local old_set = self.SetPerishTime
+    self.SetPerishTime = function(self2, time, ...)
+        self2.SetPerishTime = old_set
+        self2.warly_perish_bonus = true
+        return old_set(self2, time * mult, ...)
+    end
+end)
+
+
+AddComponentPostInit("lootdropper", function(self)
+    local old_generate = self.GenerateLoot
+    self.GenerateLoot = function(self2)
+        local loots = old_generate(self2)
+        local inst = self2.inst
+
+
+        if inst.warly_murder_double then
+            inst.warly_murder_double = nil
+            local doubled = {}
+            for _, v in ipairs(loots) do
+                table.insert(doubled, v)
+                table.insert(doubled, v)
+            end
+            loots = doubled
+        end
+
+
+
+
+
+
+
+
+
+        local lucky = inst.warly_butcher_lucky
+        inst.warly_butcher_lucky = nil
+        if not lucky then
+            local killer = inst.components.health ~= nil and inst.components.health.causeofdeath or nil
+            lucky = killer ~= nil and HasSkill(killer, "warly_butcher_2")
+        end
+        if lucky then
+
+            if inst:HasTag("pig") then
+                table.insert(loots, "pigskin")
+            end
+
+
+            local rare = inst:HasTag("beefalo") and "horn"
+                or (inst:HasTag("lightninggoat") and "lightninggoathorn")
+                or nil
+            if rare ~= nil and not table.contains(loots, rare) then
+                table.insert(loots, rare)
+            end
+        end
+
+
+
+
+
+
+        return loots
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+AddComponentPostInit("combat", function(self)
+    local old_getattacked = self.GetAttacked
+    self.GetAttacked = function(self2, attacker, damage, weapon, stimuli, spdamage)
+        local inst = self2.inst
+        local untiltime = inst.warly_garlic_block_time
+        if untiltime ~= nil then
+            if GetTime() < untiltime then
+                if GetTime() >= (inst.warly_garlic_block_cd or 0)
+                    and math.random() < GARLIC_BLOCK_CHANCE then
+                    inst.warly_garlic_block_cd = GetTime() + 0.5
+                    DoBoneShieldFX(inst)
+                    inst:PushEvent("blocked", {
+                        attacker = attacker,
+                        damage = damage,
+                        spdamage = spdamage,
+                    })
+                    return true
+                end
+            else
+                inst.warly_garlic_block_time = nil
+            end
+        end
+        return old_getattacked(self2, attacker, damage, weapon, stimuli, spdamage)
+    end
+end)
+
+
+AddPlayerPostInit(function(inst)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then return end
+
+
+
+
+
+    if inst.components.workmultiplier == nil then
+        inst:AddComponent("workmultiplier")
+    end
+    local previous_special = inst.components.workmultiplier.specialfn
+    inst.components.workmultiplier:SetSpecialMultiplierFn(
+        function(inst2, action, target, tool, numworks, recoil)
+            if previous_special ~= nil then
+                numworks = previous_special(inst2, action, target, tool, numworks, recoil)
+            end
+            if recoil or numworks == nil or numworks == 0 then
+                return numworks
+            end
+            local t = inst2.warly_sugar_crit_time
+            if t ~= nil and GetTime() < t and math.random() < SUGAR_CRIT_CHANCE then
+                if inst2.player_classified ~= nil then
+                    inst2.player_classified.playworkcritsound:push()
+                end
+                return 99999
+            end
+            return numworks
+        end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    function inst:Warly_ApplyNightmareGift(food)
+        if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+        self.warly_nightmaregift_until =
+            GetTime() + NIGHTMAREGIFT_TIME * GLOBAL.WARLY_SPECIAL_DURATION_MULT(food)
+    end
+
+    inst:ListenForEvent("attacked", function(inst2)
+        local untiltime = inst2.warly_nightmaregift_until
+        if untiltime == nil then
+            return
+        end
+        if GetTime() >= untiltime then
+            inst2.warly_nightmaregift_until = nil
+            return
+        end
+
+
+        local fx = SpawnPrefab("bramblefx_armor")
+        if fx ~= nil then
+            if fx.SetFXOwner ~= nil then
+                fx:SetFXOwner(inst2)
+            else
+                fx:Remove()
+            end
+        end
+    end)
+
+
+
+
+
+    function inst:Warly_ApplyOnionRollSpeed(food)
+        if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+        if self.components.locomotor == nil then
+            return
+        end
+        self.components.locomotor:SetExternalSpeedMultiplier(self, "warly_onionroll", 1.25)
+        if self.warly_onionroll_task ~= nil then
+            self.warly_onionroll_task:Cancel()
+        end
+        self.warly_onionroll_task = self:DoTaskInTime(
+            ONIONROLL_TIME * GLOBAL.WARLY_SPECIAL_DURATION_MULT(food), function(inst2)
+            inst2.warly_onionroll_task = nil
+            if inst2.components.locomotor ~= nil then
+                inst2.components.locomotor:RemoveExternalSpeedMultiplier(
+                    inst2, "warly_onionroll")
+            end
+        end)
+    end
+
+
+
+
+
+
+
+
+
+
+    function inst:Warly_OnEatCustomSpiceFood(spice, foodinst)
+        if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        local ed = (foodinst ~= nil and foodinst.components ~= nil)
+            and foodinst.components.edible or nil
+
+
+
+
+
+
+        local durmult = ((ed ~= nil and ed.warly_spice2) and 1.5 or 1)
+            * GLOBAL.WARLY_SPECIAL_DURATION_MULT(foodinst)
+
+        if spice == SPICE_HORROR or spice == SPICE_BRILLIANCE then
+
+
+            local buff = WARLY_SPICE_BUFF_PREFAB[spice]
+            self:AddDebuff(buff, buff, { duration = 240 * durmult })
+        elseif spice == SPICE_GLOW then
+
+
+            if self.wormlight ~= nil then
+                if self.wormlight.prefab == "wormlight_light" then
+                    local sp2 = self.wormlight.components.spell
+                    if sp2.warly_base_duration == nil then
+                        sp2.warly_base_duration = sp2.duration
+                    end
+                    sp2.duration = sp2.warly_base_duration * durmult
+                    self.wormlight.components.spell.lifetime = 0
+                    self.wormlight.components.spell:ResumeSpell()
+                    return
+                else
+                    self.wormlight.components.spell:OnFinish()
+                end
+
+```
+
