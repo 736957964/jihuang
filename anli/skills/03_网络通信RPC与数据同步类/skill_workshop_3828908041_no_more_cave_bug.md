@@ -17,10 +17,9 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3828908041)
+-- 生产级架构复刻切面范式 (提取自 Mod 3828908041，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 
 AddComponentPostInit("playerspawner", function(self, inst)
     local Shard = _G.getmetatable(_G.TheShard).__index
@@ -37,6 +36,12 @@ AddComponentPostInit("playerspawner", function(self, inst)
         gated[data.userid] = nil
     end)
 
+    if _G.Shard_IsMaster() then
+        inst:ListenForEvent("ms_playerjoined", function(world, player)
+            Arrived(player.userid, MASTER, true)
+        end)
+    end
+end)
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）

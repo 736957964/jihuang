@@ -17,26 +17,22 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3829489944)
+-- 生产级架构复刻切面范式 (提取自 Mod 3829489944，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-    --    在 StartCooking 时临时缩放 cooktime，烤完还原
-    AddComponentPostInit("cookable", function(self)
-        local old_StartCooking = self.StartCooking
-        self.StartCooking = function(self, ...)
-            local orig = self.cooktime
-            if orig then
-                self.cooktime = math.max(0.1, orig * FACTOR)
+if GetModConfigData("Fish") then
+    AddPrefabPostInit("fishingrod", function(inst)
+        local fr = inst.components.fishingrod
+        if fr then
+            if fr.waittime then
+                fr.waittime = math.max(0.1, fr.waittime * 0.8)
             end
-            local r = old_StartCooking(self, ...)
-            self.cooktime = orig
-            return r
+            if fr.reeltime then
+                fr.reeltime = math.max(0.1, fr.reeltime * 0.8)
+            end
         end
     end)
-end
-
-if GetModConfigData("CookPot") then
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）

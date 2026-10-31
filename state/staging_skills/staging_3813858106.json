@@ -1,0 +1,28 @@
+{
+  "mod_id": "3813858106",
+  "info": {
+    "name": "Geometric Drop (fixed)",
+    "author": "Chaosmonkey",
+    "version": "1.4.8-fix1",
+    "description": "Disabled"
+  },
+  "stats": {
+    "lua_files": [
+      "modinfo.lua",
+      "modmain.lua",
+      "scripts/prefabs/CirclePlacer.lua"
+    ],
+    "total_lines": 774,
+    "hooks": {
+      "AddComponentPostInit:playercontroller": 1
+    },
+    "netvars": 0,
+    "rpcs": 0,
+    "sg_hooks": 0,
+    "snippets": {
+      "AddComponentPostInit:playercontroller": "\nAddComponentPostInit(\"playercontroller\", function(self)\n    ThePlayer = GLOBAL.ThePlayer\n    TheWorld = GLOBAL.TheWorld\n    InitializePlacers()\n\n    local PlayerControllerGetLeftMouseAction = self.GetLeftMouseAction\n    local active_item, force_inspecting, mouse_target\n    local drop_action = BufferedAction(ThePlayer, nil, ACTIONS.DROP)\n    self.GetLeftMouseAction = function(self)\n        local act = PlayerControllerGetLeftMouseAction(self)\n        if force_inspecting then return act end\n        if not act and active_item and mouse_target then\n            act = drop_action\n        end\n        self.LMBaction = act"
+    }
+  },
+  "category": "07_实体机制与游戏平衡类",
+  "analyzed_at": "2026-10-31 19:25:13"
+}

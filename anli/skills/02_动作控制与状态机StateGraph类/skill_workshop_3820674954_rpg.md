@@ -17,26 +17,23 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3820674954)
+-- 生产级架构复刻切面范式 (提取自 Mod 3820674954，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-
-AddComponentPostInit("equippable", function(self)
-	modifier_init(self.inst)
-	local oldEquip = self.Equip
-	function self:Equip(owner)
-		oldEquip(self, owner)
-		if self.inst:HasTag("modifier_soulbound") then
-			findLink(self.inst, owner)
+for _, prefab in ipairs(FRIDGE_PREFABS) do
+	AddPrefabPostInit(prefab, function(inst)
+		inst:AddTag("modifier_enchantable")
+		if not GLOBAL.TheWorld or not GLOBAL.TheWorld.ismastersim then
+			return inst
 		end
-	end
 
-	local oldUnequip = self.Unequip
-	function self:Unequip(owner)
-		oldUnequip(self, owner)
-		if self.inst:HasTag("modifier_soulbound") then
-			self.inst:DoTaskInTime(0.5, function()
+		if inst.components.modifier == nil then
+			inst:AddComponent("modifier")
+		end
+
+		return inst
+	end)
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）

@@ -17,26 +17,23 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3670669065)
+-- 生产级架构复刻切面范式 (提取自 Mod 3670669065，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
+GlassicAPI.SetOnequipSkinItem = function(name, data)
+	ENV.AddPrefabPostInit(name, set_onquip_skin_item(unpack(data)))
+end
 
-AddPrefabPostInit("reskin_tool", function(inst)
-	if not TheWorld.ismastersim then
-		return
-	end
-	if inst.components.spellcaster then
-		local can_cast_fn = inst.components.spellcaster.can_cast_fn
-		inst.components.spellcaster:SetCanCastFn(function(doer, target, ...)
-			local prefab_to_skin = target.prefab
-			if table.contains(MODCHARACTERLIST, target.prefab) then
-				if
-					doer.userid == target.userid
-					and target.components.beard
-					and target.components.beard.is_skinnable
-				then
-					return validate_modchar_beard(doer, target)
+-- The common init fn for skinned prefabs.
+--[[usage:
+	CreatePrefabskin("skin_name", {
+		...,
+		init_fn = GlassicAPI.BasicInitFn,
+		...,
+	})
+--]]
+GlassicAPI.BasicInitFn = function(inst)
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）

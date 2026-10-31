@@ -17,26 +17,55 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3825012187)
+-- 生产级架构复刻切面范式 (提取自 Mod 3825012187，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
--- 飞天扫帚的动作
-AddStategraphPostInit("wilson", function(self)
-    local run = self.states.run
-    if run then
-        local old_enter = run.onenter
-        function run.onenter(inst, ...)
-            if old_enter then
-                old_enter(inst, ...)
-            end
-            if inst.components.sh_broom_flying then
-                if inst.components.sh_broom_flying.isfly then
-                    inst.AnimState:PlayAnimation("sh_broom_fly", true)
-                    inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength() + 0.01)
-                    inst.sg:AddStateTag("noslip") 
-                    inst.sg.statemem.normal = false
-                    inst.sg.statemem.careful = false
+AddPrefabPostInit("world", function(inst)
+    local map = getmetatable(inst.Map).__index
+    if map == nil then
+        return
+    end
+
+    local function realm_passable(x, y, z)
+        return IsInShHollow(x, y, z)
+    end
+
+    local OldIsAboveGroundAtPoint = map.IsAboveGroundAtPoint
+    map.IsAboveGroundAtPoint = function(self, x, y, z, ...)
+        if realm_passable(x, y, z) then
+            return true
+        end
+        return OldIsAboveGroundAtPoint(self, x, y, z, ...)
+    end
+
+    local OldIsPassableAtPoint = map.IsPassableAtPoint
+    map.IsPassableAtPoint = function(self, x, y, z, ...)
+        if realm_passable(x, y, z) then
+            return true
+        end
+        return OldIsPassableAtPoint(self, x, y, z, ...)
+    end
+
+    local OldIsVisualGroundAtPoint = map.IsVisualGroundAtPoint
+    map.IsVisualGroundAtPoint = function(self, x, y, z, ...)
+        if realm_passable(x, y, z) then
+            return true
+        end
+        return OldIsVisualGroundAtPoint(self, x, y, z, ...)
+    end
+
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    inst:ListenForEvent("ms_playerdespawnanddelete", function(world, player)
+        if player ~= nil and player._sh_hollow_focus ~= nil then
+            player.sh_hollow_spawn_delete = true
+            player._sh_hollow_focus:set(nil)
+        end
+    end)
+end)
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）

@@ -17,26 +17,18 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3827608591)
+-- 生产级架构复刻切面范式 (提取自 Mod 3827608591，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
+for character, _ in pairs(TUNING.FSC_GHOST_BACK_LAYERED_PIGTAIL_CHARACTERS) do
+    AddPrefabPostInit(character, PlayerGhostPigtailsPostInit)
+end
 
-AddPrefabPostInit("wilbur", function(inst)
-    if not TheWorld.ismastersim then
-        return
-    end
+------------ Mime skins. ------------
+-------------------------------------
 
-    inst:DoStaticTaskInTime(0, AddOrRemoveSpiderLegsSymbol)
-    inst:ListenForEvent("fsc_skinner_clothing_change", AddOrRemoveSpiderLegsSymbol)
-    inst:ListenForEvent("unequip", AddOrRemoveSpiderLegsSymbol)
-    inst:ListenForEvent("equip", AddOrRemoveSpiderLegsSymbol)
-end)
-
------------- Wathom. ------------
----------------------------------
-
-local function TryApplyShadowBuild(inst)
+local function ToggleMimeBehaviour(inst)
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
