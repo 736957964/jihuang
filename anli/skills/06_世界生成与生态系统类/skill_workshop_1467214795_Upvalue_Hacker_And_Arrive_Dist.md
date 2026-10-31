@@ -1052,3 +1052,28 @@ end)
 
 ```
 
+
+
+### 变体演进：Withered Foxy Jumpscare Every Second [Server , Configurable , Commands] (Mod 3631087563)
+- **变体场景与切面**：收录来自工坊 Mod 3631087563 (`Withered Foxy Jumpscare Every Second [Server , Configurable , Commands]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3631087563)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+if syncronized == false then --this is pretty much just an identical version of the original client-side mod, but set to all_clients_require.
+    AddPrefabPostInit("world",function()
+        if not GLOBAL.TheWorld.ismastersim then
+            GLOBAL.TheFrontEnd.screenroot.inst:DoPeriodicTask(1,function()
+                if math.random(1,prob) == 1 then
+                    JumpscarePlayer()
+                end
+            end)
+        end
+    end)
+
+```
+

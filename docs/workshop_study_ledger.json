@@ -5268,8 +5268,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 07:03:12",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3631087563",
+      "name": "Withered Foxy Jumpscare Every Second [Server , Configurable , Commands]",
+      "author": "Nixie",
+      "version": "1.1",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 07:07:16",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3713379062",
+      "name": "Lizard Bill, the Shrine Maiden",
+      "author": "Mikey",
+      "version": "1.4.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:07:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3754884291",
+      "name": "薇格弗德技能树优化",
+      "author": "羊羊羊",
+      "version": "1.0.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:07:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3793827776",
+      "name": "横向状态条2.1",
+      "author": "黑熊扑通",
+      "version": "2.2.23",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 07:07:16",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:03:12"
+  "lastUpdated": "2026-11-01 07:07:16"
 }

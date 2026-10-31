@@ -18975,3 +18975,146 @@ end
 
 ```
 
+
+
+### 变体演进：Lizard Bill, the Shrine Maiden (Mod 3713379062)
+- **变体场景与切面**：收录来自工坊 Mod 3713379062 (`Lizard Bill, the Shrine Maiden`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3713379062)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:bs2bill
+
+AddPrefabPostInit("bs2bill", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    inst:ListenForEvent("death", OnBillDeath)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    PatchBookState(sg, "book")
+    PatchBookState(sg, "book2")
+end)
+
+```
+
+
+
+### 变体演进：薇格弗德技能树优化 (Mod 3754884291)
+- **变体场景与切面**：收录来自工坊 Mod 3754884291 (`薇格弗德技能树优化`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3754884291)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddRecipePostInit:battlesong_shadowaligned
+
+AddRecipePostInit("battlesong_shadowaligned", function(recipe)
+    recipe.ingredients = {
+        Ingredient("featherpencil", 1),
+        Ingredient("papyrus", 1),
+        Ingredient("horrorfuel", 4),
+    }
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:battlesong_lunaraligned
+
+AddRecipePostInit("battlesong_lunaraligned", function(recipe)
+    recipe.ingredients = {
+        Ingredient("featherpencil", 1),
+        Ingredient("papyrus", 1),
+        Ingredient("purebrilliance", 3),
+    }
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:battleborn
+
+AddComponentPostInit("battleborn", function(self)
+    -- 改写 battleborn 的装备修复筛选，但保留其他装备的原版修复处理。
+    local old = self.RepairEquipment
+    self.RepairEquipment = function(item, delta)
+        local owner = item.components.inventoryitem ~= nil and item.components.inventoryitem:GetGrandOwner() or nil
+        if item.prefab == "wathgrithr_improvedhat" and owner ~= nil then
+            local canrepair = HasSkill(owner, "wathgrithr_arsenal_helmet_4")
+                or (HasSkill(owner, "wathgrithr_arsenal_helmet_3")
+                    and owner.components.health:GetPercent() >= 1)
+            if canrepair and item.components.armor:IsDamaged() then
+                item.components.armor:Repair(delta * TUNING.BATTLEBORN_REPAIR_EQUIPMENT_MULT)
+                return
+            end
+        end
+        old(item, delta)
+    end
+
+    -- 原版 Battleborn:OnAttack 在角色不满血时只回血，不会调用 RepairEquipment。
+    -- 头盔大师要求不满血也修复，因此在确认本次攻击确实触发了战斗荣耀回血后，
+    -- 按实际恢复量修复当前佩戴的统帅头盔。
+    local old_onattack = self.OnAttack
+    self.OnAttack = function(component, data)
+        local owner = component.inst
+        local oldhealth = owner.components.health ~= nil
+            and owner.components.health.currenthealth
+            or nil
+
+        old_onattack(component, data)
+
+        if oldhealth == nil
+            or owner.components.health.currenthealth <= oldhealth
+            or not HasSkill(owner, "wathgrithr_arsenal_helmet_4")
+        then
+            return
+        end
+
+        local head = GetHead(owner)
+        if head ~= nil
+            and head.prefab == "wathgrithr_improvedhat"
+            and head.components.armor ~= nil
+            and head.components.armor:IsDamaged()
+        then
+            local healed = owner.components.health.currenthealth - oldhealth
+            head.components.armor:Repair(healed * TUNING.BATTLEBORN_REPAIR_EQUIPMENT_MULT)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    local old_try_aoe_targeting = self.TryAOETargeting
+    self.TryAOETargeting = function(component, ...)
+        local inventory = component.inst ~= nil
+            and component.inst.replica ~= nil
+            and component.inst.replica.inventory
+            or nil
+        local equipped = inventory ~= nil and inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+        if equipped ~= nil
+            and equipped.prefab == "wathgrithr_shield"
+        then
+            return false
+        end
+        return old_try_aoe_targeting ~= nil and old_try_aoe_targeting(component, ...) or false
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(stategraph)
+    PatchShieldParryPre(stategraph, false)
+end)
+
+```
+
