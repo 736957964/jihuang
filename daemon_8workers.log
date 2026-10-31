@@ -4070,3 +4070,20 @@
 [2026-11-01 04:18:37] Reducer Worker 7: 发现 1 份待存草稿，执行母本仲裁归约...
 [2026-11-01 04:18:37] Reducer: 成功将 Mod 2781167240 (自动切手杖武器 Auto Switch Cane and Weapon) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 04:18:37] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 04:18:44] Git 自动提交并推送成功！
+[2026-11-01 04:18:44] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 04:18:44] 【批次结算】：本批归约出 1 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 04:19:14] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3826664484', '3825198065', '3818880940', '3776817880', '3703073616', '3681393205']
+[2026-11-01 04:19:14] SteamCMD 下载 3776817880 ...
+[2026-11-01 04:19:14] SteamCMD 下载 3703073616 ...
+[2026-11-01 04:19:14] SteamCMD 下载 3681393205 ...
+[2026-11-01 04:19:37] Worker [3776817880] 成功解析入库暂存区 -> 绝望守卫-Ward (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 04:19:47] Worker [3703073616] 成功解析入库暂存区 -> Potap Trainer 2.0 (GUI) (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 04:20:11] Worker [3681393205] 成功解析入库暂存区 -> DC_FGC_PVP (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 04:20:11] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 04:20:11] Reducer: 成功将 Mod 3681393205 (DC_FGC_PVP) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:20:11] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:20:11] Reducer: 成功将 Mod 3703073616 (Potap Trainer 2.0 (GUI)) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 04:20:11] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 04:20:11] Reducer: 成功将 Mod 3776817880 (绝望守卫-Ward) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 04:20:12] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md

@@ -2047,3 +2047,59 @@ end)
 
 ```
 
+
+
+### 变体演进：绝望守卫-Ward (Mod 3776817880)
+- **变体场景与切面**：收录来自工坊 Mod 3776817880 (`绝望守卫-Ward`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3776817880)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:nightmarefuel
+-- 专属消耗品回血
+AddPrefabPostInit("nightmarefuel", function(inst)
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")
+    end
+    inst.components.edible.healthvalue = 0
+    inst.components.edible.hungervalue = 0
+    inst.components.edible.sanityvalue = -30
+    inst.components.edible:SetOnEatenFn(function(inst, eater)
+        if eater.prefab == "ward" then
+            if eater.components.health ~= nil then
+                eater.components.health:DoDelta(20)
+            end
+            if eater.components.sanity ~= nil then
+                eater.components.sanity:DoDelta(25)
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:horrorfuel
+
+AddPrefabPostInit("horrorfuel", function(inst)
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")
+    end
+    inst.components.edible.healthvalue = 0
+    inst.components.edible.hungervalue = 0
+    inst.components.edible.sanityvalue = -60
+    inst.components.edible:SetOnEatenFn(function(inst, eater)
+        if eater.prefab == "ward" then
+            if eater.components.health ~= nil then
+                eater.components.health:DoDelta(60)
+            end
+            if eater.components.sanity ~= nil then
+                eater.components.sanity:DoDelta(50)
+            end
+        end
+    end)
+end)
+
+```
+
