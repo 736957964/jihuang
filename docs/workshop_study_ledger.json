@@ -4485,8 +4485,26 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 05:24:55",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2071086898",
+      "name": "my map icons(server)",
+      "author": "Dark_Ducker",
+      "version": "1.8",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 05:29:18",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2802552738",
+      "name": "45 Inventory Slots with Equip Inventory",
+      "author": "Published by Cables (code by fmo080308, xVars, and ITHOMIA)",
+      "version": "1.0",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-01 05:29:18",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:24:55"
+  "lastUpdated": "2026-11-01 05:29:18"
 }

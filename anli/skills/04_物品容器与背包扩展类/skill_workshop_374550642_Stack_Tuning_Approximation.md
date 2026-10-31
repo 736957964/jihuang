@@ -137,3 +137,44 @@ end)
 
 ```
 
+
+
+### 变体演进：45 Inventory Slots with Equip Inventory (Mod 2802552738)
+- **变体场景与切面**：收录来自工坊 Mod 2802552738 (`45 Inventory Slots with Equip Inventory`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2802552738)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+    end
+    AddPrefabPostInit("inventory_classified", addItemSlotNetvarsInInventory)
+
+    local HUD_ATLAS = "images/hud.xml"
+    local W = 64
+    local SEP = 7
+    local YSEP = 8
+    local INTERSEP = 15
+
+    local inv_CTorBase = inv._ctor or function() return true end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:backpack
+
+AddPrefabPostInit("backpack",
+function(inst)
+    if ENABLEBACKPACK == true then
+        if inst.components.inventoryitem then
+            inst.components.inventoryitem.cangoincontainer = true
+        end
+    else
+        if inst.components.inventoryitem then
+            inst.components.inventoryitem.cangoincontainer = false
+        end
+    end
+end )
+
+```
+

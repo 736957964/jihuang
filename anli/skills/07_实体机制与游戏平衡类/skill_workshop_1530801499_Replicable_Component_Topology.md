@@ -3624,3 +3624,29 @@ end)
 
 ```
 
+
+
+### 变体演进：my map icons(server) (Mod 2071086898)
+- **变体场景与切面**：收录来自工坊 Mod 2071086898 (`my map icons(server)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2071086898)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+--添加牛的图标
+AddPrefabPostInit("beefalo", function(inst)
+	inst.MiniMapEntity:SetEnabled(true)
+	local oldUpdateDomestication=inst.UpdateDomestication
+	inst.UpdateDomestication=function(inst)
+		if oldUpdateDomestication then
+			oldUpdateDomestication(inst)
+		end
+		inst.MiniMapEntity:SetEnabled(true)
+	end
+end)
+
+```
+
