@@ -19205,3 +19205,40 @@ end)
 
 ```
 
+
+
+### 变体演进：Shadow Farmer: Maxwell’s Minion (Mod 3545472713)
+- **变体场景与切面**：收录来自工坊 Mod 3545472713 (`Shadow Farmer: Maxwell’s Minion`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3545472713)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:waxwelljournal
+
+AddPrefabPostInit("waxwelljournal", function(inst)
+    if inst.components.spellbook ~= nil then
+        local items = inst.components.spellbook.items
+        if items ~= nil and not HasShadowFarmerSpell(items) then
+            table.insert(items, SHADOWFARMER_SPELL)
+        end
+        if GLOBAL.TheWorld.ismastersim then
+            if inst.components.aoetargeting == nil then
+                inst:AddComponent("aoetargeting")
+                inst.components.aoetargeting.range = 8
+                inst.components.aoetargeting.reticule.validcolour = { 0.2, 0.1, 0.5, 1 }
+                inst.components.aoetargeting.reticule.invalidcolour = { 0.5, 0, 0, 1 }
+            end
+            if inst.components.aoespell == nil then
+                inst:AddComponent("aoespell")
+                inst.components.aoespell:SetSpellFn(ShadowFarmerSpellFn)
+                inst.components.aoespell:SetSpellRadius(8)
+            end
+        end
+    end
+end)
+
+```
+

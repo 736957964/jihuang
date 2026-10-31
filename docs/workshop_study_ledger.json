@@ -5322,8 +5322,35 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 07:14:00",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3054561212",
+      "name": "robobeestatuerecipeconfig",
+      "author": "<default>, oblivioncth",
+      "version": "1.35.11",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:20:07",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3545472713",
+      "name": "Shadow Farmer: Maxwell’s Minion",
+      "author": "lstsn",
+      "version": "0.1.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:20:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3672625502",
+      "name": "凑企鹅死亡音效（服务器端）",
+      "author": "夸夸",
+      "version": "0.8",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:20:07",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:14:00"
+  "lastUpdated": "2026-11-01 07:20:07"
 }
