@@ -16234,3 +16234,62 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：[fix] DST A (Mod 3735370961)
+- **变体场景与切面**：收录来自工坊 Mod 3735370961 (`[fix] DST A`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3735370961)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:halloweenpotion_health_large
+-- 厨师能吃药水  给药水添加tag
+AddPrefabPostInit("halloweenpotion_health_large", function(inst)
+  inst:AddTag("preparedfood")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:halloweenpotion_sanity_large
+end)
+AddPrefabPostInit("halloweenpotion_sanity_large", function(inst)
+  inst:AddTag("preparedfood")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tophat
+-- 魔法师高礼帽
+AddPrefabPostInit("tophat", function(inst)
+  local _Old_OnPreBuilt = inst.onPreBuilt
+  local top_onprebuilt_new = function(inst, builder, materials, recipe)
+    if _Old_OnPreBuilt ~= nil then
+      _Old_OnPreBuilt(inst, builder, materials, recipe)
+    end
+    if recipe and recipe.name == "achiv_tophat_magician" then
+      inst:ConvertToMagician()
+    end
+  end
+  inst.onPreBuilt = top_onprebuilt_new
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", ListenForPlayers)
+
+-- 欧皇检测
+AddPrefabPostInit("krampus_sack", function(inst)
+  inst:AddComponent("ksmark")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+-- 欧皇检测
+AddPrefabPostInit("krampus_sack", function(inst)
+  inst:AddComponent("ksmark")
+end)
+
+```
+

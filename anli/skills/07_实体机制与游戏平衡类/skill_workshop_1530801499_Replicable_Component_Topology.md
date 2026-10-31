@@ -4334,3 +4334,189 @@ AddPrefabPostInit("minerhatlight", minerhatlightfn);
 
 ```
 
+
+
+### 变体演进：Mod 3816773664 (Mod 3816773664)
+- **变体场景与切面**：收录来自工坊 Mod 3816773664 (`Mod 3816773664`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3816773664)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wx78_inventorycontainer
+
+AddPrefabPostInit("wx78_inventorycontainer", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+
+    local function RefreshBackupBodyOpenState(inst)
+        if inst.components.container == nil then
+            return
+        end
+
+        if GetBackupBodyOwner(inst) ~= nil then
+            inst.components.container.canbeopened = true
+        end
+    end
+
+    if inst.SetPowered ~= nil then
+        local old_SetPowered = inst.SetPowered
+        inst.SetPowered = function(inst, powered, ...)
+            local results = {
+                old_SetPowered(inst, powered, ...)
+            }
+
+            RefreshBackupBodyOpenState(inst)
+            return _G.unpack(results)
+        end
+    end
+
+    inst:ListenForEvent("onputininventory", function(inst, owner)
+        if owner ~= nil and owner:HasTag("wx78_backupbody") then
+            RefreshBackupBodyOpenState(inst)
+        end
+    end)
+
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            RefreshBackupBodyOpenState(inst)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78_backupbody
+
+AddPrefabPostInit("wx78_backupbody", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+
+    local workable = inst.components.workable
+    if workable == nil then
+        return
+    end
+
+    local old_Destroy = workable.Destroy
+    workable.Destroy = function(workable, destroyer, ...)
+        if destroyer ~= nil
+            and destroyer.prefab == "winona_catapult_projectile"
+            and destroyer:HasTag("toughworker") then
+            return
+        end
+
+        return old_Destroy(workable, destroyer, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+
+AddPrefabPostInit("reskin_tool", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+
+    local spellcaster = inst.components.spellcaster
+    if spellcaster == nil then
+        return
+    end
+
+    local old_can_cast_fn = spellcaster.can_cast_fn
+    local old_spell_fn = spellcaster.spell
+
+    spellcaster:SetCanCastFn(function(doer, target, pos, tool)
+        if target ~= nil and target.prefab == "wx78_backupbody" then
+            if not CanUseBackupBodyReskin(doer, target) then
+                return false
+            end
+            local skinner = GetBackupBodySkinner(target)
+            local nextskin = GetNextBackupBodySkin(doer.userid, skinner:GetClothing().base)
+            return nextskin ~= nil and nextskin ~= skinner:GetClothing().base
+        end
+        if old_can_cast_fn ~= nil then
+            return old_can_cast_fn(doer, target, pos, tool)
+        end
+        return false
+    end)
+
+    spellcaster:SetSpellFn(function(tool, target, pos, doer)
+        if target ~= nil and target.prefab == "wx78_backupbody" then
+            if not CanUseBackupBodyReskin(doer, target) then
+                return
+            end
+            local skinner = GetBackupBodySkinner(target)
+            local current = skinner:GetClothing().base
+            local nextskin = GetNextBackupBodySkin(doer.userid, current)
+            if nextskin ~= nil and nextskin ~= current
+                and ApplyBackupBodySkin(target, doer.userid, nextskin) then
+                target._wx78_backupbody_swept = true
+                target._wx78_backupbody_swept_userid = doer.userid
+                local skinfx = _G.SKIN_FX_PREFAB[tool:GetSkinName()]
+                local fx = _G.SpawnPrefab(skinfx ~= nil and skinfx[1] or "explode_reskin")
+                if fx ~= nil then
+                    fx.Transform:SetPosition(target.Transform:GetWorldPosition())
+                end
+            end
+            return
+        end
+        if old_spell_fn ~= nil then
+            return old_spell_fn(tool, target, pos, doer)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:socket_shadow_harvester
+
+    AddComponentPostInit("socket_shadow_harvester", function(socket)
+        if not GLOBAL.TheWorld.ismastersim or socket._wx78_extra_plants_v3 then
+            return
+        end
+        socket._wx78_extra_plants_v3 = true
+
+        local original = socket.TryToFindItem
+        if type(original) ~= "function" then
+            return
+        end
+
+        socket.TryToFindItem = function(self, ...)
+            local item = original(self, ...)
+            if item ~= nil then
+                return item
+            end
+
+            local owner = self.inst
+            if owner == nil or not owner:IsValid() or self.GetHarvestRadius == nil then
+                return nil
+            end
+
+            local radius = self:GetHarvestRadius()
+            if radius == nil or radius <= 0 then
+                return nil
+            end
+
+            local x, y, z = owner.Transform:GetWorldPosition()
+            local candidates = GLOBAL.TheSim:FindEntities(x, y, z, radius, PICKABLE_TAGS, EXCLUDE_TAGS)
+            local best, bestdist = nil, nil
+
+            for _, plant in ipairs(candidates) do
+                if IsExtraHarvestTarget(plant, self) then
+                    local distance = owner:GetDistanceSqToInst(plant)
+                    if bestdist == nil or distance > bestdist then
+                        best, bestdist = plant, distance
+                    end
+                end
+            end
+
+            return best
+        end
+    end)
+
+end
+
+```
+
