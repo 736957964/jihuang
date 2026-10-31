@@ -3720,8 +3720,26 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 03:46:48",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3490789139",
+      "name": "登仙灵石兑换丹药",
+      "author": "布衣提三尺",
+      "version": "1.21",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 03:47:49",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3820600244",
+      "name": "Doro和咕嘎",
+      "author": "冰晨bingchen",
+      "version": "3.3.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:47:49",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:46:48"
+  "lastUpdated": "2026-11-01 03:47:49"
 }

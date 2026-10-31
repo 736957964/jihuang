@@ -3267,3 +3267,73 @@ end)
 
 ```
 
+
+
+### 变体演进：Doro和咕嘎 (Mod 3820600244)
+- **变体场景与切面**：收录来自工坊 Mod 3820600244 (`Doro和咕嘎`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3820600244)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:burnable
+-- The existing orange-tree area blocks naturally ignited fires.
+AddComponentPostInit("burnable", function(self)
+    local original = self.StartWildfire
+    self.StartWildfire = function(burnable, ...)
+        if rules.IsProtected(burnable.inst) then return end
+        return original(burnable, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigman
+
+AddPrefabPostInit("pigman", function(inst)
+    if not _G.TheWorld.ismastersim or inst.components.talker == nil
+        or inst._friendly_pigman_chatter_hooked then return end
+    inst._friendly_pigman_chatter_hooked = true
+
+    -- Every stock PigBrain/ChattyNode speech reaches Talker:Chatter. Replacing
+    -- here preserves the original timing and behaviour without a second timer.
+    local old_chatter = inst.components.talker.Chatter
+    inst.components.talker.Chatter = function(talker, stringtable, strid, time,
+            forcetext, echotochatpriority)
+        if IsNormalPig(inst) and math.random() < chatter.CUSTOM_CHANCE then
+            local line = ChooseLine(inst, GetCategory(inst, stringtable))
+            if line ~= nil then
+                return talker:Say(line, time, forcetext, forcetext)
+            end
+        end
+        return old_chatter(talker, stringtable, strid, time, forcetext,
+            echotochatpriority)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst.doro_orange_buff_duration = _G.net_float(inst.GUID, "doro_orange_buff_duration")
+    inst.doro_orange_buff_serial = _G.net_byte(inst.GUID,
+        "doro_orange_buff_serial", "doro_orange_buff_dirty")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:doro_teleport_sign
+
+AddPrefabPostInit("doro_teleport_sign", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+
+    signs[inst] = true
+    inst:ListenForEvent("onremove", function()
+        signs[inst] = nil
+    end)
+end)
+
+```
+
