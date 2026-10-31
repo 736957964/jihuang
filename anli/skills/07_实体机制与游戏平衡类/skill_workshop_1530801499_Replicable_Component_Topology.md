@@ -4234,3 +4234,103 @@ end)
 
 ```
 
+
+
+### 变体演进：Rechargeable Touch Stones (Mod 2854593752)
+- **变体场景与切面**：收录来自工坊 Mod 2854593752 (`Rechargeable Touch Stones`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2854593752)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:touchstonetracker
+
+AddComponentPostInit("touchstonetracker", function(self)
+    function self:RepairTouchStone(touchstone)
+        local id = touchstone and touchstone.GetTouchStoneID and touchstone:GetTouchStoneID() or 0
+        if id > 0 then
+            self.used[id] = nil
+            if self.inst.player_classified then
+                local used = {}
+                for k, v in pairs(self.used) do
+                    table.insert(used, k)
+                end
+                self.inst.player_classified:SetUsedTouchStones(used)
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:resurrectionstone
+
+AddPrefabPostInit("resurrectionstone", function(inst)
+    inst:AddComponent("trader")
+    inst.components.trader:SetAbleToAcceptTest(accepttest)
+    inst.components.trader.onaccept = onacceptitem
+    inst.components.trader.acceptnontradable = true
+end)
+
+```
+
+
+
+### 变体演进：tumbleweedspawner_visual (Mod 2982741818)
+- **变体场景与切面**：收录来自工坊 Mod 2982741818 (`tumbleweedspawner_visual`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2982741818)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:tumbleweedspawner
+AddPrefabPostInit("tumbleweedspawner",function(inst)
+    -- 일부러 딜래이를 줘서 스포너가 배치되면 찾도록 이렇게 만듬
+    inst:DoTaskInTime(1,function(inst)
+        local x, _, z = inst.Transform:GetWorldPosition()
+        local dummy = GLOBAL.SpawnPrefab("tumbleweed_dummy")
+        dummy.Transform:SetPosition(x, 0, z)
+    end)
+end)
+
+```
+
+
+
+### 变体演进：新手新神器_礦工帽 (Mod 3116005144)
+- **变体场景与切面**：收录来自工坊 Mod 3116005144 (`新手新神器_礦工帽`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3116005144)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minerhat
+
+AddPrefabPostInit("minerhat", minerhatfn);
+
+
+-- 照明
+local function minerhatlightfn(inst)
+    inst.Light:SetFalloff(0.7)
+    inst.Light:SetIntensity(1)
+    inst.Light:SetRadius(40)
+    inst.Light:SetColour(255 / 255, 255 / 255, 236 / 255)
+
+    inst.entity:SetPristine()
+
+    inst.persists = false
+    return inst
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minerhatlight
+
+AddPrefabPostInit("minerhatlight", minerhatlightfn);
+
+```
+
