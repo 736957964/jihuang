@@ -5070,8 +5070,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 06:26:02",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3465643011",
+      "name": "Auto-Equip Light",
+      "author": "HellFix",
+      "version": "1.0.0",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 06:31:24",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3804423239",
+      "name": "猪人房重建 (Pig House Rebuild)",
+      "author": "念奴娇",
+      "version": "0.3.6",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 06:31:24",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 06:26:02"
+  "lastUpdated": "2026-11-01 06:31:24"
 }
