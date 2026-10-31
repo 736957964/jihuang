@@ -237,3 +237,85 @@ end
 
 ```
 
+
+
+### 变体演进：Speedrun Timer + Utility Mod (Mod 3765874168)
+- **变体场景与切面**：收录来自工坊 Mod 3765874168 (`Speedrun Timer + Utility Mod`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3765874168)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+end
+AddComponentPostInit("playercontroller", CleanController)
+
+local function CleanMap(self) --mapwidget.lua
+	if CONFIG.MAPCLEAN == "nofow" then return end
+	self.bg:SetTexture("images/ui.xml", "white.tex")
+	self.bg:SetTint(.05,.05,.05,1)
+	self.bg.inst.ImageWidget:SetBlendMode(BLENDMODE.Premultiplied)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+end
+AddPrefabPostInit("world", CleanMinimap)
+
+AddPrefabPostInit("world", function(inst) -- ++Zoomzoombang
+	if CONFIG.MAPCLEAN == "nohud" then return end
+	inst:ListenForEvent("playeractivated", function(self, owner)
+		local tw = TheWorld
+		local mm = tw.minimap.MiniMap
+		local fow = mm.DrawForgottenFogOfWar
+		local efow = mm.EnableFogOfWar
+		local tp = ThePlayer
+		local tpc = tp.player_classified
+		if owner ~= tp then return end
+		fow(mm, false)
+		tpc:ListenForEvent("MapExplorer.learnmap", function() -- Treasure maps
+			tp:DoTaskInTime(FRAMES, function(inst)
+				fow(mm, false)
+				efow(mm, false)
+			end)
+		end)
+		tpc:ListenForEvent("MapSpotRevealer.revealmapspot", function() -- Bottles
+			tp:DoTaskInTime(FRAMES, function(inst)
+				fow(mm, false)
+				efow(mm, false)
+			end)
+		end)
+
+		local me = tpc.MapExplorer -- Re-enable FoW whenever the map is revealed (from using TMIP+ reveal map function for example)
+		if me then
+			local oldRA = me.RevealArea
+			getmetatable(me).__index.RevealArea = function(...)
+				fow(mm, true)
+				return oldRA(...)
+			end
+		end
+
+		local dbgshield = ThePlayer and ThePlayer.HUD and ThePlayer.HUD.controls and ThePlayer.HUD.controls.TMI and ThePlayer.HUD.controls.TMI.debugshield and ThePlayer.HUD.controls.TMI.debugshield.children
+		if not dbgshield then return end
+		local showMapButton = nil
+		for i,v in pairs(dbgshield) do
+			if v.text and v.text.string == (GLOBAL.STRINGS.TOO_MANY_ITEMS_UI and GLOBAL.STRINGS.TOO_MANY_ITEMS_UI.DEBUG_MAP_SHOW or "Show full map") then
+				showMapButton = v
+			end
+		end
+
+		if not showMapButton then return end
+		local onclick_old = showMapButton.onclick
+		showMapButton.onclick = function(...) -- Add hack to onclick to force fog when "Show full map" button is clicked
+			if TheWorld and TheWorld.minimap and TheWorld.minimap.MiniMap then
+				fow(mm, true)
+			end
+			return onclick_old(...)
+		end
+	end)
+end)
+
+```
+
