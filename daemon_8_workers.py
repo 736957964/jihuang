@@ -324,10 +324,14 @@ def reducer_summarize_and_evolve():
             cat_dir = os.path.join(SKILLS_DIR, cat)
             os.makedirs(cat_dir, exist_ok=True)
             
-            snippet_code = "-- 暂无高频切面钩子"
+            # 老爹指示：不限制行数，只要合理，支持展示多个不同切面完整片段
+            snippets_blocks = []
             if stats["snippets"]:
-                top_key = list(stats["snippets"].keys())[0]
-                snippet_code = stats["snippets"][top_key]
+                for s_key, s_code in list(stats["snippets"].items())[:5]:
+                    snippets_blocks.append(f"-- 切面钩子：{s_key}\n{s_code}\n")
+                snippet_code = "\n-- ----------------------------------------------------------------------------\n".join(snippets_blocks)
+            else:
+                snippet_code = "-- 暂无高频切面钩子"
 
             slug = re.sub(r"[^0-9A-Za-z]+", "_", name).strip("_").lower() or mod_id
             target_skill_file = os.path.join(cat_dir, "skill_workshop_%s_%s.md" % (mod_id, slug[:32]))
