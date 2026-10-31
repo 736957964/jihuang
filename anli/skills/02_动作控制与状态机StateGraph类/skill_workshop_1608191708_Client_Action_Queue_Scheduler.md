@@ -6107,3 +6107,540 @@ end
 
 ```
 
+
+
+### 变体演进：龙右 (Mod 3820211135)
+- **变体场景与切面**：收录来自工坊 Mod 3820211135 (`龙右`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3820211135)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:experiencecollector
+--     "回调体里判 prefab"规则拦（2026-09-21 新增）。
+AddComponentPostInit("experiencecollector", function(self)
+    local _UpdateXp = self.UpdateXp
+
+    self.UpdateXp = function(comp, ...)
+        if comp.inst ~= nil and comp.inst.prefab == "esctemplate" then
+            return
+        end
+        return _UpdateXp(comp, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:esctemplate
+-- 玩家入场：服务端起任务监听并在握手后把名单交给客户端；客户端按名单重设可点状态。
+AddPrefabPostInit("esctemplate", function(inst)
+    ---------------------------------------------------------------------------
+    -- 【2026-10-15 三合一】本 prefab 原先有**三个** PostInit（本处 / 文件中部
+    -- 的"位面伤害" / 文件尾的"涅槃结算"），现合并成这一个。次序说明：
+    --   官方按**注册顺序**依次跑同一 prefab 的多个 PostInit，原先实际次序是
+    --   任务监听 → 位面伤害 → 涅槃结算。现在把后两段放在本函数**最前面**，
+    --   于是变成 位面伤害 → 涅槃结算 → 任务监听。
+    --   三段互不读写对方的状态（一个加组件、一个挂监听、一个挂任务监听），
+    --   调序无影响 —— 但**必须**放在下面那条早退之前：任务监听那段有
+    --   `skilltreeupdater == nil 就 return`，后两段若放在它之后，
+    --   会在"没有 skilltreeupdater 的实体"上被那个 return 一起吞掉。
+    ---------------------------------------------------------------------------
+
+    -- 位面伤害组件（万龙战法需要；原来的"死亡不掉落"hook 已删除，
+    -- 改为在 shengwunang 里置空 container.DropEverything）
+    if GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim then
+        if inst.components.planardamage == nil then
+            inst:AddComponent("planardamage")
+        end
+    end
+
+    ---------------------------------------------------------------------------
+    -- 生物基因 · 12「不死鸟涅槃」②：复活后的三维结算（**官方不重设三维**）
+    --
+    -- CommonActualRez 只做 Resume() / 解除 ignore，**不 SetPercent**；三维数值是
+    -- 死亡瞬间写进去的：
+    --   · CommonPlayerDeath  → sanity:SetPercent(.5)、hunger:SetPercent(2/3)
+    --   · OnMakePlayerGhost  → health:SetCurrentHealth(TUNING.RESURRECT_HEALTH)（**50，绝对值**）
+    -- ⇒ 官方复活后大约是 50 血 / 50% 理智 / 66.7% 饱食。要变成"血满 / 理智满 / 饱食一半"
+    --   必须我们自己设。
+    --
+    -- 接在 `ms_respawnedfromghost` 上 —— 那是 DoActualRez 的**最后一行**
+    --（CommonActualRez 已跑完、playerghost tag 已摘掉），此时写不会被随后的
+    --  Resume() / `sanity.ignore` 复位覆盖。reviver_rebirth 状态的 onenter / timeline /
+    --  onexit **都不碰三维**（只做皮肤 / 光晕 / 光照 / 影子恢复 + SetInvincible），
+    --  所以写在事件里是安全的（写早了反而会被重生的演出覆盖掉观感）。
+    --
+    -- "无任何惩罚"这半龙右**本来就免疫**：prefabs/esctemplate.lua 里已经设了
+    --   health.disable_penalty = true（Health:SetPenalty 直接跳过）
+    --   + sanity.penalty = 0 / AddSanityPenalty 空实现
+    -- ⇒ 官方那两条 DeltaPenalty 路径对龙右是空转，上限不会被削。
+    ---------------------------------------------------------------------------
+    if GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim then
+        inst:ListenForEvent("ms_respawnedfromghost", function(inst)
+            if not inst._esctemplate_nirvana_pending then
+                return
+            end
+            inst._esctemplate_nirvana_pending = nil
+            local health = inst.components.health
+            if health ~= nil then
+                health:SetPercent(1)
+            end
+            local sanity = inst.components.sanity
+            if sanity ~= nil then
+                sanity:SetPercent(1, true)
+            end
+            local hunger = inst.components.hunger
+            if hunger ~= nil then
+                hunger:SetPercent(T.NIRVANA_HUNGER_PERCENT, true)
+            end
+        end)
+    end
+
+    ---------------------------------------------------------------------------
+    -- 玩家入场（原 733 那段，本体未动）
+    ---------------------------------------------------------------------------
+    if inst.components == nil or inst.components.skilltreeupdater == nil then
+        return
+    end
+
+    -- 环境日志：**两端都会打**（故意放在 ismastersim 判断之外）。这一端到底
+    -- "有没有 UI / 有没有服务端组件"，直接决定 Unlock.Grant 把"开放"交给谁 ——
+    -- 排查"任务做完了却点不亮"先对比这一对日志（client_log.txt 与 master_server_log.txt 各一行）：
+    --   有UI=true                → 这一端就是玩家的客户端，Grant 会就地开放 ✔
+    --   有UI=false 且 ismastersim=true → **服务端 VM**：它改 root / 抬 XP 都是白干（界面收不到）
+    --   ismastersim=false        → 客户端 VM
+    print(string.format("[龙右] 入场 %s：ismastersim=%s 本机玩家=%s 有UI=%s 服务端组件=%s",
+        tostring(inst.prefab),
+        tostring(GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim),
+        tostring(inst == GLOBAL.ThePlayer),
+        tostring(inst.HUD ~= nil),
+        tostring(inst.components ~= nil and inst.components.esctemplate_skills ~= nil)))
+    if GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim then
+        Unlock.StartTracking(inst)
+        -- 点亮反馈：玩家在技能树里点下节点的那一刻飘「解锁技能：<技能名>」（第二次播报）。
+        -- 只能靠监听官方事件 —— 点亮走的是官方 RPC 链，我们的解锁模块全程不参与：
+        --   客户端 ActivateSkill → RPC.SetSkillActivatedState → 服务端 ActivateSkill
+        --   → ActivateSkill_Server（skilltreeupdater.lua:77）推 onactivateskill_server。
+        -- 🔴 只挂在**服务端**这一段：那条分支里，服务端玩家实体在"远端玩家"（:91-92）
+        --    与"房主托管自己"（:96-99）两种情形下都会推这个事件，而服务端 talker 说的话
+        --    会网络同步给所有客户端 ⇒ 说一遍、所有人（含远端）都看得见。
+        --    客户端那段（:100-105）只推 onactivateskill_client，两边都挂就会飘两遍。
+        Unlock.WatchActivation(inst)
+        -- 握手完成之后（POSTACTIVATEHANDSHAKE.READY → ms_skilltreeinitialized，
+        -- player_common_extensions.lua:1074-1076）再把名单交过去：
+        -- 本端就是玩家的客户端就地应用，否则（服务端 VM，连房主也算）发 RPC。
+        -- 判据同 Unlock.Grant：IsClientOwner，别用 player == ThePlayer 猜。
+        -- ⚠ 服务端**不做** XP 对齐：XP 是客户端权威的量，服务端去"抹平残留 XP"
+        --    会把玩家手里还没花的技能点一起抹掉。
+        inst:ListenForEvent("ms_skilltreeinitialized", function()
+            Unlock.PushOpen(inst)
+        end)
+    end
+
+    -- 客户端侧：可点性（root）与 XP 都在这一端。
+    -- root 只是内存态、而且挂在**全局** SKILLTREE_DEFS 上 → 每次进场都要整体重设一次
+    -- （先全清、再按名单置）。这既是"补回上次的可点状态"，也是**换世界时清掉上一个
+    -- 世界残留**的唯一时机 —— 少了它，新建世界里旧世界开放过的节点照样可点，
+    -- 点一下就亮回来（2026-09-21 那次 bug 的另一半）。
+    -- ⚠ 但**重设用的名单必须是服务端下发的那一份**（RPC → Unlock.ApplyPacked）：
+    --    本端刚进场时那份是空的，抢先把空名单套上去 = 把服务端刚发的整份名单抹掉。
+    --    两个事件谁先谁后不确定，所以这里只交给 Unlock.OnClientInitialized 去**等**：
+    --    等到了就不动，等不到（grace 秒）才按本端名单兜底重设。
+    -- 时机取官方握手完成事件：那会儿 activatedskills 才是权威数据（见 skillunlock 文件头 (c)）。
+    inst:ListenForEvent("skilltreeinitialized_client", function()
+        if GLOBAL.ThePlayer ~= nil and inst == GLOBAL.ThePlayer then
+            Unlock.OnClientInitialized(inst)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- 配方
+-- 之前写在了 AddPrefabPostInit("world") 里，开洞穴/重开档会重复注册，
+-- 这里直接在顶层调用一次即可。
+--
+-- 【force_hint = true】下面三条装备配方都带这个标记，意思是「在制作栏里永远显示」。
+--
+-- 为什么必须加：制作栏只会显示 knows_recipe 或 should_hint_recipe 的配方
+-- （craftingmenu_hud.lua:309）。should_hint_recipe 的判定是
+-- 「配方科技等级 ≤ 玩家当前科技等级 + 1」（widgetutil.lua:2），
+-- 也就是说科技等级 2 以上的配方，对空手玩家压根不出现——原版 constants.lua:1244
+-- 那句注释正是在讲这件事："Magic starts at level 2 so it's not teased from the start"。
+-- 于是 TECH.ANCIENT_FOUR 的魔戟/魔铠要摸到完整的远古祭坛才冒出来，
+-- TECH.SCIENCE_TWO 的生物囊也要靠近炼金引擎才看得见，制作栏里就是「什么都没有」。
+--
+-- 加上 force_hint 之后的实际表现（全部是官方原本就支持的路径）：
+--   · 未达成科技：在「冒险家物品」「模组物品」栏里恒常显示，暗色 + 挂锁图标
+--     （craftingmenu_widget.lua:1073），鼠标移上去按 TUNING.PROTOTYPER_TREES 反推
+--     提示该带什么机器（craftingmenu_details.lua:87），比如"需要一座完整的远古遗迹"；
+--   · 达成科技但原料不够：恢复正常配方的样子，只是变暗（无锁）；
+--   · 原料齐了：正常可点。
+-- 也就是说它只影响「看不看得见」，科技门槛和材料门槛都原样保留。
+-- 顺带注意：CHARACTER（冒险家物品）栏 ~= CRAFTING_STATION 栏，后者会把 force_hint
+-- 配方藏起来（craftingmenu_widget.lua:219），所以本栏不受影响。
+-------------------------------------------------------------------------------
+AddRecipe2("anmesijichangmaji",
+    { Ingredient("gnarwail_horn", 3), Ingredient("shadowheart", 1), Ingredient("livinglog", 20), Ingredient("dreadstone", 10) },
+    TECH.ANCIENT_FOUR,
+    {
+        atlas = "images/inventoryimages/anmesijichangmaji.xml",
+        image = "anmesijichangmaji.tex",
+        builder_tag = "esctemplate",
+        force_hint = true,
+    },
+    { "CHARACTER", "MODS" })
+
+AddRecipe2("shengmingmokai",
+    {
+        Ingredient("dreadstone", 5),
+        Ingredient("shadowheart", 1),
+    },
+    TECH.ANCIENT_FOUR,
+    {
+        atlas = "images/inventoryimages/shengmingmokai.xml",
+        image = "shengmingmokai.tex",
+        builder_tag = "esctemplate",
+        force_hint = true,
+    },
+    { "CHARACTER", "MODS" })
+
+AddRecipe2("shengwunang",
+    {
+        Ingredient("rabbit", 4),
+        Ingredient("spider", 4),
+        Ingredient("froglegs", 4),
+        Ingredient("pigskin", 20),
+    },
+    TECH.SCIENCE_TWO,
+    {
+        atlas = "images/inventoryimages.xml",
+        image = "krampus_sack.tex",
+        builder_tag = "esctemplate",
+        force_hint = true,
+    },
+    { "CHARACTER", "MODS" })
+
+-------------------------------------------------------------------------------
+-- 活木：消耗生命制作（参考原版植物人 recipes.lua:338）
+--
+-- 三点必须这么写：
+-- 1. 配方名不能叫 "livinglog"。官方已经给植物人注册过同名配方（recipes.lua:338，
+--    builder_tag="plantkin"），而配方是按名字存进 AllRecipes 的，重名会直接覆盖掉官方那条，
+--    植物人就再也做不了活木了。所以另起一个名字，用 product 指回真正的产物。
+-- 2. 生命原料用官方一等公民 CHARACTER_INGREDIENT.HEALTH（constants.lua:2126），
+--    扣血在 builder.lua:570、制作栏的原料预览在 builder_replica.lua，全都是自带的，不用自己写。
+--    硬约束：数量必须是 5 的倍数（constants.lua:2134），否则 Ingredient 构造时直接断言失败。
+-- 3. 名字和图标都不用额外补 STRINGS / Assets：craftingmenu_details.lua:253 先查
+--    STRINGS.NAMES[upper(recipe.name)]，查不到就退到 STRINGS.NAMES[upper(recipe.product)]，
+--    于是自动显示原版活木的名字；图标同理走 GetInventoryItemAtlas 找原版图集。
+-- 4. （2026-09-21 新增）这条配方**锁在技能树节点 esctemplate_body5（「活木」）后面**，
+--    用的是**官方原生字段** builder_skill（recipes.lua 里 Wurt 的蚊子包、Wendy 的药水、
+--    Wilson 的炼金转化、Wormwood 的"以生命造树苗/浆果丛/芦苇"等几十条都在用）：
+--      · 客户端：builder_replica.lua:409 的 CanLearn → false
+--        → craftingmenu_hud.lua:312 算出 is_build_tag_restricted
+--        → :320 把 build_state 置 "hide" ⇒ **未点亮时制作栏里压根不显示这条配方**
+--        （不是灰显，是不出现）；
+--      · 服务端：builder.lua:869 起那段 KnowsRecipe 同样看这个字段，绕不过去。
+--    ⚠ 值必须与任务表里的节点 key 逐字一致（esctemplate_body5）。改一处要改两处 ——
+--      自检 _check_skilltree.py 会把"节点 ↔ builder_skill"这一对当硬规则核对。
+--    ⚠ 不用自己写刷新：官方 craftingmenu_hud.lua:121 本来就监听了 onactivateskill_client
+--      （点亮时由 skilltreeupdater.lua:67 在客户端推）→ 自动 UpdateRecipes，
+--      点亮那一刻配方就出现在制作栏里。
+--
+-- builder_tag 用角色自己的标签（prefabs/esctemplate.lua:43 加的 "esctemplate"），
+-- 所以只有龙右能做；也不会像 plantkin 那样连带把植物人的荆棘甲/荆棘陷阱/堆肥包一起解锁。
+-------------------------------------------------------------------------------
+local CHARACTER_INGREDIENT = GLOBAL.CHARACTER_INGREDIENT
+
+AddRecipe2("esctemplate_livinglog",
+    { Ingredient(CHARACTER_INGREDIENT.HEALTH, T.LIVINGLOG_HEALTH_COST) },
+    TECH.NONE,
+    {
+        product = "livinglog",
+        image = "livinglog.tex",
+        builder_tag = "esctemplate",
+        -- 🔴 技能树节点「活木」没点亮 → 这条配方在制作栏里**不出现**、服务端也拒绝制作。
+        --    值 = 任务表里那个节点的 key（esctemplate_quests.lua 的 esctemplate_body5）。
+        builder_skill = "esctemplate_body5",
+        allowautopick = true,
+        no_deconstruction = true,
+    },
+    { "CHARACTER", "MODS" })
+
+-------------------------------------------------------------------------------
+-- 魔蛟毒：技能树节点 esctemplate_body10（「冰海魔蛟毒」）的解锁产物
+--
+-- 与活木那条同路（三点注意事项照抄那边），差别只有三处：
+--   1. 产物是**新物品** mojiaodu，所以 name 就是 prefab 名、不用 product，
+--      但 STRINGS.NAMES.MOJIAODU **必须自己补**（见上面那段）。
+--   2. 成本 500 生命（T.MOJIAODU_HEALTH_COST）—— 官方扣血判据是
+--      `math.ceil(当前血) > 消耗量`（builder.lua:599）⇒ 做的时候当前血必须 ≥ 501。
+--      龙右基础上限只有 80，唯一堆血手段是吞噬（每次 +50）⇒ 至少吞 9 次（530）且
+--      接近满血才做得出来。这是**刻意的中后期门槛**，不是 bug。
+--   3. 图标用官方 gelblob_bottle.tex（inventoryimages2.xml），走 GetInventoryItemAtlas。
+--
+-- 锁定方式同活木：builder_skill = 节点 key（esctemplate_body10）。
+--   未点亮 → 制作栏**不显示**这条配方；服务端 KnowsRecipe 同样看这个字段，绕不过去。
+-------------------------------------------------------------------------------
+AddRecipe2("mojiaodu",
+    { Ingredient(CHARACTER_INGREDIENT.HEALTH, T.MOJIAODU_HEALTH_COST) },
+    TECH.NONE,
+    {
+        image = "gelblob_bottle.tex",
+        builder_tag = "esctemplate",
+        builder_skill = "esctemplate_body10",
+        allowautopick = true,
+        no_deconstruction = true,
+        -- ⚠ 一次给 1 支（T.MOJIAODU_YIELD）。曾试过给 3 支来避免"驯服完手上就空"，
+        --   但"指挥"已经有独立的空手通道（AddAction 那条「令其自尽」），
+        --   存量只决定"还能奴役几只"⇒ 回到 1 支（用户 2026-09-22 定）。
+        numtogive = T.MOJIAODU_YIELD,
+    },
+    { "CHARACTER", "MODS" })
+
+-------------------------------------------------------------------------------
+-- 血肉机械：技能树节点 esctemplate_body11（「血肉机械」）的 9 条解锁配方
+--
+-- 与活木 / 魔蛟毒同路（注意事项见那两段的注释），差别只有一个：这里是**一批**，
+-- 而且产物全是**官方已有物品**，于是：
+--   · 用 product 指回官方 prefab（名字 / 描述自动退回官方，不必补 STRINGS / Assets）；
+--   · 配方名**必须加 esctemplate_ 前缀**。官方已经有一批同产物的配方
+--     （Wilson 炼金线的 transmute_redgem / bluegem / purplegem / orangegem /
+--       yellowgem / greengem / opalpreciousgem 等），而配方是按名字存进 AllRecipes 的
+--     —— **重名会直接覆盖掉官方那条**（同"活木 vs plantkin"那个坑，见上面活木那段）。
+--   · 图标交给 GetInventoryItemAtlas 自动解析 ⇒ **不用也不该手写 atlas**：
+--     宝石横跨 inventoryimages 的 1/2/3/4 号分片、wagpunk_bits 在 3 号、gears 在 2 号，
+--     写死分片迟早错一个。
+--
+-- 成本（T.MECH_*_COST，全是生命值）与硬约束见 tuning 里那一段注释：
+--   齿轮 200 / 废料 500 / 六色宝石各 1000 / 彩虹宝石 2000。
+--   ⚠ 官方彩虹宝石的配方是"六色宝石各 1"（recipes.lua 的 transmute_opalpreciousgem）
+--     —— 我们这条 2000 血是**等价替代**（用命换一整套宝石），不是凭空多出一个物品。
+--
+-- 锁定方式同活木：每条都挂 builder_skill = "esctemplate_body11"。
+--   未点亮 → 制作栏**不显示**这 9 条；服务端 KnowsRecipe 同样看这个字段，绕不过去。
+--   ⚠ 值必须与任务表里那个节点的 key 逐字一致（改一处要改两处，
+--     _check_skilltree.py 把"节点 ↔ builder_skill"这一对当硬规则核对）。
+-------------------------------------------------------------------------------
+-- 一张表描述这 9 条：{ 产物 prefab, 血耗常量 }。
+-- ⚠ 顺序无所谓（配方按名字索引）。产物与门槛**故意重叠**（齿轮 / 宝石既能捡
+--   也能造）：先靠捡够 7 件把节点解锁，之后就能用血把缺的那些再造出来。
+--   ✅ 2026-10-16 用户拍板补上橙宝石配方 ⇒ 重叠的正好是「齿轮 + 6 色宝石」共 7 件，
+--     与门槛**完全一致**（在这之前配方只产 5 色宝石，橙宝石做不出来、只能靠捡）。
+local MECH_RECIPES = {
+    { "gears", T.MECH_GEARS_COST },              -- 齿轮
+    { "redgem", T.MECH_GEM_COST },               -- 红宝石
+    { "bluegem", T.MECH_GEM_COST },              -- 蓝宝石
+    { "yellowgem", T.MECH_GEM_COST },            -- 黄宝石
+    { "greengem", T.MECH_GEM_COST },             -- 绿宝石
+    { "purplegem", T.MECH_GEM_COST },            -- 紫宝石
+    { "orangegem", T.MECH_GEM_COST },            -- 橙宝石
+    { "opalpreciousgem", T.MECH_OPAL_COST },     -- 彩虹宝石
+    { "wagpunk_bits", T.MECH_WAGPUNK_COST },     -- 废料
+}
+
+for _, mech in ipairs(MECH_RECIPES) do
+    local mech_prefab = mech[1]
+    AddRecipe2("esctemplate_" .. mech_prefab,
+        { Ingredient(CHARACTER_INGREDIENT.HEALTH, mech[2]) },
+        TECH.NONE,
+        {
+            product = mech_prefab,
+            -- 图标 = 产物自己的 tex 名（都在官方 inventoryimages*.xml 里，
+            -- 由 GetInventoryItemAtlas 找分片）。
+            image = mech_prefab .. ".tex",
+            builder_tag = "esctemplate",
+            builder_skill = "esctemplate_body11",
+            allowautopick = true,
+            no_deconstruction = true,
+        },
+        { "CHARACTER", "MODS" })
+end
+
+-------------------------------------------------------------------------------
+-- 气血肉龙：技能树节点 esctemplate_tgq8（**天罡气第 8 重「无」**）的两条解锁配方
+--
+-- 玩法（用户 2026-09-24 第二次拍板）：**两条配方**各消耗 20 块肉，做出**同一件**物品 ——
+--   · 大肉版  ：20 块生大肉（meat）
+--   · 怪物肉版：20 块生怪物肉（monstermeat）
+-- 与活木 / 魔蛟毒 / 血肉机械同路（注意事项见那几段的注释），差别有三处：
+--   1. 产物是**新物品** qixueroulong ⇒ 名字与描述必须自己补（见上面那 4 条 STRINGS）；
+--   2. **两条配方共用一个产物** —— 这条是新的：配方按**名字**存进 AllRecipes
+--      （recipe.lua 用 recipe.name 做索引），所以两条互不覆盖、制作栏里各占一个格子。
+--      两条的 `description` 都指向**与配方名同名**的 key ⇒ 名字与描述各说各的。
+--   3. 材料是**具体 prefab**（meat / monstermeat），不是血 —— 所以数量**不受
+--      "必须 5 的倍数"约束**（那条只针对血/理智原料，recipe.lua 的 assert），
+--      写 20 完全合法。
+--      ⚠ 官方 `Ingredient` 只认"具体 prefab + 数量"、**没有 tag 原料** ⇒ "任意肉 x 20"
+--        表达不了，用户 2026-09-24 因此把配方收敛成这两种。
+--      ⚠ 材料按 prefab 名**精确匹配** ⇒ 烤大肉（cookedmeat）/ 肉干 / 小肉 / 鸡腿 /
+--        蛙腿 / 象鼻一律**不认**（用户拍板"3 不算"）。两条描述里都写死了"生"字。
+--
+-- 🔴 门槛 = 技能树节点 esctemplate_tgq8（天罡气第 8 重「无」）。值必须与
+--   esctemplate_quests.lua 里那个节点 key 逐字一致（_check_skilltree.py 硬核对）。
+--   未点亮 → 制作栏里**不显示**这两条（builder_replica 的 CanLearn → false ⇒
+--   craftingmenu_hud 把 build_state 置 hide），服务端 KnowsRecipe 同样拦（builder.lua）。
+--
+-- 产量 1 个、TECH.NONE（不用科技）、放**冒险家物品栏**（filters 的 CHARACTER）
+--   —— 用户 2026-09-24 拍板"5：一个，不用科技，冒险家物品栏"。
+--   filters 里额外带的 "MODS" 是本项目**所有**角色专属配方的统一写法（见上面三条），
+--   让它在 MOD 栏里也找得到；不想要就删掉 "MODS"，不影响归属判定。
+--
+-- 扣料 / 出产物 / 进背包 / 背包满掉脚下**全是官方自带**（builder.lua 的 DoBuild：
+--   扣料 → SpawnPrefab(recipe.product) → inventory:GiveItem），一个字都不用自己写。
+-------------------------------------------------------------------------------
+-- 一张表描述这两条：{ 配方名, 原料 prefab }。
+-- ⚠ 配方名带 esctemplate_ 前缀（理由同血肉机械那条：避免与官方/别的 mod 重名互相覆盖）。
+-- ⚠ 顺序无所谓（配方按名字索引）。
+local QIXUEROULONG_RECIPES = {
+    { "qixueroulong_meat",        "meat" },         -- 二十块生大肉
+    { "qixueroulong_monstermeat", "monstermeat" },  -- 二十块生怪物肉
+}
+
+for _, qix in ipairs(QIXUEROULONG_RECIPES) do
+    local qix_name = qix[1]
+    AddRecipe2(qix_name,
+        { Ingredient(qix[2], T.QIXUEROULONG_MEAT_COST) },
+        TECH.NONE,
+        {
+            product = "qixueroulong",
+            -- 🔴 atlas 必须写：配方的 image 只是个**图元名**，UI 会用 GetInventoryItemAtlas
+            --    去**官方**的 inventoryimages*.xml 里找它 —— 自绘的这张不在官方图集里，
+            --    不写 atlas 就是"制作栏那一格空白、且零报错"（对照上面魔戟 / 魔铠的写法）。
+            atlas = "images/inventoryimages/qixueroulong.xml",
+            -- 图标 = 自绘的 qixueroulong.tex（2026-10-07 起），与物品栏里那件东西同一张图。
+            -- ⚠ 两条配方图标**相同**，只能靠名字/描述区分（所以上面补了 4 条 STRINGS）。
+            image = "qixueroulong.tex",
+            builder_tag = "esctemplate",
+            -- 🔴 天罡气第 8 重「无」没点亮 ⇒ 制作栏**不显示**、服务端也拒绝制作。
+            builder_skill = T.QIXUEROULONG_SKILL,
+            -- 描述 key 与配方名同名：格子查 NAMES[upper(配方名)]、
+            -- 详情面板查 RECIPE_DESC[upper(description or 产物名)] ⇒ 两处都落到"本条"。
+            description = qix_name,
+            allowautopick = true,
+            -- 🔴 必须禁拆解：两条配方产出同一个物品，系统分不清来源 —— 不禁就会出现
+            -- 「20 个怪物肉 → 肉龙 → 拆出 20 个大肉」的白赚转换。
+            no_deconstruction = true,
+        },
+        { "CHARACTER", "MODS" })
+end
+
+-------------------------------------------------------------------------------
+-- 魔蛟毒：补一条「装备在手」的右键通道（EQUIPPED）
+--
+-- 🔴🔴 为什么必须有这一段（血泪）：官方 componentactions.lua 只给 spellcaster
+--   注册了 **POINT / USEITEM / INVENTORY** 三个表，**没有 EQUIPPED**。于是：
+--     · 用鼠标"拿着"魔蛟毒（active item）右键生物 → 走 USEITEM → 有反应；
+--     · 魔蛟毒**装备在手上**右键生物 → 走 EQUIPPED → 官方表是空的 →
+--       `#actions == 0`，直接掉到 GetSceneActions（只剩"检视"之类）⇒
+--       **右键毫无反应、零报错**，表现就是"做出来了却没法对生物用"。
+--   而玩家在物品栏里右键一个可装备物品时，游戏默认是"装备"而不是"拿在鼠标上"
+--   ⇒ 实操中几乎总是走装备态，必踩这个坑。
+--
+-- ⚠ AddComponentAction 内部按 modname 隔离（MOD_COMPONENT_ACTIONS），并要求
+--   **服务端与客户端注册顺序完全一致**（不一致会打
+--   "Mod component actions are out of sync"）。modmain 两端跑同一份代码 ⇒ 天然一致。
+-- ⚠ 判据抄官方 USEITEM 那条（componentactions.lua:255）：right + 目标带 locomotor
+--   + 物品带 castonlocomotors / castontargets + 目标不带 nomagic。
+--   用 **tag** 而不是"有 spellcaster 组件"是为了跟服务端
+--   `SpellCaster:CanCast`（spellcaster.lua:192）判据同源 —— tag 由 spellcaster
+--   字段驱动，只要 prefab 里的 flag 改了，两端一起变，不会出现
+--   "冒得出动作但按下去没效果"。
+-- ⚠ prefab 限定 mojiaodu：这条规则只服务我们自己的物品，别波及别的法器。
+-- ⚠ 装备态不会跟 ATTACK 抢：GetRightClickActions 装备态分支只收集
+--   EQUIPPED + SCENE，不收集玩家自身动作（ATTACK 是左键/强制攻击）。
+-------------------------------------------------------------------------------
+AddComponentAction("EQUIPPED", "spellcaster", function(inst, doer, target, actions, right)
+    if not right then
+        return
+    end
+    if inst == nil or inst.prefab ~= "mojiaodu" then
+        return
+    end
+    if target == nil or not target:HasTag("locomotor") or target:HasTag("nomagic") then
+        return
+    end
+    if not (inst:HasTag("castonlocomotors") or inst:HasTag("castontargets")) then
+        return
+    end
+    table.insert(actions, GLOBAL.ACTIONS.CASTSPELL)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+-------------------------------------------------------------------------------
+AddStategraphPostInit("wilson", function(sg)
+    local hit = (sg.states ~= nil) and sg.states["hit"] or nil
+    if hit == nil then
+        return
+    end
+    local old_onenter = hit.onenter
+    hit.onenter = function(inst, ...)
+        if inst:HasTag(T.ARMOR_TAG) then
+            if inst.sg ~= nil then
+                inst.sg:GoToState("idle")
+            end
+            return
+        end
+        if old_onenter ~= nil then
+            return old_onenter(inst, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", LY_GateFaceStates)
+AddStategraphPostInit("wilson_client", LY_GateFaceStates)
+
+-------------------------------------------------------------------------------
+-- ★ 快速进食：龙右吃任何东西都走 quickeat（用户 2026-10-06 拍板）
+--
+--   【为什么吃肉要嚼 3 秒】官方 SGwilson 的 ACTIONS.EAT handler
+--   （SGwilson.lua:1185-1197）里有一条**特判**：
+--       local state =
+--           (obj:HasTag("quickeat") and "quickeat") or
+--           (obj:HasTag("sloweat") and "eat") or
+--           ((obj.components.edible.foodtype == FOODTYPE.MEAT
+--             and not obj:HasTag("fooddrink")) and "eat") or   ← 就是这一条
+--           "quickeat"
+--       浮空时再拼成 "float_" .. state
+--   默认本来就是 quickeat —— 只有**肉**被单独拎出来走长 eat。所以
+--   "吃花很快、吃肉要嚼"不是动画慢，而是这一行。
+--   两套状态的代价（FRAMES = 1/30）：
+--       eat      = eat_pre + eat            ⇒ 效果在 28 帧结算，动画 94 帧 ≈ 3.1 秒
+--       quickeat = quick_eat_pre + quick_eat ⇒ 效果在 12 帧结算，动画 21 帧 ≈ 0.7 秒
+--
+--   ✅ 做法：包一层 **deststate**，不动 action 本身、不动状态表。
+--      · 状态机取状态的唯一入口是 `handler.deststate(self.inst, bufferedaction)`
+--        （stategraph.lua:436 StartAction；:412 PreviewAction 同款）⇒ 包这里
+--        一次就覆盖"自己吃"的**服务端**与**客户端预测**两条路。
+--      · **先调原函数再改名** ⇒ "不肯吃要说话"(wonteatfood)、忙碌早退、空手早退
+--        那些分支原样保留（它们返回 nil，改名函数对 nil 原样透传）。
+--      · 只对带 `esctemplate` 标签的角色改名 ⇒ 官方角色零影响。
+--      · **不需要新动画**：龙右的 bank 是官方 wilson（只有 build 是 mod 的），
+--        quick_eat / quick_eat_pre 这套动画名现成就有
+--        （物证：exported/esctemplate/esctemplate.scml 与 animation.xml 里
+--         只有 1 个动画 BUILD_PLAYER ⇒ 动作根本不来自 mod 这边）。
+--      · 尖牙不用额外处理：FACE_SHOW_STATES 白名单本来就把 quickeat /
+--        float_quickeat 收在里面（见上面那张表）。
+--
+--   🔴 三条边界（用户 2026-10-06 明确）：
+--     ① **别人喂你 → 保持原版（吃肉仍嚼）**。被别人喂走的是
+--        ACTIONS.FEEDPLAYER.fn（actions.lua:2423 —— 它自己算完 state 直接
+--        `act.target.sg:GoToState(...)`，**根本不经过 actionhandlers**）
+--        ⇒ 本补丁天然管不到，正好就是用户要的。
+--     ② 盛宴大快朵颐（WINTERSFEAST_FEAST）是另一个动作，不在范围。
+--     ③ **吞噬保持正常播 eat**。它走 skilldefs 里直接
+--        `inst.sg:GoToState("esctemplate_devour")`（不经过 ACTIONS.EAT）
+--        ⇒ 不受影响。
+-------------------------------------------------------------------------------
+local function LY_QuickEatAllowed(inst)
+    -- 🔴 这个门控是"不污染官方角色"的唯一保证，别改松（有负向用例盯着）。
+    return inst ~= nil and inst:HasTag("esctemplate")
+end
+
+```
+

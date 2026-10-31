@@ -3877,3 +3877,59 @@ if kill_to_deposit_enabled then
 
 ```
 
+
+
+### 变体演进：True Range (Mod 3817047528)
+- **变体场景与切面**：收录来自工坊 Mod 3817047528 (`True Range`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3817047528)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+end
+AddPrefabPostInit("world", function(w)
+    if w.ismastersim and not CLIENT_ONLY then w:DoPeriodicTask(0, PoseTick) end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+    end)
+    AddComponentPostInit("combat", function(self)
+        self.inst:ListenForEvent("attacked", Learn.OnAttacked)
+        Probe.WrapCombat(self)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruinsnightmare_horn_attack
+local horns = {}
+AddPrefabPostInit("ruinsnightmare_horn_attack", function(inst) horns[#horns + 1] = inst end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:antman_warrior_egg
+Predict.harmless_falls = GLOBAL.setmetatable({}, { __mode = "k" })
+AddPrefabPostInit("antman_warrior_egg", function(inst) Predict.harmless_falls[inst] = true end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:fused_shadeling_quickfuse_bomb
+-- (one short-lived, picked up as it's made - looked for only every .3 s, a red bomb's second was a third gone)
+AddPrefabPostInit("fused_shadeling_quickfuse_bomb", function(inst) aggro_ents[#aggro_ents + 1] = inst end)
+
+```
+
+
+
+### 变体演进：食谱与批量烹饪（烹饪预览 | 批量堆叠） (Mod 3818348123)
+- **变体场景与切面**：收录来自工坊 Mod 3818348123 (`食谱与批量烹饪（烹饪预览 | 批量堆叠）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3818348123)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
