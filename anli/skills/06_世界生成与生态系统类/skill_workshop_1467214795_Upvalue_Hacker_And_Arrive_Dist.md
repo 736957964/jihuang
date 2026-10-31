@@ -920,3 +920,104 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod 3273044599 (Mod 3273044599)
+- **变体场景与切面**：收录来自工坊 Mod 3273044599 (`Mod 3273044599`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3273044599)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+end
+AddPrefabPostInit("world", function()
+	for prefab, soundfiles in pairs(PREFAB_SOUNDFILES) do 
+		local fn = GLOBAL.Prefabs and GLOBAL.Prefabs[prefab]
+		if fn and fn.assets then
+			for k,v in ipairs(soundfiles) do
+				table.insert(fn.assets, v)
+			end
+		end
+	end
+
+	RemapSoundEvent("dontstarve/creatures/perd/hurt", "perd_kun/perd_kun/hurt")
+	RemapSoundEvent("dontstarve/creatures/perd/death", "perd_kun/perd_kun/death")
+	RemapSoundEvent("dontstarve/creatures/perd/scream", "perd_kun/perd_kun/scream")
+
+	RemapSoundEvent("dontstarve/creatures/pengull/attack", "penguin_qqcoin/penguin_qqcoin/attack")
+--	RemapSoundEvent("dontstarve/creatures/pengull/taunt", "penguin_qqcoin/penguin_qqcoin/taunt")
+end)
+
+```
+
+
+
+### 变体演进：Show Nicknames FIXED (Mod 3395794288)
+- **变体场景与切面**：收录来自工坊 Mod 3395794288 (`Show Nicknames FIXED`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3395794288)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+ ,           modmain.lua,
+  w  state      AddPrefabPostInit("world").
+
+mods -   (    ).
+mods.lib -   ( )      ,   .
+mods.lib.version -  
+
+--]]
+if _silence == nil then
+	print(_version,modinfo.name) --Show current version of lib
+end
+
+
+--[[
+--  ,  , ,            -.
+if mods.lib then
+	return
+end
+--]]
+
+--[[
+,     :
+	1)   .    - .
+	2)  N- .           ,   .
+    old_lib.       .   ,  .
+  ,   ( ) .   .
+--]]
+local old_lib = mods.lib or {} -- ,    nil
+
+--     .   ,   .
+if old_lib._libStopWorking then
+	old_lib._libStopWorking()
+end
+
+--      ,       .
+local IS_ACTIVE = true -- ,    .     .
+local function _libStopWorking()
+	--  .     .
+	--,  ,   ,   .
+	IS_ACTIVE = nil
+	--       ,     .
+	--       ().
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+AddPrefabPostInit("world",world_init)
+--AddPrefabPostInit("forest",world_init)
+--    , ..   forest .
+
+
+-- .    -  -,   ,    - .
+local EmptyFunction = function() end
+
+```
+

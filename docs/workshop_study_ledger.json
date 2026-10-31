@@ -4746,8 +4746,62 @@
       "category": "06_世界生成与生态系统类",
       "studied_at": "2026-11-01 05:58:51",
       "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2536588263",
+      "name": "行为排队论",
+      "author": "eXiGe / simplex(Original Author)",
+      "version": "1.050",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 06:01:39",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3273044599",
+      "name": "Mod 3273044599",
+      "author": "川小胖",
+      "version": "2.7",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 06:01:39",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3388543143",
+      "name": "「残刃·无恃」",
+      "author": "aihaihai",
+      "version": "1.7.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:01:39",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3395794288",
+      "name": "Show Nicknames FIXED",
+      "author": "Sustenance",
+      "version": "2.1",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 06:01:39",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3411817995",
+      "name": "Golden Hammer",
+      "author": "NebulaKKK",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 06:01:39",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3820010792",
+      "name": "Full Build Refund",
+      "author": "rebecca graem",
+      "version": "1.0.1",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 06:01:39",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:58:51"
+  "lastUpdated": "2026-11-01 06:01:39"
 }

@@ -253,3 +253,85 @@ AddPrefabPostInit("grass_water", pick)
 
 ```
 
+
+
+### 变体演进：Full Build Refund (Mod 3820010792)
+- **变体场景与切面**：收录来自工坊 Mod 3820010792 (`Full Build Refund`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3820010792)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:workable
+-- when disabled; a save without the mod removes it. No new save component.
+AddComponentPostInit("workable", function(self)
+    local save, load = self.OnSave, self.OnLoad
+    self.OnSave = function(c, ...)
+        local data = save(c, ...)
+        if c[PAID] then data[PAID] = c[PAID] end
+        return data
+    end
+    self.OnLoad = function(c, data, ...)
+        load(c, data, ...)
+        c[PAID] = data and validPaid(data[PAID]) or nil
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+-- structures. BufferBuild can pay before placement, including across reloads.
+AddComponentPostInit("builder", function(self)
+    local pending = {}
+    local remove = self.RemoveIngredients
+    self.RemoveIngredients = function(c, ingredients, recname, discounted, ...)
+        local recipe = G.AllRecipes[recname]
+        local paid
+        if recipe and recipe.placer and recipe.numtogive == 1 and not c.freebuildmode then
+            local cost, reduced = {}, false
+            for _, ing in ipairs(recipe.ingredients) do
+                local count = 0
+                for _, amount in pairs(ingredients[ing.type] or {}) do count = count + amount end
+                cost[ing.type] = count
+                reduced = reduced or count < ing.amount
+            end
+            if reduced then paid = { product = recipe.product, cost = cost } end
+        end
+        local result = pack(remove(c, ingredients, recname, discounted, ...))
+        if recipe and recipe.placer then pending[recname] = paid end
+        return unpack(result, 1, result.n)
+    end
+    self.inst:ListenForEvent("buildstructure", function(_, data)
+        if not (data and data.recipe and data.item) then return end
+        local recname = data.recipe.name
+        local paid = pending[recname]
+        local w = data.item.components.workable
+        if paid and paid.product == data.item.prefab and w and w:GetWorkAction() == G.ACTIONS.HAMMER then
+            w[PAID] = paid
+        end
+        pending[recname] = nil
+    end)
+    local save, load = self.OnSave, self.OnLoad
+    self.OnSave = function(c, ...)
+        local data = save(c, ...)
+        local buffered = {}
+        for name, paid in pairs(pending) do
+            if c:IsBuildBuffered(name) then buffered[name] = paid end
+        end
+        if G.next(buffered) then data[PAID] = buffered end
+        return data
+    end
+    self.OnLoad = function(c, data, ...)
+        load(c, data, ...)
+        pending = {}
+        if data and type(data[PAID]) == "table" then
+            for name, paid in pairs(data[PAID]) do
+                if c:IsBuildBuffered(name) then pending[name] = validPaid(paid) end
+            end
+        end
+    end
+end)
+
+```
+

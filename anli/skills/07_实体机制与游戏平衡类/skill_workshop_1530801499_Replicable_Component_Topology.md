@@ -3929,3 +3929,163 @@ end)
 
 ```
 
+
+
+### 变体演进：行为排队论 (Mod 2536588263)
+- **变体场景与切面**：收录来自工坊 Mod 2536588263 (`行为排队论`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2536588263)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+local always_clear_queue = GetModConfigData("always_clear_queue")
+AddComponentPostInit("playercontroller", function(self, inst)
+    if inst ~= _G.ThePlayer then return end
+    ThePlayer = _G.ThePlayer
+    TheWorld = _G.TheWorld
+    ActionQueuerInit()
+
+    local PlayerControllerOnControl = self.OnControl
+    self.OnControl = function(self, control, down)
+        local mouse_control = mouse_controls[control]
+        if mouse_control ~= nil then
+            if down then
+                if TheInput:IsAqModifierDown(action_queue_key) then
+                    local target = TheInput:GetWorldEntityUnderMouse()
+                    if target and target:HasTag("fishable") and not inst.replica.rider:IsRiding()
+                      and inst.replica.inventory:EquipHasTag("fishingrod") then
+                        ActionQueuer:StartAutoFisher(target)
+                    elseif not ActionQueuer.auto_fishing then
+                        ActionQueuer:OnDown(mouse_control)
+                    end
+                    return
+                end
+            else
+                ActionQueuer:OnUp(mouse_control)
+            end
+        end
+        PlayerControllerOnControl(self, control, down)
+        if down and ActionQueuer.action_thread and not ActionQueuer.selection_thread and InGame()
+          and (interrupt_controls[control] or mouse_control ~= nil and not TheInput:GetHUDEntityUnderMouse()) then
+            ActionQueuer:ClearActionThread()
+            if always_clear_queue or control == CONTROL_ACTION then
+                ActionQueuer:ClearSelectedEntities()
+            end
+        end
+    end
+    local PlayerControllerIsControlPressed = self.IsControlPressed
+    self.IsControlPressed = function(self, control)
+        if control == CONTROL_FORCE_INSPECT and ActionQueuer.action_thread then return false end
+        return PlayerControllerIsControlPressed(self, control)
+    end
+end)
+
+AddClassPostConstruct("components/builder_replica", function(self)
+    local BuilderReplicaMakeRecipeFromMenu = self.MakeRecipeFromMenu
+    self.MakeRecipeFromMenu = function(self, recipe, skin)
+        last_recipe, last_skin = recipe, skin
+        if not ActionQueuer.action_thread and TheInput:IsAqModifierDown(action_queue_key)
+          and not recipe.placer and self:CanBuild(recipe.name) then
+            ActionQueuer:RepeatRecipe(self, recipe, skin)
+        else
+            BuilderReplicaMakeRecipeFromMenu(self, recipe, skin)
+        end
+    end
+    local BuilderReplicaMakeRecipeAtPoint = self.MakeRecipeAtPoint
+    self.MakeRecipeAtPoint = function(self, recipe, pt, rot, skin)
+        last_recipe, last_skin = recipe, skin
+        BuilderReplicaMakeRecipeAtPoint(self, recipe, pt, rot, skin)
+    end
+end)
+
+AddComponentPostInit("highlight", function(self, inst)
+    local HighlightHighlight = self.Highlight
+    self.Highlight = function(self, ...)
+        if ActionQueuer.selection_thread or ActionQueuer:IsSelectedEntity(inst) then return end
+        HighlightHighlight(self, ...)
+    end
+    local HighlightUnHighlight = self.UnHighlight
+    self.UnHighlight = function(self)
+        if ActionQueuer:IsSelectedEntity(inst) then return end
+        HighlightUnHighlight(self)
+    end
+end)
+--for minimizing the memory leak in geo
+--hides the geo grid during an action queue
+AddComponentPostInit("placer", function(self, inst)
+    local PlacerOnUpdate = self.OnUpdate
+    self.OnUpdate = function(self, ...)
+        self.disabled = ActionQueuer.action_thread ~= nil
+        PlacerOnUpdate(self, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:highlight
+
+AddComponentPostInit("highlight", function(self, inst)
+    local HighlightHighlight = self.Highlight
+    self.Highlight = function(self, ...)
+        if ActionQueuer.selection_thread or ActionQueuer:IsSelectedEntity(inst) then return end
+        HighlightHighlight(self, ...)
+    end
+    local HighlightUnHighlight = self.UnHighlight
+    self.UnHighlight = function(self)
+        if ActionQueuer:IsSelectedEntity(inst) then return end
+        HighlightUnHighlight(self)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:placer
+--hides the geo grid during an action queue
+AddComponentPostInit("placer", function(self, inst)
+    local PlacerOnUpdate = self.OnUpdate
+    self.OnUpdate = function(self, ...)
+        self.disabled = ActionQueuer.action_thread ~= nil
+        PlacerOnUpdate(self, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Golden Hammer (Mod 3411817995)
+- **变体场景与切面**：收录来自工坊 Mod 3411817995 (`Golden Hammer`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3411817995)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:goldenhammer
+    
+    AddPrefabPostInit("goldenhammer", function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+    
+        local _OnEquip = inst.components.equippable.onequipfn
+        local _OnUnequip = inst.components.equippable.onunequipfn
+    
+        local function OnEquip(inst, owner)
+            inst:ListenForEvent("working", Working, owner)
+            _OnEquip(inst, owner)
+        end
+    
+        local function OnUnequip(inst, owner)
+            inst:RemoveEventCallback("working", Working, owner)
+            _OnUnequip(inst, owner)
+        end
+    
+        inst.components.equippable:SetOnEquip(OnEquip)
+        inst.components.equippable:SetOnUnequip(OnUnequip)
+    end)
+
+```
+

@@ -15132,3 +15132,177 @@ end)
 
 ```
 
+
+
+### 变体演进：「残刃·无恃」 (Mod 3388543143)
+- **变体场景与切面**：收录来自工坊 Mod 3388543143 (`「残刃·无恃」`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3388543143)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+-- 服务端专用：客户端不实例化combat组件，AddComponentPostInit只在服务端回调。
+AddComponentPostInit("combat", function(self)
+    local OldCanBeAttacked = self.CanBeAttacked
+    self.CanBeAttacked = function(self, attacker, ...)
+        local target = self.inst
+        if attacker ~= nil and attacker:IsValid() and attacker ~= target
+            and target ~= nil and target:HasTag("player") and not target:IsInLimbo() then
+            local px, _, pz = target.Transform:GetWorldPosition()
+            -- 结界最大半径18，搜索20必覆盖到刀
+            for _, rod in ipairs(GLOBAL.TheSim:FindEntities(px, 0, pz, 20, { "lightningrod" })) do
+                local shield = rod.mdqr_shield
+                if shield ~= nil and shield:IsValid() then
+                    local r = shield.mdqr_blockradius or 6
+                    local sx, _, sz = shield.Transform:GetWorldPosition()
+                    if (px - sx) * (px - sx) + (pz - sz) * (pz - sz) <= r * r then
+                        -- 玩家在结界内：攻击者在结界外则挡下（结界内刷出的怪/贴身目标不受影响）
+                        local ax, _, az = attacker.Transform:GetWorldPosition()
+                        if (ax - sx) * (ax - sx) + (az - sz) * (az - sz) > r * r then
+                            return false
+                        end
+                    end
+                end
+            end
+        end
+        return OldCanBeAttacked(self, attacker, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mdqr
+
+ AddPrefabPostInit("mdqr",function(inst)
+    -- 武器/工具/划船/耐久/防水/保暖/作祟全是服务端组件：只在服务端添加。
+    -- 客户端靠预制体里打好的 "weapon" tag（mdqr.lua）识别为武器，与官方spear一致。
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    inst:AddComponent("weapon")
+    inst.components.weapon:SetDamage(60)
+    inst.components.weapon:SetRange(2,2)
+    inst:AddComponent("tool")
+    -- 砍树效率：默认斧头同款（不一刀秒），镶紫宝石后在MdqrApplyGemEffect改为一刀砍树（CHOP_EFF_ONEHIT）
+    inst.components.tool:SetAction(ACTIONS.CHOP, CHOP_EFF_AXE)
+    inst.components.tool:SetAction(ACTIONS.MINE, 2)
+    -- 划船功能：oar组件 + 允许在水面使用
+    inst:AddTag("allow_action_on_impassable")
+    inst:AddComponent("oar")
+    inst.components.oar.force = 0.8        -- 划船力度（与蛇皮桨malbatross同级）
+    inst.components.oar.max_velocity = 5  -- 最大划船速度
+    -- 锤子功能
+    inst.components.tool:SetAction(ACTIONS.HAMMER)
+    -- 铲子功能
+    inst.components.tool:SetAction(ACTIONS.DIG)
+    -- 移速1.5倍改为绿宝石解锁：基础1.0，镶嵌绿宝石后在 MdqrApplyGemEffect 中设为1.5
+    if inst.components.equippable then inst.components.equippable.walkspeedmult = 1 end
+    -- 基础耐久100：攻击/砍/挖/锤/铲每次成功动作耗1点（bufferedaction.lua:30成功后→OnUsedAsItem按消耗表扣）
+    -- 耗尽不销毁：进入损坏状态（不能攻击/工具/划船/闪烁），每3秒回复1点；镶嵌黄宝石后整组移除=无限耐久
+    inst:AddComponent("finiteuses")
+    inst.components.finiteuses:SetMaxUses(100)
+    inst.components.finiteuses:SetUses(100)
+    inst.components.finiteuses:SetOnFinished(MdqrOnUsesFinished)
+    -- 工具消耗走 bufferedaction.lua:30 的 OnUsedAsItem 消耗表（动作带invobject）；
+    -- 攻击消耗由 weapon 组件自动处理（weapon.lua:111-120 每次命中-1），无需注册ATTACK
+    inst.components.finiteuses:SetConsumption(ACTIONS.CHOP, 1)
+    inst.components.finiteuses:SetConsumption(ACTIONS.MINE, 1)
+    inst.components.finiteuses:SetConsumption(ACTIONS.HAMMER, 1)
+    inst.components.finiteuses:SetConsumption(ACTIONS.DIG, 1)
+    -- 耐久恢复任务改为"损坏时才启动"（onfinished/读档损坏时调MdqrStartRecover），不常驻
+    -- 攻击特效按宝石解锁（2026-09-03）：红=攻击回血+8/次；蓝=攻击附加冰冻(+1冷凝值/次)；
+    -- 攻击回复san已按用户要求整体取消
+    local function onattack(weapon, attacker, target)
+        if attacker == nil or target == nil then
+            return
+        end
+        if inst:HasTag("mdqr_gem_red") and attacker.components.health ~= nil then
+            attacker.components.health:DoDelta(8)
+        end
+        if inst:HasTag("mdqr_gem_blue")
+            and target.components ~= nil and target.components.freezable ~= nil then
+            target.components.freezable:AddColdness(1)
+        end
+    end
+    inst.components.weapon:SetOnAttack(onattack)
+    inst:AddComponent("waterproofer")
+    inst.components.waterproofer:SetEffectiveness(1)
+    inst:AddComponent("insulator")
+    if "summer"=="summer" then  
+        inst.components.insulator:SetSummer()
+    else 
+        inst.components.insulator:SetWinter()
+    end 
+    inst.components.insulator:SetInsulation(240)
+    -- 作祟复活（橙宝石解锁）：onhaunt返回false则不触发INSTANT_REZ(hauntable.lua:88-93)
+    inst:AddComponent("hauntable")
+    inst.components.hauntable:SetHauntValue(TUNING.HAUNT_INSTANT_REZ)
+    inst.components.hauntable.no_wipe_value = true   -- 不限复活次数
+    inst.components.hauntable:SetOnHauntFn(function(i, doer)
+        if not i:HasTag("mdqr_gem_orange") then
+            return false
+        end
+        -- 复活惩罚：每次作祟复活后降低 20% 最大血量上限（作用于复活者doer，用原生penalty机制，自动封顶75%）
+        if doer ~= nil and doer.components.health ~= nil then
+            doer.components.health:DeltaPenalty(0.2)
+        end
+        MdqrStory.ChatFor(i, "revive")   -- 叙事：橙宝石复活触发（i是刀，作祟者复活时刀在身上）
+        return true
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+-- 实际联机世界的 prefab 名分别是 forest / cave；保留 world 兼容特殊世界与测试环境。
+AddPrefabPostInit("forest", MdqrInitUniqueWorld)
+AddPrefabPostInit("cave", MdqrInitUniqueWorld)
+AddPrefabPostInit("world", MdqrInitUniqueWorld)
+
+-- 制作前检测：服务器最终校验，防止客户端标签延迟或连续点击绕过限制。
+local function mdqr_canbuild(recipe, builder, pt, rotation, prototyper, skin)
+    if GLOBAL.TheWorld.mdqr_unique_crafted == true or not builder:HasTag(MDQR_CRAFT_TAG) then
+        if builder.components.talker ~= nil then
+            builder.components.talker:Say("此世残刃已然有主，唯有分锋方可再得。")
+        end
+        return false
+    end
+    return true
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+AddPrefabPostInit("forest", MdqrInitUniqueWorld)
+AddPrefabPostInit("cave", MdqrInitUniqueWorld)
+AddPrefabPostInit("world", MdqrInitUniqueWorld)
+
+-- 制作前检测：服务器最终校验，防止客户端标签延迟或连续点击绕过限制。
+local function mdqr_canbuild(recipe, builder, pt, rotation, prototyper, skin)
+    if GLOBAL.TheWorld.mdqr_unique_crafted == true or not builder:HasTag(MDQR_CRAFT_TAG) then
+        if builder.components.talker ~= nil then
+            builder.components.talker:Say("此世残刃已然有主，唯有分锋方可再得。")
+        end
+        return false
+    end
+    return true
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("cave", MdqrInitUniqueWorld)
+AddPrefabPostInit("world", MdqrInitUniqueWorld)
+
+-- 制作前检测：服务器最终校验，防止客户端标签延迟或连续点击绕过限制。
+local function mdqr_canbuild(recipe, builder, pt, rotation, prototyper, skin)
+    if GLOBAL.TheWorld.mdqr_unique_crafted == true or not builder:HasTag(MDQR_CRAFT_TAG) then
+        if builder.components.talker ~= nil then
+            builder.components.talker:Say("此世残刃已然有主，唯有分锋方可再得。")
+        end
+        return false
+    end
+    return true
+end
+
+```
+
