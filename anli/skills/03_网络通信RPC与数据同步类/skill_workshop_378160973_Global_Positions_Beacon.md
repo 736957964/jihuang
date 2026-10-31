@@ -1926,3 +1926,1854 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：掉落物计时删除 (Mod 3779699321)
+- **变体场景与切面**：收录来自工坊 Mod 3779699321 (`掉落物计时删除`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3779699321)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:lootdropper
+-- 监控掉落 lootdropper
+AddComponentPostInit("lootdropper", function(self)
+    local oldFlingItem = self.FlingItem -- 这个函数是 SpawnLootPrefab 里完成掉落物品生成之后
+    function self:FlingItem(loot, pt)
+        if loot ~= nil and loot:IsValid() then
+            loot:DoTaskInTime(1, function()
+                AdditemRemoveSetTitle(loot, GetModConfigData("zdscwp"), GetModConfigData("zdscwp_xssj"), 60) -- (物品, 倒计时, 倒计时开始显示, 颜色)
+            end)
+        end
+        oldFlingItem(self, loot, pt)
+    end
+end)
+
+```
+
+
+
+### 变体演进：附近储物总览 (Mod 3814556768)
+- **变体场景与切面**：收录来自工坊 Mod 3814556768 (`附近储物总览`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3814556768)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:container
+end
+AddComponentPostInit("container",HSO_ORGANIZER.WrapContainer)
+AddComponentPostInit("inventoryitem",HSO_ORGANIZER.WrapInventoryItem)
+AddComponentPostInit("perishable",HSO_ORGANIZER.WrapPerishable)
+AddClassPostConstruct("components/container_replica",function(self)
+    local canopen=self.CanBeOpened
+    if canopen~=nil then self.CanBeOpened=function(replica,...)
+        return not replica.inst:HasTag("hso_sorting") and canopen(replica,...)
+    end end
+end)
+for _,worldprefab in ipairs({"world","forest","cave"}) do
+    AddPrefabPostInit(worldprefab,HSO_ORGANIZER.WrapWorld)
+end
+
+local MOD_NS = "HomeStorageOverview"
+
+local CFG_RADIUS = GetModConfigData("scan_radius") or 40
+local CFG_HOTKEY = GetModConfigData("hotkey") or "B"
+local CFG_PERMISSION = GetModConfigData("use_permission") or "all"
+local CFG_TAKE_LIMIT = GetModConfigData("take_limit") or 20
+
+-- KU 白名单（逗号分隔）
+local PERM_SET = {}
+do
+    local wl = GetModConfigData("ku_whitelist") or ""
+    for id in string.gmatch(wl, "[^%s,]+") do
+        PERM_SET[id] = true
+    end
+end
+
+-- 使用权限判定（作用于拿取/整理；总览查看不受限）
+local function HasPermission(player)
+    if CFG_PERMISSION == "all" then
+        return true
+    end
+    if player == nil or player.userid == nil then
+        return false
+    end
+    if CFG_PERMISSION == "whitelist" then
+        return PERM_SET[player.userid] == true
+    elseif CFG_PERMISSION == "admin" then
+        local net = player.Network
+        return net ~= nil and net.IsServerAdmin ~= nil and net:IsServerAdmin()
+    end
+    return false
+end
+
+local CHUNK = 200       -- 单个 RPC 字符串参数的安全长度
+local MAX_CHUNKS = 512  -- Bound large-base snapshots, including instance names/recipes.
+local PACKETS_PER_TICK = 24
+local SNAPSHOT_TTL = 15 -- Native inventory events invalidate the cache immediately.
+local REQUEST_INTERVAL = .25 -- Coalesce repeated opens/refreshes before scanning.
+
+local SCAN_CACHE = {}         -- userid -> { list = 容器列表, t = 时间 }
+local SNAPSHOT_STREAMS = {}
+local SNAPSHOT_REQUESTS = {}
+local inventory_revision = 0
+local ORGANIZE_COOLDOWN = {}  -- userid -> 上次整理时间
+local OPEN_VIEWERS = {}       -- Only open panels renew their subscription by polling.
+local PREVIEWS, FEATURE_REQUESTS = {}, {}
+local FEATURE_STREAMS={}
+local feature_serial=0
+local VIEWER_TIMEOUT = 8      -- Allow two three-second polls plus delivery slack.
+local SyncContainerEvents, RefreshViews, SendOrganizeState, SendBusy
+local WATCHED_CONTAINERS, DIRTY_CONTAINERS = {}, {}
+local EVENT_TASK, LEASE_TASK
+HSO_ORGANIZER.OnPendingChanged=function(ent)
+    inventory_revision=inventory_revision+1
+    if RefreshViews~=nil then RefreshViews(nil,{[ent]=true}) end
+end
+
+-- 客户端数据状态（客户端/服务端都会注册，双端各持一份）
+local HSO_STATE = { hash = nil, data = nil, pending = nil, busy = false, status = nil, listener = nil, onerror = nil }
+local NOTICE_SECONDS=4
+local function ClientStatus(busy,status)
+    if HSO_STATE.busy==busy and HSO_STATE.status==status then return false end
+    HSO_STATE.busy,HSO_STATE.status=busy,status
+    HSO_STATE.status_until=not busy and type(status)=="string" and #status>0
+        and ((GLOBAL.GetStaticTime or GLOBAL.GetTime)()+NOTICE_SECONDS) or nil
+    return true
+end
+
+-- 玩家离开时清理其快照与冷却记录
+AddPlayerPostInit(function(player)
+    player:ListenForEvent("onremove", function()
+        local job=HSO_ORGANIZER.active_job
+        if job~=nil and job.player==player then HSO_ORGANIZER.Cancel(job,"disconnected") end
+        local userid = player.userid
+        if userid ~= nil then
+            SCAN_CACHE[userid] = nil
+            ORGANIZE_COOLDOWN[userid] = nil
+            OPEN_VIEWERS[userid] = nil
+            PREVIEWS[userid],FEATURE_REQUESTS[userid]=nil,nil
+            local feature=FEATURE_STREAMS[userid]
+            if feature~=nil and feature.task~=nil then feature.task:Cancel() end
+            FEATURE_STREAMS[userid]=nil
+            local stream=SNAPSHOT_STREAMS[userid]
+            if stream~=nil and stream.task~=nil then stream.task:Cancel() end
+            SNAPSHOT_STREAMS[userid]=nil
+            local request=SNAPSHOT_REQUESTS[userid]
+            if request~=nil and request.task~=nil then request.task:Cancel() end
+            SNAPSHOT_REQUESTS[userid]=nil
+            if SyncContainerEvents ~= nil then SyncContainerEvents() end
+        end
+    end)
+end)
+
+----------------------------------------------------------------
+-- 通用
+----------------------------------------------------------------
+
+local function Say(player, msg)
+    if player ~= nil and player:IsValid() and player.components ~= nil
+        and player.components.talker ~= nil then
+        player.components.talker:Say(Features.WrapText("[储物] "..Features.BriefStatus(msg),20),4)
+    end
+end
+
+local function ItemCount(item)
+    if item.components.stackable ~= nil then
+        return item.components.stackable:StackSize()
+    end
+    return 1
+end
+
+----------------------------------------------------------------
+-- 服务端：扫描容器
+----------------------------------------------------------------
+
+local function ScanContainers(player, for_organize)
+    local scanned = Policy.Scan(player, CFG_RADIUS)
+    if not for_organize then return scanned.containers end
+    local out = {}
+    for _, ent in ipairs(scanned.containers) do
+        if Policy.CanOrganize(ent, player, CFG_RADIUS) then out[#out + 1] = ent end
+    end
+    return out
+end
+
+-- D carries names/recipe identities; c.t and A/I use the same selectable group key.
+local function BuildContainerData(player)
+    local containers = ScanContainers(player, false)
+    local ok,cooking=pcall(require,"cooking")
+    local ingredients=ItemRules.BuildIngredientSet(GLOBAL.AllRecipes,ok and cooking or nil)
+    local payload = { v = 4, c = {}, D = {}, A = {}, I = {}, P = {}, Q = {}, K = {}, n = #containers, s = 0 }
+    if not HasPermission(player) then payload.u=false end
+    local groups = {}
+    local held_by_source={}
+    for item,rec in pairs(HSO_ORGANIZER.pending) do
+        if item:IsValid() and item.components.inventoryitem.owner==nil then
+            local held=held_by_source[rec.source]
+            if held==nil then held={};held_by_source[rec.source]=held end
+            held[#held+1]=item
+        end
+    end
+    for idx, ent in ipairs(containers) do
+        local cont = ent.components.container
+        local t, unavailable, used = {}, {}, 0
+        local function AddItem(item, held_remainder)
+            if item ~= nil then
+                local cnt = ItemCount(item)
+                local meta = ItemInfo.Describe(item)
+                local key = ItemInfo.GroupKey(meta)
+                t[key] = (t[key] or 0) + cnt
+                local quality=payload.Q[key] or {}
+                Features.AddQuality(quality,item)
+                if next(quality)~=nil then payload.Q[key]=quality end
+                local inv=item.components.inventoryitem
+                if (held_remainder or (inv~=nil and inv.islockedinslot)) and not cont.readonlycontainer then
+                    unavailable[key]=(unavailable[key] or 0)+cnt
+                end
+                used = used + cnt   -- 计件数（与界面 "N 件物品" 对应）
+                if groups[key] == nil then
+                    groups[key] = meta
+                    if ItemInfo.HasDetails(meta) then payload.D[key] = meta end
+                    if ItemRules.PriorityRaw(meta,ingredients) then payload.P[key]=true end
+                    local category=Features.Category(item,meta,payload.P[key])
+                    if category~="other" then payload.K[key]=category end
+                    payload.A[key], payload.I[key] = ItemInfo.InventoryImage(item)
+                end
+            end
+        end
+        for i=1,cont:GetNumSlots() do AddItem(cont:GetItemInSlot(i),false) end
+        for _,item in ipairs(held_by_source[ent] or {}) do
+            if item:IsValid() and item.components.inventoryitem.owner==nil then AddItem(item,true) end
+        end
+        if used > 0 then
+            payload.s = payload.s + used
+            local meta = ItemInfo.Describe(ent)
+            table.insert(payload.c, { i = idx, p = ent.prefab,
+                d = ItemInfo.HasDetails(meta) and meta or nil, t = t,
+                g=ent.GUID,e=cont._hso_excluded or nil,w=Policy.OrganizeReason(ent,player,CFG_RADIUS),
+                r = (cont.readonlycontainer or cont.canbeopened == false) and true or nil,
+                a = next(unavailable) ~= nil and unavailable or nil })
+        end
+    end
+    return payload, containers, groups
+end
+
+local function HashStr(s)
+    local h = 5381
+    for i = 1, #s do
+        h = (h * 33 + string.byte(s, i)) % 4294967291
+    end
+    return tostring(h) .. "_" .. tostring(#s)
+end
+
+----------------------------------------------------------------
+-- 服务端：跨箱整理
+----------------------------------------------------------------
+
+local function ReportOrganize(player,result)
+    if result.error~=nil then print("[HSO] organize interrupted: "..result.error) end
+    if result.incomplete then
+        print(string.format("[HSO] organize stopped: reason=%s phase=%s stage=%s elapsed=%.2f containers=%d slots=%d records=%d groups=%d work=%d steps=%d pending=%d",
+            tostring(result.reason),tostring(result.phase),tostring(result.stage),tonumber(result.elapsed) or 0,
+            tonumber(result.containers) or 0,tonumber(result.slots) or 0,tonumber(result.records) or 0,tonumber(result.groups) or 0,
+            tonumber(result.work) or 0,tonumber(result.steps) or 0,tonumber(result.pending) or 0))
+    end
+    if result.pending>0 then
+        return string.format("归并 %d 件，合堆 %d 件；暂缓 %d 件恢复",result.moved,result.merged,result.pending)
+    end
+    if result.incomplete then
+        local why=({paused="游戏暂停",timeout="时间超限",time_limit="时间超限",
+            work_limit="工作量超限",scheduler="任务调度中断",
+            disconnected="玩家离线",container_changed="容器状态变化",item_changed="物品状态变化"})[result.reason] or "库存或容器状态变化"
+        return string.format("整理已停止：%s；归并 %d 件，物品已保留",why,result.moved)
+    end
+    if next(result.changed) ~= nil or result.left > 0 or result.skipped > 0 then
+        local reasons={}
+        for _,key in ipairs({"excluded","type","open","locked","readonly","unavailable"}) do
+            local n=(result.reasons or {})[key]
+            if n~=nil and n>0 then reasons[#reasons+1]=(Policy.REASONS[key] or key)..n.."个" end
+        end
+        return string.format("整理完成：归并 %d 件，释放 %d 格；跳过 %d 个%s",
+            result.moved,result.freed or 0,result.skipped,#reasons>0 and ("（"..table.concat(reasons,"、").."）") or "")
+    else
+        return "物品已集中，无需移动"
+    end
+end
+
+----------------------------------------------------------------
+-- RPC 注册（客户端/服务端必须按相同顺序注册，保证 id 一致）
+----------------------------------------------------------------
+
+-- Requests use the known hash; completed actions push authoritative data directly.
+local function SendSnapshot(player, client_hash, watching, force)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    if player == nil or not player:IsValid() or type(player.userid)~="string" then
+        return
+    end
+    if watching == false then
+        OPEN_VIEWERS[player.userid] = nil
+        local stream=SNAPSHOT_STREAMS[player.userid]
+        if stream~=nil and stream.task~=nil then stream.task:Cancel() end
+        SNAPSHOT_STREAMS[player.userid]=nil
+        SyncContainerEvents()
+        return
+    elseif watching == true then
+        OPEN_VIEWERS[player.userid] = { player = player, t = GLOBAL.GetStaticTime() }
+    end
+    local now=GLOBAL.GetStaticTime()
+    local x,_,z=player.Transform:GetWorldPosition()
+    local scan=SCAN_CACHE[player.userid]
+    local busy=HSO_ORGANIZER.IsBusy()
+    local reusable=scan~=nil and scan.encoded~=nil and (busy or (not force and watching==true
+        and client_hash~=nil and client_hash~="" and scan.revision==inventory_revision
+        and now-scan.built<SNAPSHOT_TTL and x==scan.x and z==scan.z))
+    if not reusable then
+        local payload,containers,groups=BuildContainerData(player)
+        local encoded=json.encode(payload)
+        scan={list=containers,groups=groups,t=now,built=now,x=x,z=z,revision=inventory_revision,
+            encoded=encoded,hash=HashStr(encoded)}
+        SCAN_CACHE[player.userid]=scan
+        SyncContainerEvents()
+    else scan.t=now end
+    local s,h=scan.encoded,scan.hash
+    local clientrpc = GLOBAL.GetClientModRPC(MOD_NS, "data")
+    -- Every poll reconciles authoritative state, including a missed completion.
+    SendOrganizeState(player,busy,HSO_ORGANIZER.Status())
+    local viewer = OPEN_VIEWERS[player.userid]
+    if viewer ~= nil then viewer.hash = h end
+    local previous=SNAPSHOT_STREAMS[player.userid]
+    if previous~=nil and previous.hash~=h then
+        if previous.task~=nil then previous.task:Cancel() end
+        SNAPSHOT_STREAMS[player.userid]=nil;previous=nil
+    end
+
+    if client_hash ~= nil and client_hash ~= "" and client_hash == h then
+        SendModRPCToClient(clientrpc, player.userid, "same", h)
+        return
+    end
+
+    local total = math.ceil(#s / CHUNK)
+    if total > MAX_CHUNKS then
+        SendModRPCToClient(clientrpc, player.userid, "err", "toomany")
+        return
+    end
+    if previous~=nil and previous.hash==h and not force and client_hash~="" then return end
+    if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+    local stream={hash=h,index=1};SNAPSHOT_STREAMS[player.userid]=stream
+    SendModRPCToClient(clientrpc, player.userid, "begin", h, tostring(total))
+    local function send_batch()
+        if SNAPSHOT_STREAMS[player.userid]~=stream or not player:IsValid() then return end
+        local last=math.min(total,stream.index+PACKETS_PER_TICK-1)
+        for i=stream.index,last do
+            SendModRPCToClient(clientrpc,player.userid,"chunk",tostring(i),s:sub((i-1)*CHUNK+1,i*CHUNK),h)
+        end
+        stream.index=last+1
+        if stream.index>total then SNAPSHOT_STREAMS[player.userid]=nil
+        elseif GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+            stream.task=GLOBAL.TheWorld:DoStaticTaskInTime(GLOBAL.FRAMES or (1/30),send_batch)
+        else
+            -- Offline fixtures lack a scheduler; real clients always use batches.
+            while stream.index<=total do
+                local i=stream.index;stream.index=i+1
+                SendModRPCToClient(clientrpc,player.userid,"chunk",tostring(i),s:sub((i-1)*CHUNK+1,i*CHUNK),h)
+            end
+            SNAPSHOT_STREAMS[player.userid]=nil
+        end
+    end
+    send_batch()
+end
+local function RequestSnapshot(player,client_hash,watching)
+    if GLOBAL.TheWorld==nil or not GLOBAL.TheWorld.ismastersim or player==nil or not player:IsValid()
+        or type(player.userid)~="string" or (client_hash~=nil and (type(client_hash)~="string" or #client_hash>64))
+        or (watching~=nil and type(watching)~="boolean") then return end
+    local userid=player.userid;local previous=SNAPSHOT_REQUESTS[userid]
+    if watching==false then
+        if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+        SNAPSHOT_REQUESTS[userid]=nil;SendSnapshot(player,client_hash,false);return
+    end
+    local now=GLOBAL.GetStaticTime()
+    if previous~=nil and now-previous.t<REQUEST_INTERVAL and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        previous.player,previous.hash,previous.watching=player,client_hash,watching
+        if previous.task==nil then
+            previous.task=GLOBAL.TheWorld:DoStaticTaskInTime(REQUEST_INTERVAL-(now-previous.t),function()
+                previous.task=nil
+                if SNAPSHOT_REQUESTS[userid]~=previous or not previous.player:IsValid() then return end
+                previous.t=GLOBAL.GetStaticTime()
+                SendSnapshot(previous.player,previous.hash,previous.watching)
+            end)
+        end
+        return
+    end
+    if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+    SNAPSHOT_REQUESTS[userid]={t=now}
+    -- The force argument belongs to authoritative server updates. RPC callers
+    -- request a fresh scan with an empty hash, subject to the coalescing above.
+    SendSnapshot(player,client_hash,watching)
+end
+AddModRPCHandler(MOD_NS, "req", RequestSnapshot)
+
+-- Server RPC handlers run to completion. Notify other active views after the
+-- actual removals; their own nearby scan determines their new visible quantities.
+RefreshViews = function(player, changed)
+    if player~=nil then SendSnapshot(player,nil,nil,true) end
+    local now = GLOBAL.GetStaticTime()
+    for userid, viewer in pairs(OPEN_VIEWERS) do
+        if not viewer.player:IsValid() or now - viewer.t > VIEWER_TIMEOUT then
+            OPEN_VIEWERS[userid] = nil
+        elseif player==nil or userid ~= player.userid then
+            local scan = SCAN_CACHE[userid]
+            if scan ~= nil then
+                for _, ent in ipairs(scan.list) do
+                    if changed[ent] then
+                        SendSnapshot(viewer.player,viewer.hash,nil,true)
+                        break
+                    end
+                end
+            end
+        end
+    end
+    SyncContainerEvents()
+end
+
+local function QueueContainerChange(ent)
+    DIRTY_CONTAINERS[ent]=true
+    inventory_revision=inventory_revision+1
+    if HSO_ORGANIZER.IsBusy() then return end
+    if EVENT_TASK~=nil then return end
+    if GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        EVENT_TASK=GLOBAL.TheWorld:DoStaticTaskInTime(.1,function()
+            EVENT_TASK=nil
+            if HSO_ORGANIZER.IsBusy() then return end
+            local changed=DIRTY_CONTAINERS;DIRTY_CONTAINERS={}
+            RefreshViews(nil,changed)
+        end)
+    end
+end
+
+SyncContainerEvents = function()
+    local needed={};local now=GLOBAL.GetStaticTime()
+    for userid,viewer in pairs(OPEN_VIEWERS) do
+        if not viewer.player:IsValid() or now-viewer.t>VIEWER_TIMEOUT then OPEN_VIEWERS[userid]=nil
+        else
+            local scan=SCAN_CACHE[userid]
+            if scan~=nil then
+                for _,ent in ipairs(scan.list) do
+                    if Policy.CanView(ent,viewer.player,CFG_RADIUS) and ent.ListenForEvent~=nil then needed[ent]=true end
+                end
+            end
+        end
+    end
+    for ent,watch in pairs(WATCHED_CONTAINERS) do
+        if not needed[ent] then
+            for _,event in ipairs({"itemget","itemlose","onremove"}) do
+                pcall(ent.RemoveEventCallback,ent,event,watch.callback)
+            end
+            for item in pairs(watch.items) do pcall(ent.RemoveEventCallback,ent,"stacksizechange",watch.callback,item) end
+            WATCHED_CONTAINERS[ent]=nil
+        end
+    end
+    for ent in pairs(needed) do
+        local watch=WATCHED_CONTAINERS[ent]
+        if watch==nil then
+            watch={items={},callback=function() QueueContainerChange(ent) end}
+            WATCHED_CONTAINERS[ent]=watch
+            for _,event in ipairs({"itemget","itemlose","onremove"}) do ent:ListenForEvent(event,watch.callback) end
+        end
+        local items={};local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and item.ListenForEvent~=nil then items[item]=true end
+        end
+        for item in pairs(watch.items) do
+            if not items[item] then ent:RemoveEventCallback("stacksizechange",watch.callback,item) end
+        end
+        for item in pairs(items) do
+            if not watch.items[item] then ent:ListenForEvent("stacksizechange",watch.callback,item) end
+        end
+        watch.items=items
+    end
+    if next(OPEN_VIEWERS)==nil then
+        if EVENT_TASK~=nil then EVENT_TASK:Cancel();EVENT_TASK=nil end
+        if LEASE_TASK~=nil then LEASE_TASK:Cancel();LEASE_TASK=nil end
+        DIRTY_CONTAINERS={}
+    elseif LEASE_TASK==nil and GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        LEASE_TASK=GLOBAL.TheWorld:DoStaticTaskInTime(2,function()
+            LEASE_TASK=nil;SyncContainerEvents()
+        end)
+    end
+end
+
+-- Match the selected instance group, so different sketches/cards cannot be mixed up.
+AddModRPCHandler(MOD_NS, "take", function(player, groupkey, takeall, amount, preference)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    if player == nil or not player:IsValid() or type(player.userid)~="string" or type(groupkey) ~= "string"
+        or #groupkey == 0 or #groupkey > 128 then
+        return
+    end
+    if amount~=nil and (type(amount)~="number" or amount~=amount or amount<1 or amount>9999 or amount~=math.floor(amount)) then return end
+    if preference~=nil and not Features.ValidPreference(preference) then return end
+    preference=preference or "normal"
+    if not HasPermission(player) then
+        Say(player, "你没有使用拿取/整理功能的权限")
+        return
+    end
+    if HSO_ORGANIZER.IsBusy() then
+        Say(player,"整理进行中，请稍后拿取")
+        return
+    end
+    takeall=takeall==true
+    local scan = SCAN_CACHE[player.userid]
+    if scan == nil or GLOBAL.GetStaticTime() - scan.t > 30 then
+        -- 快照过期/缺失时按需重建，而不是静默失败（避免“点按钮没反应”）
+        local _, containers, groups = BuildContainerData(player)
+        scan = { list = containers, groups = groups, t = GLOBAL.GetStaticTime() }
+        SCAN_CACHE[player.userid] = scan
+    end
+    local selected = scan.groups[groupkey]
+    if selected == nil then
+        Say(player, "物品已被取走或发生变化")
+        SendSnapshot(player)
+        return
+    end
+    local inv = player.components.inventory
+    if inv == nil then
+        return
+    end
+    local max_stacks = (CFG_TAKE_LIMIT > 0) and CFG_TAKE_LIMIT or math.huge
+    local taken,units = 0,0
+    local changed = {}
+    local options={}
+    for index,ent in ipairs(scan.list) do if Policy.CanTake(ent,player,CFG_RADIUS) then
+        local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and item.prefab==selected.p and ItemInfo.GroupKey(ItemInfo.Describe(item))==groupkey
+                and not (item.components.inventoryitem~=nil and item.components.inventoryitem.islockedinslot) then
+                local fresh,durable=Features.Quality(item)
+                options[#options+1]={ent=ent,c=c,slot=slot,item=item,n=ItemCount(item),index=index,
+                    priority=preference=="fresh" and (fresh or 101) or preference=="durable" and -(durable or -1) or 0}
+            end
+        end
+    end end
+    table.sort(options,function(a,b)
+        if a.priority~=b.priority then return a.priority<b.priority end
+        if a.index~=b.index then return a.index<b.index end
+        if a.n~=b.n then return a.n>b.n end
+        return a.slot<b.slot
+    end)
+    for _,rec in ipairs(options) do
+        local ent,cont,slot=rec.ent,rec.c,rec.slot
+        while Policy.CanTake(ent,player,CFG_RADIUS) and ent.components.container==cont
+            and cont:GetItemInSlot(slot)==rec.item do
+            -- Every iteration rechecks the actual entity. Native infinite stacks
+            -- can keep the source entity in the slot after yielding a real stack.
+            if ItemInfo.GroupKey(ItemInfo.Describe(rec.item))~=groupkey
+                or rec.item.components.inventoryitem~=nil and rec.item.components.inventoryitem.islockedinslot then break end
+            local remaining=amount~=nil and amount-units or nil
+            local item=HSO_ORGANIZER.ExtractForTake(cont,slot,remaining)
+            changed[ent]=true
+            if item==nil then break end
+            local n=ItemCount(item)
+            if not HSO_ORGANIZER.DeliverTaken(item,ent,slot,inv) then
+                Say(player,"背包空间不足或拿取中断，余量已保留")
+                RefreshViews(player,changed);return
+            end
+            taken,units=taken+1,units+n
+            if amount~=nil and units>=amount or amount==nil and not takeall then
+                RefreshViews(player,changed);return
+            end
+            if taken>=max_stacks then
+                Say(player,string.format("已达单次上限（%d 组），稍后再拿",CFG_TAKE_LIMIT))
+                RefreshViews(player,changed);return
+            end
+        end
+    end
+    if taken == 0 then Say(player, "物品已被取走或暂不可拿取") end
+    RefreshViews(player, changed)
+end)
+
+-- 一键整理
+local function SendFeature(player,value)
+    if player==nil or not player:IsValid() then return end
+    local data=json.encode(value)
+    if #data>CHUNK*128 then return end
+    feature_serial=feature_serial+1
+    local id=tostring(feature_serial)
+    local rpc=GLOBAL.GetClientModRPC(MOD_NS,"data")
+    local total=math.ceil(#data/CHUNK);local userid=player.userid
+    local old=FEATURE_STREAMS[userid]
+    if old~=nil and old.task~=nil then old.task:Cancel() end
+    local stream={index=1};FEATURE_STREAMS[userid]=stream
+    SendModRPCToClient(rpc,userid,"feature_begin",id,tostring(total))
+    local function send_batch()
+        if FEATURE_STREAMS[userid]~=stream or not player:IsValid() then return end
+        local last=math.min(total,stream.index+PACKETS_PER_TICK-1)
+        for n=stream.index,last do
+            SendModRPCToClient(rpc,userid,"feature_chunk",tostring(n),data:sub((n-1)*CHUNK+1,n*CHUNK),id)
+        end
+        stream.index=last+1
+        if stream.index>total then FEATURE_STREAMS[userid]=nil
+        elseif GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+            stream.task=GLOBAL.TheWorld:DoStaticTaskInTime(GLOBAL.FRAMES or (1/30),send_batch)
+        else
+            while stream.index<=total do
+                local n=stream.index;stream.index=n+1
+                SendModRPCToClient(rpc,userid,"feature_chunk",tostring(n),data:sub((n-1)*CHUNK+1,n*CHUNK),id)
+            end
+            FEATURE_STREAMS[userid]=nil
+        end
+    end
+    send_batch()
+end
+local function FeatureAllowed(player,mutation)
+    if GLOBAL.TheWorld==nil or not GLOBAL.TheWorld.ismastersim or player==nil or not player:IsValid()
+        or type(player.userid)~="string" then return false end
+    if mutation and not HasPermission(player) then Say(player,"你没有使用拿取/整理功能的权限");return false end
+    local now=GLOBAL.GetStaticTime();local last=FEATURE_REQUESTS[player.userid]
+    if last~=nil and now-last<.15 then return false end
+    FEATURE_REQUESTS[player.userid]=now
+    return true
+end
+local function BoxDescription(ent,player)
+    local c=ent.components.container
+    local meta=ItemInfo.Describe(ent)
+    return {g=ent.GUID,p=ent.prefab,d=ItemInfo.HasDetails(meta) and meta or nil,
+        distance=math.floor(math.sqrt(player:GetDistanceSqToInst(ent))*10+.5)/10,
+        e=c._hso_excluded or nil,w=Policy.OrganizeReason(ent,player,CFG_RADIUS),slots=c:GetNumSlots()}
+end
+AddModRPCHandler(MOD_NS,"inspect",function(player,key,page)
+    if type(key)~="string" or #key==0 or #key>128 or not FeatureAllowed(player,false) then return end
+    page=type(page)=="number" and page==page and math.max(1,math.min(100000,math.floor(page))) or 1
+    local rows,total,available,count,meta={},0,0,0,nil
+    local containers=ScanContainers(player,false)
+    for _,ent in ipairs(containers) do
+        local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and ItemInfo.GroupKey(ItemInfo.Describe(item))==key then
+                count=count+1;local n=ItemCount(item);total=total+n
+                local takeable=HasPermission(player) and Policy.CanTake(ent,player,CFG_RADIUS)
+                    and not (item.components.inventoryitem~=nil and item.components.inventoryitem.islockedinslot)
+                if takeable then available=available+n end
+                meta=meta or ItemInfo.Describe(item)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventoryitem
+AddComponentPostInit("container",HSO_ORGANIZER.WrapContainer)
+AddComponentPostInit("inventoryitem",HSO_ORGANIZER.WrapInventoryItem)
+AddComponentPostInit("perishable",HSO_ORGANIZER.WrapPerishable)
+AddClassPostConstruct("components/container_replica",function(self)
+    local canopen=self.CanBeOpened
+    if canopen~=nil then self.CanBeOpened=function(replica,...)
+        return not replica.inst:HasTag("hso_sorting") and canopen(replica,...)
+    end end
+end)
+for _,worldprefab in ipairs({"world","forest","cave"}) do
+    AddPrefabPostInit(worldprefab,HSO_ORGANIZER.WrapWorld)
+end
+
+local MOD_NS = "HomeStorageOverview"
+
+local CFG_RADIUS = GetModConfigData("scan_radius") or 40
+local CFG_HOTKEY = GetModConfigData("hotkey") or "B"
+local CFG_PERMISSION = GetModConfigData("use_permission") or "all"
+local CFG_TAKE_LIMIT = GetModConfigData("take_limit") or 20
+
+-- KU 白名单（逗号分隔）
+local PERM_SET = {}
+do
+    local wl = GetModConfigData("ku_whitelist") or ""
+    for id in string.gmatch(wl, "[^%s,]+") do
+        PERM_SET[id] = true
+    end
+end
+
+-- 使用权限判定（作用于拿取/整理；总览查看不受限）
+local function HasPermission(player)
+    if CFG_PERMISSION == "all" then
+        return true
+    end
+    if player == nil or player.userid == nil then
+        return false
+    end
+    if CFG_PERMISSION == "whitelist" then
+        return PERM_SET[player.userid] == true
+    elseif CFG_PERMISSION == "admin" then
+        local net = player.Network
+        return net ~= nil and net.IsServerAdmin ~= nil and net:IsServerAdmin()
+    end
+    return false
+end
+
+local CHUNK = 200       -- 单个 RPC 字符串参数的安全长度
+local MAX_CHUNKS = 512  -- Bound large-base snapshots, including instance names/recipes.
+local PACKETS_PER_TICK = 24
+local SNAPSHOT_TTL = 15 -- Native inventory events invalidate the cache immediately.
+local REQUEST_INTERVAL = .25 -- Coalesce repeated opens/refreshes before scanning.
+
+local SCAN_CACHE = {}         -- userid -> { list = 容器列表, t = 时间 }
+local SNAPSHOT_STREAMS = {}
+local SNAPSHOT_REQUESTS = {}
+local inventory_revision = 0
+local ORGANIZE_COOLDOWN = {}  -- userid -> 上次整理时间
+local OPEN_VIEWERS = {}       -- Only open panels renew their subscription by polling.
+local PREVIEWS, FEATURE_REQUESTS = {}, {}
+local FEATURE_STREAMS={}
+local feature_serial=0
+local VIEWER_TIMEOUT = 8      -- Allow two three-second polls plus delivery slack.
+local SyncContainerEvents, RefreshViews, SendOrganizeState, SendBusy
+local WATCHED_CONTAINERS, DIRTY_CONTAINERS = {}, {}
+local EVENT_TASK, LEASE_TASK
+HSO_ORGANIZER.OnPendingChanged=function(ent)
+    inventory_revision=inventory_revision+1
+    if RefreshViews~=nil then RefreshViews(nil,{[ent]=true}) end
+end
+
+-- 客户端数据状态（客户端/服务端都会注册，双端各持一份）
+local HSO_STATE = { hash = nil, data = nil, pending = nil, busy = false, status = nil, listener = nil, onerror = nil }
+local NOTICE_SECONDS=4
+local function ClientStatus(busy,status)
+    if HSO_STATE.busy==busy and HSO_STATE.status==status then return false end
+    HSO_STATE.busy,HSO_STATE.status=busy,status
+    HSO_STATE.status_until=not busy and type(status)=="string" and #status>0
+        and ((GLOBAL.GetStaticTime or GLOBAL.GetTime)()+NOTICE_SECONDS) or nil
+    return true
+end
+
+-- 玩家离开时清理其快照与冷却记录
+AddPlayerPostInit(function(player)
+    player:ListenForEvent("onremove", function()
+        local job=HSO_ORGANIZER.active_job
+        if job~=nil and job.player==player then HSO_ORGANIZER.Cancel(job,"disconnected") end
+        local userid = player.userid
+        if userid ~= nil then
+            SCAN_CACHE[userid] = nil
+            ORGANIZE_COOLDOWN[userid] = nil
+            OPEN_VIEWERS[userid] = nil
+            PREVIEWS[userid],FEATURE_REQUESTS[userid]=nil,nil
+            local feature=FEATURE_STREAMS[userid]
+            if feature~=nil and feature.task~=nil then feature.task:Cancel() end
+            FEATURE_STREAMS[userid]=nil
+            local stream=SNAPSHOT_STREAMS[userid]
+            if stream~=nil and stream.task~=nil then stream.task:Cancel() end
+            SNAPSHOT_STREAMS[userid]=nil
+            local request=SNAPSHOT_REQUESTS[userid]
+            if request~=nil and request.task~=nil then request.task:Cancel() end
+            SNAPSHOT_REQUESTS[userid]=nil
+            if SyncContainerEvents ~= nil then SyncContainerEvents() end
+        end
+    end)
+end)
+
+----------------------------------------------------------------
+-- 通用
+----------------------------------------------------------------
+
+local function Say(player, msg)
+    if player ~= nil and player:IsValid() and player.components ~= nil
+        and player.components.talker ~= nil then
+        player.components.talker:Say(Features.WrapText("[储物] "..Features.BriefStatus(msg),20),4)
+    end
+end
+
+local function ItemCount(item)
+    if item.components.stackable ~= nil then
+        return item.components.stackable:StackSize()
+    end
+    return 1
+end
+
+----------------------------------------------------------------
+-- 服务端：扫描容器
+----------------------------------------------------------------
+
+local function ScanContainers(player, for_organize)
+    local scanned = Policy.Scan(player, CFG_RADIUS)
+    if not for_organize then return scanned.containers end
+    local out = {}
+    for _, ent in ipairs(scanned.containers) do
+        if Policy.CanOrganize(ent, player, CFG_RADIUS) then out[#out + 1] = ent end
+    end
+    return out
+end
+
+-- D carries names/recipe identities; c.t and A/I use the same selectable group key.
+local function BuildContainerData(player)
+    local containers = ScanContainers(player, false)
+    local ok,cooking=pcall(require,"cooking")
+    local ingredients=ItemRules.BuildIngredientSet(GLOBAL.AllRecipes,ok and cooking or nil)
+    local payload = { v = 4, c = {}, D = {}, A = {}, I = {}, P = {}, Q = {}, K = {}, n = #containers, s = 0 }
+    if not HasPermission(player) then payload.u=false end
+    local groups = {}
+    local held_by_source={}
+    for item,rec in pairs(HSO_ORGANIZER.pending) do
+        if item:IsValid() and item.components.inventoryitem.owner==nil then
+            local held=held_by_source[rec.source]
+            if held==nil then held={};held_by_source[rec.source]=held end
+            held[#held+1]=item
+        end
+    end
+    for idx, ent in ipairs(containers) do
+        local cont = ent.components.container
+        local t, unavailable, used = {}, {}, 0
+        local function AddItem(item, held_remainder)
+            if item ~= nil then
+                local cnt = ItemCount(item)
+                local meta = ItemInfo.Describe(item)
+                local key = ItemInfo.GroupKey(meta)
+                t[key] = (t[key] or 0) + cnt
+                local quality=payload.Q[key] or {}
+                Features.AddQuality(quality,item)
+                if next(quality)~=nil then payload.Q[key]=quality end
+                local inv=item.components.inventoryitem
+                if (held_remainder or (inv~=nil and inv.islockedinslot)) and not cont.readonlycontainer then
+                    unavailable[key]=(unavailable[key] or 0)+cnt
+                end
+                used = used + cnt   -- 计件数（与界面 "N 件物品" 对应）
+                if groups[key] == nil then
+                    groups[key] = meta
+                    if ItemInfo.HasDetails(meta) then payload.D[key] = meta end
+                    if ItemRules.PriorityRaw(meta,ingredients) then payload.P[key]=true end
+                    local category=Features.Category(item,meta,payload.P[key])
+                    if category~="other" then payload.K[key]=category end
+                    payload.A[key], payload.I[key] = ItemInfo.InventoryImage(item)
+                end
+            end
+        end
+        for i=1,cont:GetNumSlots() do AddItem(cont:GetItemInSlot(i),false) end
+        for _,item in ipairs(held_by_source[ent] or {}) do
+            if item:IsValid() and item.components.inventoryitem.owner==nil then AddItem(item,true) end
+        end
+        if used > 0 then
+            payload.s = payload.s + used
+            local meta = ItemInfo.Describe(ent)
+            table.insert(payload.c, { i = idx, p = ent.prefab,
+                d = ItemInfo.HasDetails(meta) and meta or nil, t = t,
+                g=ent.GUID,e=cont._hso_excluded or nil,w=Policy.OrganizeReason(ent,player,CFG_RADIUS),
+                r = (cont.readonlycontainer or cont.canbeopened == false) and true or nil,
+                a = next(unavailable) ~= nil and unavailable or nil })
+        end
+    end
+    return payload, containers, groups
+end
+
+local function HashStr(s)
+    local h = 5381
+    for i = 1, #s do
+        h = (h * 33 + string.byte(s, i)) % 4294967291
+    end
+    return tostring(h) .. "_" .. tostring(#s)
+end
+
+----------------------------------------------------------------
+-- 服务端：跨箱整理
+----------------------------------------------------------------
+
+local function ReportOrganize(player,result)
+    if result.error~=nil then print("[HSO] organize interrupted: "..result.error) end
+    if result.incomplete then
+        print(string.format("[HSO] organize stopped: reason=%s phase=%s stage=%s elapsed=%.2f containers=%d slots=%d records=%d groups=%d work=%d steps=%d pending=%d",
+            tostring(result.reason),tostring(result.phase),tostring(result.stage),tonumber(result.elapsed) or 0,
+            tonumber(result.containers) or 0,tonumber(result.slots) or 0,tonumber(result.records) or 0,tonumber(result.groups) or 0,
+            tonumber(result.work) or 0,tonumber(result.steps) or 0,tonumber(result.pending) or 0))
+    end
+    if result.pending>0 then
+        return string.format("归并 %d 件，合堆 %d 件；暂缓 %d 件恢复",result.moved,result.merged,result.pending)
+    end
+    if result.incomplete then
+        local why=({paused="游戏暂停",timeout="时间超限",time_limit="时间超限",
+            work_limit="工作量超限",scheduler="任务调度中断",
+            disconnected="玩家离线",container_changed="容器状态变化",item_changed="物品状态变化"})[result.reason] or "库存或容器状态变化"
+        return string.format("整理已停止：%s；归并 %d 件，物品已保留",why,result.moved)
+    end
+    if next(result.changed) ~= nil or result.left > 0 or result.skipped > 0 then
+        local reasons={}
+        for _,key in ipairs({"excluded","type","open","locked","readonly","unavailable"}) do
+            local n=(result.reasons or {})[key]
+            if n~=nil and n>0 then reasons[#reasons+1]=(Policy.REASONS[key] or key)..n.."个" end
+        end
+        return string.format("整理完成：归并 %d 件，释放 %d 格；跳过 %d 个%s",
+            result.moved,result.freed or 0,result.skipped,#reasons>0 and ("（"..table.concat(reasons,"、").."）") or "")
+    else
+        return "物品已集中，无需移动"
+    end
+end
+
+----------------------------------------------------------------
+-- RPC 注册（客户端/服务端必须按相同顺序注册，保证 id 一致）
+----------------------------------------------------------------
+
+-- Requests use the known hash; completed actions push authoritative data directly.
+local function SendSnapshot(player, client_hash, watching, force)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    if player == nil or not player:IsValid() or type(player.userid)~="string" then
+        return
+    end
+    if watching == false then
+        OPEN_VIEWERS[player.userid] = nil
+        local stream=SNAPSHOT_STREAMS[player.userid]
+        if stream~=nil and stream.task~=nil then stream.task:Cancel() end
+        SNAPSHOT_STREAMS[player.userid]=nil
+        SyncContainerEvents()
+        return
+    elseif watching == true then
+        OPEN_VIEWERS[player.userid] = { player = player, t = GLOBAL.GetStaticTime() }
+    end
+    local now=GLOBAL.GetStaticTime()
+    local x,_,z=player.Transform:GetWorldPosition()
+    local scan=SCAN_CACHE[player.userid]
+    local busy=HSO_ORGANIZER.IsBusy()
+    local reusable=scan~=nil and scan.encoded~=nil and (busy or (not force and watching==true
+        and client_hash~=nil and client_hash~="" and scan.revision==inventory_revision
+        and now-scan.built<SNAPSHOT_TTL and x==scan.x and z==scan.z))
+    if not reusable then
+        local payload,containers,groups=BuildContainerData(player)
+        local encoded=json.encode(payload)
+        scan={list=containers,groups=groups,t=now,built=now,x=x,z=z,revision=inventory_revision,
+            encoded=encoded,hash=HashStr(encoded)}
+        SCAN_CACHE[player.userid]=scan
+        SyncContainerEvents()
+    else scan.t=now end
+    local s,h=scan.encoded,scan.hash
+    local clientrpc = GLOBAL.GetClientModRPC(MOD_NS, "data")
+    -- Every poll reconciles authoritative state, including a missed completion.
+    SendOrganizeState(player,busy,HSO_ORGANIZER.Status())
+    local viewer = OPEN_VIEWERS[player.userid]
+    if viewer ~= nil then viewer.hash = h end
+    local previous=SNAPSHOT_STREAMS[player.userid]
+    if previous~=nil and previous.hash~=h then
+        if previous.task~=nil then previous.task:Cancel() end
+        SNAPSHOT_STREAMS[player.userid]=nil;previous=nil
+    end
+
+    if client_hash ~= nil and client_hash ~= "" and client_hash == h then
+        SendModRPCToClient(clientrpc, player.userid, "same", h)
+        return
+    end
+
+    local total = math.ceil(#s / CHUNK)
+    if total > MAX_CHUNKS then
+        SendModRPCToClient(clientrpc, player.userid, "err", "toomany")
+        return
+    end
+    if previous~=nil and previous.hash==h and not force and client_hash~="" then return end
+    if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+    local stream={hash=h,index=1};SNAPSHOT_STREAMS[player.userid]=stream
+    SendModRPCToClient(clientrpc, player.userid, "begin", h, tostring(total))
+    local function send_batch()
+        if SNAPSHOT_STREAMS[player.userid]~=stream or not player:IsValid() then return end
+        local last=math.min(total,stream.index+PACKETS_PER_TICK-1)
+        for i=stream.index,last do
+            SendModRPCToClient(clientrpc,player.userid,"chunk",tostring(i),s:sub((i-1)*CHUNK+1,i*CHUNK),h)
+        end
+        stream.index=last+1
+        if stream.index>total then SNAPSHOT_STREAMS[player.userid]=nil
+        elseif GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+            stream.task=GLOBAL.TheWorld:DoStaticTaskInTime(GLOBAL.FRAMES or (1/30),send_batch)
+        else
+            -- Offline fixtures lack a scheduler; real clients always use batches.
+            while stream.index<=total do
+                local i=stream.index;stream.index=i+1
+                SendModRPCToClient(clientrpc,player.userid,"chunk",tostring(i),s:sub((i-1)*CHUNK+1,i*CHUNK),h)
+            end
+            SNAPSHOT_STREAMS[player.userid]=nil
+        end
+    end
+    send_batch()
+end
+local function RequestSnapshot(player,client_hash,watching)
+    if GLOBAL.TheWorld==nil or not GLOBAL.TheWorld.ismastersim or player==nil or not player:IsValid()
+        or type(player.userid)~="string" or (client_hash~=nil and (type(client_hash)~="string" or #client_hash>64))
+        or (watching~=nil and type(watching)~="boolean") then return end
+    local userid=player.userid;local previous=SNAPSHOT_REQUESTS[userid]
+    if watching==false then
+        if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+        SNAPSHOT_REQUESTS[userid]=nil;SendSnapshot(player,client_hash,false);return
+    end
+    local now=GLOBAL.GetStaticTime()
+    if previous~=nil and now-previous.t<REQUEST_INTERVAL and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        previous.player,previous.hash,previous.watching=player,client_hash,watching
+        if previous.task==nil then
+            previous.task=GLOBAL.TheWorld:DoStaticTaskInTime(REQUEST_INTERVAL-(now-previous.t),function()
+                previous.task=nil
+                if SNAPSHOT_REQUESTS[userid]~=previous or not previous.player:IsValid() then return end
+                previous.t=GLOBAL.GetStaticTime()
+                SendSnapshot(previous.player,previous.hash,previous.watching)
+            end)
+        end
+        return
+    end
+    if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+    SNAPSHOT_REQUESTS[userid]={t=now}
+    -- The force argument belongs to authoritative server updates. RPC callers
+    -- request a fresh scan with an empty hash, subject to the coalescing above.
+    SendSnapshot(player,client_hash,watching)
+end
+AddModRPCHandler(MOD_NS, "req", RequestSnapshot)
+
+-- Server RPC handlers run to completion. Notify other active views after the
+-- actual removals; their own nearby scan determines their new visible quantities.
+RefreshViews = function(player, changed)
+    if player~=nil then SendSnapshot(player,nil,nil,true) end
+    local now = GLOBAL.GetStaticTime()
+    for userid, viewer in pairs(OPEN_VIEWERS) do
+        if not viewer.player:IsValid() or now - viewer.t > VIEWER_TIMEOUT then
+            OPEN_VIEWERS[userid] = nil
+        elseif player==nil or userid ~= player.userid then
+            local scan = SCAN_CACHE[userid]
+            if scan ~= nil then
+                for _, ent in ipairs(scan.list) do
+                    if changed[ent] then
+                        SendSnapshot(viewer.player,viewer.hash,nil,true)
+                        break
+                    end
+                end
+            end
+        end
+    end
+    SyncContainerEvents()
+end
+
+local function QueueContainerChange(ent)
+    DIRTY_CONTAINERS[ent]=true
+    inventory_revision=inventory_revision+1
+    if HSO_ORGANIZER.IsBusy() then return end
+    if EVENT_TASK~=nil then return end
+    if GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        EVENT_TASK=GLOBAL.TheWorld:DoStaticTaskInTime(.1,function()
+            EVENT_TASK=nil
+            if HSO_ORGANIZER.IsBusy() then return end
+            local changed=DIRTY_CONTAINERS;DIRTY_CONTAINERS={}
+            RefreshViews(nil,changed)
+        end)
+    end
+end
+
+SyncContainerEvents = function()
+    local needed={};local now=GLOBAL.GetStaticTime()
+    for userid,viewer in pairs(OPEN_VIEWERS) do
+        if not viewer.player:IsValid() or now-viewer.t>VIEWER_TIMEOUT then OPEN_VIEWERS[userid]=nil
+        else
+            local scan=SCAN_CACHE[userid]
+            if scan~=nil then
+                for _,ent in ipairs(scan.list) do
+                    if Policy.CanView(ent,viewer.player,CFG_RADIUS) and ent.ListenForEvent~=nil then needed[ent]=true end
+                end
+            end
+        end
+    end
+    for ent,watch in pairs(WATCHED_CONTAINERS) do
+        if not needed[ent] then
+            for _,event in ipairs({"itemget","itemlose","onremove"}) do
+                pcall(ent.RemoveEventCallback,ent,event,watch.callback)
+            end
+            for item in pairs(watch.items) do pcall(ent.RemoveEventCallback,ent,"stacksizechange",watch.callback,item) end
+            WATCHED_CONTAINERS[ent]=nil
+        end
+    end
+    for ent in pairs(needed) do
+        local watch=WATCHED_CONTAINERS[ent]
+        if watch==nil then
+            watch={items={},callback=function() QueueContainerChange(ent) end}
+            WATCHED_CONTAINERS[ent]=watch
+            for _,event in ipairs({"itemget","itemlose","onremove"}) do ent:ListenForEvent(event,watch.callback) end
+        end
+        local items={};local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and item.ListenForEvent~=nil then items[item]=true end
+        end
+        for item in pairs(watch.items) do
+            if not items[item] then ent:RemoveEventCallback("stacksizechange",watch.callback,item) end
+        end
+        for item in pairs(items) do
+            if not watch.items[item] then ent:ListenForEvent("stacksizechange",watch.callback,item) end
+        end
+        watch.items=items
+    end
+    if next(OPEN_VIEWERS)==nil then
+        if EVENT_TASK~=nil then EVENT_TASK:Cancel();EVENT_TASK=nil end
+        if LEASE_TASK~=nil then LEASE_TASK:Cancel();LEASE_TASK=nil end
+        DIRTY_CONTAINERS={}
+    elseif LEASE_TASK==nil and GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        LEASE_TASK=GLOBAL.TheWorld:DoStaticTaskInTime(2,function()
+            LEASE_TASK=nil;SyncContainerEvents()
+        end)
+    end
+end
+
+-- Match the selected instance group, so different sketches/cards cannot be mixed up.
+AddModRPCHandler(MOD_NS, "take", function(player, groupkey, takeall, amount, preference)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    if player == nil or not player:IsValid() or type(player.userid)~="string" or type(groupkey) ~= "string"
+        or #groupkey == 0 or #groupkey > 128 then
+        return
+    end
+    if amount~=nil and (type(amount)~="number" or amount~=amount or amount<1 or amount>9999 or amount~=math.floor(amount)) then return end
+    if preference~=nil and not Features.ValidPreference(preference) then return end
+    preference=preference or "normal"
+    if not HasPermission(player) then
+        Say(player, "你没有使用拿取/整理功能的权限")
+        return
+    end
+    if HSO_ORGANIZER.IsBusy() then
+        Say(player,"整理进行中，请稍后拿取")
+        return
+    end
+    takeall=takeall==true
+    local scan = SCAN_CACHE[player.userid]
+    if scan == nil or GLOBAL.GetStaticTime() - scan.t > 30 then
+        -- 快照过期/缺失时按需重建，而不是静默失败（避免“点按钮没反应”）
+        local _, containers, groups = BuildContainerData(player)
+        scan = { list = containers, groups = groups, t = GLOBAL.GetStaticTime() }
+        SCAN_CACHE[player.userid] = scan
+    end
+    local selected = scan.groups[groupkey]
+    if selected == nil then
+        Say(player, "物品已被取走或发生变化")
+        SendSnapshot(player)
+        return
+    end
+    local inv = player.components.inventory
+    if inv == nil then
+        return
+    end
+    local max_stacks = (CFG_TAKE_LIMIT > 0) and CFG_TAKE_LIMIT or math.huge
+    local taken,units = 0,0
+    local changed = {}
+    local options={}
+    for index,ent in ipairs(scan.list) do if Policy.CanTake(ent,player,CFG_RADIUS) then
+        local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and item.prefab==selected.p and ItemInfo.GroupKey(ItemInfo.Describe(item))==groupkey
+                and not (item.components.inventoryitem~=nil and item.components.inventoryitem.islockedinslot) then
+                local fresh,durable=Features.Quality(item)
+                options[#options+1]={ent=ent,c=c,slot=slot,item=item,n=ItemCount(item),index=index,
+                    priority=preference=="fresh" and (fresh or 101) or preference=="durable" and -(durable or -1) or 0}
+            end
+        end
+    end end
+    table.sort(options,function(a,b)
+        if a.priority~=b.priority then return a.priority<b.priority end
+        if a.index~=b.index then return a.index<b.index end
+        if a.n~=b.n then return a.n>b.n end
+        return a.slot<b.slot
+    end)
+    for _,rec in ipairs(options) do
+        local ent,cont,slot=rec.ent,rec.c,rec.slot
+        while Policy.CanTake(ent,player,CFG_RADIUS) and ent.components.container==cont
+            and cont:GetItemInSlot(slot)==rec.item do
+            -- Every iteration rechecks the actual entity. Native infinite stacks
+            -- can keep the source entity in the slot after yielding a real stack.
+            if ItemInfo.GroupKey(ItemInfo.Describe(rec.item))~=groupkey
+                or rec.item.components.inventoryitem~=nil and rec.item.components.inventoryitem.islockedinslot then break end
+            local remaining=amount~=nil and amount-units or nil
+            local item=HSO_ORGANIZER.ExtractForTake(cont,slot,remaining)
+            changed[ent]=true
+            if item==nil then break end
+            local n=ItemCount(item)
+            if not HSO_ORGANIZER.DeliverTaken(item,ent,slot,inv) then
+                Say(player,"背包空间不足或拿取中断，余量已保留")
+                RefreshViews(player,changed);return
+            end
+            taken,units=taken+1,units+n
+            if amount~=nil and units>=amount or amount==nil and not takeall then
+                RefreshViews(player,changed);return
+            end
+            if taken>=max_stacks then
+                Say(player,string.format("已达单次上限（%d 组），稍后再拿",CFG_TAKE_LIMIT))
+                RefreshViews(player,changed);return
+            end
+        end
+    end
+    if taken == 0 then Say(player, "物品已被取走或暂不可拿取") end
+    RefreshViews(player, changed)
+end)
+
+-- 一键整理
+local function SendFeature(player,value)
+    if player==nil or not player:IsValid() then return end
+    local data=json.encode(value)
+    if #data>CHUNK*128 then return end
+    feature_serial=feature_serial+1
+    local id=tostring(feature_serial)
+    local rpc=GLOBAL.GetClientModRPC(MOD_NS,"data")
+    local total=math.ceil(#data/CHUNK);local userid=player.userid
+    local old=FEATURE_STREAMS[userid]
+    if old~=nil and old.task~=nil then old.task:Cancel() end
+    local stream={index=1};FEATURE_STREAMS[userid]=stream
+    SendModRPCToClient(rpc,userid,"feature_begin",id,tostring(total))
+    local function send_batch()
+        if FEATURE_STREAMS[userid]~=stream or not player:IsValid() then return end
+        local last=math.min(total,stream.index+PACKETS_PER_TICK-1)
+        for n=stream.index,last do
+            SendModRPCToClient(rpc,userid,"feature_chunk",tostring(n),data:sub((n-1)*CHUNK+1,n*CHUNK),id)
+        end
+        stream.index=last+1
+        if stream.index>total then FEATURE_STREAMS[userid]=nil
+        elseif GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+            stream.task=GLOBAL.TheWorld:DoStaticTaskInTime(GLOBAL.FRAMES or (1/30),send_batch)
+        else
+            while stream.index<=total do
+                local n=stream.index;stream.index=n+1
+                SendModRPCToClient(rpc,userid,"feature_chunk",tostring(n),data:sub((n-1)*CHUNK+1,n*CHUNK),id)
+            end
+            FEATURE_STREAMS[userid]=nil
+        end
+    end
+    send_batch()
+end
+local function FeatureAllowed(player,mutation)
+    if GLOBAL.TheWorld==nil or not GLOBAL.TheWorld.ismastersim or player==nil or not player:IsValid()
+        or type(player.userid)~="string" then return false end
+    if mutation and not HasPermission(player) then Say(player,"你没有使用拿取/整理功能的权限");return false end
+    local now=GLOBAL.GetStaticTime();local last=FEATURE_REQUESTS[player.userid]
+    if last~=nil and now-last<.15 then return false end
+    FEATURE_REQUESTS[player.userid]=now
+    return true
+end
+local function BoxDescription(ent,player)
+    local c=ent.components.container
+    local meta=ItemInfo.Describe(ent)
+    return {g=ent.GUID,p=ent.prefab,d=ItemInfo.HasDetails(meta) and meta or nil,
+        distance=math.floor(math.sqrt(player:GetDistanceSqToInst(ent))*10+.5)/10,
+        e=c._hso_excluded or nil,w=Policy.OrganizeReason(ent,player,CFG_RADIUS),slots=c:GetNumSlots()}
+end
+AddModRPCHandler(MOD_NS,"inspect",function(player,key,page)
+    if type(key)~="string" or #key==0 or #key>128 or not FeatureAllowed(player,false) then return end
+    page=type(page)=="number" and page==page and math.max(1,math.min(100000,math.floor(page))) or 1
+    local rows,total,available,count,meta={},0,0,0,nil
+    local containers=ScanContainers(player,false)
+    for _,ent in ipairs(containers) do
+        local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and ItemInfo.GroupKey(ItemInfo.Describe(item))==key then
+                count=count+1;local n=ItemCount(item);total=total+n
+                local takeable=HasPermission(player) and Policy.CanTake(ent,player,CFG_RADIUS)
+                    and not (item.components.inventoryitem~=nil and item.components.inventoryitem.islockedinslot)
+                if takeable then available=available+n end
+                meta=meta or ItemInfo.Describe(item)
+                if count>(page-1)*6 and count<=page*6 then
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:perishable
+AddComponentPostInit("inventoryitem",HSO_ORGANIZER.WrapInventoryItem)
+AddComponentPostInit("perishable",HSO_ORGANIZER.WrapPerishable)
+AddClassPostConstruct("components/container_replica",function(self)
+    local canopen=self.CanBeOpened
+    if canopen~=nil then self.CanBeOpened=function(replica,...)
+        return not replica.inst:HasTag("hso_sorting") and canopen(replica,...)
+    end end
+end)
+for _,worldprefab in ipairs({"world","forest","cave"}) do
+    AddPrefabPostInit(worldprefab,HSO_ORGANIZER.WrapWorld)
+end
+
+local MOD_NS = "HomeStorageOverview"
+
+local CFG_RADIUS = GetModConfigData("scan_radius") or 40
+local CFG_HOTKEY = GetModConfigData("hotkey") or "B"
+local CFG_PERMISSION = GetModConfigData("use_permission") or "all"
+local CFG_TAKE_LIMIT = GetModConfigData("take_limit") or 20
+
+-- KU 白名单（逗号分隔）
+local PERM_SET = {}
+do
+    local wl = GetModConfigData("ku_whitelist") or ""
+    for id in string.gmatch(wl, "[^%s,]+") do
+        PERM_SET[id] = true
+    end
+end
+
+-- 使用权限判定（作用于拿取/整理；总览查看不受限）
+local function HasPermission(player)
+    if CFG_PERMISSION == "all" then
+        return true
+    end
+    if player == nil or player.userid == nil then
+        return false
+    end
+    if CFG_PERMISSION == "whitelist" then
+        return PERM_SET[player.userid] == true
+    elseif CFG_PERMISSION == "admin" then
+        local net = player.Network
+        return net ~= nil and net.IsServerAdmin ~= nil and net:IsServerAdmin()
+    end
+    return false
+end
+
+local CHUNK = 200       -- 单个 RPC 字符串参数的安全长度
+local MAX_CHUNKS = 512  -- Bound large-base snapshots, including instance names/recipes.
+local PACKETS_PER_TICK = 24
+local SNAPSHOT_TTL = 15 -- Native inventory events invalidate the cache immediately.
+local REQUEST_INTERVAL = .25 -- Coalesce repeated opens/refreshes before scanning.
+
+local SCAN_CACHE = {}         -- userid -> { list = 容器列表, t = 时间 }
+local SNAPSHOT_STREAMS = {}
+local SNAPSHOT_REQUESTS = {}
+local inventory_revision = 0
+local ORGANIZE_COOLDOWN = {}  -- userid -> 上次整理时间
+local OPEN_VIEWERS = {}       -- Only open panels renew their subscription by polling.
+local PREVIEWS, FEATURE_REQUESTS = {}, {}
+local FEATURE_STREAMS={}
+local feature_serial=0
+local VIEWER_TIMEOUT = 8      -- Allow two three-second polls plus delivery slack.
+local SyncContainerEvents, RefreshViews, SendOrganizeState, SendBusy
+local WATCHED_CONTAINERS, DIRTY_CONTAINERS = {}, {}
+local EVENT_TASK, LEASE_TASK
+HSO_ORGANIZER.OnPendingChanged=function(ent)
+    inventory_revision=inventory_revision+1
+    if RefreshViews~=nil then RefreshViews(nil,{[ent]=true}) end
+end
+
+-- 客户端数据状态（客户端/服务端都会注册，双端各持一份）
+local HSO_STATE = { hash = nil, data = nil, pending = nil, busy = false, status = nil, listener = nil, onerror = nil }
+local NOTICE_SECONDS=4
+local function ClientStatus(busy,status)
+    if HSO_STATE.busy==busy and HSO_STATE.status==status then return false end
+    HSO_STATE.busy,HSO_STATE.status=busy,status
+    HSO_STATE.status_until=not busy and type(status)=="string" and #status>0
+        and ((GLOBAL.GetStaticTime or GLOBAL.GetTime)()+NOTICE_SECONDS) or nil
+    return true
+end
+
+-- 玩家离开时清理其快照与冷却记录
+AddPlayerPostInit(function(player)
+    player:ListenForEvent("onremove", function()
+        local job=HSO_ORGANIZER.active_job
+        if job~=nil and job.player==player then HSO_ORGANIZER.Cancel(job,"disconnected") end
+        local userid = player.userid
+        if userid ~= nil then
+            SCAN_CACHE[userid] = nil
+            ORGANIZE_COOLDOWN[userid] = nil
+            OPEN_VIEWERS[userid] = nil
+            PREVIEWS[userid],FEATURE_REQUESTS[userid]=nil,nil
+            local feature=FEATURE_STREAMS[userid]
+            if feature~=nil and feature.task~=nil then feature.task:Cancel() end
+            FEATURE_STREAMS[userid]=nil
+            local stream=SNAPSHOT_STREAMS[userid]
+            if stream~=nil and stream.task~=nil then stream.task:Cancel() end
+            SNAPSHOT_STREAMS[userid]=nil
+            local request=SNAPSHOT_REQUESTS[userid]
+            if request~=nil and request.task~=nil then request.task:Cancel() end
+            SNAPSHOT_REQUESTS[userid]=nil
+            if SyncContainerEvents ~= nil then SyncContainerEvents() end
+        end
+    end)
+end)
+
+----------------------------------------------------------------
+-- 通用
+----------------------------------------------------------------
+
+local function Say(player, msg)
+    if player ~= nil and player:IsValid() and player.components ~= nil
+        and player.components.talker ~= nil then
+        player.components.talker:Say(Features.WrapText("[储物] "..Features.BriefStatus(msg),20),4)
+    end
+end
+
+local function ItemCount(item)
+    if item.components.stackable ~= nil then
+        return item.components.stackable:StackSize()
+    end
+    return 1
+end
+
+----------------------------------------------------------------
+-- 服务端：扫描容器
+----------------------------------------------------------------
+
+local function ScanContainers(player, for_organize)
+    local scanned = Policy.Scan(player, CFG_RADIUS)
+    if not for_organize then return scanned.containers end
+    local out = {}
+    for _, ent in ipairs(scanned.containers) do
+        if Policy.CanOrganize(ent, player, CFG_RADIUS) then out[#out + 1] = ent end
+    end
+    return out
+end
+
+-- D carries names/recipe identities; c.t and A/I use the same selectable group key.
+local function BuildContainerData(player)
+    local containers = ScanContainers(player, false)
+    local ok,cooking=pcall(require,"cooking")
+    local ingredients=ItemRules.BuildIngredientSet(GLOBAL.AllRecipes,ok and cooking or nil)
+    local payload = { v = 4, c = {}, D = {}, A = {}, I = {}, P = {}, Q = {}, K = {}, n = #containers, s = 0 }
+    if not HasPermission(player) then payload.u=false end
+    local groups = {}
+    local held_by_source={}
+    for item,rec in pairs(HSO_ORGANIZER.pending) do
+        if item:IsValid() and item.components.inventoryitem.owner==nil then
+            local held=held_by_source[rec.source]
+            if held==nil then held={};held_by_source[rec.source]=held end
+            held[#held+1]=item
+        end
+    end
+    for idx, ent in ipairs(containers) do
+        local cont = ent.components.container
+        local t, unavailable, used = {}, {}, 0
+        local function AddItem(item, held_remainder)
+            if item ~= nil then
+                local cnt = ItemCount(item)
+                local meta = ItemInfo.Describe(item)
+                local key = ItemInfo.GroupKey(meta)
+                t[key] = (t[key] or 0) + cnt
+                local quality=payload.Q[key] or {}
+                Features.AddQuality(quality,item)
+                if next(quality)~=nil then payload.Q[key]=quality end
+                local inv=item.components.inventoryitem
+                if (held_remainder or (inv~=nil and inv.islockedinslot)) and not cont.readonlycontainer then
+                    unavailable[key]=(unavailable[key] or 0)+cnt
+                end
+                used = used + cnt   -- 计件数（与界面 "N 件物品" 对应）
+                if groups[key] == nil then
+                    groups[key] = meta
+                    if ItemInfo.HasDetails(meta) then payload.D[key] = meta end
+                    if ItemRules.PriorityRaw(meta,ingredients) then payload.P[key]=true end
+                    local category=Features.Category(item,meta,payload.P[key])
+                    if category~="other" then payload.K[key]=category end
+                    payload.A[key], payload.I[key] = ItemInfo.InventoryImage(item)
+                end
+            end
+        end
+        for i=1,cont:GetNumSlots() do AddItem(cont:GetItemInSlot(i),false) end
+        for _,item in ipairs(held_by_source[ent] or {}) do
+            if item:IsValid() and item.components.inventoryitem.owner==nil then AddItem(item,true) end
+        end
+        if used > 0 then
+            payload.s = payload.s + used
+            local meta = ItemInfo.Describe(ent)
+            table.insert(payload.c, { i = idx, p = ent.prefab,
+                d = ItemInfo.HasDetails(meta) and meta or nil, t = t,
+                g=ent.GUID,e=cont._hso_excluded or nil,w=Policy.OrganizeReason(ent,player,CFG_RADIUS),
+                r = (cont.readonlycontainer or cont.canbeopened == false) and true or nil,
+                a = next(unavailable) ~= nil and unavailable or nil })
+        end
+    end
+    return payload, containers, groups
+end
+
+local function HashStr(s)
+    local h = 5381
+    for i = 1, #s do
+        h = (h * 33 + string.byte(s, i)) % 4294967291
+    end
+    return tostring(h) .. "_" .. tostring(#s)
+end
+
+----------------------------------------------------------------
+-- 服务端：跨箱整理
+----------------------------------------------------------------
+
+local function ReportOrganize(player,result)
+    if result.error~=nil then print("[HSO] organize interrupted: "..result.error) end
+    if result.incomplete then
+        print(string.format("[HSO] organize stopped: reason=%s phase=%s stage=%s elapsed=%.2f containers=%d slots=%d records=%d groups=%d work=%d steps=%d pending=%d",
+            tostring(result.reason),tostring(result.phase),tostring(result.stage),tonumber(result.elapsed) or 0,
+            tonumber(result.containers) or 0,tonumber(result.slots) or 0,tonumber(result.records) or 0,tonumber(result.groups) or 0,
+            tonumber(result.work) or 0,tonumber(result.steps) or 0,tonumber(result.pending) or 0))
+    end
+    if result.pending>0 then
+        return string.format("归并 %d 件，合堆 %d 件；暂缓 %d 件恢复",result.moved,result.merged,result.pending)
+    end
+    if result.incomplete then
+        local why=({paused="游戏暂停",timeout="时间超限",time_limit="时间超限",
+            work_limit="工作量超限",scheduler="任务调度中断",
+            disconnected="玩家离线",container_changed="容器状态变化",item_changed="物品状态变化"})[result.reason] or "库存或容器状态变化"
+        return string.format("整理已停止：%s；归并 %d 件，物品已保留",why,result.moved)
+    end
+    if next(result.changed) ~= nil or result.left > 0 or result.skipped > 0 then
+        local reasons={}
+        for _,key in ipairs({"excluded","type","open","locked","readonly","unavailable"}) do
+            local n=(result.reasons or {})[key]
+            if n~=nil and n>0 then reasons[#reasons+1]=(Policy.REASONS[key] or key)..n.."个" end
+        end
+        return string.format("整理完成：归并 %d 件，释放 %d 格；跳过 %d 个%s",
+            result.moved,result.freed or 0,result.skipped,#reasons>0 and ("（"..table.concat(reasons,"、").."）") or "")
+    else
+        return "物品已集中，无需移动"
+    end
+end
+
+----------------------------------------------------------------
+-- RPC 注册（客户端/服务端必须按相同顺序注册，保证 id 一致）
+----------------------------------------------------------------
+
+-- Requests use the known hash; completed actions push authoritative data directly.
+local function SendSnapshot(player, client_hash, watching, force)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    if player == nil or not player:IsValid() or type(player.userid)~="string" then
+        return
+    end
+    if watching == false then
+        OPEN_VIEWERS[player.userid] = nil
+        local stream=SNAPSHOT_STREAMS[player.userid]
+        if stream~=nil and stream.task~=nil then stream.task:Cancel() end
+        SNAPSHOT_STREAMS[player.userid]=nil
+        SyncContainerEvents()
+        return
+    elseif watching == true then
+        OPEN_VIEWERS[player.userid] = { player = player, t = GLOBAL.GetStaticTime() }
+    end
+    local now=GLOBAL.GetStaticTime()
+    local x,_,z=player.Transform:GetWorldPosition()
+    local scan=SCAN_CACHE[player.userid]
+    local busy=HSO_ORGANIZER.IsBusy()
+    local reusable=scan~=nil and scan.encoded~=nil and (busy or (not force and watching==true
+        and client_hash~=nil and client_hash~="" and scan.revision==inventory_revision
+        and now-scan.built<SNAPSHOT_TTL and x==scan.x and z==scan.z))
+    if not reusable then
+        local payload,containers,groups=BuildContainerData(player)
+        local encoded=json.encode(payload)
+        scan={list=containers,groups=groups,t=now,built=now,x=x,z=z,revision=inventory_revision,
+            encoded=encoded,hash=HashStr(encoded)}
+        SCAN_CACHE[player.userid]=scan
+        SyncContainerEvents()
+    else scan.t=now end
+    local s,h=scan.encoded,scan.hash
+    local clientrpc = GLOBAL.GetClientModRPC(MOD_NS, "data")
+    -- Every poll reconciles authoritative state, including a missed completion.
+    SendOrganizeState(player,busy,HSO_ORGANIZER.Status())
+    local viewer = OPEN_VIEWERS[player.userid]
+    if viewer ~= nil then viewer.hash = h end
+    local previous=SNAPSHOT_STREAMS[player.userid]
+    if previous~=nil and previous.hash~=h then
+        if previous.task~=nil then previous.task:Cancel() end
+        SNAPSHOT_STREAMS[player.userid]=nil;previous=nil
+    end
+
+    if client_hash ~= nil and client_hash ~= "" and client_hash == h then
+        SendModRPCToClient(clientrpc, player.userid, "same", h)
+        return
+    end
+
+    local total = math.ceil(#s / CHUNK)
+    if total > MAX_CHUNKS then
+        SendModRPCToClient(clientrpc, player.userid, "err", "toomany")
+        return
+    end
+    if previous~=nil and previous.hash==h and not force and client_hash~="" then return end
+    if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+    local stream={hash=h,index=1};SNAPSHOT_STREAMS[player.userid]=stream
+    SendModRPCToClient(clientrpc, player.userid, "begin", h, tostring(total))
+    local function send_batch()
+        if SNAPSHOT_STREAMS[player.userid]~=stream or not player:IsValid() then return end
+        local last=math.min(total,stream.index+PACKETS_PER_TICK-1)
+        for i=stream.index,last do
+            SendModRPCToClient(clientrpc,player.userid,"chunk",tostring(i),s:sub((i-1)*CHUNK+1,i*CHUNK),h)
+        end
+        stream.index=last+1
+        if stream.index>total then SNAPSHOT_STREAMS[player.userid]=nil
+        elseif GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+            stream.task=GLOBAL.TheWorld:DoStaticTaskInTime(GLOBAL.FRAMES or (1/30),send_batch)
+        else
+            -- Offline fixtures lack a scheduler; real clients always use batches.
+            while stream.index<=total do
+                local i=stream.index;stream.index=i+1
+                SendModRPCToClient(clientrpc,player.userid,"chunk",tostring(i),s:sub((i-1)*CHUNK+1,i*CHUNK),h)
+            end
+            SNAPSHOT_STREAMS[player.userid]=nil
+        end
+    end
+    send_batch()
+end
+local function RequestSnapshot(player,client_hash,watching)
+    if GLOBAL.TheWorld==nil or not GLOBAL.TheWorld.ismastersim or player==nil or not player:IsValid()
+        or type(player.userid)~="string" or (client_hash~=nil and (type(client_hash)~="string" or #client_hash>64))
+        or (watching~=nil and type(watching)~="boolean") then return end
+    local userid=player.userid;local previous=SNAPSHOT_REQUESTS[userid]
+    if watching==false then
+        if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+        SNAPSHOT_REQUESTS[userid]=nil;SendSnapshot(player,client_hash,false);return
+    end
+    local now=GLOBAL.GetStaticTime()
+    if previous~=nil and now-previous.t<REQUEST_INTERVAL and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        previous.player,previous.hash,previous.watching=player,client_hash,watching
+        if previous.task==nil then
+            previous.task=GLOBAL.TheWorld:DoStaticTaskInTime(REQUEST_INTERVAL-(now-previous.t),function()
+                previous.task=nil
+                if SNAPSHOT_REQUESTS[userid]~=previous or not previous.player:IsValid() then return end
+                previous.t=GLOBAL.GetStaticTime()
+                SendSnapshot(previous.player,previous.hash,previous.watching)
+            end)
+        end
+        return
+    end
+    if previous~=nil and previous.task~=nil then previous.task:Cancel() end
+    SNAPSHOT_REQUESTS[userid]={t=now}
+    -- The force argument belongs to authoritative server updates. RPC callers
+    -- request a fresh scan with an empty hash, subject to the coalescing above.
+    SendSnapshot(player,client_hash,watching)
+end
+AddModRPCHandler(MOD_NS, "req", RequestSnapshot)
+
+-- Server RPC handlers run to completion. Notify other active views after the
+-- actual removals; their own nearby scan determines their new visible quantities.
+RefreshViews = function(player, changed)
+    if player~=nil then SendSnapshot(player,nil,nil,true) end
+    local now = GLOBAL.GetStaticTime()
+    for userid, viewer in pairs(OPEN_VIEWERS) do
+        if not viewer.player:IsValid() or now - viewer.t > VIEWER_TIMEOUT then
+            OPEN_VIEWERS[userid] = nil
+        elseif player==nil or userid ~= player.userid then
+            local scan = SCAN_CACHE[userid]
+            if scan ~= nil then
+                for _, ent in ipairs(scan.list) do
+                    if changed[ent] then
+                        SendSnapshot(viewer.player,viewer.hash,nil,true)
+                        break
+                    end
+                end
+            end
+        end
+    end
+    SyncContainerEvents()
+end
+
+local function QueueContainerChange(ent)
+    DIRTY_CONTAINERS[ent]=true
+    inventory_revision=inventory_revision+1
+    if HSO_ORGANIZER.IsBusy() then return end
+    if EVENT_TASK~=nil then return end
+    if GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        EVENT_TASK=GLOBAL.TheWorld:DoStaticTaskInTime(.1,function()
+            EVENT_TASK=nil
+            if HSO_ORGANIZER.IsBusy() then return end
+            local changed=DIRTY_CONTAINERS;DIRTY_CONTAINERS={}
+            RefreshViews(nil,changed)
+        end)
+    end
+end
+
+SyncContainerEvents = function()
+    local needed={};local now=GLOBAL.GetStaticTime()
+    for userid,viewer in pairs(OPEN_VIEWERS) do
+        if not viewer.player:IsValid() or now-viewer.t>VIEWER_TIMEOUT then OPEN_VIEWERS[userid]=nil
+        else
+            local scan=SCAN_CACHE[userid]
+            if scan~=nil then
+                for _,ent in ipairs(scan.list) do
+                    if Policy.CanView(ent,viewer.player,CFG_RADIUS) and ent.ListenForEvent~=nil then needed[ent]=true end
+                end
+            end
+        end
+    end
+    for ent,watch in pairs(WATCHED_CONTAINERS) do
+        if not needed[ent] then
+            for _,event in ipairs({"itemget","itemlose","onremove"}) do
+                pcall(ent.RemoveEventCallback,ent,event,watch.callback)
+            end
+            for item in pairs(watch.items) do pcall(ent.RemoveEventCallback,ent,"stacksizechange",watch.callback,item) end
+            WATCHED_CONTAINERS[ent]=nil
+        end
+    end
+    for ent in pairs(needed) do
+        local watch=WATCHED_CONTAINERS[ent]
+        if watch==nil then
+            watch={items={},callback=function() QueueContainerChange(ent) end}
+            WATCHED_CONTAINERS[ent]=watch
+            for _,event in ipairs({"itemget","itemlose","onremove"}) do ent:ListenForEvent(event,watch.callback) end
+        end
+        local items={};local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and item.ListenForEvent~=nil then items[item]=true end
+        end
+        for item in pairs(watch.items) do
+            if not items[item] then ent:RemoveEventCallback("stacksizechange",watch.callback,item) end
+        end
+        for item in pairs(items) do
+            if not watch.items[item] then ent:ListenForEvent("stacksizechange",watch.callback,item) end
+        end
+        watch.items=items
+    end
+    if next(OPEN_VIEWERS)==nil then
+        if EVENT_TASK~=nil then EVENT_TASK:Cancel();EVENT_TASK=nil end
+        if LEASE_TASK~=nil then LEASE_TASK:Cancel();LEASE_TASK=nil end
+        DIRTY_CONTAINERS={}
+    elseif LEASE_TASK==nil and GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+        LEASE_TASK=GLOBAL.TheWorld:DoStaticTaskInTime(2,function()
+            LEASE_TASK=nil;SyncContainerEvents()
+        end)
+    end
+end
+
+-- Match the selected instance group, so different sketches/cards cannot be mixed up.
+AddModRPCHandler(MOD_NS, "take", function(player, groupkey, takeall, amount, preference)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    if player == nil or not player:IsValid() or type(player.userid)~="string" or type(groupkey) ~= "string"
+        or #groupkey == 0 or #groupkey > 128 then
+        return
+    end
+    if amount~=nil and (type(amount)~="number" or amount~=amount or amount<1 or amount>9999 or amount~=math.floor(amount)) then return end
+    if preference~=nil and not Features.ValidPreference(preference) then return end
+    preference=preference or "normal"
+    if not HasPermission(player) then
+        Say(player, "你没有使用拿取/整理功能的权限")
+        return
+    end
+    if HSO_ORGANIZER.IsBusy() then
+        Say(player,"整理进行中，请稍后拿取")
+        return
+    end
+    takeall=takeall==true
+    local scan = SCAN_CACHE[player.userid]
+    if scan == nil or GLOBAL.GetStaticTime() - scan.t > 30 then
+        -- 快照过期/缺失时按需重建，而不是静默失败（避免“点按钮没反应”）
+        local _, containers, groups = BuildContainerData(player)
+        scan = { list = containers, groups = groups, t = GLOBAL.GetStaticTime() }
+        SCAN_CACHE[player.userid] = scan
+    end
+    local selected = scan.groups[groupkey]
+    if selected == nil then
+        Say(player, "物品已被取走或发生变化")
+        SendSnapshot(player)
+        return
+    end
+    local inv = player.components.inventory
+    if inv == nil then
+        return
+    end
+    local max_stacks = (CFG_TAKE_LIMIT > 0) and CFG_TAKE_LIMIT or math.huge
+    local taken,units = 0,0
+    local changed = {}
+    local options={}
+    for index,ent in ipairs(scan.list) do if Policy.CanTake(ent,player,CFG_RADIUS) then
+        local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and item.prefab==selected.p and ItemInfo.GroupKey(ItemInfo.Describe(item))==groupkey
+                and not (item.components.inventoryitem~=nil and item.components.inventoryitem.islockedinslot) then
+                local fresh,durable=Features.Quality(item)
+                options[#options+1]={ent=ent,c=c,slot=slot,item=item,n=ItemCount(item),index=index,
+                    priority=preference=="fresh" and (fresh or 101) or preference=="durable" and -(durable or -1) or 0}
+            end
+        end
+    end end
+    table.sort(options,function(a,b)
+        if a.priority~=b.priority then return a.priority<b.priority end
+        if a.index~=b.index then return a.index<b.index end
+        if a.n~=b.n then return a.n>b.n end
+        return a.slot<b.slot
+    end)
+    for _,rec in ipairs(options) do
+        local ent,cont,slot=rec.ent,rec.c,rec.slot
+        while Policy.CanTake(ent,player,CFG_RADIUS) and ent.components.container==cont
+            and cont:GetItemInSlot(slot)==rec.item do
+            -- Every iteration rechecks the actual entity. Native infinite stacks
+            -- can keep the source entity in the slot after yielding a real stack.
+            if ItemInfo.GroupKey(ItemInfo.Describe(rec.item))~=groupkey
+                or rec.item.components.inventoryitem~=nil and rec.item.components.inventoryitem.islockedinslot then break end
+            local remaining=amount~=nil and amount-units or nil
+            local item=HSO_ORGANIZER.ExtractForTake(cont,slot,remaining)
+            changed[ent]=true
+            if item==nil then break end
+            local n=ItemCount(item)
+            if not HSO_ORGANIZER.DeliverTaken(item,ent,slot,inv) then
+                Say(player,"背包空间不足或拿取中断，余量已保留")
+                RefreshViews(player,changed);return
+            end
+            taken,units=taken+1,units+n
+            if amount~=nil and units>=amount or amount==nil and not takeall then
+                RefreshViews(player,changed);return
+            end
+            if taken>=max_stacks then
+                Say(player,string.format("已达单次上限（%d 组），稍后再拿",CFG_TAKE_LIMIT))
+                RefreshViews(player,changed);return
+            end
+        end
+    end
+    if taken == 0 then Say(player, "物品已被取走或暂不可拿取") end
+    RefreshViews(player, changed)
+end)
+
+-- 一键整理
+local function SendFeature(player,value)
+    if player==nil or not player:IsValid() then return end
+    local data=json.encode(value)
+    if #data>CHUNK*128 then return end
+    feature_serial=feature_serial+1
+    local id=tostring(feature_serial)
+    local rpc=GLOBAL.GetClientModRPC(MOD_NS,"data")
+    local total=math.ceil(#data/CHUNK);local userid=player.userid
+    local old=FEATURE_STREAMS[userid]
+    if old~=nil and old.task~=nil then old.task:Cancel() end
+    local stream={index=1};FEATURE_STREAMS[userid]=stream
+    SendModRPCToClient(rpc,userid,"feature_begin",id,tostring(total))
+    local function send_batch()
+        if FEATURE_STREAMS[userid]~=stream or not player:IsValid() then return end
+        local last=math.min(total,stream.index+PACKETS_PER_TICK-1)
+        for n=stream.index,last do
+            SendModRPCToClient(rpc,userid,"feature_chunk",tostring(n),data:sub((n-1)*CHUNK+1,n*CHUNK),id)
+        end
+        stream.index=last+1
+        if stream.index>total then FEATURE_STREAMS[userid]=nil
+        elseif GLOBAL.TheWorld~=nil and GLOBAL.TheWorld.DoStaticTaskInTime~=nil then
+            stream.task=GLOBAL.TheWorld:DoStaticTaskInTime(GLOBAL.FRAMES or (1/30),send_batch)
+        else
+            while stream.index<=total do
+                local n=stream.index;stream.index=n+1
+                SendModRPCToClient(rpc,userid,"feature_chunk",tostring(n),data:sub((n-1)*CHUNK+1,n*CHUNK),id)
+            end
+            FEATURE_STREAMS[userid]=nil
+        end
+    end
+    send_batch()
+end
+local function FeatureAllowed(player,mutation)
+    if GLOBAL.TheWorld==nil or not GLOBAL.TheWorld.ismastersim or player==nil or not player:IsValid()
+        or type(player.userid)~="string" then return false end
+    if mutation and not HasPermission(player) then Say(player,"你没有使用拿取/整理功能的权限");return false end
+    local now=GLOBAL.GetStaticTime();local last=FEATURE_REQUESTS[player.userid]
+    if last~=nil and now-last<.15 then return false end
+    FEATURE_REQUESTS[player.userid]=now
+    return true
+end
+local function BoxDescription(ent,player)
+    local c=ent.components.container
+    local meta=ItemInfo.Describe(ent)
+    return {g=ent.GUID,p=ent.prefab,d=ItemInfo.HasDetails(meta) and meta or nil,
+        distance=math.floor(math.sqrt(player:GetDistanceSqToInst(ent))*10+.5)/10,
+        e=c._hso_excluded or nil,w=Policy.OrganizeReason(ent,player,CFG_RADIUS),slots=c:GetNumSlots()}
+end
+AddModRPCHandler(MOD_NS,"inspect",function(player,key,page)
+    if type(key)~="string" or #key==0 or #key>128 or not FeatureAllowed(player,false) then return end
+    page=type(page)=="number" and page==page and math.max(1,math.min(100000,math.floor(page))) or 1
+    local rows,total,available,count,meta={},0,0,0,nil
+    local containers=ScanContainers(player,false)
+    for _,ent in ipairs(containers) do
+        local c=ent.components.container
+        for slot=1,c:GetNumSlots() do
+            local item=c:GetItemInSlot(slot)
+            if item~=nil and ItemInfo.GroupKey(ItemInfo.Describe(item))==key then
+                count=count+1;local n=ItemCount(item);total=total+n
+                local takeable=HasPermission(player) and Policy.CanTake(ent,player,CFG_RADIUS)
+                    and not (item.components.inventoryitem~=nil and item.components.inventoryitem.islockedinslot)
+                if takeable then available=available+n end
+                meta=meta or ItemInfo.Describe(item)
+                if count>(page-1)*6 and count<=page*6 then
+                    local rec=BoxDescription(ent,player)
+
+```
+

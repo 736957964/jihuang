@@ -432,3 +432,23 @@ end)
 
 ```
 
+
+
+### 变体演进：AI NPC - Đừng Chết Đói :) (Mod 3809084975)
+- **变体场景与切面**：收录来自工坊 Mod 3809084975 (`AI NPC - Đừng Chết Đói :)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3809084975)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if not inst.ismastersim then return end
+    inst:AddComponent("ailangquanly")
+end)
+
+```
+
