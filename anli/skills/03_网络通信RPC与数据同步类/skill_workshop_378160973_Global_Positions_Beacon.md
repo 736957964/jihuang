@@ -3933,3 +3933,59 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Buff Timer (Extended) (Mod 3781874198)
+- **变体场景与切面**：收录来自工坊 Mod 3781874198 (`Buff Timer (Extended)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3781874198)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:eater
+-- effect outside Eat, and the source is then unknown.
+AddComponentPostInit("eater", function(component)
+    if not component.inst:HasTag("player") then
+        return
+    end
+
+    local old_eat = component.Eat
+    component.Eat = function(self, food, ...)
+        self.inst._buff_watch_eating = food
+        local eaten = old_eat(self, food, ...)
+        self.inst._buff_watch_eating = nil
+        return eaten
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:temperature
+
+AddComponentPostInit("temperature", function(component)
+    if not component.inst:HasTag("player") then
+        return
+    end
+
+    local old_set_temperature_in_belly = component.SetTemperatureInBelly
+    component.SetTemperatureInBelly = function(self, delta, duration, ...)
+        old_set_temperature_in_belly(self, delta, duration, ...)
+        local icon = GetFoodIcon(self.inst._buff_watch_eating)
+        self.inst:DoTaskInTime(0, function()
+            TrackBellyTemperature(self, duration, icon)
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    if inst.components.buff_watch_manager == nil then
+        inst:AddComponent("buff_watch_manager")
+    end
+end)
+
+```
+
