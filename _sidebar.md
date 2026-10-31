@@ -22,6 +22,8 @@
     * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
+    * [全球定位RR](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3163922068_rr.md)
+    * [小合集SS](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3120638435_ss.md)
     * [Mod 3689239824](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3689239824_mod_3689239824.md)
     * [Phonograph Tweaked](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2988233681_phonograph_tweaked.md)
     * [快捷物品栏 Quick Bar](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3787501714_quick_bar.md)
@@ -45,6 +47,8 @@
     * [共享位置](anli/skills/06_世界生成与生态系统类/skill_workshop_3789721701_3789721701.md)
   * 07 实体机制与游戏平衡类
     * [聊天指令拦截与生命周期重置 (母本)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_player_lifecycle_and_command_restart.md)
+    * [明日方舟唱片](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3379258656_3379258656.md)
+    * [lan](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3052540872_lan.md)
     * [kramel的华语经典唱片](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3586130971_kramel.md)
     * [改变玩家出生位置](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3518921307_3518921307.md)
     * [自定义沃拓克斯 / Customize ](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3627955500_customize_wortox.md)

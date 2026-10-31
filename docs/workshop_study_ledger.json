@@ -3261,8 +3261,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-10-31 19:41:56",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3586130971_kramel.md"
+    },
+    {
+      "id": "3052540872",
+      "name": "lan",
+      "author": "蠢嗷嗷&傻啾啾",
+      "version": "3.0.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:45:17",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3052540872_lan.md"
+    },
+    {
+      "id": "3120638435",
+      "name": "小合集SS",
+      "author": "xiaochency",
+      "version": "1.0.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:45:17",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3120638435_ss.md"
+    },
+    {
+      "id": "3163922068",
+      "name": "全球定位RR",
+      "author": "xiaochency",
+      "version": "1.4.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:45:17",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3163922068_rr.md"
+    },
+    {
+      "id": "3379258656",
+      "name": "明日方舟唱片",
+      "author": "本源年",
+      "version": "1.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:45:18",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3379258656_3379258656.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:41:56"
+  "lastUpdated": "2026-10-31 19:45:18"
 }
