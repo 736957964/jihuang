@@ -1893,3 +1893,55 @@ end)
 
 ```
 
+
+
+### 变体演进：modao (Mod 2925295933)
+- **变体场景与切面**：收录来自工坊 Mod 2925295933 (`modao`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2925295933)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:modao
+
+ AddPrefabPostInit("modao",function(inst)
+    inst:AddComponent("weapon")
+    inst.components.weapon:SetDamage(60)
+    inst.components.weapon:SetRange(1.1,1.1)
+    inst:AddComponent("finiteuses")
+    inst.components.finiteuses:SetMaxUses(1000)
+    inst.components.finiteuses:SetUses(1000)  
+    inst.components.finiteuses:SetOnFinished(inst.Remove)
+    inst:AddComponent("tool")
+	inst.components.tool:SetAction(ACTIONS.CHOP, 66)
+    inst.components.tool:SetAction(ACTIONS.MINE, 2)
+    inst.components.tool:SetAction(ACTIONS.DIG)
+    if inst.components.equippable then inst.components.equippable.walkspeedmult =1.1 end
+	local function onattack(weapon, attacker, target)
+	if attacker then
+	    if attacker.components.health then
+		    attacker.components.health:DoDelta(1)
+		end
+	end
+	if attacker then
+	    if attacker.components.sanity then
+		    attacker.components.sanity:DoDelta(0)
+		end
+	end
+    end
+    inst.components.weapon:SetOnAttack(onattack)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:goldnugget
+end)
+AddPrefabPostInit("goldnugget",function(inst)
+	if not inst.components.tradable then
+		inst:AddComponent("tradable")
+    end
+end)
+
+```
+
