@@ -3531,8 +3531,26 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 03:36:59",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3728174446",
+      "name": "Visible Mimicreep Items",
+      "author": "Kasbin4ik",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:37:58",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3730144014",
+      "name": "小恶魔plus",
+      "author": "春宝",
+      "version": "1.0.2",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 03:37:58",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:36:59"
+  "lastUpdated": "2026-11-01 03:37:58"
 }

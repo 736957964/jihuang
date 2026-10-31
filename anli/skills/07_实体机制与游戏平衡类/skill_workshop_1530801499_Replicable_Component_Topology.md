@@ -1406,3 +1406,53 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Visible Mimicreep Items (Mod 3728174446)
+- **变体场景与切面**：收录来自工坊 Mod 3728174446 (`Visible Mimicreep Items`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3728174446)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:itemmimic
+
+AddComponentPostInit("itemmimic", function(self)
+    local inst = self.inst
+
+    inst:DoTaskInTime(0, function()
+        if not inst:IsValid() then return end
+
+        -- Mimicreep names
+        local old_GetDisplayName = inst.GetDisplayName
+        if old_GetDisplayName then
+            inst.GetDisplayName = function(item_inst)
+                return ApplyMimicPrefix(old_GetDisplayName(item_inst))
+            end
+        end
+
+        -- Mimicreep shader
+        inst.AnimState:SetMultColour(0, 0, 0, 0.6)
+        inst.AnimState:SetAddColour(0, 0, 0, 0)
+
+        -- Mimicreep icon
+        inst.layeredinvimagefn = function(item)
+            local layers = {}
+            local inventoryitem = item.replica and item.replica.inventoryitem
+            if inventoryitem then
+                table.insert(layers, {
+                    atlas = inventoryitem:GetAtlas(),
+                    image = inventoryitem:GetImage(),
+                })
+            end
+            table.insert(layers, { atlas = OVERLAY_ATLAS, image = OVERLAY_IMAGE })
+            return layers
+        end
+        inst:PushEvent("imagechange")
+    end)
+end)
+
+```
+

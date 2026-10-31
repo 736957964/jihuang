@@ -229,3 +229,138 @@ end)
 
 ```
 
+
+
+### 变体演进：小恶魔plus (Mod 3730144014)
+- **变体场景与切面**：收录来自工坊 Mod 3730144014 (`小恶魔plus`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3730144014)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wortox_soul_spawn
+--------------------------------------------------------------------------
+AddPrefabPostInit("wortox_soul_spawn", function(inst)
+  if not GLOBAL.TheWorld.ismastersim then
+    return
+  end
+  inst.SoulSpearTick = SoulSpearTick
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox_soul
+--------------------------------------------------------------------------
+AddPrefabPostInit("wortox_soul", function(inst)
+  if not GLOBAL.TheWorld.ismastersim then
+    return
+  end
+
+  inst:ListenForEvent("ondropped", function(inst)
+    if not GetModConfigData("BOMB_ENABLED") then
+      return
+    end
+
+    -- 取消原版治疗+移除定时器
+    if inst._task then
+      inst._task:Cancel()
+      inst._task = nil
+    end
+
+    -- 禁止拾取
+    if inst.components.inventoryitem then
+      inst.components.inventoryitem.canbepickedup = false
+    end
+
+    -- 1秒后治疗，治疗完毕立即爆炸
+    inst._task = inst:DoTaskInTime(TUNING.WORTOX_SOUL_HEAL_DELAY, function()
+      inst._task = nil
+      wortox_soul_common.DoHeal(inst)
+
+      local x, y, z = inst.Transform:GetWorldPosition()
+      GLOBAL.SpawnPrefab("explode_small").Transform:SetPosition(x, y, z)
+
+      -- 镜头闪白 + 震动（参考火药爆炸效果）
+      for _, player in ipairs(GLOBAL.AllPlayers) do
+        local distSq = player:GetDistanceSqToInst(inst)
+        local k = math.max(0, math.min(1, distSq / 400))
+        local intensity = k * 0.75 * (k - 2) + 0.75
+        if intensity > 0 then
+          player:ScreenFlash(intensity)
+          player:ShakeCamera(GLOBAL.CAMERASHAKE.FULL, .7, .02, intensity / 2)
+        end
+      end
+
+      -- 范围爆炸伤害
+      local ents = GLOBAL.TheSim:FindEntities(x, y, z, TUNING.GUNPOWDER_RANGE, { "_combat", "_health" }, { "INLIMBO", "player" })
+      for _, ent in ipairs(ents) do
+        if ent ~= inst and ent:IsValid() and not ent:IsInLimbo()
+            and ent.components.health and not ent.components.health:IsDead()
+            and ent.components.combat and ent.components.combat:CanBeAttacked() then
+          local dmg = TUNING.GUNPOWDER_DAMAGE
+          if ent.components.explosiveresist then
+            dmg = dmg * (1 - ent.components.explosiveresist:GetResistance())
+            ent.components.explosiveresist:OnExplosiveDamage(dmg, inst)
+          end
+          ent.components.combat:GetAttacked(inst, dmg)
+        end
+      end
+
+      inst:Remove()
+    end)
+  end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+-- 阻止未受挑衅的中立生物主动攻击带 buff 的沃托克斯
+AddComponentPostInit("combat", function(self)
+  local _CanTarget = self.CanTarget
+  self.CanTarget = function(combat, target)
+    if target and target:HasTag(GLOMGOOP_BUFF_TAG) then
+      local recent_threshold = 5
+      if combat.last_hitby ~= target or (GLOBAL.GetTime() - (combat.last_hitby_time or 0)) > recent_threshold then
+        return false
+      end
+    end
+    return _CanTarget(combat, target)
+  end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigman
+-- pigman 的拒绝逻辑在 onaccept 回调 (OnGetItemFromPlayer) 中检查 giver:HasTag("monster")
+AddPrefabPostInit("pigman", function(inst)
+  if not GLOBAL.TheWorld.ismastersim then return end
+  local trader = inst.components.trader
+  if trader then
+    local _OnAccept = trader.onaccept
+    trader.onaccept = function(inst, giver, item)
+      if giver and giver:HasTag(GLOMGOOP_BUFF_TAG) then
+        return TemporarilyHideDemon(giver, _OnAccept, inst, giver, item)
+      end
+      return _OnAccept(inst, giver, item)
+    end
+  end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigking
+-- pigking 在 trader.test 中检查给予者标签
+AddPrefabPostInit("pigking", function(inst)
+  if not GLOBAL.TheWorld.ismastersim then return end
+  local trader = inst.components.trader
+  if trader then
+    local _Test = trader.test
+    trader.test = function(inst, item, giver)
+      if giver and giver:HasTag(GLOMGOOP_BUFF_TAG) then
+        return TemporarilyHideDemon(giver, _Test, inst, item, giver)
+      end
+      return _Test(inst, item, giver)
+    end
+  end
+end)
+
+```
+
