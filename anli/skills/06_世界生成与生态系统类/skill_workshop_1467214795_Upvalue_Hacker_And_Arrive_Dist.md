@@ -487,3 +487,129 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：Iridescent Insight (Mod 3658027558)
+- **变体场景与切面**：收录来自工坊 Mod 3658027558 (`Iridescent Insight`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3658027558)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+--------------------------------------------------------------------------------
+AddPrefabPostInit("player_classified", function(inst)
+    inst.insight_bonus = net_byte(inst.GUID, "insight_bonus", "insight_bonus_dirty")
+    if not TheNet:GetIsServer() then
+        inst:ListenForEvent("insight_bonus_dirty", function(inst)
+            if inst._parent then
+                inst._parent:PushEvent("newskillpointupdated")
+                inst._parent:PushEvent("refreshskilltree")
+            end
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+    
+    AddPrefabPostInit("world", function(inst)
+        -- 初始化一个表，用来存所有玩家的数据： { ["KU_xxxx"] = 3, ["KU_yyyy"] = 1 }
+        inst._insight_user_bank = {}
+
+        -- A. 世界存档
+        local old_OnSave = inst.OnSave
+        inst.OnSave = function(inst)
+            local data = (old_OnSave and old_OnSave(inst)) or {}
+            data.insight_user_bank = inst._insight_user_bank
+            return data
+        end
+
+        -- B. 世界读档
+        local old_OnLoad = inst.OnLoad
+        inst.OnLoad = function(inst, data)
+            if old_OnLoad then old_OnLoad(inst, data) end
+            if data and data.insight_user_bank then
+                inst._insight_user_bank = data.insight_user_bank
+            end
+        end
+
+        -- C. 玩家进入/重生监听 (不仅是Join，Respawn也会触发检查)
+        inst:ListenForEvent("ms_playerjoined", function(src, player)
+            if not player or not player.userid then return end
+            
+            -- 稍微延迟一点，确保玩家组件初始化完毕
+            player:DoTaskInTime(0, function()
+                if player.components.skilltreeupdater then
+                    local bank = inst._insight_user_bank or {}
+                    local saved_val = bank[player.userid] or 0
+                    
+                    -- 如果银行里有钱，直接覆盖玩家当前状态
+                    if saved_val > 0 then
+                        player.components.skilltreeupdater._insight_bonus = saved_val
+                        SyncToClient(player, saved_val)
+                        -- print("[InsightMod] Loaded " .. saved_val .. " points from World Bank for " .. player.userid)
+                    end
+                end
+            end)
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:skilltreeupdater
+--------------------------------------------------------------------------------
+AddComponentPostInit("skilltreeupdater", function(self)
+    self._insight_bonus = 0
+
+    -- 依然保留组件存档作为备份 (兼容旧数据)
+    local old_OnSave = self.OnSave
+    self.OnSave = function(self)
+        local data = (old_OnSave and old_OnSave(self)) or {}
+        if self._insight_bonus > 0 then
+            data.insight_bonus = self._insight_bonus
+        end
+        return data
+    end
+
+    local old_OnLoad = self.OnLoad
+    self.OnLoad = function(self, data)
+        if old_OnLoad then old_OnLoad(self, data) end
+        if data and data.insight_bonus then
+            local val = math.min(data.insight_bonus, MAX_BONUS)
+            self._insight_bonus = val
+            SyncToClient(self.inst, val)
+            
+            -- 如果是从旧存档读出来的，立刻同步到世界银行，防止下次换人丢失
+            DepositToBank(self.inst, val)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:opalpreciousgem
+
+AddPrefabPostInit("opalpreciousgem", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    if not inst.components.healer then inst:AddComponent("healer") end
+    inst.components.healer:SetHealthAmount(0)
+    inst.components.healer:SetOnHealFn(function(inst, target)
+        if target:HasTag("player") then
+            local success = UseGemOnPlayer(inst, target)
+            if not success then
+                target:DoTaskInTime(0, function()
+                    if target.components.inventory then
+                        local gem = SpawnPrefab("opalpreciousgem")
+                        if not target.components.inventory:GiveItem(gem) then
+                            gem.Transform:SetPosition(target.Transform:GetWorldPosition())
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+end)
+
+```
+
