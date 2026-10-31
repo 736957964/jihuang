@@ -1720,3 +1720,139 @@ end)
 
 ```
 
+
+
+### 变体演进：食物保持新鲜 | Fresh Until Rot (Mod 3822505147)
+- **变体场景与切面**：收录来自工坊 Mod 3822505147 (`食物保持新鲜 | Fresh Until Rot`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3822505147)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:hambat
+
+AddPrefabPostInit("hambat", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local weapon = inst.components.weapon
+    if weapon == nil then return end
+    local old = weapon.SetDamage
+    weapon.SetDamage = function(self, damage, ...)
+        if alive(inst) and G.type(damage) == "number" then
+            local percent = inst.components.perishable:GetPercent()
+            local vanilla = G.Remap(T.HAMBAT_DAMAGE * percent, 0, T.HAMBAT_DAMAGE,
+                T.HAMBAT_MIN_DAMAGE_MODIFIER * T.HAMBAT_DAMAGE, T.HAMBAT_DAMAGE)
+            -- Leave unrelated custom damage assignments from other mods alone.
+            if G.math.abs(damage - vanilla) < 0.000001 then
+                damage = T.HAMBAT_DAMAGE
+            end
+        end
+        return old(self, damage, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:oceanfishinghook
+-- are retained. The actual bait percent is never replaced, even temporarily.
+AddComponentPostInit("oceanfishinghook", function(self)
+    local old = self._ClacCharm -- This spelling is the actual current API.
+    self._ClacCharm = function(self, fish, ...)
+        local result = old(self, fish, ...)
+        if alive(self.inst) then
+            local percent = self.inst.components.perishable:GetPercent()
+            if percent > 0 then return result / percent end
+        end
+        return result
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox_reviver
+local revivercost
+AddPrefabPostInit("wortox_reviver", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local spellcaster = inst.components.spellcaster
+    if spellcaster == nil or spellcaster.spell == nil then return end
+    if revivercost == nil then
+        local recipe = G.AllRecipes.wortox_reviver
+        local cost = 0
+        if recipe ~= nil and recipe.ingredients ~= nil then
+            for _, ingredient in G.ipairs(recipe.ingredients) do
+                if ingredient.type == "wortox_soul" then cost = cost + ingredient.amount end
+            end
+        end
+        revivercost = cost > 0 and cost or 10
+    end
+    local old = spellcaster.spell
+    spellcaster:SetSpellFn(function(item, target, pos, caster, ...)
+        local extra = 0
+        if caster ~= nil and caster.components.inventory ~= nil and alive(item)
+            and item.components.linkeditem ~= nil
+            and item.components.linkeditem:GetOwnerInst() == caster then
+            extra = revivercost - G.math.ceil(item.components.perishable:GetPercent() * revivercost)
+        end
+        local result = old(item, target, pos, caster, ...)
+        if extra > 0 and caster:IsValid() then
+            local prior = caster.wortox_ignoresoulcounts
+            caster.wortox_ignoresoulcounts = true
+            for _ = 1, extra do
+                local soul = G.SpawnPrefab("wortox_soul")
+                if soul ~= nil then caster.components.inventory:DropItem(soul, true, true, caster:GetPosition()) end
+            end
+            caster.wortox_ignoresoulcounts = prior
+        end
+        return result
+    end)
+end)
+
+```
+
+
+
+### 变体演进：Ukyou (Mod 3823946272)
+- **变体场景与切面**：收录来自工坊 Mod 3823946272 (`Ukyou`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823946272)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:lightning
+end
+AddPrefabPostInit("lightning", function(inst)
+    if TheWorld.ismastersim then inst:DoTaskInTime(0,function() notify_noise(inst,140) end) end
+end)
+for _, prefab in ipairs({"cavein_boulder","rocks","flint","nitre","goldnugget","marble"}) do
+    local is_cavein=prefab=="cavein_boulder"
+    AddPrefabPostInit(prefab,function(inst)
+        if not TheWorld.ismastersim then return end
+        inst:ListenForEvent("startfalling",function() notify_noise(inst,35) end)
+        if is_cavein then inst:DoTaskInTime(0,function() notify_noise(inst,35) end) end
+    end)
+end
+
+STRINGS.NAMES.UKYOU_ANY_FEATHER = "任意羽毛"
+local feather_ingredient = require("ukyou_feather_ingredient")
+AddComponentPostInit("inventory", feather_ingredient.InstallInventory)
+AddClassPostConstruct("components/inventory_replica", feather_ingredient.InstallHas)
+
+-- The character selection widgets read flat tuning keys.
+TUNING.UKYOU_HEALTH = TUNING.UKYOU.HEALTH
+TUNING.UKYOU_HUNGER = TUNING.UKYOU.HUNGER
+TUNING.UKYOU_SANITY = TUNING.UKYOU.SANITY
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+local feather_ingredient = require("ukyou_feather_ingredient")
+AddComponentPostInit("inventory", feather_ingredient.InstallInventory)
+AddClassPostConstruct("components/inventory_replica", feather_ingredient.InstallHas)
+
+-- The character selection widgets read flat tuning keys.
+TUNING.UKYOU_HEALTH = TUNING.UKYOU.HEALTH
+TUNING.UKYOU_HUNGER = TUNING.UKYOU.HUNGER
+TUNING.UKYOU_SANITY = TUNING.UKYOU.SANITY
+
+```
+

@@ -6644,3 +6644,241 @@ end
 
 ```
 
+
+
+### 变体演进：【崩铁厄敌/Phaidei】万敌 (Mod 3793699296)
+- **变体场景与切面**：收录来自工坊 Mod 3793699296 (`【崩铁厄敌/Phaidei】万敌`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3793699296)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:mydei
+
+        AddPrefabPostInit("mydei", function(inst)
+            -- v54：阶段 netvar —— 服务端写、客户端读（图标自动点亮 + 打开中的面板实时刷新）。
+            --   netvar 两端都必须建，所以放在 mastersim 分支**之前**声明。
+            inst.mydei_insight_stage = GLOBAL.net_byte(inst.GUID, "mydei.insight.stage", "mydeiinsightstagedirty")
+            -- v57：计数 netvar —— 客户端显示进度 / 判小锁开合（与阶段 netvar 同源同步）。
+            --   类型按**正式量程**预置（netvars.lua:97 GetIdealUnsignedNetVarForCount）：
+            --   正式门槛 77 投掷 / 777 矛命中 ⇒ net_ushortint（上限 65535，够）；巨兽 ≤3 ⇒ net_byte。
+            --   ⚠️ v58 测试期计数只是个位数，也**不要**降成 net_byte —— 门槛改回正式值时会溢出。
+            inst.mydei_insight_throw = GLOBAL.net_ushortint(inst.GUID, "mydei.insight.throw", "mydeiinsightstagedirty")
+            inst.mydei_insight_melee = GLOBAL.net_ushortint(inst.GUID, "mydei.insight.melee", "mydeiinsightstagedirty")
+            inst.mydei_insight_giant = GLOBAL.net_byte(inst.GUID, "mydei.insight.giant", "mydeiinsightstagedirty")
+
+            if not GLOBAL.TheWorld.ismastersim then
+                -- 客户端：阶段变化时借用官方刷新事件让打开着的技能树面板立即重渲染
+                -- （skilltreewidget.lua:180 官方自己就监听 onaddskillxp_client → RefreshTree）
+                inst:ListenForEvent("mydeiinsightstagedirty", function(i)
+                    if GLOBAL.ThePlayer == i then
+                        i:PushEvent("onaddskillxp_client")
+                    end
+                end)
+                return
+            end
+
+            inst:ListenForEvent("onhitother", function(inst, data)
+                local target = data ~= nil and data.target or nil
+                if not IsAggroedEnemy(target, inst) then
+                    return
+                end
+                -- 投掷 / 近战分路：投掷由 lance_of_fury 在 GetAttacked 前后盖时间戳
+                -- （同步回调，期间一定读得到）。用 0.2s 窗口而非布尔，万一标记没清掉也会自动过期。
+                local t = inst._mydei_thrownhit_t
+                if t ~= nil and GLOBAL.GetTime() - t < 0.2 then
+                    -- ★ v68：投掷命中 = THROW +1，**并且** MELEE +1
+                    --   （MELEE 语义已放宽为「天谴之矛命中」，投掷当然也是矛命中）。
+                    AddLocalCount(inst, "THROW")
+                    AddLocalCount(inst, "MELEE")
+                else
+                    -- v56/v68：近战命中要**手里拿着天谴之矛**才计数 ——
+                    --   v56 的老口径是「使用天谴之矛近战 10/30/100」；v68 去掉「必须近战」的
+                    --   强制，但只要不是投掷，就仍然要求武器是这把矛（否则拿别的武器乱砍也涨）。
+                    --   判据 = 手持槽里是不是带 lance_of_fury tag。
+                    local hand = nil
+                    if inst.components.inventory ~= nil then
+                        hand = inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+                    end
+                    if hand ~= nil and hand:HasTag("lance_of_fury") then
+                        AddLocalCount(inst, "MELEE")
+                    end
+                end
+            end)
+
+            -- v61：原「killed 才计巨兽」的监听已删除 —— 那时的判据是"万敌补上最后一刀"，
+            --   master 定稿改成「只要万敌参与过这场战斗，巨兽最终被击败就 +1」，与谁补刀无关。
+            --   现在由 NoteGiantParticipation（伤害前登记，挂在巨兽身上）+
+            --   巨兽自己的 death 事件（结算）接管，见上方 v61 段。
+            --   ⚠️ 不要加回来：两条并存 ⇒ 同一只巨兽被记两次。
+
+            -- v60：玩家加载时官方会用存档里的 skilltreeblob **重新激活**技能
+            --   （player_common_extensions.lua:1093 → SendFromSkillTreeBlob，时机**晚于** OnLoad）
+            --   ⇒ 在这条事件上再对账一次，把「计数撑不起的旧激活记录」撤掉。
+            --   这是旧激活记录唯一能被捕获的时机：OnLoad 太早（记录还没填），
+            --   命中事件太晚（可能一直不打怪）。
+            inst:ListenForEvent("onsetskillselection_server", function(i)
+                if i._mydei_insight_counts == nil then return end
+                SyncStage(i, false)   -- 内含 tag 同步 + 激活记录对账
+            end)
+
+            -- v53：实体计数随玩家存档持久化（包装 prefab 自带的 OnSave/OnLoad，先存再调原函数）
+            local oldsave, oldload = inst.OnSave, inst.OnLoad
+            inst.OnSave = function(i, data)
+                data.mydei_insight_counts = i._mydei_insight_counts
+                if oldsave ~= nil then oldsave(i, data) end
+            end
+            inst.OnLoad = function(i, data)
+                if data ~= nil and data.mydei_insight_counts ~= nil then
+                    i._mydei_insight_counts = data.mydei_insight_counts
+                    -- v54：读档后把阶段 netvar 补到当前值 —— 图标点亮状态随存档恢复
+                    -- v57：计数 netvar 一起补，否则客户端要等到下一次命中才看得到进度
+                    PushCounts(i)
+                    SyncStage(i, false)
+                    -- v57：把当前进度打进 server_log —— master 核对"面板数字对不对"时一眼可查
+                    local c = i._mydei_insight_counts
+                    print(string.format("[mydei] insight counts loaded: THROW=%d MELEE=%d GIANT=%d (stage=%d)",
+                        c.THROW or 0, c.MELEE or 0, c.GIANT or 0, i.mydei_insight_stage and i.mydei_insight_stage:value() or 0))
+                end
+                if oldload ~= nil then oldload(i, data) end
+            end
+
+            print("[mydei] insight auto-unlock counters installed (v53, server-side)")
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+-- ---------------------------------------------------------------------------
+AddComponentPostInit("container", function(self)
+    if self._lance_gate then
+        return
+    end
+    self._lance_gate = true
+
+    local _CanTakeItemInSlot = self.CanTakeItemInSlot
+    self.CanTakeItemInSlot = function(c, item, slot, ...)
+        if item ~= nil
+            and LANCE_MAX_PET > 0
+            and c.inst ~= nil
+            and c.currentuser ~= nil            -- 只在「有人正在搬运」时判定
+            and item:HasTag("lance_of_fury")
+            and IsLancePet(c.inst)
+            and LanceCountInContainer(c) >= LANCE_MAX_PET then
+            -- 矛已经在同一个容器里、只是想换格子 → 放行，否则宠物背包内没法整理
+            local already_here = false
+            pcall(function()
+                already_here = item.components ~= nil
+                    and item.components.inventoryitem ~= nil
+                    and item.components.inventoryitem:GetContainer() == c
+            end)
+            if not already_here then
+                dlog("[lance] %s 不收天谴之矛：已达宠物持有上限（%d 把）",
+                     tostring(c.inst.prefab), LANCE_MAX_PET)
+                return false
+            end
+        end
+        return _CanTakeItemInSlot(c, item, slot, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:container_classified
+
+AddPrefabPostInit("container_classified", function(inst)
+    if inst.ReceiveItem == nil then
+        return
+    end
+    local _ReceiveItem = inst.ReceiveItem
+    inst.ReceiveItem = function(i, item, count, forceslot)
+        if item ~= nil and LANCE_MAX_PET > 0 and item:HasTag("lance_of_fury") then
+            local parent = i._parent
+            local refuse = false
+            pcall(function()
+                if parent ~= nil
+                    and (LANCE_PET_PREFABS[parent.prefab] == true
+                        or parent:HasTag("critter")
+                        or parent:HasTag("companion")) then
+                    refuse = LanceClassifiedAlreadyHasLance(i, item)
+                end
+            end)
+            if refuse then
+                print("[lance] 客户端预测拒绝：宠物已达天谴之矛上限（不放入、不发 RPC）")
+                if GLOBAL.TheFocalPoint ~= nil and GLOBAL.TheFocalPoint.SoundEmitter ~= nil then
+                    GLOBAL.TheFocalPoint.SoundEmitter:PlaySound("dontstarve/HUD/click_negative")
+                end
+                return nil
+            end
+        end
+        return _ReceiveItem(i, item, count, forceslot)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+-- ---------------------------------------------------------------------------
+AddComponentPostInit("inventory", function(self)
+    if self._lance_guarded then
+        return
+    end
+    self._lance_guarded = true
+    local _GiveItem = self.GiveItem
+    self.GiveItem = function(inv, item, ...)
+        if item ~= nil and item:HasTag("lance_of_fury") then
+            local ok, allow = pcall(function()
+                local owner = inv.inst
+                if owner == nil then
+                    return true
+                end
+                -- 已在主人名下（搬家 / 归还）→ 放行
+                local cur_owner = nil
+                if item.components ~= nil and item.components.inventoryitem ~= nil then
+                    cur_owner = item.components.inventoryitem:GetGrandOwner()
+                end
+                if cur_owner == owner then
+                    return true
+                end
+                if IsLancePet(owner) then
+                    local e, s = LanceCountOwned(owner)
+                    return (e + s) < LANCE_MAX_PET
+                end
+                -- 角色：这里只卡【总数上限】(手上1 + 背包1 = 2)。
+                --   不能再套 CanHoldOneMoreLance 的"分栏位"判定：GiveItem 这个时机
+                --   无法知道"手上是否空着"，分栏位会误拦合法情况——例如
+                --   「背包里有 1 把、手上空着捡第 2 把」（总数才 1→2，应当允许，
+                --   但 st<1 会被判 false）。分栏位判定交给动作层
+                --   (CreateLance / PICKUP / GIVE 拦截) 负责，这里只兜总数。
+                local e, s = LanceCountOwned(owner)
+                return (e + s) < (LANCE_MAX_HELD + LANCE_MAX_STORED)
+            end)
+            if ok and allow == false then
+                dlog("[lance] inventory:GiveItem 被拦截：%s 已达持有上限",
+                     tostring(inv.inst ~= nil and inv.inst.prefab))
+                return false
+            end
+        end
+        return _GiveItem(inv, item, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+    local ok, err = pcall(function()
+        AddStategraphPostInit("wilson", GuardCastspell)
+    end)
+    if not ok then
+        print("[mydei][sg] SGwilson castspell 守卫挂载失败: " .. tostring(err))
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- HUD：注入 UI 按钮（仅客户端）
+-- ---------------------------------------------------------------------------
+AddClassPostConstruct("screens/playerhud", function(self)
+    if self._lance_of_fury_btn ~= nil then
+        return
+    end
+
+```
+

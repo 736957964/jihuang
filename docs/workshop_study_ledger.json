@@ -3882,8 +3882,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 03:55:40",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3793699296",
+      "name": "【崩铁厄敌/Phaidei】万敌",
+      "author": "魚骨骨鱼",
+      "version": "1.0.77",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:57:01",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3822505147",
+      "name": "食物保持新鲜 | Fresh Until Rot",
+      "author": "rebecca graem",
+      "version": "1.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:57:01",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3823946272",
+      "name": "Ukyou",
+      "author": "WaferShiba",
+      "version": "1.0.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:57:01",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:55:40"
+  "lastUpdated": "2026-11-01 03:57:01"
 }
