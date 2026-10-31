@@ -3827,3 +3827,105 @@ if not any_spread or not sprouted_spread or nutrient_consumption ~= GLOBAL.TUNIN
 
 ```
 
+
+
+### 变体演进：骨甲倒计时 (Mod 3502601307)
+- **变体场景与切面**：收录来自工坊 Mod 3502601307 (`骨甲倒计时`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3502601307)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:armorskeleton
+-- 骨甲预制体实例化后钩子
+AddPrefabPostInit("armorskeleton",function(self)
+    -- 输出当前骨甲预制体
+    Log("骨甲预制体实例化后钩子，骨甲GUID:" .. self.GUID)
+    -- 记录当前耐久度
+    self.preTrackpercent = 0
+
+    -- cd开始时间
+    self.rechargeTimeStart = GetTime()
+    -- cd结束时间
+    self.rechargeTimeEnd = self.rechargeTimeStart
+
+    -- 获取总cd时间
+    function self:GetRechargeDuration()
+        return self.rechargeTimeEnd - self.rechargeTimeStart
+    end
+
+    -- 获取剩余cd时间
+    function self:GetRemainingRechargeTime()
+        return self.rechargeTimeEnd - GetTime()
+    end
+
+    -- 获取cd完成百分比
+    function self:GetRechargeCompletePercent()
+        -- 分母为0，也返回1
+        if self:GetRechargeDuration() == 0 then
+            return 1
+        end
+
+        return 1 - (self:GetRemainingRechargeTime() / self:GetRechargeDuration())
+    end
+
+    -- 是否在cd中
+    function self:IsRecharging()
+        return GetTime() < self.rechargeTimeEnd
+    end
+
+    -- 开始cd，单位s
+    function self:StartRecharge(duration)
+        Log("开始cd，骨甲GUID:" .. self.GUID .. "，持续时间:" .. duration)
+        self.rechargeTimeStart = GetTime()
+        self.rechargeTimeEnd = self.rechargeTimeStart + duration
+
+        self:PushEvent("set_charge_time", self:GetRechargeDuration())
+        self:PushEvent("set_charge_percent", self:GetRechargeCompletePercent())
+    end
+    
+    -- 停止cd
+    function self:StopRecharge()
+        self.rechargeTimeStart = GetTime()
+        self.rechargeTimeEnd = self.rechargeTimeStart
+
+        self:PushEvent("set_charge_time", self:GetRechargeDuration())
+        self:PushEvent("set_charge_percent", self:GetRechargeCompletePercent())
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:inventoryitem_classified
+-- 物品分类器初始化后钩子，在这个钩子里执行我理解是需要确保物品的网络数据已经同步，然后可以开始进行初始化了
+AddPrefabPostInit("inventoryitem_classified", function(inst)
+    inst:DoTaskInTime(0, function()
+        local invitem = inst.entity:GetParent()
+        if invitem and invitem.prefab == "armorskeleton" then
+            -- 当前这个物品是骨甲
+            Log("物品分类器骨甲钩子，骨甲GUID:" .. invitem.GUID)
+
+            -- 初始化骨甲耐久度
+            invitem.preTrackpercent = invitem.replica.inventoryitem.classified.percentused:value()
+            -- 监听骨甲耐久度变化
+            inst:ListenForEvent("percentuseddirty", function()
+                -- 如果骨甲耐久度变少了，说明被打了，进入冷却
+                if invitem.preTrackpercent > invitem.replica.inventoryitem.classified.percentused:value() then
+                    Log("骨甲耐久变化，进入冷却，骨甲GUID:" .. invitem.GUID)
+                    if hasSound then
+                        inst:DoTaskInTime(TUNING.ARMOR_SKELETON_COOLDOWN, function() PlaySoundOnRecharge(invitem) end)
+                    end
+
+                    invitem:StartRecharge(TUNING.ARMOR_SKELETON_COOLDOWN)
+                end
+
+                -- 更新骨甲耐久度
+                invitem.preTrackpercent = invitem.replica.inventoryitem.classified.percentused:value()
+            end)
+        end
+    end)
+end)
+
+```
+

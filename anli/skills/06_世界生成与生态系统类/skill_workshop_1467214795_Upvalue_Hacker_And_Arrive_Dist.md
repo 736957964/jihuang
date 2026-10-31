@@ -867,3 +867,56 @@ Usually you'll want to be making these changes from an AddPrefabPostInit("world"
 
 ```
 
+
+
+### 变体演进：自动盾反 (Mod 3804641395)
+- **变体场景与切面**：收录来自工坊 Mod 3804641395 (`自动盾反`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3804641395)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(world)
+  Autoshield:CheckMods()
+  world:ListenForEvent("playeractivated", function()
+    if not TUNING.Shieldthread then
+      Autoshield:autoshield(true)
+    end
+  end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:siving_boss_root
+--子规突触
+AddPrefabPostInit('siving_boss_root', function(self)
+  self:DoTaskInTime(0, function()
+    if math.sqrt(distsq(ThePlayer:GetPosition(), self:GetPosition())) < 2 then
+      local boss = FindEntity(ThePlayer, 20,
+        function(inst)
+          return inst.prefab == "siving_foenix" or inst.prefab == "siving_moenix"
+        end)
+      self:DoTaskInTime(boss and (6 * FRAMES) or (5 * FRAMES), function()
+        Autoshield:DoShield()
+      end)
+    end
+  end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:siving_feather_line
+--自动收回
+AddPrefabPostInit("siving_feather_line", function(inst)
+  inst:DoTaskInTime(5 * FRAMES, function()
+    SendRPCToServer(RPC.RightClick, ACTIONS.RC_SKILL_L.code, ThePlayer:GetPosition().x,
+      ThePlayer:GetPosition().z, nil, nil,
+      nil, nil, nil, ACTIONS.RC_SKILL_L.mod_name, nil,
+      false)
+  end)
+end)
+
+```
+

@@ -14508,3 +14508,627 @@ end)
 
 ```
 
+
+
+### 变体演进：allow_expansion (Mod 3786122407)
+- **变体场景与切面**：收录来自工坊 Mod 3786122407 (`allow_expansion`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3786122407)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+-- are installed. Our priority runs after Basements (-99) and Nine Slots (900).
+AddStategraphPostInit("wilson", function(sg)
+    local result = StategraphPhysics.Repair(sg)
+    if result.repaired > 0 or result.missing > 0 then
+        _G.print(PATCH_LOG_PREFIX .. _G.string.format(
+            "Basement traversal physics: repaired=%d native=%d fallback=%d missing=%d",
+            result.repaired, result.recovered, result.fallback, result.missing))
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:basement_reborn_farm_plot
+
+AddPrefabPostInit("basement_reborn_farm_plot", RegisterVirtualFarmPlot)
+AddPrefabPostInit("farm_plow", InstallFarmPlowMachineCompatibility)
+AddComponentPostInit("farming_manager", InstallVirtualFarmingManager)
+AddComponentAction("POINT", "wateryprotection", AddVirtualWateringAction)
+AddPrefabPostInitAny(InstallVirtualFertilizerContext)
+
+AddPrefabPostInitAny(function(inst)
+    if _G.TheWorld == nil
+        or not _G.TheWorld.ismastersim
+        or type(inst.prefab) ~= "string"
+        or not _G.string.match(inst.prefab, "^farm_plant_") then
+        return
+    end
+
+    inst:ListenForEvent("picked", function(plant)
+        if IsValidEntity(plant) and plant.Transform ~= nil then
+            RestoreBrokenSoilAtPoint(plant.Transform:GetWorldPosition())
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:farm_plow
+AddPrefabPostInit("basement_reborn_farm_plot", RegisterVirtualFarmPlot)
+AddPrefabPostInit("farm_plow", InstallFarmPlowMachineCompatibility)
+AddComponentPostInit("farming_manager", InstallVirtualFarmingManager)
+AddComponentAction("POINT", "wateryprotection", AddVirtualWateringAction)
+AddPrefabPostInitAny(InstallVirtualFertilizerContext)
+
+AddPrefabPostInitAny(function(inst)
+    if _G.TheWorld == nil
+        or not _G.TheWorld.ismastersim
+        or type(inst.prefab) ~= "string"
+        or not _G.string.match(inst.prefab, "^farm_plant_") then
+        return
+    end
+
+    inst:ListenForEvent("picked", function(plant)
+        if IsValidEntity(plant) and plant.Transform ~= nil then
+            RestoreBrokenSoilAtPoint(plant.Transform:GetWorldPosition())
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:farming_manager
+AddPrefabPostInit("farm_plow", InstallFarmPlowMachineCompatibility)
+AddComponentPostInit("farming_manager", InstallVirtualFarmingManager)
+AddComponentAction("POINT", "wateryprotection", AddVirtualWateringAction)
+AddPrefabPostInitAny(InstallVirtualFertilizerContext)
+
+AddPrefabPostInitAny(function(inst)
+    if _G.TheWorld == nil
+        or not _G.TheWorld.ismastersim
+        or type(inst.prefab) ~= "string"
+        or not _G.string.match(inst.prefab, "^farm_plant_") then
+        return
+    end
+
+    inst:ListenForEvent("picked", function(plant)
+        if IsValidEntity(plant) and plant.Transform ~= nil then
+            RestoreBrokenSoilAtPoint(plant.Transform:GetWorldPosition())
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:weather
+
+AddComponentPostInit("weather", InstallWeatherSoundSuppression)
+AddComponentPostInit("caveweather", InstallWeatherSoundSuppression)
+AddComponentPostInit("lunarhailbuildup", InstallLunarHailBuildupProtection)
+AddComponentPostInit("acidlevel", InstallAcidRainProtection)
+
+local function InstallRubbleHook(inst)
+    if not hooks.map
+        or _G.TheWorld == nil
+        or not _G.TheWorld.ismastersim then
+        return false
+    end
+
+    local set_basement_tile = inst ~= nil and inst.SetBasementTile or nil
+    if not hooks.rubble then
+        local original_spawn_rubble = FindNamedUpvalue(set_basement_tile, "SpawnRubble")
+        if type(original_spawn_rubble) == "function" then
+            hooks.original_spawn_rubble = original_spawn_rubble
+            hooks.rubble = ReplaceNamedUpvalue(
+                set_basement_tile,
+                "SpawnRubble",
+                SpawnRubbleWithCorrectedPhase
+            )
+        end
+    end
+
+    if hooks.rubble
+        and type(set_basement_tile) == "function"
+        and inst._wallgrid_rubble_context_installed ~= true then
+        inst.SetBasementTile = function(core, local_x, local_z, ...)
+            local previous_context = active_rubble_context
+            active_rubble_context =
+            {
+                core = core,
+                local_x = local_x,
+                local_z = local_z,
+            }
+
+            local ok, result = _G.pcall(
+                set_basement_tile,
+                core,
+                local_x,
+                local_z,
+                ...
+            )
+            active_rubble_context = previous_context
+
+            if not ok then
+                _G.error(result, 0)
+            end
+            return result
+        end
+        inst._wallgrid_rubble_context_installed = true
+    end
+
+    if not hooks.rubble and not hooks.rubble_warning_printed then
+        hooks.rubble_warning_printed = true
+        print(PATCH_LOG_PREFIX .. "Collapse-effect hook was unavailable; wall correction remains active.")
+    end
+
+    return hooks.rubble and inst._wallgrid_rubble_context_installed == true
+end
+
+local function InstallFunctionHooks()
+    local prefab = _G.Prefabs ~= nil and _G.Prefabs.basement or nil
+    local constructor = prefab ~= nil and prefab.fn or nil
+    local on_init = FindNamedUpvalue(constructor, "OnInit")
+
+    if _G.TheWorld ~= nil
+        and _G.TheWorld.ismastersim
+        and not hooks.fertilizer_spawn
+        and not InstallSafeBasementFertilizerSpawn(on_init)
+        and not hooks.fertilizer_spawn_warning_printed then
+        hooks.fertilizer_spawn_warning_printed = true
+        print(PATCH_LOG_PREFIX
+            .. "Safe basement fertilizer-spawn hook was unavailable.")
+    end
+
+    if hooks.disabled then
+        return
+    end
+
+    if hooks.server
+        and hooks.client
+        and hooks.map
+        and hooks.farm_map
+        and hooks.precipitation_fx then
+        return
+    end
+
+    InstallBlockedPrecipitationEffects(constructor)
+
+    if type(on_init) == "function" then
+        if not hooks.server then
+            local original_server_rebuild = FindNamedUpvalue(on_init, "RebuildWalls")
+            if hooks.original_server_rebuild == nil
+                and type(original_server_rebuild) == "function" then
+                hooks.original_server_rebuild = original_server_rebuild
+            end
+            if type(original_server_rebuild) == "function"
+                and hooks.upstream_wall_animation == nil then
+                hooks.upstream_wall_animation =
+                    FindNamedUpvalue(original_server_rebuild, "PlayWallAnimation")
+            end
+            hooks.server = ReplaceNamedUpvalue(on_init, "RebuildWalls", RebuildServerWalls)
+        end
+
+        if not hooks.client then
+            local original_client_rebuild = FindNamedUpvalue(on_init, "RebuildBasementClient")
+            if hooks.original_client_rebuild == nil
+                and type(original_client_rebuild) == "function" then
+                hooks.original_client_rebuild = original_client_rebuild
+            end
+            if type(original_client_rebuild) == "function" then
+                if hooks.upstream_wall_animation == nil then
+                    hooks.upstream_wall_animation =
+                        FindNamedUpvalue(original_client_rebuild, "PlayWallAnimation")
+                end
+
+                local function RebuildClientWithCorrection(inst)
+                    if not hooks.map then
+                        return original_client_rebuild(inst)
+                    end
+
+                    -- Basements 1.2.6 basement.lua:1123-1194 first refreshes
+                    -- the client synthetic-tile registry on its legacy phase.
+                    -- Preserve that phase for the upstream builder, then
+                    -- replace its transient floor visuals at their final raw-
+                    -- core phase before calculating the new child void masks.
+                    RunWithLegacyMapQuery(original_client_rebuild, inst)
+                    CorrectClientGeometry(inst)
+                end
+
+                hooks.client = ReplaceNamedUpvalue(
+                    on_init,
+                    "RebuildBasementClient",
+                    RebuildClientWithCorrection
+                )
+            end
+        end
+    end
+
+    if not hooks.map
+        and _G.TheNet ~= nil
+        and (_G.TheNet:IsDedicated() or hooks.client) then
+        InstallMapQueryHook()
+    end
+
+    if hooks.map and not hooks.farm_map then
+        InstallVirtualFarmMapHooks()
+    end
+
+    if not hooks.map then
+        if hooks.server and type(hooks.original_server_rebuild) == "function" then
+            if ReplaceNamedUpvalue(
+                on_init,
+                "RebuildWalls",
+                hooks.original_server_rebuild
+            ) then
+                hooks.server = false
+            end
+        end
+        if hooks.client and type(hooks.original_client_rebuild) == "function" then
+            if ReplaceNamedUpvalue(
+                on_init,
+                "RebuildBasementClient",
+                hooks.original_client_rebuild
+            ) then
+                hooks.client = false
+            end
+        end
+        hooks.disabled = true
+    end
+
+    if not hooks.disabled
+        and (not hooks.server or not hooks.client)
+        and not hooks.warning_printed then
+        hooks.warning_printed = true
+        print(PATCH_LOG_PREFIX .. "Internal hooks were unavailable; event fallback is active.")
+    end
+
+    if not hooks.map and not hooks.map_warning_printed then
+        hooks.map_warning_printed = true
+        print(PATCH_LOG_PREFIX .. "Required hooks were unavailable; the patch is disabled.")
+    end
+end
+
+local function CancelTask(inst, field_name)
+    local task = inst ~= nil and inst[field_name] or nil
+    if task ~= nil then
+        task:Cancel()
+        inst[field_name] = nil
+    end
+end
+
+local function QueueCorrection(inst, field_name, delay, correction)
+    if not IsValidEntity(inst) or inst[field_name] ~= nil then
+        return
+    end
+
+    inst[field_name] = inst:DoTaskInTime(delay or 0, function(core)
+        core[field_name] = nil
+        correction(core)
+    end)
+end
+
+local function CancelClientFloorRecovery()
+    client_recovery.generation = client_recovery.generation + 1
+    if client_recovery.task ~= nil then
+        client_recovery.task:Cancel()
+        client_recovery.task = nil
+    end
+    client_recovery.attempt = 0
+    client_recovery.reason = nil
+    client_recovery.hinted_core = nil
+    client_recovery.active_core = nil
+    client_recovery.missing_core = nil
+    client_recovery.missing_observations = 0
+end
+
+local function ReportClientRecoveryTimeout()
+    if hooks.client_recovery_warning_printed then
+        return
+    end
+    hooks.client_recovery_warning_printed = true
+
+    local player_x = "unavailable"
+    local player_z = "unavailable"
+    local player = _G.ThePlayer
+    if IsValidEntity(player) and player.Transform ~= nil then
+        local x, _, z = player.Transform:GetWorldPosition()
+        player_x = tostring(x)
+        player_z = tostring(z)
+    end
+
+    local core = client_recovery.hinted_core
+    local live, total = 0, 0
+    local tile_count = 0
+    local core_guid = "none"
+    local awake = false
+    if IsValidEntity(core) then
+        core_guid = tostring(core.GUID)
+        awake = IsAwake(core)
+        live, total = CountLiveClientFloor(core)
+        local _, count = ReadUsableTileData(core)
+        tile_count = count
+    end
+
+    print(PATCH_LOG_PREFIX .. _G.string.format(
+        "Client floor recovery timed out: reason=%s player=%s,%s core=%s awake=%s tiledata=%d floor=%d/%d.",
+        tostring(client_recovery.reason),
+        player_x,
+        player_z,
+        core_guid,
+        tostring(awake),
+        tile_count,
+        live,
+        total
+    ))
+end
+
+local RunClientFloorRecovery
+
+local function ScheduleClientFloorRecovery(generation, delay)
+    if generation ~= client_recovery.generation
+        or _G.TheWorld == nil
+        or not IsValidEntity(_G.TheWorld) then
+        return
+    end
+
+    client_recovery.task = _G.TheWorld:DoTaskInTime(delay or 0, function()
+        client_recovery.task = nil
+        if generation == client_recovery.generation then
+            RunClientFloorRecovery(generation)
+        end
+    end)
+end
+
+RunClientFloorRecovery = function(generation)
+    if generation ~= client_recovery.generation
+        or not hooks.map
+        or _G.TheNet == nil
+        or _G.TheNet:IsDedicated() then
+        return
+    end
+
+    client_recovery.attempt = client_recovery.attempt + 1
+    local player = _G.ThePlayer
+    local core = nil
+    if IsValidEntity(player)
+        and player.Transform ~= nil
+        and player.GetTimeAlive ~= nil
+        and player:GetTimeAlive() > 0.5 then
+        core = FindOccupiedClientCore(player, client_recovery.hinted_core)
+    end
+
+    if IsAwake(core) and ReadUsableTileData(core) ~= nil then
+        client_recovery.active_core = core
+        if generation ~= client_recovery.generation then
+            return
+        end
+
+        -- The required Mod's OnEntityWake client path has already built the
+        -- ordinary floor before core_ready is queued. Never run that global
+        -- synthetic-tile builder a second time while live chunks exist: its
+        -- second void-mask pass can leave valid entities fully obscured. Only
+        -- an actually empty/invalid inst.tiles list is eligible for recovery.
+        local live_before = CountLiveClientFloor(core)
+        if live_before <= 0 then
+            if client_recovery.missing_core ~= core then
+                client_recovery.missing_core = core
+                client_recovery.missing_observations = 0
+            end
+            client_recovery.missing_observations =
+                client_recovery.missing_observations + 1
+
+            -- Basements may schedule its own short client retry while waking.
+            -- Require two consecutive missing observations before invoking the
+            -- global synthetic-tile builder, so our fallback cannot race and
+            -- duplicate that ordinary initialization.
+            if client_recovery.missing_observations < 2 then
+                client_recovery.active_core = nil
+                ScheduleClientFloorRecovery(
+                    generation,
+                    CLIENT_RECOVERY_FAST_DELAY
+                )
+                return
+            end
+        else
+            client_recovery.missing_core = nil
+            client_recovery.missing_observations = 0
+        end
+
+        local recovered = CorrectClientGeometry(core)
+        client_recovery.active_core = nil
+        if generation ~= client_recovery.generation then
+            return
+        end
+
+        if recovered then
+            local live, total = CountLiveClientFloor(core)
+            if not core._wallgrid_client_recovery_reported then
+                core._wallgrid_client_recovery_reported = true
+                print(PATCH_LOG_PREFIX .. _G.string.format(
+                    "Client floor recovery completed: reason=%s core=%s attempts=%d action=%s floor=%d/%d.",
+                    tostring(client_recovery.reason),
+                    tostring(core.GUID),
+                    client_recovery.attempt,
+                    live_before > 0 and "verified" or "rebuilt",
+                    live,
+                    total
+                ))
+            end
+            client_recovery.task = nil
+            client_recovery.attempt = 0
+            client_recovery.reason = nil
+            client_recovery.hinted_core = nil
+            client_recovery.missing_core = nil
+            client_recovery.missing_observations = 0
+            return
+        end
+    end
+
+    if client_recovery.attempt >= CLIENT_RECOVERY_MAX_ATTEMPTS then
+        ReportClientRecoveryTimeout()
+        client_recovery.task = nil
+        client_recovery.reason = nil
+        client_recovery.hinted_core = nil
+        client_recovery.active_core = nil
+        client_recovery.missing_core = nil
+        client_recovery.missing_observations = 0
+        return
+    end
+
+    local delay = client_recovery.attempt < CLIENT_RECOVERY_FAST_ATTEMPTS
+        and CLIENT_RECOVERY_FAST_DELAY
+        or CLIENT_RECOVERY_SLOW_DELAY
+    ScheduleClientFloorRecovery(generation, delay)
+end
+
+local function RequestClientFloorRecovery(reason, hinted_core)
+    if not hooks.map
+        or _G.TheNet == nil
+        or _G.TheNet:IsDedicated()
+        or _G.TheWorld == nil then
+        return
+    end
+
+    CancelClientFloorRecovery()
+    client_recovery.reason = reason or "unspecified"
+    client_recovery.hinted_core = basement_cores[hinted_core]
+        and hinted_core
+        or nil
+    ScheduleClientFloorRecovery(client_recovery.generation, 0)
+end
+
+local function QueueClientReadyCorrection(inst)
+    RequestClientFloorRecovery("core_ready", inst)
+end
+
+local function InstallClientFloorLifecycleHooks()
+    if _G.TheWorld == nil
+        or _G.TheNet == nil
+        or _G.TheNet:IsDedicated()
+        or _G.TheWorld._wallgrid_client_lifecycle_hooks then
+        return
+    end
+
+    _G.TheWorld._wallgrid_client_lifecycle_hooks = true
+    _G.TheWorld:ListenForEvent("playeractivated", function(_, player)
+        if player == nil or player == _G.ThePlayer then
+            RequestClientFloorRecovery("playeractivated", nil)
+        end
+    end)
+    _G.TheWorld:ListenForEvent("playerdeactivated", function(_, player)
+        if player == nil or player == _G.ThePlayer then
+            CancelClientFloorRecovery()
+        end
+    end)
+    _G.TheWorld:ListenForEvent("onremove", CancelClientFloorRecovery)
+end
+
+local function CancelPendingCorrections(inst)
+    CancelTask(inst, "_wallgrid_server_task")
+    CancelTask(inst, "_wallgrid_client_task")
+    CancelTask(inst, "_basement_reborn_farm_migration_task")
+end
+
+local function OnCoreRemoved(inst)
+    basement_cores[inst] = nil
+    core_phase_cache[inst] = nil
+    if last_query_core == inst then
+        last_query_core = nil
+    end
+    if last_weather_core == inst then
+        last_weather_core = nil
+    end
+    if client_recovery.hinted_core == inst
+        or client_recovery.active_core == inst then
+        CancelClientFloorRecovery()
+    end
+    CancelPendingCorrections(inst)
+end
+
+AddSimPostInit(function()
+    InstallFarmPlowTileArrivalCompatibility()
+    ExtendBasementWorldState()
+    InstallPrecipitationShelterHook()
+    InstallSoilDrinkerEventRouter()
+    InstallClientFloorLifecycleHooks()
+end)
+
+AddPrefabPostInit("farm_plow_item", InstallFarmPlowCompatibility)
+AddPrefabPostInit("wall_basement", function(inst)
+    -- The upstream wall has workable on both host and remote client. Removing
+    -- its official MINE_workable tag also removes the normal mining prompt.
+    ExpansionPolicy.InstallWall(inst, ALLOW_BASEMENT_EXPANSION)
+end)
+AddPrefabPostInit("farm_plow_item_placer", InstallFarmPlowPlacerCompatibility)
+AddPrefabPostInit("basement_tile", StabilizeClientFloorPrefab)
+AddPrefabPostInit("basement_voidtile", StabilizeClientFloorPrefab)
+AddPrefabPostInit(
+    "basement_background",
+    InstallBasementBackgroundMousePassthrough
+)
+
+AddPrefabPostInit("basement", function(inst)
+    basement_cores[inst] = true
+    ExtendBasementWorldState()
+    InstallPrecipitationShelterHook()
+    InstallFunctionHooks()
+    InstallRubbleHook(inst)
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+        ExpansionPolicy.InstallCore(inst, ALLOW_BASEMENT_EXPANSION, Geometry)
+        QueueCorrection(
+            inst,
+            "_basement_reborn_farm_migration_task",
+            0.2,
+            MigrateLegacyFarmSoilGrid
+        )
+    end
+
+    local original_wake = inst.OnEntityWake
+    if type(original_wake) == "function" then
+        inst.OnEntityWake = function(core, ...)
+            original_wake(core, ...)
+
+            if hooks.map
+                and _G.TheWorld ~= nil
+                and _G.TheWorld.ismastersim
+                and not hooks.server then
+                QueueCorrection(core, "_wallgrid_server_task", 0, RebuildServerWalls)
+            end
+            QueueClientReadyCorrection(core)
+        end
+    end
+
+    local original_sleep = inst.OnEntitySleep
+    if type(original_sleep) == "function" then
+        inst.OnEntitySleep = function(core, ...)
+            CancelPendingCorrections(core)
+            return original_sleep(core, ...)
+        end
+    end
+
+    inst:ListenForEvent("ontilechanged", function(core)
+        if hooks.map
+            and _G.TheWorld ~= nil
+            and _G.TheWorld.ismastersim
+            and not hooks.server then
+            QueueCorrection(core, "_wallgrid_server_task", 0, RebuildServerWalls)
+        end
+        if hooks.map and not hooks.client then
+            QueueCorrection(core, "_wallgrid_client_task", 0, CorrectClientGeometry)
+        end
+        RequestClientFloorRecovery("tiledata_changed", core)
+    end)
+
+    inst:ListenForEvent("onremove", OnCoreRemoved)
+
+    if hooks.map
+        and _G.TheWorld ~= nil
+        and _G.TheWorld.ismastersim
+        and not hooks.server then
+        QueueCorrection(inst, "_wallgrid_server_task", 0, RebuildServerWalls)
+    end
+    QueueClientReadyCorrection(inst)
+end)
+
+```
+

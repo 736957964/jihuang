@@ -4670,3 +4670,28 @@
 [2026-11-01 05:55:24] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 05:55:24] Reducer: 成功将 Mod 2717158113 (More Craftables) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
 [2026-11-01 05:55:24] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 05:55:27] Git 自动提交并推送成功！
+[2026-11-01 05:55:27] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 05:55:27] 【批次结算】：本批归约出 2 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 05:55:57] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['614062720', '381295942', '3804641395', '3786122407', '3721858089', '3502601307']
+[2026-11-01 05:55:57] SteamCMD 下载 614062720 ...
+[2026-11-01 05:55:57] SteamCMD 下载 381295942 ...
+[2026-11-01 05:55:57] SteamCMD 下载 3804641395 ...
+[2026-11-01 05:55:57] SteamCMD 下载 3786122407 ...
+[2026-11-01 05:55:57] SteamCMD 下载 3502601307 ...
+[2026-11-01 05:55:57] SteamCMD 下载 3721858089 ...
+[2026-11-01 05:56:05] Worker [614062720] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 05:56:14] Worker [381295942] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 05:56:23] Worker [3804641395] 成功解析入库暂存区 -> 自动盾反 (类别: 06_世界生成与生态系统类)
+[2026-11-01 05:56:36] Worker [3786122407] 成功解析入库暂存区 -> allow_expansion (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 05:57:55] Worker [3721858089] 成功解析入库暂存区 -> Better Skill Affinity Wortox (类别: 05_战斗AI行为树与Boss机制类)
+[2026-11-01 05:58:50] Worker [3502601307] 成功解析入库暂存区 -> 骨甲倒计时 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 05:58:50] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 05:58:50] Reducer: 成功将 Mod 3502601307 (骨甲倒计时) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 05:58:51] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 05:58:51] Reducer: 成功将 Mod 3721858089 (Better Skill Affinity Wortox) 增量归约合入既有权威母本 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md
+[2026-11-01 05:58:51] Reducer: 完成母本归约并清理草稿 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md
+[2026-11-01 05:58:51] Reducer: 成功将 Mod 3786122407 (allow_expansion) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 05:58:51] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 05:58:51] Reducer: 成功将 Mod 3804641395 (自动盾反) 增量归约合入既有权威母本 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-01 05:58:51] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md

@@ -423,3 +423,97 @@ end)
 
 ```
 
+
+
+### 变体演进：Better Skill Affinity Wortox (Mod 3721858089)
+- **变体场景与切面**：收录来自工坊 Mod 3721858089 (`Better Skill Affinity Wortox`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3721858089)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:voidcloth_scythe
+
+AddPrefabPostInit("voidcloth_scythe", function(inst)
+
+    if not GLOBAL.TheWorld or not GLOBAL.TheWorld.ismastersim then
+      return
+    end
+
+    inst:DoTaskInTime(0, function()
+
+        if inst.components.weapon == nil then
+            return
+        end
+
+        inst.components.weapon:SetOnAttack(function(inst, attacker, target)
+
+            TryToSparkOn(target, attacker)
+
+            if attacker ~= nil
+                and attacker.components ~= nil
+                and attacker.components.skilltreeupdater
+                and attacker.components.skilltreeupdater:IsActivated("wortox_allegiance_shadow")
+                and attacker.finishportalhoptask ~= nil
+            then
+
+                -- 50% chance
+                if math.random() < 0.5 then
+                    attacker:TryToPortalHop(1, false)
+                end
+
+                -- AoE da arma (sua versão custom)
+                inst:DoShadowAoE(attacker, target)
+            end
+        end)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+
+    local old = self.GetAttacked
+
+    function self:GetAttacked(attacker, damage, weapon, stimuli, ...)
+
+        local inst = self.inst
+
+        if inst == nil or inst.components == nil then
+            return old(self, attacker, damage, weapon, stimuli, ...)
+        end
+
+        local inv = inst.components.inventory
+
+
+        if inst:HasTag("player")
+            and not HasLunarSet(inst)
+            and HasLunarAffiliation(inst)
+            and inst.finishportalhoptask ~= nil
+        then
+
+            -- BLOQUEIA DANO
+            damage = 0
+
+            inst.components.health:DoDelta(0)
+
+            inst:PushEvent("wortox_lunar_blocked", {
+                attacker = attacker,
+                weapon = weapon
+            })
+
+            inst:TryToPortalHop(1, false)
+
+
+            return old(self, attacker, 0, weapon, stimuli, ...)
+        end
+
+        return old(self, attacker, damage, weapon, stimuli, ...)
+    end
+end)
+
+```
+
