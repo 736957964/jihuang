@@ -319,3 +319,69 @@ end)
 
 ```
 
+
+
+### 变体演进：Slash Command Trading (Mod 3007529410)
+- **变体场景与切面**：收录来自工坊 Mod 3007529410 (`Slash Command Trading`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3007529410)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+	AddPrefabPostInit("world", ListenForPlayers)
+	AddPrefabPostInit("world", FeeItemSetup)
+end
+
+--Mod support! Augments the below tables with modded materials should those mods be running
+local function TableCombine(table1, table2)
+	for k, v in ipairs(table2) do 	
+		table1[#table1 + 1] = table2[k]
+	end
+
+```
+
+
+
+### 变体演进：开局物品 (Mod 3012465209)
+- **变体场景与切面**：收录来自工坊 Mod 3012465209 (`开局物品`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3012465209)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+	AddPrefabPostInit("world", function(inst)
+		local steamlang = TheNet:GetLanguageCode() or nil
+		if steamlang and steam_support_languages[steamlang] then
+			print("<Starting NovicePacks> Get your language from steam!")
+			modimport("translate_" .. steam_support_languages[steamlang])
+		else
+			local lang = _G.LanguageTranslator.defaultlang or nil
+			if lang ~= nil and support_languages[lang] ~= nil then
+				if support_languages[lang] ~= true then
+					lang = support_languages[lang]
+				end
+				print("<Starting NovicePacks> Get your language from language mod!")
+				modimport("translate_" .. lang)
+			end
+		end
+
+		if MY_STRINGS_OVERRIDE ~= nil then
+			for k, v in pairs(MY_STRINGS_OVERRIDE) do
+				if MY_STRINGS[k] ~= nil then
+					MY_STRINGS[k] = v
+				end
+			end
+			MY_STRINGS_OVERRIDE = nil
+		end
+	end)
+
+```
+

@@ -1604,3 +1604,57 @@ if GetModConfigData("enable2") then
 
 ```
 
+
+
+### 变体演进：Announce_all (Mod 3411189852)
+- **变体场景与切面**：收录来自工坊 Mod 3411189852 (`Announce_all`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3411189852)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:burnable
+
+AddComponentPostInit("burnable", function(self)
+	if not TheWorld.ismastersim then return end
+    local oldStartWildfire = self.StartWildfire
+    local tag_list = {"structure","farm_plant","heavy","kelp","planted","palmconetree","moon_tree"}
+    --建筑.农田作物.巨大作物.海带.种植的*.棕榈树.月树
+    local prefab_list = {"rock_avocado_bush","boat_cannon","oceantree","oceantree_pillar"}
+    --石果.大炮.疙瘩树.高于平均的大树
+    local no_ann_tag = {"farm_plant_killjoy"}
+	--杂草
+    local no_ann_prefab = {"marsh_bush"}
+	--尖刺灌木丛
+    function self:StartWildfire()
+        if self.inst and all then
+            local x,y,z = self.inst.Transform:GetWorldPosition()
+            local player = FindClosestPlayerInRange(x, y, z,80)
+            local msg = self.inst:GetBasicDisplayName().."被引燃"
+            if player then
+                msg = msg..","..player.name.."你可以去灭火"
+            end
+            TheNet:Announce(msg)
+        else
+            if (self.inst:HasOneOfTags(tag_list) and not self.inst:HasOneOfTags(no_ann_tag)
+                or self.inst.planted
+                    or self.inst.components.pickable and self.inst.components.pickable.transplanted
+                        or find(self.inst.prefab,prefab_list))
+                            and not find(self.inst.prefab,no_ann_prefab) then
+                local x,y,z = self.inst.Transform:GetWorldPosition()
+                local player = FindClosestPlayerInRange(x, y, z,80)
+                local msg = self.inst:GetBasicDisplayName().."被引燃"
+                if player then
+                    msg = msg..","..player.name.."你可以去灭火"
+                end
+                TheNet:Announce(msg)
+            end
+        end
+        return oldStartWildfire(self)
+    end
+end)
+
+```
+
