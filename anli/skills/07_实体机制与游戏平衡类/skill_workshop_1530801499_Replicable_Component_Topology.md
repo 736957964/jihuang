@@ -1945,3 +1945,46 @@ end)
 
 ```
 
+
+
+### 变体演进：Yay! Rain! (Mod 1813311384)
+- **变体场景与切面**：收录来自工坊 Mod 1813311384 (`Yay! Rain!`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1813311384)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wormwood
+
+AddPrefabPostInit("wormwood", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+
+	--[[local rHealth = GetModConfigData("HEALTH_RAIN")
+	local rDelay = GetModConfigData("DELAY_RAIN")
+	local rWet = GetModConfigData("WET_RAIN")
+	local rDay = GetModConfigData("DAY_RAIN")]]--
+
+	inst:DoPeriodicTask(GetModConfigData("DELAY_RAIN"), function()
+		if GetModConfigData("WET_RAIN") and inst.components.moisture.moisture == 0 then
+			print("Not Wet")
+		elseif not GetModConfigData("WET_RAIN") and not GLOBAL.TheWorld.state.israining then
+			print("Not Raining")
+		else
+
+			if GetModConfigData("DAY_RAIN") and GLOBAL.TheWorld.state.phase ~= "day" then
+				print("Too Dark")
+			elseif inst.components.moisture.moisture > 80 then
+				print("Too Wet")
+			else
+				inst.components.health:DoDelta(GetModConfigData("HEALTH_RAIN"))
+			end
+		end
+	end)
+end)		
+
+```
+

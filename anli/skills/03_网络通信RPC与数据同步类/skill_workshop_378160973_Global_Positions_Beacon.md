@@ -4164,3 +4164,76 @@ end)
 
 ```
 
+
+
+### 变体演进：Cy的黑店 2.0 (Mod 1095971442)
+- **变体场景与切面**：收录来自工坊 Mod 1095971442 (`Cy的黑店 2.0`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1095971442)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+ ,           modmain.lua,
+  w  state      AddPrefabPostInit("world").
+
+mods -   (    ).
+mods.lib -   ( )      ,   .
+mods.lib.version -  
+
+--]]
+if _silence == nil then
+	print(_version,modinfo.name) --Show current version of lib
+end
+
+
+--[[
+--  ,  , ,            -.
+if mods.lib then
+	return
+end
+--]]
+
+--[[
+,     :
+	1)   .    - .
+	2)  N- .           ,   .
+    old_lib.       .   ,  .
+  ,   ( ) .   .
+--]]
+local old_lib = mods.lib or {} -- ,    nil
+
+--     .   ,   .
+if old_lib._libStopWorking then
+	old_lib._libStopWorking()
+end
+
+--      ,       .
+local IS_ACTIVE = true -- ,    .     .
+local function _libStopWorking()
+	--  .     .
+	--,  ,   ,   .
+	IS_ACTIVE = nil
+	--       ,     .
+	--       ().
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+AddPrefabPostInit("world",world_init)
+--AddPrefabPostInit("forest",world_init)
+--    , ..   forest .
+
+
+-- .    -  -,   ,    - .
+local EmptyFunction = function() end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:researchlab2
+end
+AddPrefabPostInit("researchlab2",confn)
+
+```
+

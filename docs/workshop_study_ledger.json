@@ -3972,8 +3972,26 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 04:04:19",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1095971442",
+      "name": "Cy的黑店 2.0",
+      "author": "cy",
+      "version": "2.6",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 04:07:57",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "1813311384",
+      "name": "Yay! Rain!",
+      "author": "Temporary Solutions",
+      "version": "1.2.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 04:07:57",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 04:04:19"
+  "lastUpdated": "2026-11-01 04:07:57"
 }
