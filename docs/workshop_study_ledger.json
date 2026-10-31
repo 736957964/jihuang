@@ -3702,8 +3702,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 03:45:48",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3824396997",
+      "name": "momo蓝图",
+      "author": "momo",
+      "version": "1.01",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:46:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3825943267",
+      "name": "【里程碑】",
+      "author": "月落星霜",
+      "version": "0.3.8",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 03:46:48",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:45:48"
+  "lastUpdated": "2026-11-01 03:46:48"
 }

@@ -3151,3 +3151,119 @@ return M
 
 ```
 
+
+
+### 变体演进：momo蓝图 (Mod 3824396997)
+- **变体场景与切面**：收录来自工坊 Mod 3824396997 (`momo蓝图`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3824396997)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:fishable
+AddComponentPostInit("fishable", function(self) --钓鱼
+	local oldHookFish=self.HookFish
+	self.HookFish = function(self,fisherman)
+		if math.random() < .1  then
+			local px,py,pz= fisherman.Transform:GetWorldPosition()
+			local lantu = SpawnPrefab("blueprint")
+			lantu.Transform:SetPosition(px, 0, pz)
+			SpawnPrefab("small_puff").Transform:SetPosition(px, 0, pz)
+			TheNet:Announce(""..fisherman:GetDisplayName().."在钓鱼时获得"..lantu:GetDisplayName().."")
+		end
+		if oldHookFish then
+			return oldHookFish(self,fisherman)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:oceanfishingrod
+
+AddComponentPostInit("oceanfishingrod", function(self)--海钓
+	local oldCatchFish=self.CatchFish
+	self.CatchFish = function(self)
+		if self.target ~= nil and self.target.components.oceanfishable ~= nil then
+			if math.random() < .1  then
+				local px,py,pz= self.fisher.Transform:GetWorldPosition()
+				local lantu = SpawnPrefab("blueprint")
+				lantu.Transform:SetPosition(px, 0, pz)
+				SpawnPrefab("small_puff").Transform:SetPosition(px, 0, pz)
+				TheNet:Announce(""..self.fisher:GetDisplayName().."在钓"..self.target:GetDisplayName().."时获得"..lantu:GetDisplayName().."")
+			end
+		end
+		if oldCatchFish then
+			oldCatchFish(self)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer", function(self)--高级烹饪
+	local oldHarvest=self.Harvest
+	self.Harvest = function(self,harvester)
+		if (self.inst.prefab == "cookpot" or self.inst.prefab == "archive_cookpot" or self.inst.prefab == "portablecookpot") and harvester ~= nil and self.chef_id == harvester.userid and self.product 
+		and self.product ~= "wetgoop" and self.product ~= "monsterlasagna" and self.product ~= "monstertartare" then
+			if math.random() < .03  then
+				local px,py,pz= harvester.Transform:GetWorldPosition()
+				local lantu = SpawnPrefab("blueprint")
+				lantu.Transform:SetPosition(px, 0, pz)
+				local liaoli = SpawnPrefab(self.product)
+				SpawnPrefab("small_puff").Transform:SetPosition(px, 0, pz)
+				TheNet:Announce(""..harvester:GetDisplayName().."在烹饪"..liaoli:GetDisplayName().."时获得"..lantu:GetDisplayName().."")
+			end
+		end
+		return oldHarvest and oldHarvest(self,harvester) or nil
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:cooker
+
+AddComponentPostInit("cooker", function(self)--普通烹饪
+	local oldCookItem=self.CookItem
+	self.CookItem = function(self,item, chef)
+		if item ~= nil and chef and chef:HasTag("player") then
+			if math.random() < .005  then
+				local px,py,pz= chef.Transform:GetWorldPosition()
+				local lantu = SpawnPrefab("blueprint")
+				lantu.Transform:SetPosition(px, 0, pz)
+				SpawnPrefab("small_puff").Transform:SetPosition(px, 0, pz)
+				TheNet:Announce(""..chef:GetDisplayName().."在烹饪"..item:GetDisplayName().."时获得"..lantu:GetDisplayName().."")
+			end
+		end
+		return oldCookItem and oldCookItem(self,item, chef) or nil
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:shaveable
+
+AddComponentPostInit("shaveable", function(self)--刮毛10%掉落蓝图
+	local oldShave=self.Shave
+	self.Shave = function(self,shaver, shaving_implement)
+		if shaver ~= nil and self.inst and shaving_implement and self.prize_prefab ~= nil and self.prize_count ~= nil then
+			if self.canshavetest ~= nil then
+				local pass, reason = self.canshavetest(self.inst, shaver)
+				if not pass then
+					return
+				end
+			end
+			if math.random() < .1  then
+				local px,py,pz= shaver.Transform:GetWorldPosition()
+				local lantu = SpawnPrefab("blueprint")
+				lantu.Transform:SetPosition(px, 0, pz)
+				SpawnPrefab("small_puff").Transform:SetPosition(px, 0, pz)
+				TheNet:Announce(""..shaver:GetDisplayName().."在刮"..self.inst:GetDisplayName().."时获得"..lantu:GetDisplayName().."")
+			end
+		end
+		return oldShave and oldShave(self,shaver, shaving_implement) or nil
+	end
+end)
+
+```
+
