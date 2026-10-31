@@ -4548,8 +4548,44 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 05:33:00",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3750882508",
+      "name": "Fresh Mod(物品保鲜)",
+      "author": "YiMaoa",
+      "version": "1.1.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:35:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3764553505",
+      "name": "Adoptable Woby at the Rock Den - Pet & Portal Fix",
+      "author": "Landyas",
+      "version": "1.03",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:35:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3787042651",
+      "name": "Extra Equip Slots",
+      "author": "Ymathashe",
+      "version": "1.0.11",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:35:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3813295767",
+      "name": "Clockwork Parking",
+      "author": "Blind Guy",
+      "version": "0.13.28",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:35:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:33:00"
+  "lastUpdated": "2026-11-01 05:35:36"
 }

@@ -11012,3 +11012,853 @@ end)
 
 ```
 
+
+
+### 变体演进：Fresh Mod(物品保鲜) (Mod 3750882508)
+- **变体场景与切面**：收录来自工坊 Mod 3750882508 (`Fresh Mod(物品保鲜)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3750882508)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:backpack
+if config_backpack_mult ~= 1 then
+    AddPrefabPostInit("backpack", function(inst)
+        AddPreserver(inst, config_backpack_mult)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+    end)
+    AddPrefabPostInit("krampus_sack", function(inst)
+        AddPreserver(inst, config_backpack_mult)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:seedpouch
+    end)
+    AddPrefabPostInit("seedpouch", function(inst)
+        AddPreserver(inst, config_backpack_mult)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:treasurechest
+if config_chest_mult ~= 1 then
+    AddPrefabPostInit("treasurechest", function(inst)
+        AddPreserver(inst, config_chest_mult)
+    end)
+
+```
+
+
+
+### 变体演进：Adoptable Woby at the Rock Den - Pet & Portal Fix (Mod 3764553505)
+- **变体场景与切面**：收录来自工坊 Mod 3764553505 (`Adoptable Woby at the Rock Den - Pet & Portal Fix`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3764553505)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wobysmall
+
+AddPrefabPostInit("wobysmall", DisableCommandWheelForAdoptedWoby)
+AddPrefabPostInit("wobybig", DisableCommandWheelForAdoptedWoby)
+
+local function IsOwnedAdoptedBigWoby(inst, doer)
+    if inst.prefab ~= "wobybig"
+        or not inst:HasTag(TAG_WOBY)
+        or inst:HasTag("hitched")
+        or doer == nil
+    then
+        return false
+    end
+
+    local commands = doer.woby_commands_classified
+    return commands ~= nil
+        and commands.GetWoby ~= nil
+        and commands:GetWoby() == inst
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wobybig
+AddPrefabPostInit("wobysmall", DisableCommandWheelForAdoptedWoby)
+AddPrefabPostInit("wobybig", DisableCommandWheelForAdoptedWoby)
+
+local function IsOwnedAdoptedBigWoby(inst, doer)
+    if inst.prefab ~= "wobybig"
+        or not inst:HasTag(TAG_WOBY)
+        or inst:HasTag("hitched")
+        or doer == nil
+    then
+        return false
+    end
+
+    local commands = doer.woby_commands_classified
+    return commands ~= nil
+        and commands.GetWoby ~= nil
+        and commands:GetWoby() == inst
+end
+
+```
+
+
+
+### 变体演进：Extra Equip Slots (Mod 3787042651)
+- **变体场景与切面**：收录来自工坊 Mod 3787042651 (`Extra Equip Slots`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3787042651)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+    local _GetEquippedItem = self.GetEquippedItem
+    -- Vanilla useable hats (bush etc.) call GetEquippedItem(HEAD) and index .useableitem.
+    -- With armor on HEAD and bush on HEAD2 that crashes. Redirect only in the dangerous cases.
+    function self:GetEquippedItem(eslot)
+        local item = _GetEquippedItem(self, eslot)
+        if eslot == EQUIPSLOTS.HEAD then
+            local h2 = _GetEquippedItem(self, EQUIPSLOTS.HEAD2)
+            if h2 ~= nil and h2:IsValid() and h2.components.useableitem ~= nil then
+                if h2:HasTag("inuse") or h2:HasTag("hide") then
+                    return h2
+                end
+                -- Load/transition: HEAD armor can be INLIMBO while bush listener still fires.
+                if item ~= nil and item.components.useableitem == nil and item:HasTag("INLIMBO") then
+                    return h2
+                end
+                if item == nil then
+                    if h2:HasTag("inuse") or h2:HasTag("hide") then
+                        return h2
+                    end
+                end
+            end
+        end
+        return item
+    end
+
+    local _Equip = self.Equip
+    function self:Equip(item, old_to_active, no_animation, force_ui_anim)
+        if item ~= nil and item.components.equippable ~= nil then
+            AssignEquipSlot(self, item)
+        end
+
+        local ok = _Equip(self, item, old_to_active, no_animation, force_ui_anim)
+
+        if ok and item ~= nil and item:IsValid() and item.components.equippable ~= nil then
+            local eslot = item.components.equippable.equipslot
+            if eslot == EQUIPSLOTS.BACKPACK and item.components.container ~= nil then
+                item.components.container:Open(self.inst)
+                self.inst:PushEvent("setoverflow", { overflow = item })
+            end
+            if IsRenderRelevantSlot(eslot) then
+                OnEquipVisual(self.inst, item)
+            end
+            -- SoftRefresh of armor/clothes must not leave backpack closed.
+            EnsureBackpackOverflowActive(self.inst)
+        end
+        return ok
+    end
+
+    local _Unequip = self.Unequip
+    function self:Unequip(equipslot, slip, force)
+        local item = _Unequip(self, equipslot, slip, force)
+        if equipslot == EQUIPSLOTS.BACKPACK then
+            self.inst:PushEvent("setoverflow", {})
+        end
+        if item ~= nil and item:IsValid() and item.components.equippable ~= nil then
+            ApplyKindSlot(item.components.equippable, GetEquipKind(item))
+        end
+        if IsRenderRelevantSlot(equipslot) then
+            OnUnequipVisual(self.inst, equipslot)
+        end
+        if equipslot ~= EQUIPSLOTS.BACKPACK then
+            EnsureBackpackOverflowActive(self.inst)
+        end
+        return item
+    end
+
+    self.GetOverflowContainer = GetBackpackOverflow
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:equippable
+
+AddComponentPostInit("equippable", function(self)
+    self.inst:DoTaskInTime(0, function(inst)
+        if inst:IsValid() then
+            ApplyDefaultSlot(inst)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:setbonus
+-- so armor-side misroutes still form sets without breaking HEAD+BODY.
+AddComponentPostInit("setbonus", function(self)
+    function self:_HasSetBonus(inventory)
+        local heads = {
+            inventory.equipslots[EQUIPSLOTS.HEAD],
+            inventory.equipslots[EQUIPSLOTS.HEAD2],
+        }
+        local bodies = {
+            inventory.equipslots[EQUIPSLOTS.BODY],
+            inventory.equipslots[EQUIPSLOTS.BODY2],
+        }
+        for _, head in ipairs(heads) do
+            if head ~= nil and head.components.setbonus ~= nil then
+                for _, body in ipairs(bodies) do
+                    if body ~= nil
+                        and body.components.setbonus ~= nil
+                        and head.components.setbonus.setname == body.components.setbonus.setname then
+                        return true, head.components.setbonus.setname
+                    end
+                end
+            end
+        end
+        return false
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+
+AddPrefabPostInit("inventory_classified", function(inst)
+    local function ApplyOverflowOverride()
+        inst.GetOverflowContainer = ClientGetOverflowContainer
+        for _, key in ipairs({
+            "ReceiveItem",
+            "GetOverflowContainer",
+            "Has",
+            "HasItemWithTag",
+            "IsFull",
+            "IsOpenedBy",
+        }) do
+            PatchOverflowUpvalues(inst[key], ClientGetOverflowContainer)
+        end
+        -- Catch any other attached fns that close over GetOverflowContainer.
+        for _, v in pairs(inst) do
+            if type(v) == "function" then
+                PatchOverflowUpvalues(v, ClientGetOverflowContainer)
+            end
+        end
+    end
+
+    ApplyOverflowOverride()
+    inst:DoTaskInTime(0, ApplyOverflowOverride)
+end)
+
+--------------------------------------------------------------------------
+-- HUD equip slots
+-- Register slots BEFORE Rebuild, then force-fit the wooden background.
+-- Vanilla only SetScale(1.22); without Image:Flow the bar stays too narrow.
+--------------------------------------------------------------------------
+local INV_W = 68
+local INV_SEP = 12
+local INV_INTERSEP = 28
+
+local function CalcInventoryBarWidth(num_slots, num_equip, num_buttons)
+    local num_slotintersep = math.ceil(num_slots / 5)
+    local num_equipintersep = num_buttons > 0 and 1 or 0
+    return (num_slots + num_equip + num_buttons) * INV_W
+        + (num_slots + num_equip + num_buttons - num_slotintersep - num_equipintersep - 1) * INV_SEP
+        + (num_slotintersep + num_equipintersep) * INV_INTERSEP
+end
+
+local function FitInventoryBarBackground(invbar)
+    if invbar == nil or invbar.bg == nil or invbar.owner == nil then
+        return
+    end
+    local inventory = invbar.owner.replica and invbar.owner.replica.inventory or nil
+    if inventory == nil or invbar.equipslotinfo == nil then
+        return
+    end
+
+    local num_slots = inventory:GetNumSlots()
+    local num_equip = #invbar.equipslotinfo
+    local num_buttons = invbar.inspectcontrol ~= nil and 1 or 0
+    local total_w = CalcInventoryBarWidth(num_slots, num_equip, num_buttons)
+
+    if invbar.bg.Flow ~= nil then
+        invbar.bg:Flow(total_w + 60, 256, true)
+    end
+
+    -- Reference scale 1.22 is vanilla self-inspect for 15 inv + 3 equip + 1 button.
+    local ref_w = CalcInventoryBarWidth(15, 3, 1)
+    local scale = ((total_w + 60) / (ref_w + 60)) * 1.22
+    invbar.bg:SetScale(scale, 1, 1)
+    if invbar.bgcover ~= nil and invbar.bgcover.SetScale ~= nil then
+        if invbar.bgcover.Flow ~= nil then
+            invbar.bgcover:Flow(total_w + 60, 256, true)
+        end
+        invbar.bgcover:SetScale(scale, 1, 1)
+    end
+end
+
+local function EnsureExtraEquipSlots(invbar)
+    if invbar == nil or invbar.equipslotinfo == nil then
+        return false
+    end
+    if invbar._ees_slots_added then
+        return false
+    end
+    invbar._ees_slots_added = true
+
+    -- sortkey after vanilla HANDS/BODY/HEAD (0/1/2)
+    invbar:AddEquipSlot(EQUIPSLOTS.HEAD2, HUD_ATLAS, "equip_slot_head.tex", 3)
+    invbar:AddEquipSlot(EQUIPSLOTS.BODY2, HUD_ATLAS, "equip_slot_body.tex", 4)
+    invbar:AddEquipSlot(EQUIPSLOTS.BACKPACK, HUD_ATLAS, "equip_slot_body.tex", 5)
+    invbar:AddEquipSlot(EQUIPSLOTS.AMULET, HUD_ATLAS, "equip_slot_body.tex", 6)
+    return true
+end
+
+AddClassPostConstruct("widgets/inventorybar", function(self)
+    -- Add as early as possible (constructor already added HANDS/BODY/HEAD).
+    EnsureExtraEquipSlots(self)
+
+    local _Rebuild = self.Rebuild
+    function self:Rebuild(...)
+        EnsureExtraEquipSlots(self)
+        local ret = _Rebuild(self, ...)
+        FitInventoryBarBackground(self)
+        return ret
+    end
+
+    local _Refresh = self.Refresh
+    if _Refresh ~= nil then
+        function self:Refresh(...)
+            local ret = _Refresh(self, ...)
+            FitInventoryBarBackground(self)
+            return ret
+        end
+    end
+
+    self.inst:DoTaskInTime(0, function()
+        if self.Rebuild ~= nil then
+            self.rebuild_pending = true
+        end
+    end)
+end)
+
+--------------------------------------------------------------------------
+-- Vanilla exception gear: callbacks that hardcode EQUIPSLOTS.HEAD/BODY.
+-- Retarget to the actual equipped instance so HEAD2/BODY2 never crash
+-- vanilla (bush + armor hat was the known NPE).
+--------------------------------------------------------------------------
+local function BlockListenDuring(inst, owner, should_block, call)
+    local _ListenForEvent = inst.ListenForEvent
+    inst.ListenForEvent = function(self, event, fn, source)
+        if should_block(event, source) then
+            return
+        end
+        return _ListenForEvent(self, event, fn, source)
+    end
+    call()
+    inst.ListenForEvent = _ListenForEvent
+end
+
+-- Prefab -> SG state name while the item is actively used (skip StopUsing there).
+local USEABLE_IDLE_STATE = {
+    bushhat = "hide",
+    plantregistryhat = "plantregistry_open",
+    nutrientsgoggleshat = "plantregistry_open",
+    inspectacleshat = "inspectacles_open",
+}
+
+local function PatchUseableEquippable(inst, idle_statename)
+    local eq = inst.components.equippable
+    if eq == nil or eq.onequipfn == nil or inst._ees_useable_patched then
+        return
+    end
+    inst._ees_useable_patched = true
+
+    local vanilla_onequip = eq.onequipfn
+    local vanilla_onunequip = eq.onunequipfn
+
+    local function stopusing(owner, data)
+        if data == nil then
+            return
+        end
+        if idle_statename ~= nil and data.statename == idle_statename then
+            return
+        end
+        -- Generic: only stop while marked in use (covers hats without a mapped idle state).
+        if idle_statename == nil and not inst:HasTag("inuse") then
+            return
+        end
+        if not inst:IsValid() or inst.components.useableitem == nil then
+            return
+        end
+        if eq:IsEquipped() then
+            inst.components.useableitem:StopUsingItem()
+        end
+    end
+
+    eq.onequipfn = function(i, owner, from_ground)
+        BlockListenDuring(i, owner, function(event, source)
+            return event == "newstate" and source == owner
+        end, function()
+            vanilla_onequip(i, owner, from_ground)
+        end)
+        i:ListenForEvent("newstate", stopusing, owner)
+        i._ees_stopusing = stopusing
+    end
+
+    eq.onunequipfn = function(i, owner)
+        if i._ees_stopusing ~= nil then
+            i:RemoveEventCallback("newstate", i._ees_stopusing, owner)
+            i._ees_stopusing = nil
+        end
+        if vanilla_onunequip ~= nil then
+            vanilla_onunequip(i, owner)
+        end
+    end
+end
+
+-- Auto-patch every useableitem that can be a hat (covers future vanilla hats too).
+-- Prefer immediate patch so equip does not register the vanilla newstate listener first.
+AddComponentPostInit("useableitem", function(self)
+    local inst = self.inst
+    local function try_patch()
+        if not inst:IsValid() or inst.components.equippable == nil then
+            return
+        end
+        local slot = inst.components.equippable.equipslot
+        local is_head = slot == EQUIPSLOTS.HEAD
+            or slot == EQUIPSLOTS.HEAD2
+            or inst:HasTag("hat")
+            or inst:HasTag("hide")
+        if not is_head then
+            return
+        end
+        PatchUseableEquippable(inst, USEABLE_IDLE_STATE[inst.prefab])
+    end
+    try_patch()
+    if not inst._ees_useable_patched then
+        inst:DoTaskInTime(0, try_patch)
+    end
+end)
+
+-- Explicit known hats (in case useableitem postinit timing differs).
+for prefab, idle in pairs(USEABLE_IDLE_STATE) do
+    AddPrefabPostInit(prefab, function(inst)
+        if GLOBAL.TheWorld.ismastersim then
+            PatchUseableEquippable(inst, idle)
+            if not inst._ees_useable_patched then
+                inst:DoTaskInTime(0, function()
+                    if inst:IsValid() then
+                        PatchUseableEquippable(inst, idle)
+                    end
+                end)
+            end
+        end
+    end)
+end
+
+-- balloonhat: pops whatever is on HEAD; retarget to this balloon on HEAD2.
+AddPrefabPostInit("balloonhat", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    inst:DoTaskInTime(0, function()
+        if not inst:IsValid() then
+            return
+        end
+        local eq = inst.components.equippable
+        if eq == nil or eq.onequipfn == nil or inst._ees_balloon_patched then
+            return
+        end
+        inst._ees_balloon_patched = true
+        local vanilla_onequip = eq.onequipfn
+        local vanilla_onunequip = eq.onunequipfn
+
+        local function onattacked(owner, data)
+            if inst:IsValid()
+                and eq:IsEquipped()
+                and inst.components.poppable ~= nil then
+                inst.components.poppable:Pop()
+            end
+        end
+
+        eq.onequipfn = function(i, owner, from_ground)
+            BlockListenDuring(i, owner, function(event, source)
+                return event == "attacked" and source == owner
+            end, function()
+                vanilla_onequip(i, owner, from_ground)
+            end)
+            i:ListenForEvent("attacked", onattacked, owner)
+            i._ees_onattacked = onattacked
+        end
+
+        eq.onunequipfn = function(i, owner)
+            if i._ees_onattacked ~= nil then
+                i:RemoveEventCallback("attacked", i._ees_onattacked, owner)
+                i._ees_onattacked = nil
+            end
+            if vanilla_onunequip ~= nil then
+                vanilla_onunequip(i, owner)
+            end
+        end
+    end)
+end)
+
+-- moon mushroom retaliation looks up HEAD only.
+AddPrefabPostInit("moon_mushroomhat", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    inst:DoTaskInTime(0, function()
+        if not inst:IsValid() then
+            return
+        end
+        local eq = inst.components.equippable
+        if eq == nil or eq.onequipfn == nil or inst._ees_moon_patched then
+            return
+        end
+        inst._ees_moon_patched = true
+        local vanilla_onequip = eq.onequipfn
+        local vanilla_onunequip = eq.onunequipfn
+        local TUNING = GLOBAL.TUNING
+
+        local function tryspawn(hat)
+            local periodicspawner = hat.components.periodicspawner
+            if periodicspawner == nil then
+                hat._moonspore_tryspawn_count = nil
+                return
+            end
+            periodicspawner:TrySpawn()
+            hat._moonspore_tryspawn_count = (hat._moonspore_tryspawn_count or 1) - 1
+            if hat._moonspore_tryspawn_count <= 0 then
+                hat._moonspore_tryspawn_count = nil
+                return
+            end
+            hat:DoTaskInTime(TUNING.MUSHROOMHAT_MOONSPORE_RETALIATION_SPORE_DELAY, tryspawn)
+        end
+
+        local function onattacked(owner, data)
+            if not inst:IsValid() or not eq:IsEquipped() then
+                return
+            end
+            if inst._moonspore_tryspawn_count == nil then
+                inst:DoTaskInTime(TUNING.MUSHROOMHAT_MOONSPORE_RETALIATION_SPORE_DELAY, tryspawn)
+            end
+            inst._moonspore_tryspawn_count = TUNING.MUSHROOMHAT_MOONSPORE_RETALIATION_SPORE_COUNT
+        end
+
+        eq.onequipfn = function(i, owner, from_ground)
+            BlockListenDuring(i, owner, function(event, source)
+                return event == "attacked" and source == owner
+            end, function()
+                vanilla_onequip(i, owner, from_ground)
+            end)
+            i:ListenForEvent("attacked", onattacked, owner)
+            i._ees_onattacked = onattacked
+        end
+
+        eq.onunequipfn = function(i, owner)
+            if i._ees_onattacked ~= nil then
+                i:RemoveEventCallback("attacked", i._ees_onattacked, owner)
+                i._ees_onattacked = nil
+            end
+            if vanilla_onunequip ~= nil then
+                vanilla_onunequip(i, owner)
+            end
+        end
+    end)
+end)
+
+-- Red amulet rebirth SG: consume from AMULET (or legacy body slots).
+local function FindEquippedAmulet(inv, prefab)
+    if inv == nil then
+        return nil
+    end
+    for _, slot in ipairs({ EQUIPSLOTS.AMULET, EQUIPSLOTS.BODY, EQUIPSLOTS.BODY2 }) do
+        local item = inv:GetEquippedItem(slot)
+        if item ~= nil and (prefab == nil or item.prefab == prefab) and IsAmulet(item) then
+            return item
+        end
+    end
+end
+
+AddStategraphPostInit("wilson", function(sg)
+    local state = sg.states["amulet_rebirth"]
+    if state == nil or state.onexit == nil then
+        return
+    end
+    local _onexit = state.onexit
+    state.onexit = function(inst)
+        local item = FindEquippedAmulet(inst.components.inventory, "amulet")
+        if item ~= nil then
+            item = inst.components.inventory:RemoveItem(item)
+            if item ~= nil then
+                item:Remove()
+                item.persists = false
+            end
+        end
+        _onexit(inst)
+    end
+end)
+
+--------------------------------------------------------------------------
+-- Migrate old BODY-equipped packs/amulets into dedicated slots after load
+--------------------------------------------------------------------------
+local function MigrateEquips(inst)
+    if not GLOBAL.TheWorld.ismastersim or inst.components.inventory == nil then
+        return
+    end
+    local inv = inst.components.inventory
+    -- Use raw equipslots so GetEquippedItem HEAD redirects do not confuse migration.
+    local slots = inv.equipslots
+
+    local body = slots[EQUIPSLOTS.BODY]
+    if body ~= nil and IsBackpack(body) and slots[EQUIPSLOTS.BACKPACK] == nil then
+        inv:Unequip(EQUIPSLOTS.BODY)
+        body.components.equippable.equipslot = EQUIPSLOTS.BACKPACK
+        inv:Equip(body)
+    elseif body ~= nil and IsAmulet(body) and slots[EQUIPSLOTS.AMULET] == nil then
+        inv:Unequip(EQUIPSLOTS.BODY)
+        body.components.equippable.equipslot = EQUIPSLOTS.AMULET
+        inv:Equip(body)
+    end
+
+    local body2 = slots[EQUIPSLOTS.BODY2]
+    if body2 ~= nil and IsBackpack(body2) and slots[EQUIPSLOTS.BACKPACK] == nil then
+        inv:Unequip(EQUIPSLOTS.BODY2)
+        body2.components.equippable.equipslot = EQUIPSLOTS.BACKPACK
+        inv:Equip(body2)
+    end
+
+    -- Non-armor head still stuck on HEAD -> HEAD2, etc.
+    local head = slots[EQUIPSLOTS.HEAD]
+    if head ~= nil and not IsArmor(head) and slots[EQUIPSLOTS.HEAD2] == nil then
+        inv:Unequip(EQUIPSLOTS.HEAD)
+        head.components.equippable.equipslot = EQUIPSLOTS.HEAD2
+        inv:Equip(head)
+    end
+
+    -- Clears stale vanilla bush/plantregistry newstate listeners from saves / late patch.
+    local h2 = slots[EQUIPSLOTS.HEAD2]
+    if h2 ~= nil and h2:IsValid() and h2.components.useableitem ~= nil and not h2._ees_useable_rebound then
+        h2._ees_useable_rebound = true
+        PatchUseableEquippable(h2, USEABLE_IDLE_STATE[h2.prefab])
+        inv:Unequip(EQUIPSLOTS.HEAD2)
+        if h2:IsValid() then
+            inv:Equip(h2)
+        end
+    end
+
+    RefreshEquipmentVisuals(inst)
+end
+
+AddPlayerPostInit(function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        -- Early pass: stop crash-loop from stale bush listeners before first newstate burst.
+        inst:DoTaskInTime(0, MigrateEquips)
+        inst:DoTaskInTime(1, MigrateEquips)
+    end
+end)
+
+print("[Extra Equip Slots] vanilla-safe slots + HUD fit + render priority")
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:useableitem
+-- Prefer immediate patch so equip does not register the vanilla newstate listener first.
+AddComponentPostInit("useableitem", function(self)
+    local inst = self.inst
+    local function try_patch()
+        if not inst:IsValid() or inst.components.equippable == nil then
+            return
+        end
+        local slot = inst.components.equippable.equipslot
+        local is_head = slot == EQUIPSLOTS.HEAD
+            or slot == EQUIPSLOTS.HEAD2
+            or inst:HasTag("hat")
+            or inst:HasTag("hide")
+        if not is_head then
+            return
+        end
+        PatchUseableEquippable(inst, USEABLE_IDLE_STATE[inst.prefab])
+    end
+    try_patch()
+    if not inst._ees_useable_patched then
+        inst:DoTaskInTime(0, try_patch)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Clockwork Parking (Mod 3813295767)
+- **变体场景与切面**：收录来自工坊 Mod 3813295767 (`Clockwork Parking`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3813295767)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+-- Protect allied targets from clockwork hits, including already-fired projectiles.
+AddComponentPostInit("combat",function(combat)
+    local attacked=combat.GetAttacked
+    combat.GetAttacked=function(self,attacker,...)
+        if attacker and attacker.components and attacker.components.clockworkparking
+            and parking.Friendly(attacker,self.inst) then return false end
+        return attacked(self,attacker,...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:workable
+-- Rook collision damage uses workable:Destroy, independently of combat.
+AddComponentPostInit("workable", function(component)
+    component.inst:ListenForEvent("onbuilt", function() component.inst:AddTag("cw_playerbuilt") end)
+    local save, load = component.OnSave, component.OnLoad
+    component.OnSave = function(self)
+        local data, refs
+        if save then data, refs = save(self) end
+        if self.inst:HasTag("cw_playerbuilt") then
+            data = data or {}; data.cw_playerbuilt = true
+        end
+        return data, refs
+    end
+    component.OnLoad = function(self, data)
+        if load then load(self, data) end
+        if data and data.cw_playerbuilt then self.inst:AddTag("cw_playerbuilt") end
+    end
+    local destroy = component.Destroy
+    component.Destroy = function(self, worker, ...)
+        if worker and worker._cw_tree_charge and (not self.inst:HasTag("tree") or self:GetWorkAction()~=G.ACTIONS.CHOP or parking.ProtectedScenery(self.inst)) then return end
+        if parking.rook_protection and parking.IsFollowerRook(worker) and parking.ProtectedScenery(self.inst) then return end
+        return destroy(self, worker, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- Scope the filter to this search so force attacks and other combat checks still work.
+AddComponentPostInit("playercontroller",function(controller)
+    local original=controller.GetAttackTarget
+    controller.GetAttackTarget=function(self,force_attack,force_target,...)
+        local combat=self.inst.replica and self.inst.replica.combat
+        if not parking.hide_owned_attack or force_attack or not combat then
+            return original(self,force_attack,force_target,...)
+        end
+        if IsOwnedClockwork(self.inst,force_target) then force_target=nil end
+        local cantarget=combat.CanTarget
+        combat.CanTarget=function(c,target,...)
+            if IsOwnedClockwork(self.inst,target) then return false end
+            return cantarget(c,target,...)
+        end
+        local ok,target=G.pcall(original,self,force_attack,force_target,...)
+        combat.CanTarget=cantarget
+        if not ok then G.error(target,0) end
+        return target
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+-- Preserve inspection/Insight information when hiding the normal mouse attack.
+AddComponentPostInit("playeractionpicker",function(picker)
+    local original=picker.GetLeftClickActions
+    picker.GetLeftClickActions=function(self,position,target,...)
+        local actions=original(self,position,target,...)
+        local controller=self.inst.components and self.inst.components.playercontroller
+        local forced=controller and controller:IsControlPressed(G.CONTROL_FORCE_ATTACK)
+        if parking.hide_owned_attack and not forced and IsOwnedClockwork(self.inst,target) then
+            for i=#actions,1,-1 do
+                if actions[i].action==G.ACTIONS.ATTACK then
+                    -- Preserve a targeted primary action for native/Insight hover information.
+                    actions[i]=G.BufferedAction(self.inst,target,G.ACTIONS.LOOKAT)
+                end
+            end
+        end
+        return actions
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:arrowsign_post_placer
+local ranges = require("clockworkparking_range")
+AddPrefabPostInit("arrowsign_post_placer", function(inst) ranges.Attach(inst, function() return parking.base_radius end, true) end)
+AddPrefabPostInit("arrowsign_post", function(inst) ranges.Attach(inst, function() return parking.base_radius end, false) end)
+
+local toggle = AddAction("CW_TOGGLE", "Park", function(act)
+    local c = act.target and act.target.components.clockworkparking
+    if not parking.individual_toggle or not c or not c:IsOwner(act.doer) then return false end
+    if c.parked then return c:Follow(true) else c:Park(act.target:GetPosition()); c.resume_active = false; c.auto_exempt = nil; c.pending_recall = nil end
+    return true
+end)
+toggle.strfn = function(act) return act.target:HasTag("cw_parked") and "FOLLOW" or "PARK" end
+G.STRINGS.ACTIONS.CW_TOGGLE = { PARK = "Park", FOLLOW = "Follow" }
+
+local command = AddAction("CW_ARMY", "Park army here", function(act)
+    return parking.Command(act.target, act.doer)
+end)
+command.strfn = function(act)
+    if act.target.prefab == "arrowsign_post" then
+        return act.target:HasTag("cw_auto_enabled") and "AUTOOFF" or "AUTOON"
+    end
+    return act.target:HasTag("cw_army_parked") and "RECALL" or "PARK"
+end
+G.STRINGS.ACTIONS.CW_ARMY = { PARK = "Park army here", RECALL = "Recall army", AUTOON = "Enable base parking", AUTOOFF = "Disable base parking / recall" }
+
+AddComponentAction("SCENE", "inspectable", function(inst, doer, actions, right)
+    if not right then return end
+    if inst:HasTag("cw_clockwork") then
+        if parking.individual_toggle and inst._cw_owner and inst._cw_owner:value() == doer.userid then table.insert(actions, G.ACTIONS.CW_TOGGLE) end
+    elseif inst:HasTag("cw_parking_sign") then
+        table.insert(actions, G.ACTIONS.CW_ARMY)
+    end
+end)
+for _, sg in ipairs({ "wilson", "wilson_client" }) do
+    AddStategraphActionHandler(sg, G.ActionHandler(toggle, "doshortaction"))
+    AddStategraphActionHandler(sg, G.ActionHandler(command, "doshortaction"))
+end
+
+for _, prefab in ipairs({ "knight", "knight_nightmare", "bishop", "bishop_nightmare", "rook", "rook_nightmare" }) do
+    AddPrefabPostInit(prefab, function(inst)
+        inst:AddTag("cw_clockwork")
+        inst._cw_owner = G.net_string(inst.GUID, "clockworkparking.owner", "cwownerdirty")
+        if not G.TheWorld.ismastersim then return end
+        inst:AddComponent("clockworkparking")
+        parking.ProtectCombat(inst)
+        if parking.IsFollowerRook(inst) or prefab=="rook" or prefab=="rook_nightmare" then inst:DoPeriodicTask(.25,function() forestry.Update(inst) end) end
+    end)
+end
+for _, prefab in ipairs({ "homesign", "arrowsign_post" }) do
+    AddPrefabPostInit(prefab, function(inst)
+        inst:AddTag("cw_parking_sign")
+        inst._cw_offsetx=G.net_float(inst.GUID,"clockworkparking.offsetx","cwoffsetdirty")
+        inst._cw_offsetz=G.net_float(inst.GUID,"clockworkparking.offsetz","cwoffsetdirty")
+        if prefab=="arrowsign_post" then inst._cw_camera_heading=G.net_float(inst.GUID,"clockworkparking.camera_heading","cwoffsetdirty") end
+        if G.TheWorld.ismastersim then inst:AddComponent("clockworkstation") end
+    end)
+end
+AddPlayerPostInit(function(inst)
+    if not G.TheWorld.ismastersim then return end
+    inst:ListenForEvent("attacked", function(_, data) parking.Defend(inst, data) end)
+    inst:ListenForEvent("working",function(_,data) forestry.Work(inst,data) end)
+    inst:DoTaskInTime(3, function() parking.Bootstrap(inst) end)
+    inst:DoPeriodicTask(1, function() parking.AutoPark(inst) end)
+end)
+
+-- Brain starts inside the native prefab before our parking component exists.
+-- Always install the movement wrapper and resolve the component at execution.
+for _, name in ipairs({ "knightbrain", "bishopbrain", "rookbrain" }) do
+    AddBrainPostInit(name, function(brain)
+        require("clockworkparking_brain").Install(brain, G, parking, forestry)
+    end)
+end
+
+```
+
