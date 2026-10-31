@@ -5518,3 +5518,592 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：孤岛抽奖机 (Mod 3025140277)
+- **变体场景与切面**：收录来自工坊 Mod 3025140277 (`孤岛抽奖机`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3025140277)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if TheWorld.ismastersim then --判断主机
+        inst:AddComponent("daywalkerspawner") -- 添加噩梦猪人boss刷新组件
+
+        inst:ListenForEvent("ms_playerspawn", function(inst, player)    --玩家出生时 "ms_newplayerspawned"不包括变猴
+            local CurrentOnNewSpawn = player.OnNewSpawn or function() return true end -- 记录角色本身开局物品
+            player.OnNewSpawn = function(...)
+                player.components.inventory.ignoresound = true
+
+                for i,v in pairs({"footballhat","spear","lucky_goldnugget","lucky_goldnugget","lucky_goldnugget",
+                                "lucky_goldnugget","lucky_goldnugget","trinket_1","trinket_1","trinket_1","boat_item","oar"}) do  --猪皮帽 长矛 元宝*5 弹珠*3 船 浆
+                    local item = SpawnPrefab(v)
+                    SetSpellCB(item, player)
+                    player.components.inventory:GiveItem(item)
+                end
+                return CurrentOnNewSpawn(...)
+            end
+
+            -----------------玩家弹珠偿还
+            inst:DoTaskInTime(3*FRAMES,function ()
+				if player.components.ability and player.components.ability.danzhubagnum>0 then  --数据储存在组件里面
+                    local check = false
+                    if player.components.inventory then
+                        local bag = player.components.inventory:GetEquippedItem(EQUIPSLOTS.NLDANZHUBAG)
+                        if bag and bag.components.container then
+                            local item = SpawnPrefab("trinket_1")
+                            if item.components.stackable then
+                                item.components.stackable.stacksize = player.components.ability.danzhubagnum    --计数
+                            end
+                            bag.components.container:GiveItem(item)--,nil,nil,false
+                            check = true--给了就标记
+                        else    --一般情况下实现不了，只是保险
+                            local item = SpawnPrefab("trinket_1")
+                            if item.components.stackable then
+                                item.components.stackable.stacksize = player.components.ability.danzhubagnum --没钱包就直接给全部
+                            end
+                            player.components.inventory:GiveItem(item)
+                            check = true
+                        end
+                    end
+
+                    if check then
+                        player.components.ability.danzhubagnum = 0
+                    end
+                end
+            end)
+        end)
+
+        inst:DoTaskInTime(5,function()
+            if not TheWorld.ismastersim then
+                return inst
+            end
+            local a,b = nil,nil --对于部分岛，让其连接虫洞
+            a = c_findnext("wormhole",nil,inst) --（官方的c_findnext很方便，会自动排除已经查找到的实体）
+            b = c_findnext("wormhole",nil,inst)
+            if a ~= nil and b ~= nil and a ~= b then
+                a.components.teleporter:Target(b)
+                b.components.teleporter:Target(a)
+                TheNet:Announce("成功连接虫洞")
+            else
+                TheNet:Announce("未能连接虫洞")
+            end
+
+            RIFTPORTAL_FNS.CreateRiftPortalDefinition("lunarrift_portal", { --选择裂隙生成点，需要返回两个点x，z。因为改了地图生成方法，需要手动重设
+                GetNextRiftSpawnLocation = function(_map, rift_def)
+                    local t = {}
+                    local ep = nil
+                    for i = 1, 5 do
+                        ep = c_findnext("nl_lunarportal_point",nil,inst) --我的想法是直接额外设置一个岛，在岛上安排标记点，然后随机选择这些标记点为裂隙点(因为感觉不喜欢随机选岛生成的方法，就这样吧)
+                        if ep ~= nil then
+                            local x,y,z = ep.Transform:GetWorldPosition()
+                            table.insert(t,{xp = x,zp = z})
+                        end
+                    end
+                    if #t>0 then
+                        local point = t[math.random(#t)]
+                        return point.xp,point.zp
+                    end
+                end,
+                CustomAllowTest = function(_map, x, y, z)
+                    return true
+                end,
+                Affinity = RIFTPORTAL_CONST.AFFINITY.LUNAR,
+            })
+
+            RIFTPORTAL_FNS.CreateRiftPortalDefinition("shadowrift_portal", {
+                GetNextRiftSpawnLocation = function(_map, rift_def)
+                    local t = {}
+                    local ep = nil
+                    for i = 1, 5 do
+                        ep = c_findnext("nl_shadowportal_point",nil,inst)
+                        if ep ~= nil then
+                            local x,y,z = ep.Transform:GetWorldPosition()
+                            table.insert(t,{xp = x,zp = z})
+                        end
+                    end
+                    if #t>0 then
+                        local point = t[math.random(#t)]
+                        return point.xp,point.zp
+                    end
+                end,
+                CustomAllowTest = function(_map, x, y, z)
+                    return true
+                end,
+                Affinity = RIFTPORTAL_CONST.AFFINITY.SHADOW,
+            })
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nightlight
+------------------------------------------------------
+AddPrefabPostInit("nightlight", function(inst) --对于影灯只是简单的修改了一点，具体实现细节请看官方组件components.trader，可以实现很多多样化的操作
+    if TheWorld.ismastersim then --判断是不是主机
+        if inst.components.trader == nil then
+            inst:AddComponent("trader")
+        end
+        
+        if inst.components.trader then
+            inst.components.trader:SetAbleToAcceptTest(AbleToAcceptTest_bl)
+            inst.components.trader:SetAcceptTest(can_accept_item_bl)
+            inst.components.trader.onaccept = bl_OnGetItemFromPlayer
+        end
+
+        if GetModConfigData("if_break_nl") then --让影灯无法被破坏
+            if inst.components.workable then inst:RemoveComponent("workable") end --不能被敲
+            AddRecipe2("nightlight", { Ingredient("goldnugget", 8), Ingredient("nightmarefuel", 2), Ingredient("redgem", 1) },TECH.LOST, { placer = "nightlight_placer" }) --移除影灯配方
+        end
+
+        inst:AddTag("not_move_nl") --不会被清理
+        inst:AddTag("shop_no_destroy") --不让影灯可以被拆解法杖分解
+
+        -- inst:AddComponent("timer")
+        -- inst:ListenForEvent("timerdone", clear_nightlight_keep)
+        -- clear_nightlight_begin(inst)
+
+        -- 监听世界时间：进入黄昏时触发清理记录
+        inst:WatchWorldState("phase", function(inst, phase)
+            if phase == "dusk" then
+                inst:DoTaskInTime(2, nl_doclean)
+            end
+        end)
+
+        -- inst:DoPeriodicTask(5,nl_doclean)  --测试用时间
+
+        local oldsave = inst.OnSave
+        inst.OnSave = function(inst, data)--当保存的时候
+            if oldsave ~= nil then oldsave(inst,data) end
+            data.nl_check_count = inst.nl_check_count
+        end
+        
+        local oldOnPreLoad = inst.OnPreLoad
+        inst.OnPreLoad = function(inst,data)
+            if oldOnPreLoad ~= nil then oldOnPreLoad(inst,data) end
+            if data and data.nl_check_count~=nil then inst.nl_check_count = data.nl_check_count end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nl_lotterymachine
+
+AddPrefabPostInit("nl_lotterymachine", function(inst)   --弹珠抽奖机
+    if TheWorld.ismastersim then --判断是不是主机
+        if inst.components.trader == nil then
+            inst:AddComponent("trader")
+        end
+        
+        if inst.components.trader then
+            inst.components.trader:SetAbleToAcceptTest(AbleToAcceptTest_bl)
+            inst.components.trader:SetAcceptTest(can_accept_item_bl)
+            inst.components.trader.onaccept = bl_OnGetItemFromPlayer_b
+        end
+  
+        inst:AddTag("not_move_nl") --不会被清理
+        inst:AddTag("shop_no_destroy") --不可以被拆解法杖分解
+    
+        -- inst:AddComponent("timer")
+        -- inst:ListenForEvent("timerdone", clear_nightlight_keep)
+        -- clear_nightlight_begin(inst)
+
+        -- 监听世界时间：进入黄昏时触发清理记录
+        inst:WatchWorldState("phase", function(inst, phase)
+            if phase == "dusk" then
+                inst:DoTaskInTime(5, nl_doclean)
+            end
+        end)
+
+        local oldsave = inst.OnSave
+        inst.OnSave = function(inst, data)--当保存的时候
+            if oldsave ~= nil then oldsave(inst,data) end
+            data.nl_check_count = inst.nl_check_count
+        end
+        
+        local oldOnPreLoad = inst.OnPreLoad
+        inst.OnPreLoad = function(inst,data)
+            if oldOnPreLoad ~= nil then oldOnPreLoad(inst,data) end
+            if data and data.nl_check_count~=nil then inst.nl_check_count = data.nl_check_count end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:drownable
+if GetModConfigData("if_drownable") then
+    AddComponentPostInit("drownable",function(component)    --溺水不掉落物品
+        component.DropInventory = function(self, inst) end
+        component.ShouldDropItems = function(self, inst) end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pinkstaff
+
+    AddPrefabPostInit("pinkstaff", function(inst)   --幻象法杖，不能幻化商品
+        if TheWorld.ismastersim then
+            if inst.components.spellcaster then
+                inst.components.spellcaster.can_cast_fn = nil
+                inst.components.spellcaster.can_cast_fn = function (doer, target, pos)
+                    if target:HasTag("shopitem") then
+                        return false
+                    end
+
+                    if target == nil then --解除幻化，也是可以生效的
+                        return true
+                    elseif target == doer then --对自己施法：解除幻化
+                        return true
+                    elseif DRESSUP_DATA_LEGION[target.prefab] ~= nil then
+                        return true
+                    end
+                
+                    return false
+                end
+            end
+        end
+    end)
+end
+
+for i, v in pairs(backpack_list) do
+    AddPrefabPostInit(v, function(inst)   --背包死亡不掉落
+        if TheWorld.ismastersim then
+            if inst.components.inventoryitem then
+                inst.components.inventoryitem.keepondeath = true
+            end
+        end
+    end)
+end
+
+AddPrefabPostInit("lucky_goldnugget", function(inst)   --幸运黄金的堆叠数量调大
+    if TheWorld.ismastersim then
+        if inst.components.stackable then
+            inst.components.stackable:SetIgnoreMaxSize(true)
+        end
+    end
+end)
+-----------------------------------------------------------------------------------新人保护试写
+local function player_protect (inst)   
+    local playerday = inst.components.age:GetAgeInDays() + 1
+    if playerday <= 21 then
+        local ab_pre =0.01*(42 - (playerday*2))
+        local absorb_rate = nil
+        if ab_pre>= 0 then absorb_rate = ab_pre else absorb_rate = 0 end
+        local init_ab_rate = 0
+        if inst.components.health then
+            if inst.prefab == "wathgrithr" then init_ab_rate = 0.25 end
+            inst.components.health.absorb = init_ab_rate + absorb_rate <= 0.95 and init_ab_rate + absorb_rate or 0.95
+        end
+
+        if absorb_rate > 0 and playerday % 3 == 0  then --每三天播报一次 
+            _G.TheNet:Announce("玩家 "..inst:GetDisplayName().." 的生存时间不满20天，当前自带额外 "..tostring(absorb_rate*100).." %伤害减免 ")
+        end
+    end
+end
+
+AddComponentPostInit("age", function(self, inst)--生存保护，boss更新debuff
+    if TheWorld.state.cycles >= 50 and (inst ~=nil and inst:HasTag("player") and not inst:HasTag("playerghost") and inst.components.age) then
+        inst:DoPeriodicTask(480, function(inst)
+            -- if inst.userid == "KU_iJIpbeHa" then --整蛊一下某位玩家(无情修狗)
+            --     TheNet:Announce("检测到玩家 【"..inst:GetDisplayName().."】 在线，触发事件 —— 陶笛的诅咒：该玩家抽奖抽到好东西的概率减少1%")
+            -- end
+            player_protect(inst)
+        end)
+    end
+    if TheWorld.state.cycles%10 == 0 then   --debuff更新
+        if inst and inst:IsValid() and inst.components and inst.components.nl_entitydebuff then
+            inst:DoTaskInTime(5*FRAMES,function()
+                if inst.components.nl_entitydebuff.self.buffnum and inst.components.nl_entitydebuff.self.buffnum<1 then
+                    inst.components.nl_entitydebuff:Init()
+                end
+            end)
+        end
+    end
+end)
+-----------------------------------------------------------------------------------加一点生物加强，可以自己选择关闭
+local str_list = {--只选了能对玩家造成伤害的大部分生物，像亮茄这种真的恶心的还是不加强了
+    "spider", "spider_warrior", "spider_hider", "spider_spitter", "spider_dropper", "spider_moon", "spider_healer","spider_water",--各种小蜘蛛                                                                                                          
+    "bee", "killerbee",--蜜蜂
+    "bat",--蝙蝠
+    "mosquito",--蚊子
+    "frog",--青蛙
+    "penguin",--企鹅
+    "pigman",--猪人
+    "pigguard",--猪人守卫
+    "rocky",--石虾
+    "bunnyman",--兔人
+    "merm",--鱼人
+    "mushgnome",--蘑菇精
+    "beefalo",--牛
+    "koalefant_summer", "koalefant_winter",--冬夏象
+    "catcoon",--浣猫
+    "lightninggoat",--电羊
+    "walrus",--海象
+    "little_walrus",--小海象
+    "grassgator",--草鳄鱼
+    "shark",--大白鲨
+    "gnarwail",--一角鲸
+    "squid",--章鱼
+    "tallbird",--高鸟
+    "hound", "firehound", "icehound", "hedgehound_bush", "hedgehound",--各种狗
+    "slurtle", "snurtle",--蜗牛
+    "slurper",--缀食者
+    "monkey",--猴子
+    "knight", "knight_nightmare",--发条骑士
+    "bishop", "bishop_nightmare",--发条主教
+    "rook", "rook_nightmare",--发条战车
+    "worm",--洞穴蠕虫
+    "yots_worm",--金蠕虫
+    "krampus",--坎普斯
+    "mossling",--小鸭子
+    "tentacle",--触手
+    "molebat",--裸鼹鼠蝙蝠
+    "fused_shadeling",--熔合暗影
+    "shadowthrall_hands","shadowthrall_wings","shadowthrall_horns",--墨荒
+    "crabking_mob",--蟹卫
+    "crabking_mob_knight",--蟹骑士
+    "crabking_cannontower",--加农炮塔
+    "otter",--水獭掠夺者
+    "shadowthrall_mouth",--狞笑
+    "chest_mimic_revealed",--暴躁箱子
+    "rabbitkingminion_bunnyman",--皇家兔子警卫
+    "mutatedbuzzard_gestalt",--水晶冠秃鹫
+    "cave_vent_mite",--地热螨
+    "ruinsnightmare",--潜伏梦魇
+    ---------------------------之后的为大部分boss
+    "shadow_rook", "shadow_knight", "shadow_bishop",--暗影三基佬
+    "spiderqueen",--蜘蛛女王
+    "leif", "leif_sparse",--树精
+    "deerclops",--巨鹿
+    "moose",--鹿鸭
+    "antlion",--蚁狮
+    "warg",--座狼
+    "spat",--钢羊
+    "warglet",--年轻座狼
+    "bearger",--熊大
+    "klaus",--克劳斯
+    "lordfruitfly",--果蝇王
+    "dragonfly",--龙蝇
+    "beequeen",--蜂后
+    "minotaur",--犀牛
+    "toadstool",--蛤蟆
+    "toadstool_dark",--金蛤蟆
+    "stalker_atrium",--远古影织者
+    "alterguardian_phase1", "alterguardian_phase2", "alterguardian_phase3",--天体英雄3种形态
+    "malbatross",--邪天翁
+    "crabking",--帝王蟹
+    "eyeofterror", "twinofterror1", "twinofterror2",--恐怖之眼，激光眼，魔焰眼
+    "shadowthrall_hands", "shadowthrall_horns", "shadowthrall_wings",--三种墨荒
+    "sharkboi",--大霜鲨
+    "daywalker",--疯猪
+    "daywalker2",--疯猪
+    "mutateddeerclops",--晶体巨鹿
+    "mutatedbearger",--装甲熊大
+    "worm_boss",--巨大洞穴蠕虫
+    "rabbitking_aggressive",--暴戾兔王
+    "alterguardian_phase4_lunarrift",--天体后裔
+    "wagboss_robot",--战争瓦器人
+    "shadowthrall_centipede_controller",--涟漪
+    "vault_pillar_guard",--远古戍卫塔
+}
+
+if GetModConfigData("creature_health_str") ~= false then --血量成长，就是随天数变多，新生成的生物血量会慢慢变高
+    for i, v in pairs(str_list) do
+        AddPrefabPostInit(v, function(inst)
+        if TheWorld.ismastersim then
+
+            local hp_rate = GetModConfigData("creature_health_str")
+            local max_day = GetModConfigData("creature_str_day")
+
+            local now_day = TheWorld.state.cycles
+            local current_rate = nil
+
+            if now_day < max_day then
+                current_rate = (((hp_rate - 1) / max_day) * now_day) + 1 --每天变为当前天数占目标天数的百分比
+            else
+                current_rate = hp_rate
+            end
+
+            if inst.components.health then
+                local creature_hp = inst.components.health.maxhealth --记录其原版血量
+                inst.components.health:SetMaxHealth(creature_hp * current_rate)
+            end
+        end
+        end)
+    end
+end
+
+if GetModConfigData("creature_attack_str") ~= false then --基础攻击力成长，就是随天数变多，新生成的生物基础攻击力会慢慢变高
+    for i, v in pairs(str_list) do
+        AddPrefabPostInit(v, function(inst)
+        if TheWorld.ismastersim then
+            local at_rate = GetModConfigData("creature_attack_str")
+            local max_day = GetModConfigData("creature_str_day")
+
+            local now_day = TheWorld.state.cycles
+            local current_rate = nil
+
+            if now_day < max_day then
+                current_rate = (((at_rate - 1) / max_day) * now_day) + 1 --每天变为当前天数占目标天数的百分比
+            else
+                current_rate = at_rate
+            end
+
+            if inst.components.combat then
+                local creature_at = inst.components.combat.defaultdamage --记录其原版攻击力
+                inst.components.combat:SetDefaultDamage(creature_at * current_rate)
+            end
+        end
+        end)
+    end
+end
+
+----------------------------------------导入商店系统动作，从老木糖的杂草战争mod继承与修改
+modimport("scripts/mutang_shop.lua")
+----------------------------------------导入陷阱箱相关函数，麦斯威尔陷阱修改，以及一些杂项修改
+modimport("scripts/trap_chest.lua")
+----------------------------------------导入商品保护，不让商品可以被拆解法杖分解
+modimport("scripts/shop_protect.lua")
+----------------------------------------BOSS击杀奖励福袋
+if GetModConfigData("boss_kill_gift") then
+    modimport("scripts/boss_gift.lua")
+end
+----------------------------------------BOSS不相互攻击
+if GetModConfigData("boss_attack_each") then
+    AddComponentPostInit("combat", function(self)
+        local OldSuggestTarget=self.SuggestTarget
+        self.SuggestTarget = function(self,target)  --仇恨
+            if target == nil then return false end --保险，有时候会打到空气而报错？
+            if self.inst:HasTag("epic") and target:HasTag("epic") then --boss一般有的标签，懒得再列表给boss加标签了(已知会忽略暗影三基佬，帝王蟹)
+                return false
+            else
+                return OldSuggestTarget and OldSuggestTarget(self,target) or false
+            end
+        end
+
+        local OldCanHitTarget=self.CanHitTarget
+        self.CanHitTarget = function(self,target, weapon)   --攻击命中
+            if target == nil then return false end   --保险，有时候会打到空气而报错？
+            if self.inst:HasTag("epic") and target:HasTag("epic") then --boss一般有的标签，懒得再列表给boss加标签了(已知会忽略暗影三基佬，帝王蟹)
+                return false
+            else
+                return OldCanHitTarget and OldCanHitTarget(self,target,weapon) or false
+            end
+        end
+    end)
+end
+----------------------------------------强度模式调整
+if GetModConfigData("hard_modify") then
+    modimport("scripts/hard_modify.lua")
+end
+----------------------------------------boss再加强，受伤反击，参考成就
+local BOSSLISTAI = {"dragonfly", "deerclops", "bearger", "moose", "beequeen", "klaus","antlion","toadstool","toadstool_dark","malbatross",
+"minotaur", "stalker_atrium","crabking",
+"alterguardian_phase1", "alterguardian_phase2", "alterguardian_phase3", "eyeofterror",--"koalefant_summer","koalefant_winter",
+"twinofterror1", "twinofterror2","daywalker","sharkboi","daywalker2","mutateddeerclops","mutatedbearger","vault_pillar_guard","alterguardian_phase4_lunarrift",
+"wagboss_robot",
+}
+if GetModConfigData("boss_str_more") then
+for _, v in pairs(BOSSLISTAI) do -- boss受伤有概率加快反击，对玩家伤害提高
+    if v then
+        AddPrefabPostInit(v, function(inst)
+            if TheWorld.ismastersim then
+                local day = TheWorld.state.cycles
+                local max_day = GetModConfigData("creature_str_day")
+                local absorbpresent = math.min(day/max_day,1)
+                local tem_cooldowntime = 2
+                local tem_random = 0.7
+                if inst.components.combat then
+                    if v and (v ~= "twinofterror1" or v ~= "twinofterror2") then
+                        inst.components.combat.playerdamagepercent = 1 - 0.25*absorbpresent
+                    else
+                        inst.components.combat.playerdamagepercent = 1
+                    end
+                end
+                if inst.components.health then
+                    if v and v ~= "klaus" and v ~= "worm" and v ~= "stalker_atrium" then
+                        if v == "alterguardian_phase1" or v == "alterguardian_phase2" or v == "alterguardian_phase3" then
+                            inst.components.health:SetAbsorptionAmount(0.25*absorbpresent)
+                        else
+                            inst.components.health:SetAbsorptionAmount(0.35*absorbpresent)
+                        end
+                    end
+                    if v and (v == "koalefant_summer" or v == "koalefant_winter" or v =="malbatross") then
+                        tem_cooldowntime = 2
+                        tem_random = 0.5
+                    end
+                    if v and (v == "crabking") then
+                        tem_cooldowntime = 2.5
+                        tem_random = 0.1
+                    end
+                end
+            
+                inst:ListenForEvent("attacked", function(inst, data)
+                    if v ~= "eyeofterror" and v ~= "twinofterror1" and v ~= "twinofterror2" then
+                        if inst.components.combat and math.random() < tem_random and inst._task_cooldown_atk == nil then
+                            if data and data.attacker and data.attacker:HasTag("player") and not data.attacker:HasTag("playerghost") then ---and inst.components.combat:TryAttack(data.attacker) then
+                                if not inst.components.health:IsDead() then
+                                    inst.components.combat:ResetCooldown()
+                                    inst._task_cooldown_atk =
+                                        inst:DoTaskInTime(tem_cooldowntime, function(inst)
+                                            inst._task_cooldown_atk = nil
+                                    end)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+    end
+end
+end
+-----------------------------------------Boss词条
+if GetModConfigData("debuff_appearanceday") then
+    for _, v in pairs(BOSSLISTAI) do --各种boss词条
+        if v then
+            AddPrefabPostInit(v, function(inst)
+                if TheWorld.ismastersim then
+                    if inst.components.nl_entitydebuff==nil then
+                        inst:AddComponent("nl_entitydebuff")
+                    end
+                    inst:DoTaskInTime(4*FRAMES,function()
+                        inst.components.nl_entitydebuff:Init()
+                    end)
+                    inst:AddTag("nl_debuff_creature")
+                end
+            end)
+        end
+    end
+end
+----------------------------------------药水作用
+modimport("scripts/use_medal_f.lua")
+----------------------------------------动作修改
+--modimport("scripts/actionchange_attack.lua")
+modimport("scripts/actionchange_aoespell.lua")
+----------------------------------------一些ui
+modimport("scripts/nl_ui.lua")
+----------------------------------------
+modimport("scripts/nl_recipe.lua")
+----------------------------------------
+--modimport("scripts/nl_itemflymethod.lua")
+
+local old_DoPeriodicTask = EntityScript.DoPeriodicTask
+function EntityScript:DoPeriodicTask(period, fn, initialdelay, ...)
+    local wrapped_fn = function(inst, ...)
+        if inst == nil or not inst:IsValid() then return end
+        local ok, err = pcall(fn, inst, ...)
+        if not ok then
+            TheNet:Announce("错误：entityscript attempt to index local 'self' (a nil value) -->"..tostring(err))
+            print("PERIODIC TASK ERROR:", err)
+        end
+    end
+    return old_DoPeriodicTask(self, period, wrapped_fn, initialdelay, ...)
+end
+
+```
+

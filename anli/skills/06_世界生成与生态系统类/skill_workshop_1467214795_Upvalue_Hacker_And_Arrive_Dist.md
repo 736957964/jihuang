@@ -452,3 +452,38 @@ end)
 
 ```
 
+
+
+### 变体演进：WX-78 Teleport System (Mod 3780994170)
+- **变体场景与切面**：收录来自工坊 Mod 3780994170 (`WX-78 Teleport System`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3780994170)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+    -- ============================================
+    AddPrefabPostInit("world", function(world)
+        WX78BodyBind.load()
+
+        world:ListenForEvent("playeractivated", function()
+            WX78BodyBind.load()
+
+            GLOBAL.TheWorld:DoTaskInTime(0.5, function()
+                for _, e in pairs(GLOBAL.Ents) do
+                    if e:IsValid() and e.prefab == "wx78_backupbody" then
+                        WX78BodyBind.HookSingleBody(e)
+                    end
+                    
+                end
+                if WX78BodyBind.HookAllBodies ~= nil then
+                    WX78BodyBind.HookAllBodies()
+                end
+            end)
+        end)
+    end)
+
+```
+

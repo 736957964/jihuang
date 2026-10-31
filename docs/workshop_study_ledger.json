@@ -3828,8 +3828,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 03:52:32",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3025140277",
+      "name": "孤岛抽奖机",
+      "author": "陶笛c",
+      "version": "1.3.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:53:35",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3780994170",
+      "name": "WX-78 Teleport System",
+      "author": "SUPAAA",
+      "version": "0.6.6",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 03:53:35",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:52:32"
+  "lastUpdated": "2026-11-01 03:53:35"
 }
