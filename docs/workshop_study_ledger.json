@@ -3936,8 +3936,26 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 04:00:15",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3641970435",
+      "name": "自定义默认视角方向",
+      "author": "喜乐",
+      "version": "4.4.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 04:01:15",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3646918484",
+      "name": "Crop Leveler",
+      "author": "langui、冰冰羊",
+      "version": "1.1.8",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 04:01:15",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 04:00:15"
+  "lastUpdated": "2026-11-01 04:01:15"
 }

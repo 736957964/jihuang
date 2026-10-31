@@ -3989,3 +3989,178 @@ end)
 
 ```
 
+
+
+### 变体演进：Crop Leveler (Mod 3646918484)
+- **变体场景与切面**：收录来自工坊 Mod 3646918484 (`Crop Leveler`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3646918484)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:friendlyfruitfly
+if GetModConfigData("enable_fruitfly_noblock") ~= false then
+    AddPrefabPostInit("friendlyfruitfly", function(inst)
+        inst:AddTag("NOBLOCK")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:honeycomb
+-- 蜜脾初始化为升级器
+AddPrefabPostInit("honeycomb", function(inst)
+    inst:AddTag("beeboxleveler_upgrader")
+    inst:AddTag("cropleveler_upgrader")
+    
+    if not TheWorld.ismastersim then return end
+    
+    if not inst.components.upgrader then
+        inst:AddComponent("upgrader")
+    end
+    inst.components.upgrader.upgradetype = UPGRADETYPES.BEEBOXLEVELER
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beebox
+-- 蜂箱初始化
+AddPrefabPostInit("beebox", function(inst)
+    if not TheWorld then return end
+    
+    inst:AddTag("beeboxleveler_upgradeable")
+    inst:AddTag("cropleveler_upgradeable")
+    
+    SetupBeeboxNetworkVar(inst)
+    SetupBeeboxDisplayNameFn(inst)
+    
+    if not TheWorld.ismastersim then return end
+    
+    local old_OnSave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        if old_OnSave then
+            old_OnSave(inst, data)
+        end
+        if inst.components.beeboxleveler then
+            data.beeboxleveler = inst.components.beeboxleveler:OnSave()
+        elseif inst._beeboxleveler_loaddata then
+            data.beeboxleveler = inst._beeboxleveler_loaddata
+        end
+    end
+    
+    local old_OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data, newents)
+        if data and data.beeboxleveler then
+            inst._beeboxleveler_loaddata = data.beeboxleveler
+        end
+        if old_OnLoad then
+            old_OnLoad(inst, data, newents)
+        end
+    end
+    
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            SetupBeeboxLeveler(inst)
+        end
+    end)
+end)
+
+
+local _old_Upgrader_CanUpgrade_beebox = Upgrader.CanUpgrade
+Upgrader.CanUpgrade = function(self, target, doer)
+    -- 蜂箱升级
+    if self.inst.prefab == "honeycomb" then
+        if target and target.prefab == "beebox" and target.components.beeboxleveler then
+            if target.components.beeboxleveler:CanUpgrade() then
+                return true
+            end
+        end
+        return false
+    end
+    
+    return _old_Upgrader_CanUpgrade_beebox(self, target, doer)
+end
+
+
+local _old_UPGRADE_fn_beebox = ACTIONS.UPGRADE.fn
+ACTIONS.UPGRADE.fn = function(act)
+    -- 蜂箱升级
+    if act.invobject and act.invobject.prefab == "honeycomb" and 
+       act.target and act.target.prefab == "beebox" and
+       act.target.components.beeboxleveler then
+        local leveler = act.target.components.beeboxleveler
+        
+        if not leveler:CanUpgrade() then
+            return false, "MAX_LEVEL"
+        end
+        
+        local success, reason = leveler:Upgrade(act.doer, act.invobject)
+        return success, reason
+    end
+    
+    return _old_UPGRADE_fn_beebox(act)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    local old_DoActionAutoEquip = self.DoActionAutoEquip
+    self.DoActionAutoEquip = function(self, buffaction)
+        if buffaction and 
+           buffaction.action == ACTIONS.UPGRADE and 
+           buffaction.invobject and 
+           buffaction.invobject.prefab == "bullkelp_root" then
+            return -- 不自动装备海带根
+        end
+        return old_DoActionAutoEquip(self, buffaction)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bullkelp_root
+-- 海带根初始化
+AddPrefabPostInit("bullkelp_root", function(inst)
+    inst:AddTag("bullkelpleveler_upgrader")
+    inst:AddTag("cropleveler_upgrader")
+    
+    if not TheWorld.ismastersim then return end
+    
+    if not inst.components.upgrader then
+        inst:AddComponent("upgrader")
+        inst.components.upgrader.upgradetype = UPGRADETYPES.BULLKELPLEVELER
+    end
+    
+    
+    inst:DoTaskInTime(0, function()
+        if not inst:IsValid() then return end
+        
+        local x, y, z = inst.Transform:GetWorldPosition()
+        local key = string.format("%.2f:%.2f", x, z)
+        
+        local pending = _pending_bullkelp_level[key]
+        if pending and pending.level > 1 and GetTime() - pending.time < 0.5 then
+            _pending_bullkelp_level[key] = nil
+            
+            for i = 1, pending.level - 1 do
+                local extra_root = SpawnPrefab("bullkelp_root")
+                if extra_root then
+                    extra_root.Transform:SetPosition(
+                        pending.x + math.random() * 0.5 - 0.25, 
+                        0, 
+                        pending.z + math.random() * 0.5 - 0.25
+                    )
+                end
+            end
+        end
+        
+        local now = GetTime()
+        for k, v in pairs(_pending_bullkelp_level) do
+            if now - v.time > 2 then
+                _pending_bullkelp_level[k] = nil
+            end
+        end
+    end)
+end)
+
+```
+

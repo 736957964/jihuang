@@ -1856,3 +1856,40 @@ TUNING.UKYOU_SANITY = TUNING.UKYOU.SANITY
 
 ```
 
+
+
+### 变体演进：自定义默认视角方向 (Mod 3641970435)
+- **变体场景与切面**：收录来自工坊 Mod 3641970435 (`自定义默认视角方向`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3641970435)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:cave
+-- 监听 cave prefab 的初始化，判断是否在洞穴
+AddPrefabPostInit("cave", function(inst)
+    IS_CAVE = true
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+-- 2. 拦截服务器下发的重置视角指令 (player_classified)
+AddPrefabPostInit("player_classified", function(inst)
+    inst:ListenForEvent("playercamerasnap", function(inst)
+        -- 延时0秒以在游戏原生逻辑执行后覆盖它
+        inst:DoTaskInTime(0, function()
+            -- 检查 camerasnap 的值 (即 resetrot 参数)
+            -- 只有当 resetrot 为 true 时，才强制应用设置的默认视角
+            if inst._parent == ThePlayer and TheCamera and inst.camerasnap:value() then
+                local target = GetHeading()
+                TheCamera:SetHeadingTarget(target)
+                TheCamera:Snap()
+            end
+        end)
+    end)
+end)
+
+```
+
