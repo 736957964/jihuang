@@ -14456,3 +14456,55 @@ end)
 
 ```
 
+
+
+### 变体演进：Unofficial Rin Satsuki (Mod 3477357300)
+- **变体场景与切面**：收录来自工坊 Mod 3477357300 (`Unofficial Rin Satsuki`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3477357300)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+AddStategraphState("SGwilson", play_satsukierhu_loop_state)
+AddStategraphPostInit("wilson", SGWilsonPostInit2) 
+
+local function SGWilsonPostInit3(sg)
+    sg.states["play_satsukierhu_end_state"] = play_satsukierhu_end_state
+end
+
+```
+
+
+
+### 变体演进：捕捞之书 (Mod 3654450333)
+- **变体场景与切面**：收录来自工坊 Mod 3654450333 (`捕捞之书`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3654450333)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:book
+
+AddComponentPostInit("book", function(self)
+	self.MyOnRead = function(self, reader)
+		local success, reason = self:Interact(self.onread, reader)
+		if success and reader.components.sanity then
+			if self.fx then
+				local fx = SpawnPrefab(self.fx)
+				fx.Transform:SetPosition(reader.Transform:GetWorldPosition())
+			end
+
+			reader.components.sanity:DoDelta(self.read_sanity or 0)
+		end
+
+		return success, reason
+	end
+end)
+
+```
+
