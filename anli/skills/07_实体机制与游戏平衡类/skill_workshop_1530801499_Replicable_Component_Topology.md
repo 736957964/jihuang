@@ -6359,3 +6359,326 @@ end)
 
 ```
 
+
+
+### 变体演进：Better Abigail (Mod 2361334841)
+- **变体场景与切面**：收录来自工坊 Mod 2361334841 (`Better Abigail`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2361334841)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:abigail
+
+AddPrefabPostInit("abigail", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+		inst:AddTag("crazy")
+end)
+
+```
+
+
+
+### 变体演进：Woodrow (Mod 2881867062)
+- **变体场景与切面**：收录来自工坊 Mod 2881867062 (`Woodrow`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2881867062)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:transistor
+
+AddPrefabPostInit("transistor", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.tradable then
+			inst:AddComponent("tradable")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:purebrilliance
+
+AddPrefabPostInit("purebrilliance", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.tradable then
+			inst:AddComponent("tradable")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonglass_charged
+
+AddPrefabPostInit("moonglass_charged", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.tradable then
+			inst:AddComponent("tradable")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonstorm_spark
+
+AddPrefabPostInit("moonstorm_spark", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.tradable then
+			inst:AddComponent("tradable")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:zapncrack
+
+AddPrefabPostInit("zapncrack", function(inst)	
+	if GLOBAL.TheWorld.ismastersim then
+		inst.entity:AddSoundEmitter()
+		
+		if not inst.components.trader then
+			inst:AddComponent("trader")
+		end
+		
+		local function onattackother(self)
+			inst.components.finiteuses:Use(1) 
+		end
+		
+		local function onfinished(inst, owner)
+					if inst.components.equippable ~= nil then
+	inst.components.weapon:SetDamage(1)
+			end
+		end
+		
+		local function AbleToAcceptTest(inst, item)
+			return item ~= nil and item.prefab == "transistor" or item.tag == "transistor"
+		end
+		
+		local function OnAccept(inst, giver, item)
+			local fuelvalue =
+			{
+				["transistor"] = 75,
+			}
+			inst.SoundEmitter:PlaySound("dontstarve/common/lightningrod")
+			if inst.components.finiteuses then
+				inst.components.finiteuses:SetUses(inst.components.finiteuses:GetUses() + fuelvalue[item.prefab])
+				if inst.components.finiteuses:GetPercent() > 1 then
+					inst.components.finiteuses:SetPercent(1)
+				end
+			end
+			if not 	inst.components.weapon:SetDamage(45) then
+					inst.components.weapon:SetDamage(45)
+			end
+		end
+		
+		if inst.components.finiteuses ~= nil then
+			inst.components.finiteuses:SetOnFinished(onfinished)
+		end
+		
+		inst.components.trader:SetAbleToAcceptTest(AbleToAcceptTest)
+		inst.components.trader.onaccept = OnAccept
+	end
+end)
+
+```
+
+
+
+### 变体演进：自动做饭 (Mod 3066039598)
+- **变体场景与切面**：收录来自工坊 Mod 3066039598 (`自动做饭`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3066039598)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self, inst)
+	if inst ~= ThePlayer then return end
+
+	local PlayerControllerOnControl = self.OnControl
+	self.OnControl = function(self, control, down)
+		if down then -- 按下鼠标
+			if not TUNING.AutoCooking then
+				if control == CONTROL_PRIMARY and TheInput:IsControlPressed(CONTROL_FORCE_INSPECT) then
+					Autocooking:fn()
+				end
+			else --TUNING.AutoCooking
+				local target = TheInput:GetWorldEntityUnderMouse()
+				local hud = TheInput:GetHUDEntityUnderMouse()
+				local activate = ThePlayer.replica.inventory:GetActiveItem()
+				if (control == CONTROL_SECONDARY or control == CONTROL_PRIMARY)
+					and not (target or hud or activate) then
+					Autocooking:fn()
+				end
+			end
+		else
+		end
+		return PlayerControllerOnControl(self, control, down)
+	end
+	local oldpredict = self.DoPredictWalking
+	function self:DoPredictWalking(dt)
+		if not self.ismastersim and self.locomotor then
+			local x, y, z = self.inst.Transform:GetPredictionPosition()
+			if x == nil and KEY_util:MoveKeyDown() then
+				self:RemotePredictWalking(self.inst:GetPosition().x, self.inst:GetPosition().z,
+					self.locomotor:GetTimeMoving() == 0)
+			end
+		end
+		return oldpredict(self, dt)
+	end
+end)
+
+```
+
+
+
+### 变体演进：Don (Mod 3693244442)
+- **变体场景与切面**：收录来自工坊 Mod 3693244442 (`Don`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3693244442)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:burnable
+
+    AddComponentPostInit("burnable", OnBurnablePostInit)
+end
+
+if cfg_temp_heatrock or cfg_light_heatrock or cfg_moisture_heatrock then
+    local function UpdateTemp(inst)
+        local ambient_temp = GetLocalTemperature(inst)
+        local heatrock_cur_temp = inst.components.temperature:GetCurrent()
+        local heatrock_target_temp = math.clamp(70 - ambient_temp, TUNING.MIN_ENTITY_TEMP, TUNING.MAX_ENTITY_TEMP)
+
+        if math.abs(heatrock_cur_temp - heatrock_target_temp) > 1 then
+            inst.components.temperature:SetTemperature(heatrock_target_temp)
+        end
+
+        local owner = inst.components.inventoryitem:GetGrandOwner()
+        if owner and owner:HasTag("player") then
+            local player_cur_temp = owner.components.temperature:GetCurrent()
+            local player_target_temp = math.clamp(player_cur_temp, 20, 50)
+
+            if math.abs(player_cur_temp - player_target_temp) > 1 then
+                owner.components.temperature:SetTemperature(player_target_temp)
+            end
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:heatrock
+
+    AddPrefabPostInit("heatrock", OnHeatRockPostInit)
+end
+
+if cfg_ghost_player then
+    local function OnBecameGhost(inst)
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "ghost_speed", 5)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+    AddComponentPostInit("inventory", OnInventoryPostInit)
+
+    local function OnDrownablePostInit(self)
+        local _ShouldDropItems = self.ShouldDropItems
+        if _ShouldDropItems then
+            local function NewShouldDropItems(self)
+                if self.inst:HasTag("player") then
+                    return false
+                end
+                return _ShouldDropItems(self)
+            end
+            self.ShouldDropItems = NewShouldDropItems
+        end
+
+        local _OnFallInOcean = self.OnFallInOcean
+        if _OnFallInOcean then
+            local function NewOnFallInOcean(self, shore_x, shore_y, shore_z)
+                local inv = self.inst.components.inventory
+                local active_item = inv and inv:GetActiveItem()
+
+                if active_item then
+                    inv.activeitem = nil
+                end
+
+                _OnFallInOcean(self, shore_x, shore_y, shore_z)
+
+                if active_item then
+                    inv.activeitem = active_item
+                end
+            end
+            self.OnFallInOcean = NewOnFallInOcean
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:drownable
+
+    AddComponentPostInit("drownable", OnDrownablePostInit)
+
+    local function FixRender(inst)
+        if not inst.sg:HasStateTag("busy") then
+            if inst.fix_render then
+                inst.fix_render:Cancel()
+                inst.fix_render = nil
+            end
+
+            local inv = inst.components.inventory
+            local equips = {}
+
+            for index, item in pairs(inv.equipslots) do
+                equips[index] = item
+            end
+
+            for index, item in pairs(equips) do
+                inv:Unequip(index, nil, true)
+                inv:Equip(item)
+            end
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:upgrademoduleowner
+
+    AddComponentPostInit("upgrademoduleowner", OnUpgradeModuleOwnerPostInit)
+
+    local function OnWX78BackupBodyPostInit(inst)
+        if not TheWorld.ismastersim then return end
+
+        local _Remove = inst.Remove
+        if _Remove then
+            local function NewRemove(inst)
+                inst.wx78_backupbody_inventory.components.inventory:DropEverything()
+                inst.components.container:DropEverything()
+
+                local items = inst.components.socketholder:UnsocketEverything()
+                for _, item in ipairs(items) do
+                    inst.components.lootdropper:FlingItem(item)
+                end
+
+                local modules = inst.components.upgrademoduleowner:PopAllModules()
+                for _, onemodule in ipairs(modules) do
+                    inst.components.lootdropper:FlingItem(onemodule)
+                end
+
+                return _Remove(inst)
+            end
+            inst.Remove = NewRemove
+        end
+    end
+
+```
+

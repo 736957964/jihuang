@@ -5511,8 +5511,62 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 07:44:12",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2361334841",
+      "name": "Better Abigail",
+      "author": "jeremylefou",
+      "version": "1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:49:20",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2881867062",
+      "name": "Woodrow",
+      "author": "zvxa",
+      "version": "1.2.10",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:49:20",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3066039598",
+      "name": "自动做饭",
+      "author": "萌萌的新",
+      "version": "1.29",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:49:20",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3693244442",
+      "name": "Don",
+      "author": "STORM",
+      "version": "2.7.8",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:49:20",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3759002349",
+      "name": "terrain_optimize",
+      "author": "落叶长街",
+      "version": "1.6.9.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:49:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3775474571",
+      "name": "MODE_SETTINGS",
+      "author": "Mountain Wraith",
+      "version": "3.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:49:21",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:44:12"
+  "lastUpdated": "2026-11-01 07:49:21"
 }

@@ -21988,3 +21988,241 @@ end)
 
 ```
 
+
+
+### 变体演进：terrain_optimize (Mod 3759002349)
+- **变体场景与切面**：收录来自工坊 Mod 3759002349 (`terrain_optimize`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3759002349)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:hiddenmoonlight
+if GetModConfigData("icebox_saltbox_improve") == true and apply ~= nil then
+    AddPrefabPostInit("hiddenmoonlight", apply)
+    AddPrefabPostInit("hiddenmoonlight_inf", apply)
+    AddPrefabPostInit("bearger_chest", apply)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:hiddenmoonlight_inf
+    AddPrefabPostInit("hiddenmoonlight", apply)
+    AddPrefabPostInit("hiddenmoonlight_inf", apply)
+    AddPrefabPostInit("bearger_chest", apply)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bearger_chest
+    AddPrefabPostInit("hiddenmoonlight_inf", apply)
+    AddPrefabPostInit("bearger_chest", apply)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mushroom_farm
+    if mushroom_farm.rework_enabled then
+        AddPrefabPostInit("mushroom_farm", function(inst)
+            if not TheWorld.ismastersim or not IsEnabledInModManager() then
+                return
+            end
+            inst:DoTaskInTime(0, function(farm)
+                farm:PushEvent("qol_reapply_mushroom_farm_trader")
+                print("[QoL compat] Heap of Foods mushroom-farm trader logic replaced by the QoL rework.")
+            end)
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beebox
+if TheNet:GetIsServer() then
+    AddPrefabPostInit("beebox", function(o)
+        if not TheWorld.ismastersim then return end
+        if o.components.harvestable then
+            local a = o.components.harvestable
+            if a._qol_beebox_patched then return end
+            a._qol_beebox_patched = true
+
+            local i = a.onharvestfn
+            a.onharvestfn = function(a, e, ...)
+                if s and e and e.components.inventory and e.components.inventory.equipslots and
+                    e.components.inventory.equipslots.head and
+                    e.components.inventory.equipslots.head.prefab == "beehat" then
+                    e = nil
+                end
+                if t ~= 6 then
+                    return r(a, i(a, e, ...))
+                end
+                return i(a, e, ...)
+            end
+
+            if t == 6 then return end
+             
+            a.maxproduce = t
+            local t = a.ongrowfn
+            a.ongrowfn = function(e, ...)
+                return h(e, t(e, ...))
+            end
+            local t = o.OnLoad
+            o.OnLoad = function(e, ...)
+                 
+                return h(e, t(e, ...))
+            end
+            n(o)
+        end
+    end)
+
+```
+
+
+
+### 变体演进：MODE_SETTINGS (Mod 3775474571)
+- **变体场景与切面**：收录来自工坊 Mod 3775474571 (`MODE_SETTINGS`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3775474571)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:frograin
+
+AddComponentPostInit("frograin", function(self)
+    if not TheWorld.ismastersim
+        or self._frog_rain_impact_health_wrapped
+    then
+        return
+    end
+
+    local old_StartTracking =
+        self.StartTracking
+
+    if old_StartTracking == nil then
+        return
+    end
+
+    self._frog_rain_impact_health_wrapped = true
+
+    function self:StartTracking(target)
+        if ShouldMarkForImpact(target) then
+            target[IMPACT_HEALTH_MARKER] = true
+        end
+
+        return old_StartTracking(self, target)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:frog
+
+AddStategraphPostInit("frog", function(sg)
+
+    local fall_state =
+        sg.states ~= nil
+        and sg.states["fall"]
+        or nil
+
+    if fall_state ~= nil
+        and fall_state.onupdate ~= nil
+    then
+        local old_fall_onupdate =
+            fall_state.onupdate
+
+        fall_state.onupdate = function(inst, ...)
+
+
+            if not inst[IMPACT_HEALTH_MARKER] then
+                return old_fall_onupdate(inst, ...)
+            end
+
+            local _, y, _ =
+                inst.Transform:GetWorldPosition()
+
+            if y > 0.1 then
+                return old_fall_onupdate(inst, ...)
+            end
+
+            inst[IMPACT_HEALTH_MARKER] = nil
+
+            local health_percent, drop_loot =
+                GetImpactSettings(inst)
+
+
+            if health_percent <= 0
+                and not drop_loot
+            then
+                inst[SUPPRESS_LOOT_MARKER] = true
+            end
+
+            old_fall_onupdate(inst, ...)
+
+            ApplyImpactHealth(inst, health_percent)
+        end
+    end
+
+
+    local needs_loot_suppression
+
+    if FALL_MODE == FALL_MODE_HARD then
+
+        needs_loot_suppression =
+            not (
+                HARD_FROG_DROP_LOOT
+                and HARD_LUNAR_FROG_DROP_LOOT
+            )
+
+    else
+
+        needs_loot_suppression =
+            not (
+                FROG_DROP_LOOT
+                and LUNAR_FROG_DROP_LOOT
+            )
+
+    end
+
+    if not needs_loot_suppression then
+        return
+    end
+
+
+    local death_state =
+        sg.states ~= nil
+        and sg.states["death"]
+        or nil
+
+    if death_state == nil
+        or death_state.onenter == nil
+    then
+        return
+    end
+
+    local old_death_onenter =
+        death_state.onenter
+
+    death_state.onenter = function(inst, ...)
+
+
+        if not inst[SUPPRESS_LOOT_MARKER] then
+            return old_death_onenter(inst, ...)
+        end
+
+
+        inst[SUPPRESS_LOOT_MARKER] = nil
+
+        local old_DropDeathLoot =
+            inst.DropDeathLoot
+
+
+        inst.DropDeathLoot = function()
+        end
+
+        old_death_onenter(inst, ...)
+
+
+        inst.DropDeathLoot =
+            old_DropDeathLoot
+    end
+end)
+
+```
+
