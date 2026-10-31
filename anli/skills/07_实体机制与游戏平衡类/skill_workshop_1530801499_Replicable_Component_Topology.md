@@ -2308,3 +2308,55 @@ end)
 
 ```
 
+
+
+### 变体演进：Porządne Spolszczenie - DEMO (Mod 3804527772)
+- **变体场景与切面**：收录来自工坊 Mod 3804527772 (`Porządne Spolszczenie - DEMO`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3804527772)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:sapling_moon
+GLOBAL.STRINGS.NAMES.TREE_ROCK = "Głazonar"
+AddPrefabPostInit("sapling_moon", function(inst)
+    inst:SetPrefabNameOverride("sapling_moon")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78
+
+AddPrefabPostInit("wx78", function(inst)
+    if inst.components.talker then
+        inst.components.talker.mod_str_fn = PolishUpper
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wanderingtrader
+
+AddPrefabPostInit("wanderingtrader", function(inst)
+    if inst.components.talker ~= nil then
+        inst.components.talker.font = TALKINGFONT_TRADEIN
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:talker
+-- Customowy kolor tekstu Wagstaffa
+AddComponentPostInit("talker", function(talker)
+    local inst = talker.inst
+
+    if inst ~= nil and inst:HasTag("wagstaff_npc") then
+        talker.colour = Vector3(
+            224 / 255,
+            173 / 255,
+            103 / 255
+        )
+    end
+end)
+
+```
+

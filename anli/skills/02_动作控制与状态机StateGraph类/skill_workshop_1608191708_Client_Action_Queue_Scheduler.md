@@ -9318,3 +9318,614 @@ end)
 
 ```
 
+
+
+### 变体演进：白夜,一只神秘大白虎 (Mod 3795616269)
+- **变体场景与切面**：收录来自工坊 Mod 3795616269 (`白夜,一只神秘大白虎`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3795616269)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:bernie_big
+
+AddPrefabPostInit("bernie_big", function(inst)
+    -- The supplied archive has one complete build rather than separate lunar
+    -- and shadow builds. Keep the native allegiance logic, then restore this
+    -- skin after the native client/server art update.
+    inst:ListenForEvent("current_allegiancedirty", QueueFishDollBuild)
+
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    local oldsetskinbuild = inst.SetBernieSkinBuild
+    inst.SetBernieSkinBuild = function(self, build)
+        if build ~= BUILD then
+            return oldsetskinbuild(self, build)
+        end
+        self:ClearBernieSkinBuild()
+        ApplyFishDollBuild(self)
+    end
+
+    local oldcheck = inst.CheckForAllegiances
+    inst.CheckForAllegiances = function(self, leader)
+        if not IsFishDoll(self) then
+            return oldcheck(self, leader)
+        end
+
+        local getskinbuild = self.GetSkinBuild
+        self.GetSkinBuild = function()
+            return nil
+        end
+        local ok, err = pcall(oldcheck, self, leader)
+        self.GetSkinBuild = getskinbuild
+        if not ok then
+            error(err)
+        end
+        ApplyFishDollBuild(self)
+    end
+end)
+
+GLOBAL.BAIYE_BERNIE_SKIN_PREFABS = SKIN_PREFABS
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", AddBaiyeTillHandler)
+
+AddStategraphState("wilson", State{
+    name = "baiye_till_start",
+    tags = { "doing", "busy" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:SetDeltaTimeMultiplier(TILL_SPEED_MULTIPLIER)
+        inst.AnimState:PlayAnimation(IsServerToolFlipped(inst) and "till2_pre" or "till_pre")
+    end,
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", AddBaiyeTillHandler)
+
+AddStategraphState("wilson_client", State{
+    name = "baiye_till_start",
+    tags = { "doing", "busy" },
+    server_states = { "baiye_till_start", "baiye_till" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:SetDeltaTimeMultiplier(TILL_SPEED_MULTIPLIER)
+
+        if IsClientToolFlipped(inst) then
+            inst.sg.statemem.fliptool = true
+            inst.AnimState:PlayAnimation("till2_pre")
+            inst.AnimState:PushAnimation("till2_lag", false)
+        else
+            inst.AnimState:PlayAnimation("till_pre")
+            inst.AnimState:PushAnimation("till_lag", false)
+        end
+
+        inst:PerformPreviewBufferedAction()
+        inst.sg:SetTimeout(CLIENT_ACTION_TIMEOUT)
+    end,
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:skinner
+--人物皮肤的init_fn 和 clear_fn
+AddComponentPostInit(
+    'skinner',
+    function(self)
+        local oldfn = self.SetSkinName
+        if oldfn then
+            function self.SetSkinName(s, skinname, ...)
+                local old = s.skin_name
+                local new = skinname
+                if characterskins[old] and characterskins[old].clear_fn then
+                    characterskins[old].clear_fn(s.inst, old)
+                end
+                if characterskins[new] and characterskins[new].init_fn then
+                    characterskins[new].init_fn(s.inst, new)
+                end
+                oldfn(s, skinname, ...)
+            end
+        end
+    end
+
+```
+
+
+
+### 变体演进：幻想乡 魔法使 爱丽丝·玛格特洛依德 (Mod 3830621485)
+- **变体场景与切面**：收录来自工坊 Mod 3830621485 (`幻想乡 魔法使 爱丽丝·玛格特洛依德`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3830621485)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+local AliceNetwork = require("alice_network")
+AddPrefabPostInit("player_classified", AliceNetwork.InitClassified)
+
+PrefabFiles = {
+    "alice",
+    "alice_scissors",
+    "alice_scissor_blade",
+    "alice_thread_line",
+    "alice_scissor_attack_fx",
+    "alice_flight_scissors_fx",
+    "alice_needles",
+    "alice_needle_fx",
+    "alice_dolls",
+}
+
+Assets = {
+    Asset("IMAGE", "bigportraits/alice.tex"), Asset("ATLAS", "bigportraits/alice.xml"),
+    Asset("IMAGE", "images/map_icons/alice.tex"), Asset("ATLAS", "images/map_icons/alice.xml"),
+    Asset("IMAGE", "images/map_icons/alice_doll_explorer.tex"),
+    Asset("ATLAS", "images/map_icons/alice_doll_explorer.xml"),
+    Asset("IMAGE", "images/avatars/avatar_alice.tex"), Asset("ATLAS", "images/avatars/avatar_alice.xml"),
+    Asset("IMAGE", "images/avatars/avatar_ghost_alice.tex"), Asset("ATLAS", "images/avatars/avatar_ghost_alice.xml"),
+    Asset("IMAGE", "images/avatars/self_inspect_alice.tex"), Asset("ATLAS", "images/avatars/self_inspect_alice.xml"),
+    Asset("IMAGE", "images/names_alice.tex"), Asset("ATLAS", "images/names_alice.xml"),
+    Asset("ANIM", "anim/alice_spool.zip"),
+    Asset("ATLAS", "images/inventoryimages/alice_scissors.xml"),
+    Asset("IMAGE", "images/inventoryimages/alice_scissors.tex"),
+    Asset("ATLAS", "images/inventoryimages/alice_needle_1.xml"),
+    Asset("IMAGE", "images/inventoryimages/alice_needle_1.tex"),
+    Asset("ATLAS", "images/inventoryimages/alice_needle_2.xml"),
+    Asset("IMAGE", "images/inventoryimages/alice_needle_2.tex"),
+    Asset("ATLAS", "images/inventoryimages/alice_needle_3.xml"),
+    Asset("IMAGE", "images/inventoryimages/alice_needle_3.tex"),
+    Asset("ANIM", "anim/alice_dolls.zip"),
+    Asset("ATLAS", "images/alice_spells/spell_explorer.xml"),
+    Asset("IMAGE", "images/alice_spells/spell_explorer.tex"),
+    Asset("ATLAS", "images/alice_spells/spell_hourai.xml"),
+    Asset("IMAGE", "images/alice_spells/spell_hourai.tex"),
+    Asset("ATLAS", "images/alice_spells/spell_shanghai.xml"),
+    Asset("IMAGE", "images/alice_spells/spell_shanghai.tex"),
+    Asset("ATLAS", "images/alice_spells/spell_blast.xml"),
+    Asset("IMAGE", "images/alice_spells/spell_blast.tex"),
+    Asset("ATLAS", "images/inventoryimages/alice_spell_shanghai_unlock.xml"),
+    Asset("IMAGE", "images/inventoryimages/alice_spell_shanghai_unlock.tex"),
+    Asset("ATLAS", "images/inventoryimages/alice_spell_blast_unlock.xml"),
+    Asset("IMAGE", "images/inventoryimages/alice_spell_blast_unlock.tex"),
+}
+
+TUNING.ALICE_YOUKAI = GetModConfigData("alice_strength") == "youkai"
+TUNING.ALICE_SEWING_KEY = GetModConfigData("alice_sewing_key") or KEY_R
+TUNING.ALICE_DOLL_KEY = GetModConfigData("alice_doll_key") or KEY_Z
+TUNING.ALICE_HEALTH = TUNING.ALICE_YOUKAI and 200 or 100
+TUNING.ALICE_HUNGER = TUNING.ALICE_YOUKAI and 150 or 100
+TUNING.ALICE_SANITY = 200
+TUNING.ALICE_THREAD_MAX = TUNING.ALICE_YOUKAI and 1200 or 600
+TUNING.ALICE_DAMAGE_MULT = TUNING.ALICE_YOUKAI and 1.25 or 1
+TUNING.ALICE_SCISSORS_USES = TUNING.ALICE_YOUKAI and 1200 or 600
+TUNING.ALICE_SCISSORS_RANGE = TUNING.ALICE_YOUKAI and 12 or 6
+
+modimport("scripts/alice_strings")
+modimport("scripts/alice_actions")
+modimport("scripts/alice_hooks")
+modimport("scripts/alice_trim")
+modimport("scripts/alice_sewing")
+modimport("scripts/alice_flight")
+modimport("scripts/alice_repair")
+modimport("scripts/alice_ui")
+modimport("scripts/alice_needles")
+modimport("scripts/alice_doll_runtime")
+
+AddMinimapAtlas("images/map_icons/alice.xml")
+AddMinimapAtlas("images/map_icons/alice_doll_explorer.xml")
+RegisterInventoryItemAtlas("images/inventoryimages/alice_scissors.xml", "alice_scissors.tex")
+RegisterInventoryItemAtlas("images/inventoryimages/alice_needle_1.xml", "alice_needle_1.tex")
+RegisterInventoryItemAtlas("images/inventoryimages/alice_needle_2.xml", "alice_needle_2.tex")
+RegisterInventoryItemAtlas("images/inventoryimages/alice_needle_3.xml", "alice_needle_3.tex")
+RegisterInventoryItemAtlas("images/inventoryimages/alice_spell_shanghai_unlock.xml", "alice_spell_shanghai_unlock.tex")
+RegisterInventoryItemAtlas("images/inventoryimages/alice_spell_blast_unlock.xml", "alice_spell_blast_unlock.tex")
+AddModCharacter("alice", "FEMALE")
+TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.ALICE = { "alice_scissors" }
+
+AddRecipe2("alice_scissors", {
+    Ingredient("goldnugget", 16), Ingredient("moonrocknugget", 8), Ingredient("nightmarefuel", 4),
+}, TECH.NONE, {
+    builder_tag = "alice", atlas = "images/inventoryimages/alice_scissors.xml", image = "alice_scissors.tex",
+}, { "WEAPONS", "CHARACTER" })
+
+AddRecipePostInit("sewing_kit", function(recipe)
+    recipe.no_builder_tag = "alice"
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:sewing_kit
+
+AddRecipePostInit("sewing_kit", function(recipe)
+    recipe.no_builder_tag = "alice"
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    inst:DoPeriodicTask(1, RefreshAliceWorldBonuses, 0)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:slipperyfeet
+
+AddComponentPostInit("slipperyfeet", function(self)
+    local old_delta = self.DoDelta
+    self.DoDelta = function(component, delta, ...)
+        if M.IsFlying(component.inst) then
+            component:SetCurrent(0)
+            return
+        end
+        return old_delta(component, delta, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:carefulwalker
+
+AddComponentPostInit("carefulwalker", function(self)
+    local old_track = self.TrackTarget
+    self.TrackTarget = function(component, target, ...)
+        if M.IsFlying(component.inst) then return end
+        return old_track(component, target, ...)
+    end
+
+    local old_toggle = self.ToggleCareful
+    self.ToggleCareful = function(component, careful, ...)
+        if M.IsFlying(component.inst) and careful then return end
+        return old_toggle(component, careful, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Infinite Witch Brooms (Mod 3830879982)
+- **变体场景与切面**：收录来自工坊 Mod 3830879982 (`Infinite Witch Brooms`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3830879982)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:witchbroom
+
+AddPrefabPostInit("witchbroom", SetupBroom)
+AddPrefabPostInit("witchbroom_living", SetupBroom)
+
+print("[Infinite Witch Brooms] 1.3.3 loaded. Enchanted speed: " ..
+    (SPEED_ENABLED and (SPEED_PERCENT .. "%") or "vanilla") ..
+    "; water walking: " .. (WATER_WALK_ENABLED and "on" or "off"))
+
+
+-- v1.3.3: Always-hover idle. Uses Klei's ACTUAL 2026 witch-broom animation.
+-- In vanilla SGwilson and SGwilson_client, the broom uses the specialized
+-- "run_flyingbroom" state (NOT "run") with "run_witchbroom_loop" animation.
+-- We do not call a nonexistent GetCurrentAnimation or use debug strings.
+-- Only a normal player "idle" is changed; locomotion and action states remain native.
+local IWB_HOVER_ENABLED = GetModConfigData("enchanted_idle_hover_enabled") == true
+
+if IWB_HOVER_ENABLED then
+    local IWB_FLIGHT_ANIM = "run_witchbroom_loop"
+
+    local function HasEnchantedBroomEquipped(player)
+        if player == nil or player:HasTag("playerghost") then
+            return false
+        end
+        -- Exact check used by the ORIGINAL 2026 Klei flight stategraph.
+        -- Prefer client replica on clients; component on the master sim.
+        local replica_inventory = player.replica ~= nil and player.replica.inventory or nil
+        if replica_inventory ~= nil and replica_inventory.EquipHasTag ~= nil
+            and replica_inventory:EquipHasTag("flyingbroom") then
+            return true
+        end
+        local inventory = player.components ~= nil and player.components.inventory or nil
+        return inventory ~= nil and inventory.EquipHasTag ~= nil
+            and inventory:EquipHasTag("flyingbroom") or false
+    end
+
+    local function IsOrdinaryIdle(player)
+        return player ~= nil and player.sg ~= nil
+            and player.sg.currentstate ~= nil
+            and player.sg.currentstate.name == "idle"
+    end
+
+    local function ApplyHover(player)
+        if not IsOrdinaryIdle(player) or not HasEnchantedBroomEquipped(player)
+            or player.AnimState == nil then
+            return
+        end
+        if not player.AnimState:IsCurrentAnimation(IWB_FLIGHT_ANIM) then
+            player.AnimState:PlayAnimation(IWB_FLIGHT_ANIM, true)
+        end
+        player._iwb_hover133 = true
+    end
+
+    local function ClearHover(player)
+        if player == nil or player._iwb_hover133 == nil then
+            return
+        end
+        player._iwb_hover133 = nil
+        if IsOrdinaryIdle(player) and player.AnimState ~= nil
+            and player.AnimState:IsCurrentAnimation(IWB_FLIGHT_ANIM) then
+            player.AnimState:PlayAnimation("idle_loop", true)
+        end
+    end
+
+    local function PatchIdleStategraph(sg)
+        if sg == nil or sg.states == nil or sg.states.idle == nil then
+            return
+        end
+        local idle = sg.states.idle
+        if idle.onenter ~= nil then
+            local vanilla_onenter = idle.onenter
+            idle.onenter = function(player, pushanim, ...)
+                -- Do not skip any original game safety, movement or action code.
+                local result = vanilla_onenter(player, pushanim, ...)
+                -- These special prediction parameters request no animation.
+                if pushanim ~= "cancel" and pushanim ~= "noanim"
+                    and not player:HasTag("nopredict")
+                    and not player:HasTag("pausepredict") then
+                    ApplyHover(player)
+                end
+                return result
+            end
+        end
+        -- Vanilla SGwilson schedules funny idles every few seconds.
+        -- With the broom we keep the flight idle instead.
+        if idle.ontimeout ~= nil then
+            local vanilla_ontimeout = idle.ontimeout
+            idle.ontimeout = function(player, ...)
+                if IsOrdinaryIdle(player) and HasEnchantedBroomEquipped(player) then
+                    ApplyHover(player)
+                    return
+                end
+                return vanilla_ontimeout(player, ...)
+            end
+        end
+    end
+
+    AddStategraphPostInit("wilson", PatchIdleStategraph)
+    AddStategraphPostInit("wilson_client", PatchIdleStategraph)
+
+    AddPlayerPostInit(function(player)
+        -- Equip an enchanted broom while already stationary.
+        player:ListenForEvent("equip", function()
+            player:DoTaskInTime(0, function()
+                if HasEnchantedBroomEquipped(player) then
+                    ApplyHover(player)
+                else
+                    ClearHover(player)
+                end
+            end)
+        end)
+        player:ListenForEvent("unequip", function()
+            player:DoTaskInTime(0, function()
+                if not HasEnchantedBroomEquipped(player) then
+                    ClearHover(player)
+                end
+            end)
+        end)
+        -- Fallback only for ordinary idle, not attack/interaction/movement.
+        -- Also catches already equipped saved brooms or unexpected idle resets.
+        player:DoPeriodicTask(.6, function()
+            if HasEnchantedBroomEquipped(player) then
+                ApplyHover(player)
+            else
+                ClearHover(player)
+            end
+        end)
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:witchbroom_living
+AddPrefabPostInit("witchbroom", SetupBroom)
+AddPrefabPostInit("witchbroom_living", SetupBroom)
+
+print("[Infinite Witch Brooms] 1.3.3 loaded. Enchanted speed: " ..
+    (SPEED_ENABLED and (SPEED_PERCENT .. "%") or "vanilla") ..
+    "; water walking: " .. (WATER_WALK_ENABLED and "on" or "off"))
+
+
+-- v1.3.3: Always-hover idle. Uses Klei's ACTUAL 2026 witch-broom animation.
+-- In vanilla SGwilson and SGwilson_client, the broom uses the specialized
+-- "run_flyingbroom" state (NOT "run") with "run_witchbroom_loop" animation.
+-- We do not call a nonexistent GetCurrentAnimation or use debug strings.
+-- Only a normal player "idle" is changed; locomotion and action states remain native.
+local IWB_HOVER_ENABLED = GetModConfigData("enchanted_idle_hover_enabled") == true
+
+if IWB_HOVER_ENABLED then
+    local IWB_FLIGHT_ANIM = "run_witchbroom_loop"
+
+    local function HasEnchantedBroomEquipped(player)
+        if player == nil or player:HasTag("playerghost") then
+            return false
+        end
+        -- Exact check used by the ORIGINAL 2026 Klei flight stategraph.
+        -- Prefer client replica on clients; component on the master sim.
+        local replica_inventory = player.replica ~= nil and player.replica.inventory or nil
+        if replica_inventory ~= nil and replica_inventory.EquipHasTag ~= nil
+            and replica_inventory:EquipHasTag("flyingbroom") then
+            return true
+        end
+        local inventory = player.components ~= nil and player.components.inventory or nil
+        return inventory ~= nil and inventory.EquipHasTag ~= nil
+            and inventory:EquipHasTag("flyingbroom") or false
+    end
+
+    local function IsOrdinaryIdle(player)
+        return player ~= nil and player.sg ~= nil
+            and player.sg.currentstate ~= nil
+            and player.sg.currentstate.name == "idle"
+    end
+
+    local function ApplyHover(player)
+        if not IsOrdinaryIdle(player) or not HasEnchantedBroomEquipped(player)
+            or player.AnimState == nil then
+            return
+        end
+        if not player.AnimState:IsCurrentAnimation(IWB_FLIGHT_ANIM) then
+            player.AnimState:PlayAnimation(IWB_FLIGHT_ANIM, true)
+        end
+        player._iwb_hover133 = true
+    end
+
+    local function ClearHover(player)
+        if player == nil or player._iwb_hover133 == nil then
+            return
+        end
+        player._iwb_hover133 = nil
+        if IsOrdinaryIdle(player) and player.AnimState ~= nil
+            and player.AnimState:IsCurrentAnimation(IWB_FLIGHT_ANIM) then
+            player.AnimState:PlayAnimation("idle_loop", true)
+        end
+    end
+
+    local function PatchIdleStategraph(sg)
+        if sg == nil or sg.states == nil or sg.states.idle == nil then
+            return
+        end
+        local idle = sg.states.idle
+        if idle.onenter ~= nil then
+            local vanilla_onenter = idle.onenter
+            idle.onenter = function(player, pushanim, ...)
+                -- Do not skip any original game safety, movement or action code.
+                local result = vanilla_onenter(player, pushanim, ...)
+                -- These special prediction parameters request no animation.
+                if pushanim ~= "cancel" and pushanim ~= "noanim"
+                    and not player:HasTag("nopredict")
+                    and not player:HasTag("pausepredict") then
+                    ApplyHover(player)
+                end
+                return result
+            end
+        end
+        -- Vanilla SGwilson schedules funny idles every few seconds.
+        -- With the broom we keep the flight idle instead.
+        if idle.ontimeout ~= nil then
+            local vanilla_ontimeout = idle.ontimeout
+            idle.ontimeout = function(player, ...)
+                if IsOrdinaryIdle(player) and HasEnchantedBroomEquipped(player) then
+                    ApplyHover(player)
+                    return
+                end
+                return vanilla_ontimeout(player, ...)
+            end
+        end
+    end
+
+    AddStategraphPostInit("wilson", PatchIdleStategraph)
+    AddStategraphPostInit("wilson_client", PatchIdleStategraph)
+
+    AddPlayerPostInit(function(player)
+        -- Equip an enchanted broom while already stationary.
+        player:ListenForEvent("equip", function()
+            player:DoTaskInTime(0, function()
+                if HasEnchantedBroomEquipped(player) then
+                    ApplyHover(player)
+                else
+                    ClearHover(player)
+                end
+            end)
+        end)
+        player:ListenForEvent("unequip", function()
+            player:DoTaskInTime(0, function()
+                if not HasEnchantedBroomEquipped(player) then
+                    ClearHover(player)
+                end
+            end)
+        end)
+        -- Fallback only for ordinary idle, not attack/interaction/movement.
+        -- Also catches already equipped saved brooms or unexpected idle resets.
+        player:DoPeriodicTask(.6, function()
+            if HasEnchantedBroomEquipped(player) then
+                ApplyHover(player)
+            else
+                ClearHover(player)
+            end
+        end)
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+    AddStategraphPostInit("wilson", PatchIdleStategraph)
+    AddStategraphPostInit("wilson_client", PatchIdleStategraph)
+
+    AddPlayerPostInit(function(player)
+        -- Equip an enchanted broom while already stationary.
+        player:ListenForEvent("equip", function()
+            player:DoTaskInTime(0, function()
+                if HasEnchantedBroomEquipped(player) then
+                    ApplyHover(player)
+                else
+                    ClearHover(player)
+                end
+            end)
+        end)
+        player:ListenForEvent("unequip", function()
+            player:DoTaskInTime(0, function()
+                if not HasEnchantedBroomEquipped(player) then
+                    ClearHover(player)
+                end
+            end)
+        end)
+        -- Fallback only for ordinary idle, not attack/interaction/movement.
+        -- Also catches already equipped saved brooms or unexpected idle resets.
+        player:DoPeriodicTask(.6, function()
+            if HasEnchantedBroomEquipped(player) then
+                ApplyHover(player)
+            else
+                ClearHover(player)
+            end
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+    AddStategraphPostInit("wilson", PatchIdleStategraph)
+    AddStategraphPostInit("wilson_client", PatchIdleStategraph)
+
+    AddPlayerPostInit(function(player)
+        -- Equip an enchanted broom while already stationary.
+        player:ListenForEvent("equip", function()
+            player:DoTaskInTime(0, function()
+                if HasEnchantedBroomEquipped(player) then
+                    ApplyHover(player)
+                else
+                    ClearHover(player)
+                end
+            end)
+        end)
+        player:ListenForEvent("unequip", function()
+            player:DoTaskInTime(0, function()
+                if not HasEnchantedBroomEquipped(player) then
+                    ClearHover(player)
+                end
+            end)
+        end)
+        -- Fallback only for ordinary idle, not attack/interaction/movement.
+        -- Also catches already equipped saved brooms or unexpected idle resets.
+        player:DoPeriodicTask(.6, function()
+            if HasEnchantedBroomEquipped(player) then
+                ApplyHover(player)
+            else
+                ClearHover(player)
+            end
+        end)
+    end)
+
+```
+

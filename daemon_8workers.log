@@ -4236,3 +4236,28 @@
 [2026-11-01 04:55:59] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 04:56:00] Reducer: 成功将 Mod 3830815462 (三号线) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 04:56:00] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:56:05] Git 自动提交并推送成功！
+[2026-11-01 04:56:06] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 04:56:06] 【批次结算】：本批归约出 6 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 04:56:36] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3830621485', '3804527772', '3795616269', '3830879982', '3775039605', '3830929723']
+[2026-11-01 04:56:36] SteamCMD 下载 3830621485 ...
+[2026-11-01 04:56:36] SteamCMD 下载 3804527772 ...
+[2026-11-01 04:56:36] SteamCMD 下载 3795616269 ...
+[2026-11-01 04:56:36] SteamCMD 下载 3830879982 ...
+[2026-11-01 04:56:36] SteamCMD 下载 3775039605 ...
+[2026-11-01 04:56:36] SteamCMD 下载 3830929723 ...
+[2026-11-01 04:57:03] Worker [3830621485] 成功解析入库暂存区 -> 幻想乡 魔法使 爱丽丝·玛格特洛依德 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 04:57:15] Worker [3804527772] 成功解析入库暂存区 -> Porządne Spolszczenie - DEMO (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 04:57:26] Worker [3795616269] 成功解析入库暂存区 -> 白夜,一只神秘大白虎 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 04:57:35] Worker [3830879982] 成功解析入库暂存区 -> Infinite Witch Brooms (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 04:57:45] Worker [3775039605] 过滤拦截: Fat Teto Plush Glommer (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 04:58:07] Worker [3830929723] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 04:58:07] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 04:58:07] Reducer: 成功将 Mod 3795616269 (白夜,一只神秘大白虎) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:58:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:58:07] Reducer: 成功将 Mod 3804527772 (Porządne Spolszczenie - DEMO) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 04:58:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 04:58:07] Reducer: 成功将 Mod 3830621485 (幻想乡 魔法使 爱丽丝·玛格特洛依德) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:58:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:58:07] Reducer: 成功将 Mod 3830879982 (Infinite Witch Brooms) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 04:58:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
