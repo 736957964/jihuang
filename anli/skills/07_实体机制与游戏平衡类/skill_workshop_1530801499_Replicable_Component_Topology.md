@@ -2103,3 +2103,208 @@ end)
 
 ```
 
+
+
+### 变体演进：🐾 Pets Vivos / Living Pets — Mais que um pet! / More Than a Pet! (Mod 3826664484)
+- **变体场景与切面**：收录来自工坊 Mod 3826664484 (`🐾 Pets Vivos / Living Pets — Mais que um pet! / More Than a Pet!`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3826664484)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:workable
+-- Boss quebrando estrutura (base): avisa os pets por um evento do mundo
+AddComponentPostInit("workable", function(self)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then return end
+    self.inst:ListenForEvent("workfinished", function(inst, data)
+        local w = data and data.worker
+        if w ~= nil and w:HasTag("epic") and inst:HasTag("structure") then
+            GLOBAL.TheWorld:PushEvent("petsvivos_basehit", { inst = inst })
+        end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：懒人全能设施 (Mod 3830746829)
+- **变体场景与切面**：收录来自工坊 Mod 3830746829 (`懒人全能设施`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3830746829)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:fueled
+
+AddComponentPostInit("fueled", function(self)
+    local inst = self.inst
+    if inst == nil or inst.components.mast == nil or not IsOn("opt_deck_lamp") then
+        return
+    end
+    -- 组件是在 prefab 函数里创建的，那时 inst.prefab 还没赋值，所以等一帧再判断 prefab 并处理
+    inst:DoTaskInTime(0, function(i)
+        if not i:IsValid() or not VANILLA_MAST_PREFABS[i.prefab] then
+            return
+        end
+        local fueled = i.components.fueled
+        if fueled ~= nil then
+            MakeFuelPermanent(fueled)
+        end
+        ForceMastLamp(i)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:floatinglantern
+
+AddPrefabPostInit("floatinglantern", function(inst)
+    if not TheWorld.ismastersim or not IsOn("opt_sky_lantern") then
+        return inst
+    end
+    local life = 30 * (TUNING.TOTAL_DAY_TIME or 480)
+    inst:DoTaskInTime(life, function(i)
+        if i:IsValid() then
+            i:Remove()
+        end
+    end)
+    return inst
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:carnivaldecor_lamp
+
+AddPrefabPostInit("carnivaldecor_lamp", function(inst)
+    if inst.Light == nil or not IsOn("opt_carnival_lamp") then
+        return inst
+    end
+
+    inst.Light:SetRadius(4)
+
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    -- 正常激活；激活后取消原版的自动熄灭，并保证灯和顶上那颗小珠子一起保持点亮
+    inst:DoPeriodicTask(1, function(i)
+        if i.Light == nil or not i.Light:IsEnabled() then
+            return
+        end
+        if i.turnofftask ~= nil then
+            i.turnofftask:Cancel()
+            i.turnofftask = nil
+        end
+        if i.components.activatable ~= nil then
+            i.components.activatable.inactive = false
+        end
+        local onanim = "idle" .. (i.shape or 1) .. "_on"
+        if i.AnimState ~= nil and not i.AnimState:IsCurrentAnimation(onanim) then
+            i.AnimState:PlayAnimation(onanim, true)
+        end
+    end)
+
+    return inst
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pumpkin_lantern
+
+AddPrefabPostInit("pumpkin_lantern", function(inst)
+    if not IsOn("opt_pumpkin_lantern") then
+        return inst
+    end
+
+    -- 半径锁在 2×2：原版每 0.1 秒用闪烁任务把半径写回 1.5，这里把那个任务停掉
+    inst:DoPeriodicTask(.2, function(i)
+        if i._flickertask ~= nil then
+            i._flickertask:Cancel()
+            i._flickertask = nil
+        end
+        if i.Light ~= nil then
+            i.Light:SetRadius(PUMPKIN_LIGHT_RADIUS)
+        end
+    end)
+
+    -- 客户端也需要这个标签，右键菜单才会出现「打蜡」
+    inst:AddTag("waxable")
+
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    local waxable = inst:AddComponent("waxable")
+    waxable:SetWaxfn(function(target)
+        if target._allfac_waxed then
+            return false, "ALREADY_WAXED"
+        end
+        MakePumpkinPermanent(target)
+        return true
+    end)
+
+    local old_onload = inst.OnLoad
+    inst.OnLoad = function(i, data)
+        if old_onload ~= nil then
+            old_onload(i, data)
+        end
+        if i._allfac_waxed then
+            MakePumpkinPermanent(i)
+        end
+    end
+
+    inst.OnSave = function(i, data)
+        data.allfac_waxed = i._allfac_waxed or nil
+    end
+
+    return inst
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:allfac_light
+
+AddPrefabPostInit("allfac_light", ApplyLightSettings)
+
+AddPrefabPostInit("firesuppressor", function(inst)
+    if not TheWorld.ismastersim or not IsOn("opt_suppressor") then
+        return inst
+    end
+
+    MakeFuelPermanent(inst.components.fueled)
+    FillFuel(inst.components.fueled)
+
+    local light = SpawnPrefab("allfac_light")
+    if light ~= nil then
+        light.entity:SetParent(inst.entity)
+        light.Transform:SetPosition(0, 1, 0)
+        inst._allfac_light = light
+        inst:ListenForEvent("onremove", function()
+            if light:IsValid() then
+                light:Remove()
+            end
+        end)
+    end
+
+    -- 清除范围内的亮茄寄生体。
+    -- Remove() 会走 prefab 内的 OnRemove -> deinfest()，被寄生的植物会恢复交互和生长；
+    -- deinfest() 不会清 plant.lunarthrall_plant 这个"已被寄生"反向引用（只有死亡路径清），
+    -- 这里补上，避免植物一直挂着已删除实体。
+    -- 寄生体被清掉后同一株植物仍可能被再次选中，靠周期扫描持续处理。
+    inst:DoPeriodicTask(SCAN_INTERVAL, function()
+        local x, y, z = inst.Transform:GetWorldPosition()
+        local thralls = TheSim:FindEntities(x, y, z, LIGHT_RADIUS, { THRALL_TAG })
+        for _, thrall in ipairs(thralls) do
+            local tracker = thrall.components.entitytracker
+            local plant = tracker ~= nil and tracker:GetEntity("targetplant") or nil
+            if plant ~= nil and plant.lunarthrall_plant == thrall then
+                plant.lunarthrall_plant = nil
+            end
+            thrall:Remove()
+        end
+    end)
+end)
+
+```
+

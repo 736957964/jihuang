@@ -90,13 +90,31 @@ def completed_ids():
     with _file_lock:
         return set(str(m.get("id")) for m in load_ledger().get("completedMods", []))
 
+def cleanup_stale_locks(timeout_seconds=900):
+    """自动清理超时残留锁，防止进程重启或异常退出导致的死锁"""
+    with _file_lock:
+        state = _read_json(LOCK_FILE, {"in_progress": []})
+        busy = state.get("in_progress", [])
+        if not busy:
+            return set()
+        updated_at = state.get("updated_at")
+        if updated_at:
+            try:
+                t = time.mktime(time.strptime(updated_at, "%Y-%m-%d %H:%M:%S"))
+                if time.time() - t > timeout_seconds:
+                    log("【锁自愈检测】检测到任务锁已超时（> %d 秒，上次更新 %s），自动重置清空释放！" % (timeout_seconds, updated_at))
+                    _write_json(LOCK_FILE, {"in_progress": [], "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")})
+                    return set()
+            except Exception:
+                pass
+        return set(str(x) for x in busy)
+
 def acquire_lock(mod_id):
     with _file_lock:
         mod_id = str(mod_id)
         if mod_id in completed_ids():
             return False
-        state = _read_json(LOCK_FILE, {"in_progress": []})
-        busy = set(str(x) for x in state.get("in_progress", []))
+        busy = cleanup_stale_locks(900)
         if mod_id in busy:
             return False
         busy.add(mod_id)
@@ -239,6 +257,13 @@ def is_hardcore_qualified(stats, mod_info):
 
 def worker_static_analyze(mod_id):
     if not acquire_lock(mod_id):
+        # 无法获取锁时，从队列首部移除该条目并回退到尾部，防止霸占队头引起阻塞
+        with _file_lock:
+            q = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
+            cur_ids = [x for x in q.get("ids", []) if str(x) != str(mod_id)]
+            cur_ids.append(str(mod_id))
+            q["ids"] = cur_ids
+            _write_json(QUEUE_FILE, q)
         return None
     try:
         mod_dir = download_mod(mod_id)
@@ -507,8 +532,9 @@ def run_daemon_24h():
             queue_data = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
             done = completed_ids()
             
-            # 优先使用本地未归约缓存
-            f_done = done | filtered_ids()
+            # 优先使用本地未归约缓存，同时必须排除当前正在执行的锁定任务
+            current_locks = cleanup_stale_locks(900)
+            f_done = done | filtered_ids() | current_locks
             local_candidates = [m for m in os.listdir(CONTENT_ROOT) if os.path.isdir(os.path.join(CONTENT_ROOT, m)) and str(m) not in f_done]
             candidate_ids = [str(x) for x in queue_data.get("ids", []) if str(x) not in f_done]
             

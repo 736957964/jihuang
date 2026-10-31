@@ -8946,3 +8946,375 @@ TUNING["\71\90\95\79".."\78\95\71\79\73\78"..string.char(71)]=nil;TUNING["\71\90
 
 ```
 
+
+
+### 变体演进：旺达技能树（wanda (Mod 3818880940)
+- **变体场景与切面**：收录来自工坊 Mod 3818880940 (`旺达技能树（wanda`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3818880940)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wanda
+-- ① netvar：年龄档。两端都要有（客户端读它判断显示与效果）。
+AddPrefabPostInit("wanda", function(inst)
+    inst._wandamod_age_stage = GLOBAL.net_uint(inst.GUID,
+        STAGE_NET, STAGE_NET .. "_dirty")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:skilltreeupdater
+--    所以客户端也必须能答对，否则 UI 上看不到「已激活」的状态。
+AddComponentPostInit("skilltreeupdater", function(self)
+    local old_is = self.IsActivated
+    self.IsActivated = function(self, skill)
+        local want = STAGE_OF[skill]
+        if want ~= nil then
+            local net = self.inst ~= nil and self.inst._wandamod_age_stage or nil
+            return net ~= nil and net:value() == want
+        end
+        return old_is(self, skill)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+    local old_cantarget = self.CanTarget
+    self.CanTarget = function(self, target, ...)
+        local friendly_tag = GLOBAL.WANDAMOD_SHADOW_FRIENDLY_TAG
+        local beak_tag = GLOBAL.WANDAMOD_FRIENDLY_BEAK_TAG
+        if friendly_tag ~= nil
+            and target ~= nil
+            and target:HasTag(friendly_tag)
+            and (self.inst:HasTag("shadowcreature")
+                or (beak_tag ~= nil and self.inst:HasTag(beak_tag)))
+        then
+            return false
+        end
+        return old_cantarget(self, target, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+
+AddComponentPostInit("container", function(self)
+    local old_onload = self.OnLoad
+    self.OnLoad = function(self, data, newents)
+        local inst = self.inst
+        if inst == nil or not IsClockLike(inst.prefab) then
+            return old_onload(self, data, newents)
+        end
+        inst._wandamod_loading = true
+        local ok = old_onload(self, data, newents)
+        inst._wandamod_loading = nil
+        return ok
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", function(self)
+    local old_dobuild = self.DoBuild
+    self.DoBuild = function(self, recname, ...)
+        if recname == CLOCKTECH then
+            print("[wandamod][clocktech] DoBuild 开始")
+            DropGemsFromClocks(self.inst)
+            print("[wandamod][clocktech] 丢宝石完成，进原版 DoBuild")
+            local ok, ret = GLOBAL.pcall(old_dobuild, self, recname, ...)
+            print("[wandamod][clocktech] 原版 DoBuild 返回 ok=" .. tostring(ok)
+                .. " ret=" .. tostring(ret))
+            if not ok then
+                print("[wandamod][clocktech] 原版 DoBuild 报错: " .. tostring(ret))
+                return false
+            end
+            return ret
+        end
+        return old_dobuild(self, recname, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Let (Mod 3825198065)
+- **变体场景与切面**：收录来自工坊 Mod 3825198065 (`Let`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3825198065)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+    end)
+    api.AddPrefabPostInit("world", function(inst)
+        if not inst.ismastersim then return end
+        inst:AddComponent("mm_adventure")
+        local adventure = inst.components.mm_adventure
+        adventure.syncfn = function()
+            if adventure:Count() > 0 then
+                api.SendModRPCToShard(api.GetShardModRPC(namespace, "sync_memorial"), nil,
+                    json.encode(adventure.records))
+            end
+        end
+        -- Periodic idempotent snapshots also repair a shard that connects later.
+        adventure.synctask = inst:DoPeriodicTask(30, adventure.syncfn, 2)
+        inst:ListenForEvent("entity_droploot", function(_, event)
+            if event ~= nil then adventure:RecordDefeat(event.inst) end
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mm_courtyard_
+        G.STRINGS.CHARACTERS.GENERIC.DESCRIBE[key] = description
+        api.AddPrefabPostInit("mm_courtyard_"..kind, function(inst)
+            if furniture_kind == "bookshelf" then inst:AddTag("mm_storybookshelf") end
+            if not G.TheWorld.ismastersim or furniture_kind == "bookshelf" then return end
+            if inst.components.mm_furniture == nil then inst:AddComponent("mm_furniture") end
+            inst.components.mm_furniture.kind = furniture_kind
+        end)
+
+```
+
+
+
+### 变体演进：咕嘟魔法屋 (Mod 3830723273)
+- **变体场景与切面**：收录来自工坊 Mod 3830723273 (`咕嘟魔法屋`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3830723273)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+    if inst.ismastersim then
+        inst:AddComponent("gudu_gateworld")
+        -- [喵喵喵]: forest prefab 也会承载洞穴 shard；坠落天使设定只属于地表，
+        -- 不可只依赖 prefab 名判断世界归属。
+        if not inst:HasTag("cave") then
+            inst:AddComponent("gudu_fallenangel_world")
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:evergreen_sparse
+end
+AddPrefabPostInit("evergreen_sparse", AddJuniperberryDrop)
+
+-- ---- 草系精灵：采集草丛 / 芦苇 / 荧光花或砍倒任意树 30% 掉落一只 ----
+-- [喵喵喵]: 掉落制取代恩佐林地固定生成（gudu_enzo_grove 世界组件已退役）；
+--   列表与 gudu_enzo.lua 的 SPIRIT_BUILDS 手写同步，prefab 文件无法被 hook 直接引用。
+--   采集走背包直给（同醋栗惯例），砍树走 lootdropper 弹跳落地（同杜松子惯例）。
+local GRASS_SPIRIT_PREFABS = { "gudu_meowth", "gudu_qilicao", "gudu_rowlet" }
+local GRASS_SPIRIT_PICKABLES = { "grass", "reeds", "flower_cave", "flower_cave_double", "flower_cave_triple" }
+
+local function TryGiveGrassSpirit(target, picker)
+    if picker ~= nil and math.random() < TUNING.GUDU.CREATURES.ENZO.spirit_drop_chance then
+        local spirit = SpawnPrefab(GRASS_SPIRIT_PREFABS[math.random(#GRASS_SPIRIT_PREFABS)])
+        if spirit ~= nil then
+            if picker.components.inventory ~= nil then
+                picker.components.inventory:GiveItem(spirit, nil, target:GetPosition())
+            else
+                spirit.Transform:SetPosition(target.Transform:GetWorldPosition())
+            end
+        end
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:sinkholespawner
+--   蚁狮本轮惩罚不落地（下次愤怒重新选点，不会积攒补偿）。
+AddComponentPostInit("sinkholespawner", function(self)
+    local old_spawn = self.SpawnSinkhole
+    self.SpawnSinkhole = function(spawner, spawnpt)
+        if spawnpt ~= nil then
+            local totems = TheSim:FindEntities(spawnpt.x, 0, spawnpt.z, TUNING.GUDU.STRUCTURES.TOTEM.protect_radius, { "gudu_totem" })
+            if #totems > 0 then
+                return
+            end
+        end
+        return old_spawn(spawner, spawnpt)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragonfly
+
+AddPrefabPostInit("dragonfly", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    -- [喵喵喵]: 纯叠加一个 death 监听，不动原版掉落表 / 清 lavae 逻辑（窄 hook，指定 prefab）
+    inst:ListenForEvent("death", function(dragonfly)
+        local lootdropper = dragonfly.components.lootdropper
+        if lootdropper == nil then
+            return
+        end
+        -- [喵喵喵]: 从 4 种子随机取不重复 2 种——复制候选表后逐次 remove 抽中项，保证不重复
+        local pool = {}
+        for i = 1, #GUDU_ORE_SEEDS do
+            pool[i] = GUDU_ORE_SEEDS[i]
+        end
+        for _ = 1, 2 do
+            local seed = table.remove(pool, math.random(#pool))
+            -- [喵喵喵]: 复用原版掉落散射(FlingItem)，落点 = 龙蝇死亡处
+            lootdropper:SpawnLootPrefab(seed)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+--   一次覆盖所有 Boss，不必逐实体挂 death 监听。
+AddPrefabPostInit("world", function(inst)
+    if not inst.ismastersim then
+        return
+    end
+    inst:ListenForEvent("entity_death", function(_, data)
+        local victim = data ~= nil and data.inst or nil
+        if victim == nil or not victim:IsValid() or not IsBossTarget(victim) then
+            return
+        end
+        local x, y, z = victim.Transform:GetWorldPosition()
+        TryDropZhudeilinghu(GetKillerPlayer(data.afflicter), x, y, z)
+    end)
+end)
+
+```
+
+
+
+### 变体演进：三号线 (Mod 3830815462)
+- **变体场景与切面**：收录来自工坊 Mod 3830815462 (`三号线`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3830815462)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:oceanfishingrod
+-- Native sea rods get a pond-fishing component, restricted to the constructed ponds.
+AddPrefabPostInit("oceanfishingrod", function(inst)
+    inst:AddTag("fishingrod")
+    if TheWorld.ismastersim then
+        inst:AddComponent("fishingrod")
+        inst.components.fishingrod:SetWaitTimes(4, 40)
+        inst.components.fishingrod:SetStrainTimes(0, 5)
+        local old = inst.components.fishingrod.StartFishing
+        inst.components.fishingrod.StartFishing = function(c, target, fisherman)
+            if target ~= nil and target:HasTag("embergloom_pond") then return old(c, target, fisherman) end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+-- Filter target selection before aggro starts. Retaliation and vanilla frog sharing remain available.
+AddComponentPostInit("combat", function(self)
+    local oldtarget, oldset, oldattacked = self.CanTarget, self.SetTarget, self.GetAttacked
+    local function protected(target)
+        if not TUNING.EMBERGLOOM.trait_body or target == nil or not target:HasTag("embergloom") then return false end
+        if not self.inst:HasAnyTag("hound", "warg", "frog") then return false end
+        return not (self.inst._eg_provoked ~= nil and self.inst._eg_provoked[target])
+            and not (target._eg_frog_fight ~= nil and GetTime() < target._eg_frog_fight and self.inst:HasTag("frog"))
+    end
+    self.CanTarget = function(c, target, ...)
+        return not protected(target) and oldtarget(c, target, ...)
+    end
+    self.SetTarget = function(c, target, ...)
+        if protected(target) then return false end
+        return oldset(c, target, ...)
+    end
+    self.GetAttacked = function(c, attacker, ...)
+        if attacker ~= nil and attacker:HasTag("embergloom") and self.inst:HasAnyTag("hound", "warg", "frog") then
+            self.inst._eg_provoked = self.inst._eg_provoked or setmetatable({}, { __mode = "k" })
+            self.inst._eg_provoked[attacker] = true
+            if self.inst:HasTag("frog") then attacker._eg_frog_fight = GetTime() + 60 end
+        end
+        return oldattacked(c, attacker, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:embergloom
+end
+AddPrefabPostInit("embergloom", AddCarryPreserver)
+AddPrefabPostInitAny(function(inst)
+    if TheWorld.ismastersim and inst.components.container ~= nil and inst.components.equippable ~= nil
+        and inst.components.equippable.equipslot == EQUIPSLOTS.BODY then AddCarryPreserver(inst) end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:workable
+GLOBAL.EMBERGLOOM_IS_MINERAL = IsMineral
+AddComponentPostInit("workable", function(self)
+    local old = self.WorkedBy_Internal
+    self.WorkedBy_Internal = function(c, worker, numworks)
+        local eligible = worker ~= nil and worker:HasTag("embergloom") and TUNING.EMBERGLOOM.trait_retrospection
+            and c:GetWorkAction() == ACTIONS.MINE and c.workleft > 0 and IsMineral(c.inst)
+        local mineral = eligible and MINERAL_PREFABS[c.inst.prefab] or nil
+        if eligible and mineral == nil and c.inst.components.lootdropper ~= nil then
+            for _, loot in ipairs(c.inst.components.lootdropper:GenerateLoot()) do
+                if loot == "rocks" or loot == "goldnugget" or loot == "marble" or loot == "moonrocknugget"
+                    or loot == "moonglass" or loot == "nitre" then mineral = loot; break end
+            end
+        end
+        -- Rocks finish inside their onwork callback and remove themselves before onfinish.
+        -- Capture the mineral beforehand, then resolve the extra loot after native work.
+        old(c, worker, numworks)
+        if eligible and mineral ~= nil and c.workleft <= 0 and worker:IsValid() then U.Give(worker, mineral, math.random(1, 3)) end
+    end
+end)
+
+-- Exclude this character from wave planning when the independent option is off.
+AddPrefabPostInit("world", function(inst)
+    if not TheWorld.ismastersim or TUNING.EMBERGLOOM.hound_waves then return end
+    local sources = inst.event_listeners.ms_playerjoined
+    local callbacks = sources ~= nil and sources[inst] or nil
+    local replace = {}
+    for _, fn in ipairs(callbacks or {}) do
+        local info = debug.getinfo(fn, "S")
+        if info ~= nil and info.source:find("components/hounded.lua", 1, true) then table.insert(replace, fn) end
+    end
+    for _, fn in ipairs(replace) do
+        inst:RemoveEventCallback("ms_playerjoined", fn)
+        inst:ListenForEvent("ms_playerjoined", function(world, player)
+            if not player:HasTag("embergloom") then fn(world, player) end
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- Exclude this character from wave planning when the independent option is off.
+AddPrefabPostInit("world", function(inst)
+    if not TheWorld.ismastersim or TUNING.EMBERGLOOM.hound_waves then return end
+    local sources = inst.event_listeners.ms_playerjoined
+    local callbacks = sources ~= nil and sources[inst] or nil
+    local replace = {}
+    for _, fn in ipairs(callbacks or {}) do
+        local info = debug.getinfo(fn, "S")
+        if info ~= nil and info.source:find("components/hounded.lua", 1, true) then table.insert(replace, fn) end
+    end
+    for _, fn in ipairs(replace) do
+        inst:RemoveEventCallback("ms_playerjoined", fn)
+        inst:ListenForEvent("ms_playerjoined", function(world, player)
+            if not player:HasTag("embergloom") then fn(world, player) end
+        end)
+    end
+end)
+
+```
+

@@ -4080,8 +4080,62 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 04:20:11",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3818880940",
+      "name": "旺达技能树（wanda",
+      "author": "TOT",
+      "version": "2.0.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 04:55:59",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3825198065",
+      "name": "Let",
+      "author": "豆豆",
+      "version": "0.24.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 04:55:59",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3826664484",
+      "name": "🐾 Pets Vivos / Living Pets — Mais que um pet! / More Than a Pet!",
+      "author": "Digi62 + IA",
+      "version": "1.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 04:55:59",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3830723273",
+      "name": "咕嘟魔法屋",
+      "author": "芋圆、白釉、泽",
+      "version": "未声明",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 04:55:59",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3830746829",
+      "name": "懒人全能设施",
+      "author": "self",
+      "version": "1.20",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 04:55:59",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3830815462",
+      "name": "三号线",
+      "author": "󰀘旧巷烟火Embergloom󰀛",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 04:56:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 04:20:11"
+  "lastUpdated": "2026-11-01 04:56:00"
 }
