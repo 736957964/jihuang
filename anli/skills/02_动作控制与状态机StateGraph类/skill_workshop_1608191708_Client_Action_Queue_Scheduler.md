@@ -22576,3 +22576,608 @@ end)
 
 ```
 
+
+
+### 变体演进：Language (Mod 3344680064)
+- **变体场景与切面**：收录来自工坊 Mod 3344680064 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3344680064)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:peach
+
+AddPrefabPostInit("peach", function(inst)
+    if TheWorld.ismastersim then
+		if not inst.components.myth_rhino_tribute then
+			inst:AddComponent('myth_rhino_tribute')
+		end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:fuel
+end)
+AddComponentPostInit("fuel", function(self) if self.inst then self.inst:AddComponent('myth_rhino_tribute') end end)
+
+local MYTH_RED_GIVE = Action({mount_valid = true,priority = 2})
+MYTH_RED_GIVE.id = 'MYTH_RED_GIVE'
+MYTH_RED_GIVE.str = STRINGS.MYTH_RED_GIVE
+MYTH_RED_GIVE.fn = function(act)
+    if act.invobject and act.target and act.target.components.myth_redlantern_ground then
+		act.target.components.myth_redlantern_ground:GuaLight(act.invobject,act.doer)
+		return true
+    end
+end
+AddAction(MYTH_RED_GIVE)
+
+AddComponentAction("USEITEM", "myth_redlantern", function(inst, doer, target, actions)
+    if target:HasTag("canguashangqu") then
+        table.insert(actions, ACTIONS.MYTH_RED_GIVE)
+    end
+end)
+
+AddStategraphActionHandler("wilson",ActionHandler(MYTH_RED_GIVE, "give"))
+AddStategraphActionHandler("wilson_client",ActionHandler(MYTH_RED_GIVE, "give"))
+
+
+
+local MYTH_YJP_GIVE = Action({mount_valid = true,priority = 2})
+MYTH_YJP_GIVE.id = 'MYTH_YJP_GIVE'
+MYTH_YJP_GIVE.str = STRINGS.ACTIONS.USEITEM
+MYTH_YJP_GIVE.fn = function(act)
+    if act.invobject and act.target and act.invobject.components.finiteuses and act.invobject.components.finiteuses.current >= 20 then
+            if act.target:HasTag("farm_plant_killjoy") and act.target._base_name ~= nil then
+                act.invobject.components.finiteuses:Use(20)
+                local x,y,z = act.target.Transform:GetWorldPosition()
+                local flower = SpawnPrefab(act.target._base_name.."_oversized")
+                if flower then
+                    act.target:Remove()
+                    flower.Transform:SetPosition(x,y,z)
+                end
+                return true
+            elseif act.target:HasTag("infantree_small") then
+                if act.invobject.components.finiteuses:GetUses() < 100 then
+                    if act.doer and act.doer.components.talker then
+                        act.doer.components.talker:Say(MYTH_YJP_NEEDMAX)
+                    end
+                    return true
+                else
+                    act.invobject.components.finiteuses:Use(100)
+                    local new = ReplacePrefab(act.target, "myth_plant_infantree_medium")
+                    new.AnimState:PlayAnimation("smalltomedium")
+                    new.AnimState:PushAnimation("idle_snow",false)   
+                    if new.OnGrowFn then
+                        new:OnGrowFn()
+                    end
+                    return true
+                end
+            elseif act.target.components.growable ~= nil then
+                local stage = act.target.components.growable.stage
+                if act.target.components.growable.stages and act.target.components.growable.stages[stage] ~= nil and 
+                    act.target.components.growable.stages[stage].name == "rotten" and stage > 1 then
+                    act.target.components.growable.stage = stage - 1 
+                    act.target.components.growable:StopGrowing()
+					local pd = act.target:GetPersistData()
+					local new = SpawnPrefab(act.target.prefab)--崩了别怪我 
+					if new then
+                        new:SetPersistData(pd, {})
+                        new.Transform:SetPosition(act.target.Transform:GetWorldPosition())
+                        act.target:Remove()
+                        act.invobject.components.finiteuses:Use(20)
+                         return true
+                    end
+                end
+            end
+        --end
+    end
+end
+AddAction(MYTH_YJP_GIVE)
+
+AddComponentAction("USEITEM", "myth_yjp", function(inst, doer, target, actions)
+    if target:HasTag("pickable_harvest_str") or target:HasTag("infantree_small") then
+        table.insert(actions, ACTIONS.MYTH_YJP_GIVE)
+    end
+end)
+
+AddStategraphActionHandler("wilson",ActionHandler(MYTH_YJP_GIVE, "dolongaction"))
+AddStategraphActionHandler("wilson_client",ActionHandler(MYTH_YJP_GIVE, "dolongaction"))
+
+---给紫金葫芦的特殊关照
+AddComponentPostInit("playeractionpicker", function(self)
+    local old_get = self.GetInventoryActions
+    function self:GetInventoryActions(item, ...)
+        local result = old_get(self, item, ...)
+        if item and item.prefab == 'purple_gourd' then
+            local ret = {}
+            for i, v in ipairs(result) do
+                if v.action ~= ACTIONS.EQUIP then
+                    table.insert(ret, v)
+                end
+            end
+            return ret
+        end
+        return result
+    end
+end)
+
+local old = ACTIONS.DISMOUNT.fn
+ACTIONS.DISMOUNT.fn = function(act)
+    if act.doer == act.target and act.doer.components.rider ~= nil and act.doer.components.rider:IsRiding() then
+        local x,y,z = act.doer.Transform:GetWorldPosition()
+        if act.doer.components.mk_cloudfxspawner and act.doer.components.mk_cloudfxspawner.canspawn and not TheWorld.Map:IsPassableAtPoint(x, 0, z) then
+            act.doer.components.talker:Say(STRINGS.CHARACTERS.GENERIC.ACTIONFAIL.RUMMAGE.GENERIC)
+            return false
+        end
+    end
+    return  old(act)
+end
+
+local old = ACTIONS.INTERACT_WITH.fn
+ACTIONS.INTERACT_WITH.fn = function(act)
+    if act.doer and act.doer.prefab == "myth_tudi" and act.target ~= nil then
+        local x, y, z = act.target.Transform:GetWorldPosition()
+        local ents = TheWorld.Map:GetEntitiesOnTileAtPoint(x, 0, z)
+        for _, ent in ipairs(ents) do
+            if ent.components.farmplanttendable ~= nil then
+                if ent ==  act.target and ent.components.farmplanttendable:TendTo(act.doer) then
+                    if act.doer.components.talker ~= nil then
+                        act.doer.sg:AddStateTag("idle") 
+                        act.doer.components.talker:Say(STRINGS.MYTH_TUDI_TIRED[math.random(#STRINGS.MYTH_TUDI_TIRED)])
+                        --act.doer.components.talker:Say(GetString(act.doer, "ANNOUNCE_TALK_TO_PLANTS"))
+                    end                   
+                else
+                    ent.components.farmplanttendable:TendTo(act.doer)
+                end
+            end
+        end
+        return true
+    end
+    return old(act)
+end
+
+local oldsaddle = ACTIONS.SADDLE.fn
+ACTIONS.SADDLE.fn = function(act)
+    if act.invobject:HasTag("qingniu_saddle") and not act.target:HasTag("laozi_qingniu") then
+        return false
+    end
+    return oldsaddle(act)
+end
+
+STRINGS.ACTIONS.STOPUSINGITEM.LAOZI_BELL = STRINGS.ACTIONS.USEITEM
+STRINGS.ACTIONS.STOPUSINGITEM.NIAN_BELL = STRINGS.ACTIONS.USEITEM
+
+---种植莲花
+local  MYTH_LOTUS_PLANT = Action()
+MYTH_LOTUS_PLANT.id = "MYTH_LOTUS_PLANT"
+MYTH_LOTUS_PLANT.str = V and "Trồng" or "种植"
+MYTH_LOTUS_PLANT.fn = function(act)
+    if act.target and act.target.components.myth_lotus_grower and act.target.components.myth_lotus_grower:IsEmpty() then
+        return act.target.components.myth_lotus_grower:PlantItem(act.invobject, act.doer)
+    end
+end
+
+AddAction(MYTH_LOTUS_PLANT)
+
+AddComponentAction("USEITEM", "lotusplant" , function(inst, doer, target, actions, right)
+    if target:HasTag("can_plant_lotus") then
+        table.insert(actions, ACTIONS.MYTH_LOTUS_PLANT)
+    end
+end)
+
+AddStategraphActionHandler("wilson",ActionHandler(ACTIONS.MYTH_LOTUS_PLANT, "dolongaction"))
+AddStategraphActionHandler("wilson_client",ActionHandler(ACTIONS.MYTH_LOTUS_PLANT, "dolongaction"))
+
+
+local ponds = {"pond_mos"}
+for _,v in ipairs(ponds) do
+	AddPrefabPostInit(v, function(inst)
+		if not TheWorld.ismastersim then
+			return inst
+		end
+		inst:AddComponent("myth_lotus_grower")
+    end)
+end
+
+local  MYTH_LOTUS_PICK = Action({distance=2.5})
+MYTH_LOTUS_PICK.id = "MYTH_LOTUS_PICK"
+MYTH_LOTUS_PICK.str = STRINGS.ACTIONS.PICK
+MYTH_LOTUS_PICK.fn = function(act)
+    if act.target ~= nil and act.target.components.pickable ~= nil then
+        act.target.components.pickable:Pick(act.doer)
+        return true
+    end
+end
+
+AddAction(MYTH_LOTUS_PICK)
+
+AddComponentAction("SCENE", "pickable" , function(inst, doer, actions,right)
+    if inst:HasTag("pickable_lotus") and not (inst:HasTag("fire") or inst:HasTag("intense")) then
+        table.insert(actions, ACTIONS.MYTH_LOTUS_PICK)
+    end
+end)
+
+AddStategraphActionHandler("wilson",ActionHandler(ACTIONS.MYTH_LOTUS_PICK, function(inst, action)
+    return (inst:HasTag("quagmire_farmhand") and "doshortaction")
+        or (inst:HasTag("quagmire_fasthands") and "domediumaction")
+        or "dolongaction"
+end))
+AddStategraphActionHandler("wilson_client",ActionHandler(ACTIONS.MYTH_LOTUS_PICK, function(inst, action)
+    return (inst:HasTag("quagmire_farmhand") and "doshortaction")
+        or (inst:HasTag("quagmire_fasthands") and "domediumaction")
+        or "dolongaction"
+end))
+ACTIONS.SHAVE.distance = 2.5
+
+--==========吸收日月精华
+local essenselight = {
+    stafflight = "myth_fireessense" ,
+    staffcoldlight = "myth_coldessense" ,
+}
+local function FindEquipItem(self,fn)
+    for k,v in pairs(self.equipslots) do
+        if fn(v) then
+            return v 
+        end
+    end
+    return nil
+end
+local function kill_sound(inst)
+    inst.SoundEmitter:KillSound("staff_star_loop")
+end
+local function kill_light(inst)
+    inst.AnimState:PlayAnimation("disappear")
+    inst:ListenForEvent("animover", kill_sound)
+    inst:DoTaskInTime(1, inst.Remove)
+    inst.persists = false
+    inst._killed = true
+end
+local  PURPLEGOURD_ACTION = Action({distance=20})
+PURPLEGOURD_ACTION.id = "PURPLEGOURD_ACTION"
+PURPLEGOURD_ACTION.str = STRINGS.ACTIONS.PICK
+PURPLEGOURD_ACTION.fn = function(act)
+    if act.doer and act.target and act.target:IsValid() and essenselight[act.target.prefab] then
+        kill_light(act.target)
+        local guord = FindEquipItem(act.doer.components.inventory,function(item) return item.prefab == "purple_gourd" end)
+        guord.components.container:GiveItem(SpawnPrefab(essenselight[act.target.prefab]))
+        return true
+    end
+end
+AddAction(PURPLEGOURD_ACTION)
+
+AddComponentAction("SCENE", "purplegourd_action" , function(inst, doer, actions, right)
+    if right and doer.replica.inventory and doer.replica.inventory:EquipHasTag("purple_gourd") then
+        table.insert(actions, ACTIONS.PURPLEGOURD_ACTION)
+    end
+end)
+AddStategraphActionHandler("wilson",ActionHandler(ACTIONS.PURPLEGOURD_ACTION, "castspell"))
+AddStategraphActionHandler("wilson_client",ActionHandler(ACTIONS.PURPLEGOURD_ACTION,"castspell"))
+
+local stafflights = {"stafflight","staffcoldlight"}
+for _,v in ipairs(stafflights) do
+    AddPrefabPostInit(v,function(inst)
+        if TheWorld.ismastersim then
+            inst:AddComponent("purplegourd_action")
+        end
+    end)
+end
+---=========================
+local MYTH_FUCHEN = Action({mount_valid = true,distance=12})
+MYTH_FUCHEN.id = 'MYTH_FUCHEN'
+MYTH_FUCHEN.strfn = function(act)
+    return act.target ~= nil
+        and act.target:HasTag("_inventoryitem")
+        and "QUWU"
+        or "MOREN"
+end
+
+MYTH_FUCHEN.fn = function(act)
+    if act.invobject and act.invobject.components.fuchen_spell and act.target then
+		act.invobject.components.fuchen_spell:CastSpell(act.doer,act.target)
+		return true
+    end
+end
+AddAction(MYTH_FUCHEN)
+
+AddComponentAction("EQUIPPED", "fuchen_spell" , function(inst, doer, target, actions, right)
+    if right and inst:HasTag("can_spell_fuchen") and target  and target ~= doer
+        and ( target:HasTag("_combat") or target:HasTag("_jianzhufanzhuan") or target:HasTag("_inventoryitem")) then
+        table.insert(actions, ACTIONS.MYTH_FUCHEN)
+    end
+end)
+
+AddStategraphActionHandler("wilson",ActionHandler(MYTH_FUCHEN,function(inst)
+    return "dojostleaction"
+end))
+AddStategraphActionHandler("wilson_client",ActionHandler(MYTH_FUCHEN, function(inst)
+    return "dojostleaction"
+end))
+
+STRINGS.ACTIONS.MYTH_FUCHEN = {
+    QUWU = V and "Cách không thu vật" or "隔空取物",
+    MOREN = V and "Làm phép" or "施法",
+}
+
+---那些建筑可以翻转？
+local jianzhus = {
+    "myth_redlantern_ground", --灯笼架
+    "myth_interiors_ghg_flower", --月宫的花
+    "myth_interiors_ghg_he_left", --仙鹤
+    "myth_interiors_ghg_he_right",
+    "myth_interiors_ghg_groundlight",
+}
+
+for _,v in  ipairs(jianzhus) do
+	AddPrefabPostInit(v, function(inst) 
+        if TheWorld.ismastersim then
+            inst:AddComponent("myth_jzfz")
+        end
+	end)
+end
+
+--这里写一种普遍适用的USEITEM类型
+local MYTH_USEITEM = Action({priority = 10,mount_valid = true})
+MYTH_USEITEM.id = 'MYTH_USEITEM'
+MYTH_USEITEM.strfn = function(act)
+    local target = act.invobject or act.target
+    return target and target.MYTH_USEITEM_TYPE or "USE"
+end
+
+MYTH_USEITEM.fn = function(act)
+    if act.invobject and act.invobject.components.myth_useitem then
+        act.invobject.components.myth_useitem:Use(act.target,act.doer)
+        return true
+    end
+end
+AddAction(MYTH_USEITEM)
+
+AddComponentAction("USEITEM", "myth_useitem", function(inst, doer, target, actions)
+    if target and inst.myth_useitem_needfn ~= nil and  inst.myth_useitem_needfn(inst,target,doer)  then
+        table.insert(actions, MYTH_USEITEM)
+    end
+end)
+
+AddStategraphActionHandler("wilson",ActionHandler(MYTH_USEITEM, function(inst, action)
+    local target = action.invobject or action.target
+    if target then
+        return target.onuseitemsgname or "dolongaction"
+	end
+	return "dolongaction"
+end))
+AddStategraphActionHandler("wilson_client",ActionHandler(MYTH_USEITEM, function(inst, action)
+    local target = action.invobject or action.target
+    if target then
+        return target.onuseitemsgname or "dolongaction"
+	end
+	return "dolongaction"
+end))
+
+STRINGS.ACTIONS.MYTH_USEITEM = {
+    USE = STRINGS.MYTH_USE_INVENTORY,
+    LAOZIPACK = STRINGS.MYTH_LAOZIPACK,
+    GIVE = STRINGS.ACTIONS.GIVE.GENERIC,
+}
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+---给紫金葫芦的特殊关照
+AddComponentPostInit("playeractionpicker", function(self)
+    local old_get = self.GetInventoryActions
+    function self:GetInventoryActions(item, ...)
+        local result = old_get(self, item, ...)
+        if item and item.prefab == 'purple_gourd' then
+            local ret = {}
+            for i, v in ipairs(result) do
+                if v.action ~= ACTIONS.EQUIP then
+                    table.insert(ret, v)
+                end
+            end
+            return ret
+        end
+        return result
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:critterlab
+end
+AddPrefabPostInit('critterlab', function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+	end
+	inst:DoTaskInTime(0,function(...)
+		if not TheWorld.myth_honeypot then
+			local pt = Vector3(inst.Transform:GetWorldPosition())
+			local spawn_pt = GetSpawnPoint(pt)
+			if spawn_pt then
+				local pot = SpawnPrefab("myth_honeypot")
+				pot.Transform:SetPosition(spawn_pt:Get())
+			end
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:blackbear
+--与熊大不发生仇恨
+AddPrefabPostInit('blackbear', function(inst)
+	if inst.components.combat then
+		local old_set = inst.components.combat.SetTarget
+		inst.components.combat.SetTarget = function(self, target, ...)
+			if target and (target.prefab == 'blackbear' or target.prefab == 'bearger') then
+				return 
+			else
+				return old_set(self, target, ...)
+			end
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：Habis_Ru (Mod 3691996638)
+- **变体场景与切面**：收录来自工坊 Mod 3691996638 (`Habis_Ru`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3691996638)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit(
+    'wilson',
+    function(sg)
+        by_run(sg)
+        by_mime(sg)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+)
+AddStategraphPostInit(
+    'wilson_client',
+    function(sg)
+        by_run(sg)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ghost
+--local xxx6_ghostbrain = require 'brains/xxx6_ghostbrain'
+AddPrefabPostInit(
+    'ghost',
+    function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+        --[[inst:DoTaskInTime(
+            0.1,
+            function()
+                inst:StopBrain()
+                inst:SetBrain(xxx6_ghostbrain)
+                inst:RestartBrain()
+            end
+        )]]
+        inst.components.combat:AddNoAggroTag('xxx6')
+        inst.components.combat:AddNoAggroTag("xxx6_reaper")
+
+        inst.components.health.save_maxhealth = true
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:ghostbrain
+require "behaviours/runaway"
+AddBrainPostInit("ghostbrain", function(self)
+    if self.OnStart then
+        local TARGET_CANT_TAGS = UpvalueHacker.GetUpvalue(self.OnStart, "GetFollowTarget", "TARGET_CANT_TAGS")
+        if TARGET_CANT_TAGS then
+            table.insert(TARGET_CANT_TAGS, "xxx6")
+            table.insert(TARGET_CANT_TAGS, "xxx6_reaper")
+        end
+    end
+    local index = nil
+    for i,node in ipairs(self.bt.root.children) do
+        if node.name == "Parallel" and node.children[1].name == "FollowTarget" then
+            index = i
+            break
+        end
+    end
+    if index ~= nil then
+        table.insert(self.bt.root.children, index, RunAway(self.inst, {oneoftags={"xxx6", "xxx6_reaper"}, notags={"playerghost"}}, 
+            SEE_PLAYER_DIST, STOP_RUN_DIST, nil, nil, true))
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+--------------------------------------------------------------------------------
+AddComponentPostInit("health", function(self, inst)
+    --设置血量上限
+    if self.inst ~= nil and self.inst:HasTag("xxx6") then
+        local _ = rawget(self, "_")
+        local maxhealth_old = _["maxhealth"][2]
+        _["maxhealth"][2] = function(self, new, old)
+            maxhealth_old(self, math.min(new, 44444), old)
+        end
+        local currenthealth_old = _["currenthealth"][2]
+        _["currenthealth"][2] = function(self, new, old)
+            currenthealth_old(self, math.min(new, 44444), old)
+        end
+    end
+    --变身后正常受到时间伤害
+    local DoDelta_old = self.DoDelta
+    self.DoDelta = function(self, amount, overtime, cause, ignore_invincible, ...)
+        if self.inst.components.xxx6_reaper and self.inst.components.xxx6_reaper.reaper and cause == "oldager_component" then
+            return DoDelta_old(self, amount, overtime, cause, true, ...)
+        end
+        return DoDelta_old(self, amount, overtime, cause, ignore_invincible, ...)
+    end
+    --变身后斩杀效果
+    local SetVal_old = self.SetVal
+    self.SetVal = function(self, val, cause, afflicter, ...)
+        if not self.inst:HasTag("ghost") and afflicter and afflicter:HasTag("xxx6_reaper") and val < self.maxhealth*.05 
+                and (not self.minhealth or self.minhealth <= 0) and self.inst.fx_zstx == nil then
+            self.minhealth = 1
+            self.inst:AddTag("notarget")
+            HBS_TimeStop(self.inst)
+            self.inst.fx_zstx = SpawnPrefab('xxx6_zstx')
+            if self.inst.fx_zstx ~= nil then
+                self.inst.fx_zstx.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
+            end
+            self.inst:DoTaskInTime(0.5, function()
+                HBS_TimeStart(self.inst)
+                if self.inst.SoundEmitter then
+                    self.inst.SoundEmitter:PlaySound('xxx6_sounds/xxx6_sounds/zstx', 'zstx', 10)
+                end
+                self.minhealth = 0
+                self.inst:DoTaskInTime(1, function() self.inst:RemoveTag("notarget") end)
+                if afflicter:IsValid() then
+                    afflicter:PushEvent('killed', {victim = self.inst, attacker = afflicter})
+                end
+                self:Kill()
+            end)
+        end
+        return SetVal_old(self, val, cause, afflicter, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：YELLOW_GEM_MODE (Mod 3814974285)
+- **变体场景与切面**：收录来自工坊 Mod 3814974285 (`YELLOW_GEM_MODE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3814974285)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:eyeturret
+
+AddPrefabPostInit(
+    "eyeturret",
+    AddGemSocket
+)
+
+AddPrefabPostInit(
+    "eyeturret_item",
+    InstallEyeturretItemHealthTransfer
+)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:eyeturret_item
+
+AddPrefabPostInit(
+    "eyeturret_item",
+    InstallEyeturretItemHealthTransfer
+)
+
+```
+

@@ -6729,3 +6729,33 @@ end)
 
 ```
 
+
+
+### 变体演进：Wilson S. Kennedy (Mod 3805587491)
+- **变体场景与切面**：收录来自工坊 Mod 3805587491 (`Wilson S. Kennedy`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3805587491)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beard
+
+AddPrefabPostInit("beard", function(inst)
+    if inst and inst.AnimState then
+        inst.AnimState:SetBuild("Beard")
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wilson
+
+AddPrefabPostInit("wilson", function(inst)
+    if inst and inst.AnimState then
+        inst.AnimState:SetBuild("Wilson S. Kennedy")
+    end
+end)
+
+```
+

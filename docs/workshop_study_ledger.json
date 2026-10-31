@@ -5601,8 +5601,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 07:53:45",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3344680064",
+      "name": "Language",
+      "author": "1926修改，初心使者制作",
+      "version": "6.6.6.10",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:57:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3691996638",
+      "name": "Habis_Ru",
+      "author": "丧芝，HPMY，花菜，LUOXIA11，雨荧QAQ，C",
+      "version": "0.1.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:57:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3805587491",
+      "name": "Wilson S. Kennedy",
+      "author": "Juddgment",
+      "version": "1.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:57:16",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3814974285",
+      "name": "YELLOW_GEM_MODE",
+      "author": "Mountain Wraith",
+      "version": "2.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:57:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:53:45"
+  "lastUpdated": "2026-11-01 07:57:16"
 }
