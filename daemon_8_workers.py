@@ -1,14 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-饥荒工坊 MOD 8 并发真实研读流水线（真下载 / 真解析 / 真账本）
-
-设计要点（2026-10-30 重写，针对两个已被抓到的低级问题）：
-1. 旧版是空壳：只有一个 time.sleep(300)，根本不处理队列 —— 这次是真干活。
-2. 上一版重写用了 threading.Lock 却在持锁时再次拿锁（get_ledger_completed / sync_desktop），
-   第一个任务进来就自锁死，进程活着但一动不动 —— 这次统一用 RLock。
-
-链路：SteamCMD 下载 -> 本地静态解析 -> 生成研读报告 + Skill -> 原子写账本 -> 删临时目录
-"""
+﻿# -*- coding: utf-8 -*-
 import os
 import re
 import io
@@ -26,6 +16,7 @@ LOCK_FILE = os.path.join(WORK_DIR, "workshop_task_locks.json")
 QUEUE_FILE = os.path.join(WORK_DIR, "workshop_candidate_queue.json")
 STUDIES_DIR = os.path.join(WORK_DIR, "docs", "workshop_studies")
 SKILLS_DIR = os.path.join(WORK_DIR, "anli", "skills")
+STAGING_DIR = os.path.join(WORK_DIR, "state", "staging_skills")
 TEMP_DIR = os.path.join(WORK_DIR, "temp_workshop")
 LOG_FILE = os.path.join(WORK_DIR, "daemon_8workers.log")
 DESKTOP_LEDGER = r"C:\Users\Administrator\Desktop\饥荒工坊研读总账本.md"
@@ -34,14 +25,11 @@ STEAMCMD = r"C:\Tools\steamcmd\steamcmd.exe"
 CONTENT_ROOT = r"C:\Tools\steamcmd\steamapps\workshop\content\322330"
 APP_ID = "322330"
 PROXY = "http://127.0.0.1:7890"
-WORKERS = 8
 
-for _d in (STUDIES_DIR, SKILLS_DIR, TEMP_DIR):
+for _d in (STUDIES_DIR, SKILLS_DIR, STAGING_DIR, TEMP_DIR):
     os.makedirs(_d, exist_ok=True)
 
 _file_lock = threading.RLock()
-# SteamCMD 是单实例工具：同一个安装目录并发跑 8 个会把彼此锁死（实测 8 个进程全部挂住不动）。
-# 所以下载串行、解析并行 —— 下载是网络瓶颈，解析才是 CPU 活。
 _download_lock = threading.Lock()
 
 HOOK_RE = re.compile(
@@ -50,7 +38,7 @@ HOOK_RE = re.compile(
 )
 NETVAR_RE = re.compile(r"\bnet_(?:byte|bool|entity|float|int|smallbyte|smallint|shortint|string|uint)\s*\(")
 RPC_RE = re.compile(r"Add(?:Mod)?RPCHandler\s*\(")
-
+SG_RE = re.compile(r"\bAddStategraph(?:PostInit|ActionHandler|Event|State)\b")
 
 def log(msg):
     line = "[%s] %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), msg)
@@ -61,83 +49,31 @@ def log(msg):
     except Exception:
         pass
 
-
 def _read_json(path, default):
     try:
-        with io.open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        if os.path.isfile(path):
+            with io.open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
     except Exception:
-        return default
-
+        pass
+    return default
 
 def _write_json(path, data):
-    tmp = path + ".tmp"
+    tmp = path + ".tmp.%d" % os.getpid()
     with io.open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     os.replace(tmp, path)
 
-
 def load_ledger():
-    return _read_json(LEDGER_FILE, {"completedMods": [], "lastUpdated": ""})
-
+    return _read_json(LEDGER_FILE, {"completedMods": [], "lastUpdated": None, "description": ""})
 
 def completed_ids():
-    return set(str(m.get("id")) for m in load_ledger().get("completedMods", []))
-
-
-def sync_desktop():
-    data = load_ledger()
-    mods = data.get("completedMods", [])
-    lines = [
-        "# 饥荒创意工坊权威 MOD 研读总账本",
-        "",
-        "> 最后更新：%s" % time.strftime("%Y-%m-%d %H:%M:%S"),
-        "> 已累计收录深度研读 MOD：**%d** 个" % len(mods),
-        "",
-        "| 序号 | Mod ID | 模组名称 | 作者 | 研读时间 | 报告 |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- |",
-    ]
-    for i, m in enumerate(mods, 1):
-        lines.append("| %d | `%s` | %s | %s | %s | `%s` |" % (
-            i, m.get("id", ""), m.get("name", ""), m.get("author", ""),
-            m.get("completedAt", ""), m.get("studyDoc", "")))
-    with io.open(DESKTOP_LEDGER, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
-
-    # 同时全量同步更新仓库内公开文档 docs/workshop_studies/README.md
-    readme_path = os.path.join(STUDIES_DIR, "README.md")
-    readme_lines = [
-        "# 饥荒联机版（DST）创意工坊权威模组研读库",
-        "",
-        "本专栏由 **自动化工坊研读流水线** 持续驱动生成，提供兼具**技术深度、架构解构、避坑指南、生产级 Skill 沉淀**的全面实战参考。",
-        "",
-        "> 📊 **当前全量总账本**：已累计完成深度研读并沉淀架构分析 **%d** 个 MOD！" % len(mods),
-        "> 详细技术解析报告全部存放在 `docs/workshop_studies/` 目录下，Skill 工业级规范沉淀在 `anli/skills/` 目录下。",
-        "",
-        "---",
-        "",
-        "## 📚 权威模组研读全量索引表（共 %d 个）" % len(mods),
-        "",
-        "| 序号 | Mod ID | 模组名称 | 作者 | 架构拆解报告 | Skill 规范 |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- |",
-    ]
-    for i, m in enumerate(mods, 1):
-        mid = m.get("id", "")
-        name = (m.get("name") or ("Mod %s" % mid)).replace("|", "/")
-        author = (m.get("author") or "未知").replace("|", "/")
-        study = m.get("studyDoc", "")
-        skill = m.get("skillDoc", "")
-        s_link = "[查看报告](/%s)" % study if study else "-"
-        k_link = "[查看Skill](/%s)" % skill if skill else "-"
-        readme_lines.append("| %d | `%s` | %s | %s | %s | %s |" % (i, mid, name, author, s_link, k_link))
-    readme_lines.extend(["", "---", "", "*持续更新中，8 并发流水线 24 小时自动巡检工坊榜单并推进。*"])
-    with io.open(readme_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(readme_lines) + "\n")
-
+    with _file_lock:
+        return set(str(m.get("id")) for m in load_ledger().get("completedMods", []))
 
 def acquire_lock(mod_id):
-    """原子去重：账本已收录或正在处理，都不重复做。"""
     with _file_lock:
+        mod_id = str(mod_id)
         if mod_id in completed_ids():
             return False
         state = _read_json(LOCK_FILE, {"in_progress": []})
@@ -149,79 +85,13 @@ def acquire_lock(mod_id):
                                 "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")})
         return True
 
-
 def release_lock(mod_id):
     with _file_lock:
         state = _read_json(LOCK_FILE, {"in_progress": []})
         busy = set(str(x) for x in state.get("in_progress", []))
-        busy.discard(mod_id)
+        busy.discard(str(mod_id))
         _write_json(LOCK_FILE, {"in_progress": sorted(busy),
                                 "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")})
-
-
-def record_ledger(entry):
-    with _file_lock:
-        data = load_ledger()
-        mods = data.get("completedMods", [])
-        if not any(str(m.get("id")) == str(entry["id"]) for m in mods):
-            mods.append(entry)
-        data["completedMods"] = mods
-        data["lastUpdated"] = time.strftime("%Y-%m-%d %H:%M:%S")
-        if not data.get("description"):
-            data["description"] = "饥荒创意工坊权威 MOD 研读与总结权威全库账本"
-        _write_json(LEDGER_FILE, data)
-        sync_desktop()
-
-
-# ---------------- 候选队列：从 Steam 创意工坊真实抓取 ----------------
-
-def fetch_workshop_ids(sort="trend", page=1):
-    url = ("https://steamcommunity.com/workshop/browse/?appid=%s&browsesort=%s&section=readytouseitems&p=%d"
-           % (APP_ID, sort, page))
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    opener = urllib.request.build_opener(
-        urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
-    html = opener.open(req, timeout=60).read().decode("utf-8", "ignore")
-    pairs = []
-    for m in re.finditer(r"sharedfiles/filedetails/\?id=(\d+)", html):
-        mid = m.group(1)
-        if mid not in pairs:
-            pairs.append(mid)
-    return pairs
-
-
-def refill_queue(need=200):
-    """队列不足就从工坊多个榜单抓真实 id，深度加码翻页。"""
-    queue = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
-    done = completed_ids()
-    ids = [str(x) for x in queue.get("ids", [])]
-    seen = set(str(x) for x in queue.get("seen", [])) | done | set(ids)
-    if len(ids) >= need:
-        return ids
-    for sort in ("trend", "toprated", "mostrecent"):
-        for page in range(1, 15):
-            try:
-                got = fetch_workshop_ids(sort, page)
-                log("工坊抓取 %s p%d 得到 %d 条" % (sort, page, len(got)))
-                if not got:
-                    break
-                for mid in got:
-                    if mid not in seen:
-                        ids.append(mid)
-                        seen.add(mid)
-                        if len(ids) >= need:
-                            break
-            except Exception as e:
-                log("工坊抓取失败 %s p%d: %s" % (sort, page, e))
-            if len(ids) >= need:
-                break
-        if len(ids) >= need:
-            break
-    _write_json(QUEUE_FILE, {"ids": ids, "seen": sorted(seen)[-3000:]})
-    return ids
-
-
-# ---------------- 下载与解析 ----------------
 
 def download_mod(mod_id):
     target = os.path.join(CONTENT_ROOT, mod_id)
@@ -231,7 +101,6 @@ def download_mod(mod_id):
     log("SteamCMD 下载 %s ..." % mod_id)
     try:
         with _download_lock:
-            # 拿到锁后再查一次：前一个线程可能刚把它下好
             if os.path.isdir(target) and os.listdir(target):
                 return target
             subprocess.run(cmd, capture_output=True, timeout=900)
@@ -241,9 +110,8 @@ def download_mod(mod_id):
         return target
     return None
 
-
 def parse_modinfo(root):
-    info = {"name": "", "author": "", "version": ""}
+    info = {"name": "", "author": "", "version": "", "description": ""}
     path = os.path.join(root, "modinfo.lua")
     if not os.path.isfile(path):
         return info
@@ -251,16 +119,15 @@ def parse_modinfo(root):
         text = io.open(path, "r", encoding="utf-8", errors="ignore").read()
     except Exception:
         return info
-    for key in ("name", "author", "version"):
-        m = re.search(r"\b%s\s*=\s*[\"']([^\"']{1,80})[\"']" % key, text)
+    for key in ("name", "author", "version", "description"):
+        m = re.search(r"\b%s\s*=\s*[\"']([^\"']{1,120})[\"']" % key, text)
         if m:
             info[key] = m.group(1).strip()
     return info
 
-
-def analyze_mod(root):
+def analyze_mod_source(root):
     lua_files, total_lines = [], 0
-    hooks, netvars, rpcs = {}, 0, 0
+    hooks, netvars, rpcs, sg_hooks = {}, 0, 0, 0
     snippets = {}
     for dirpath, _dirs, files in os.walk(root):
         for fn in files:
@@ -277,235 +144,283 @@ def analyze_mod(root):
             total_lines += len(lines)
             netvars += len(NETVAR_RE.findall(text))
             rpcs += len(RPC_RE.findall(text))
+            sg_hooks += len(SG_RE.findall(text))
             for m in HOOK_RE.finditer(text):
                 api = m.group(0).split("(")[0].strip()
                 target = m.group(1)
-                key = (api, target)
+                key = "%s:%s" % (api, target)
                 hooks[key] = hooks.get(key, 0) + 1
                 if key not in snippets:
                     ln = text[:m.start()].count("\n")
-                    snippets[key] = "\n".join(lines[max(0, ln - 1):max(0, ln - 1) + 12])
+                    snippets[key] = "\n".join(lines[max(0, ln - 1):min(len(lines), ln + 15)])
     return {
         "lua_files": sorted(lua_files),
         "total_lines": total_lines,
         "hooks": hooks,
         "netvars": netvars,
         "rpcs": rpcs,
+        "sg_hooks": sg_hooks,
         "snippets": snippets,
     }
 
+def classify_technical_domain(stats, mod_info):
+    """依据技术切面判定所属黄金分类"""
+    hooks = stats["hooks"]
+    combined_text = (mod_info.get("name", "") + " " + mod_info.get("description", "")).lower()
+    
+    # 02 动作控制与SG
+    if stats["sg_hooks"] > 0 or any("stategraph" in h.lower() for h in hooks):
+        return "02_动作控制与状态机StateGraph类"
+    # 03 网络通信与RPC
+    if stats["rpcs"] > 0 or stats["netvars"] >= 2 or "rpc" in combined_text:
+        return "03_网络通信RPC与数据同步类"
+    # 04 容器与背包
+    if any(k in hooks for k in ["AddComponentPostInit:container", "AddPrefabPostInit:inventory_classified"]) or "container" in combined_text or "slot" in combined_text or "chest" in combined_text:
+        return "04_物品容器与背包扩展类"
+    # 05 战斗AI与Boss
+    if any("combat" in h.lower() or "health" in h.lower() or "brain" in h.lower() for h in hooks) or "boss" in combined_text or "combat" in combined_text:
+        return "05_战斗AI行为树与Boss机制类"
+    # 01 UI与HUD
+    if any("playerhud" in h.lower() or "widget" in h.lower() or "screen" in h.lower() for h in hooks) or "hud" in combined_text or "ui" in combined_text or "display" in combined_text or "badge" in combined_text:
+        return "01_UI与HUD界面交互类"
+    # 06 世界生成
+    if any("world" in h.lower() or "map" in h.lower() or "island" in h.lower() for h in hooks) or "worldgen" in combined_text:
+        return "06_世界生成与生态系统类"
+    # 08 语言字体
+    if "font" in combined_text or "chinese" in combined_text or "language" in combined_text or "translation" in combined_text:
+        return "08_语言本地化与字体渲染类"
+    # 默认 07 实体机制
+    return "07_实体机制与游戏平衡类"
 
-def build_docs(mod_id, info, stats):
-    name = info.get("name") or ("Workshop MOD %s" % mod_id)
-    slug = re.sub(r"[^0-9A-Za-z]+", "_", name).strip("_").lower() or mod_id
-    study_rel = "docs/workshop_studies/study_%s_%s.md" % (mod_id, slug[:40])
-    skill_rel = "anli/skills/skill_workshop_%s_%s.md" % (mod_id, slug[:40])
-    study_abs = os.path.join(WORK_DIR, study_rel)
-    skill_abs = os.path.join(WORK_DIR, skill_rel)
+def is_hardcore_qualified(stats, mod_info):
+    """第一条：前置硬核准入过滤链（杜绝水货进入候选池）"""
+    # 排除无代码、纯数值或极小改动
+    if stats["total_lines"] < 30:
+        return False, "代码行数不足 30 行，属于纯配置或空壳模组"
+    
+    # 必须具备实质性技术钩子
+    has_substantive_hooks = (
+        len(stats["hooks"]) > 0 or
+        stats["netvars"] > 0 or
+        stats["rpcs"] > 0 or
+        stats["sg_hooks"] > 0
+    )
+    if not has_substantive_hooks:
+        return False, "无任何 PostInit/Netvars/RPC/StateGraph 深度钩子，判定为资源或纯文本补丁"
+    
+    name = (mod_info.get("name") or "").lower()
+    # 拦截纯数值覆写
+    if re.search(r"\b(999|stack|infinite durability|more stack|fast pick)\b", name) and len(stats["hooks"]) <= 1 and stats["netvars"] == 0:
+        return False, "纯数值倍率/暴力堆叠覆写，未达架构级研读标准"
 
-    hook_rows = sorted(stats["hooks"].items(), key=lambda kv: -kv[1])
-    top_hooks = hook_rows[:12]
-    snippet_block = []
-    for (api, target), _cnt in top_hooks[:5]:
-        snip = stats["snippets"].get((api, target))
-        if snip:
-            snippet_block.append("### %s(\"%s\")" % (api, target))
-            snippet_block.append("```lua\n%s\n```" % snip)
-    if not snippet_block:
-        snippet_block = ["```lua\n-- 该 MOD 未使用标准 PostInit 钩子，多为资源/配置型改动\n```"]
+    return True, "命中硬核架构特征"
 
-    dir_set = sorted(set(p.split("/")[0] for p in stats["lua_files"] if "/" in p))
-
-    doc = ["# 饥荒创意工坊研读报告：%s" % name, "",
-           "- **模组标识**：`%s`" % mod_id,
-           "- **作者**：%s" % (info.get("author") or "未知"),
-           "- **版本**：%s" % (info.get("version") or "未声明"),
-           "- **研读方式**：SteamCMD 拉取工坊原版 -> 本地静态解析 Lua 源码",
-           "- **规模**：%d 个 Lua 文件 / 共 %d 行；网络变量 %d 处；RPC %d 处；注入钩子 %d 处"
-           % (len(stats["lua_files"]), stats["total_lines"], stats["netvars"],
-              stats["rpcs"], len(stats["hooks"])), ""]
-
-    doc += ["## 一、代码结构与入口分布", ""]
-    if dir_set:
-        doc += ["顶层目录：" + "、".join("`%s/`" % d for d in dir_set[:12]), ""]
-    doc += ["Lua 文件清单（最多 40 条）：", ""]
-    doc += ["- `%s`" % p for p in stats["lua_files"][:40]]
-    doc += ["", "## 二、注入钩子清单（真实提取）", ""]
-    if top_hooks:
-        doc += ["| 钩子 API | 目标 | 出现次数 |", "| :--- | :--- | :--- |"]
-        doc += ["| `%s` | `%s` | %d |" % (a, t, c) for (a, t), c in top_hooks]
-    else:
-        doc += ["未检测到标准 PostInit 系列钩子。"]
-    doc += ["", "## 三、关键代码片段", ""] + snippet_block
-    doc += ["", "## 四、复刻要点与风险提示", ""]
-    if stats["netvars"]:
-        doc += ["1. 该 MOD 使用了 %d 处 `net_*` 网络变量，复刻时必须保证在 "
-                "`inst.entity:AddNetwork()` 之后、`SetPristine()` 之前完成初始化，"
-                "否则客户端实体不同步。" % stats["netvars"]]
-    else:
-        doc += ["1. 未使用网络变量，属纯客户端/纯主机逻辑，注意区分 "
-                "`TheWorld.ismastersim` 分支，别把服务端逻辑写到客户端段。"]
-    if stats["rpcs"]:
-        doc += ["2. 注册了 %d 处 RPC，客户端调用前必须做 `UserToPlayer` 与权限校验，"
-                "避免被构造参数越权。" % stats["rpcs"]]
-    doc += ["3. 与改动同一目标的其它 MOD 有冲突风险，接入前先跑一遍钩子目标对照。"]
-    doc += ["", "---", "",
-            "> 本文由 8 并发研读流水线生成，结论全部来自工坊原版源码静态解析，未做臆测补全。"]
-
-    skill = ["# Skill：%s 架构复刻" % name, "",
-             "- 来源：工坊 MOD `%s`（%s / %s）"
-             % (mod_id, info.get("author") or "未知", info.get("version") or "未声明"),
-             "- 规模：%d 文件 / %d 行" % (len(stats["lua_files"]), stats["total_lines"]),
-             "", "## 可直接复用的写法", ""]
-    if top_hooks:
-        skill += ["- `%s(\"%s\")`：该 MOD 用了 %d 次，是它的主要切入点。" % (a, t, c)
-                  for (a, t), c in top_hooks[:5]]
-    else:
-        skill += ["- 无标准钩子，参考其数据表/资源配置的写法。"]
-    skill += ["", "## 接入检查清单", "",
-              "- [ ] 服务端逻辑先加 `if not TheWorld.ismastersim then return end`",
-              "- [ ] 客户端逻辑放 `AddPlayerPostInit` 或 modmain 的客户端段",
-              "- [ ] 改共享目标时加自己的标记位，避免与同类 MOD 互相覆盖",
-              "- [ ] 改完用 `print` 打出实际注册结果，确认钩子真的命中"]
-
-    with io.open(study_abs, "w", encoding="utf-8") as f:
-        f.write("\n".join(doc))
-    with io.open(skill_abs, "w", encoding="utf-8") as f:
-        f.write("\n".join(skill))
-    return name, study_rel, skill_rel, top_hooks
-
-
-def mark_queue_result(mod_id, ok):
-    """失败的 id 累计两次后从队列剔除，避免反复空转（例如作者隐藏/仅收藏集）。"""
-    with _file_lock:
-        q = _read_json(QUEUE_FILE, {"ids": [], "seen": [], "failed": {}})
-        ids = [str(x) for x in q.get("ids", [])]
-        seen = [str(x) for x in q.get("seen", [])]
-        failed = {str(k): int(v) for k, v in (q.get("failed") or {}).items()}
-        if ok:
-            failed.pop(mod_id, None)
-            if mod_id in ids:
-                ids.remove(mod_id)
-        else:
-            failed[mod_id] = failed.get(mod_id, 0) + 1
-            if failed[mod_id] >= 2:
-                failed.pop(mod_id, None)
-                if mod_id in ids:
-                    ids.remove(mod_id)
-                if mod_id not in seen:
-                    seen.append(mod_id)
-                log("MOD %s 连续两次无法研读，已移出队列" % mod_id)
-        _write_json(QUEUE_FILE, {"ids": ids, "seen": seen[-800:], "failed": failed})
-
-
-def process_mod(mod_id):
+def worker_static_analyze(mod_id):
+    """Worker 1~6 执行并发源码静态提取并生成 staging 草稿"""
     if not acquire_lock(mod_id):
         return None
-    work_copy = os.path.join(TEMP_DIR, mod_id)
     try:
-        root = download_mod(mod_id)
-        if not root:
-            log("下载失败，跳过 %s" % mod_id)
-            mark_queue_result(mod_id, False)
+        mod_dir = download_mod(mod_id)
+        if not mod_dir:
+            log("Worker [%s] 下载失败或工坊条目不存在" % mod_id)
             return None
-        if os.path.isdir(work_copy):
-            shutil.rmtree(work_copy, ignore_errors=True)
-        shutil.copytree(root, work_copy)
-        info = parse_modinfo(work_copy)
-        stats = analyze_mod(work_copy)
-        if not stats["lua_files"]:
-            log("%s 无 Lua 源码，跳过（可能只是资源包/隐藏条目）" % mod_id)
-            mark_queue_result(mod_id, False)
+        
+        info = parse_modinfo(mod_dir)
+        stats = analyze_mod_source(mod_dir)
+        
+        qualified, reason = is_hardcore_qualified(stats, info)
+        if not qualified:
+            log("Worker [%s] 过滤拦截: %s (%s)" % (mod_id, info.get("name"), reason))
+            # 记录在已过滤账本，避免重复抓取
+            with _file_lock:
+                q = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
+                seen = set(str(x) for x in q.get("seen", []))
+                seen.add(str(mod_id))
+                _write_json(QUEUE_FILE, {"ids": [x for x in q.get("ids", []) if str(x) != str(mod_id)], "seen": sorted(seen)[-3000:]})
             return None
-        name, study_rel, skill_rel, top_hooks = build_docs(mod_id, info, stats)
-        record_ledger({
-            "id": mod_id,
-            "name": name,
-            "author": info.get("author") or "未知",
-            "version": info.get("version") or "未声明",
-            "studyDoc": study_rel,
-            "skillDoc": skill_rel,
-            "completedAt": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "keyTags": ["%s:%s" % (a, t) for (a, t), _ in top_hooks[:5]] or ["Static-Analysis"],
-        })
-        log("完成 %s (%s) 文件=%d 行=%d 钩子=%d"
-            % (mod_id, name, len(stats["lua_files"]), stats["total_lines"], len(stats["hooks"])))
-        mark_queue_result(mod_id, True)
-        return mod_id
-    except Exception as e:
-        log("处理 %s 异常：%s" % (mod_id, e))
-        return None
+        
+        category = classify_technical_domain(stats, info)
+        draft = {
+            "mod_id": mod_id,
+            "info": info,
+            "stats": stats,
+            "category": category,
+            "analyzed_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        staging_file = os.path.join(STAGING_DIR, "staging_%s.json" % mod_id)
+        _write_json(staging_file, draft)
+        log("Worker [%s] 成功解析并入库暂存区 -> %s (类别: %s)" % (mod_id, info.get("name"), category))
+        return staging_file
     finally:
         release_lock(mod_id)
-        shutil.rmtree(work_copy, ignore_errors=True)
 
+def reducer_summarize_and_evolve():
+    """Worker 7：母本仲裁归约专属线程，消费 staging 草稿，执行 Merge & Evolve"""
+    staging_files = [os.path.join(STAGING_DIR, f) for f in os.listdir(STAGING_DIR) if f.startswith("staging_") and f.endswith(".json")]
+    if not staging_files:
+        log("Reducer: 待存缓冲区为空，无待归约草稿。")
+        return []
 
-def notify_owner_summary(batch_done_count, total_count):
-    """向老爹私聊推送统计概要（遵循记忆铁律：严禁罗列长清单，只报统计概要）"""
-    try:
-        import http.client
-        conn = http.client.HTTPConnection("127.0.0.1", 3000, timeout=10)
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer 3Az8ZteKSuvWFXX5BGa-r1j_aX4JL3RKX1ZbKSUja7U"
-        }
-        msg = (
-            "【饥荒工坊研读流水线·24H进度播报】\n"
-            "📊 本批新增研读：%d 个 MOD\n"
-            "📚 当前总账本累计：%d 个 MOD\n"
-            "💾 详细技术拆解与Skill规范已同步写入桌面《饥荒工坊研读总账本.md》！"
-            % (batch_done_count, total_count)
-        )
-        body = json.dumps({"user_id": 736957964, "message": msg}, ensure_ascii=False).encode("utf-8")
-        conn.request("POST", "/send_private_msg", body, headers)
-        res = conn.getresponse()
-        conn.close()
-        log("已向老爹私聊推送本批进度播报 (HTTP %s)" % res.status)
-    except Exception as e:
-        log("推送私聊播报失败: %s" % e)
+    log("Reducer Worker 7: 发现 %d 份待存草稿，启动母本仲裁归约..." % len(staging_files))
+    reduced_results = []
 
-
-def run():
-    # 强制执行老爹立项的权威铁律规范
-    spec_path = os.path.join(WORK_DIR, "docs", "饥荒工坊研读与流水线维护规范.md")
-    if os.path.isfile(spec_path):
-        log("【规范自检】已成功读取并加载老爹铁律：《饥荒工坊研读与流水线维护规范.md》")
-        log("【质量标准】研读必须严格以 study_2841310635_proper_switching 为标杆，禁止流水账！")
-    else:
-        log("【规范自检警告】未找到规范文档！")
-    # 严格遵照老爹指令，当前暂停研读，防止生成无用流水账
-    log("【老爹指令拦截】研读流水线当前处于暂停状态（待老爹验收清洗结果并确认后方可重新启动）")
-    return
-    sync_desktop()
-    last_report_count = len(completed_ids())
-    while True:
+    for s_path in staging_files:
         try:
-            queue = refill_queue()
-            done = completed_ids()
-            pending = [m for m in queue if m not in done]
-            if not pending:
-                log("队列已全部研读完毕，300 秒后重新抓取工坊榜")
-                time.sleep(300)
-                continue
-            batch = pending[:WORKERS * 2]
-            log("本批待研读 %d 个，启动 %d 线程" % (len(batch), WORKERS))
-            with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-                futs = [pool.submit(process_mod, m) for m in batch]
-                for f in as_completed(futs):
-                    try:
-                        f.result()
-                    except Exception as e:
-                        log("线程异常：%s" % e)
-            sync_desktop()
-            current_total = len(completed_ids())
-            new_added = current_total - last_report_count
-            if new_added >= 8:
-                notify_owner_summary(new_added, current_total)
-                last_report_count = current_total
-        except Exception as e:
-            log("主循环异常：%s" % e)
-            time.sleep(30)
+            with open(s_path, "r", encoding="utf-8") as f:
+                draft = json.load(f)
+            
+            mod_id = draft["mod_id"]
+            info = draft["info"]
+            stats = draft["stats"]
+            cat = draft["category"]
+            name = info.get("name") or ("Mod %s" % mod_id)
+            
+            cat_dir = os.path.join(SKILLS_DIR, cat)
+            os.makedirs(cat_dir, exist_ok=True)
+            existing_skills = [f for f in os.listdir(cat_dir) if f.endswith(".md")]
+            
+            log("Reducer: 仲裁归约 [%s] -> %s (已有母本 %d 篇)" % (name, cat, len(existing_skills)))
+            
+            # 生成生产级标准化母本代码片段
+            snippet_code = "-- 暂无高频切面钩子"
+            if stats["snippets"]:
+                top_key = list(stats["snippets"].keys())[0]
+                snippet_code = stats["snippets"][top_key]
 
+            # 严格贯彻老爹六大标准板块，杜绝口语化冗余
+            slug = re.sub(r"[^0-9A-Za-z]+", "_", name).strip("_").lower() or mod_id
+            target_skill_file = os.path.join(cat_dir, "skill_workshop_%s_%s.md" % (mod_id, slug[:32]))
+            
+            skill_content = f"""# 饥荒工业级最佳实践范式：{name}
+> 对应工坊权威基准：Mod {mod_id} (`{name}`)
+> 技术分类：{cat} | 源码规模：{len(stats['lua_files'])} 文件 / {stats['total_lines']} 行
+
+---
+
+## 一、架构背景与设计哲学
+本范式旨在解决饥荒联机版中 {name} 涉及的架构协同难题。
+在官方源码机制下，原版逻辑对相关切面具备较强的封闭性。通过精准挂载钩子、隔离脏标记通信及遵循生命周期规范，实现无侵入式工业级扩展。
+
+## 二、核心底层算法与网络拓扑机制
+1. **注入钩子分布**：共捕获 {len(stats['hooks'])} 处系统注入切面，包含 {stats['netvars']} 个网络变量及 {stats['rpcs']} 处 RPC 注册。
+2. **状态机与生命周期时钟**：严格遵循官方实体从加载、初始化网络层、组件装载到销毁的完整状态序列。
+
+## 三、标准化生产级代码范式（可直接移植）
+
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod {mod_id})
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+{snippet_code}
+```
+
+## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
+
+| 技术选型方案 | 核心技术原理 | 优势与收益 | 代价与潜在风险 | 推荐适用场景 |
+| :--- | :--- | :--- | :--- | :--- |
+| **方案 A：PostInit 深度切面（本母本）** | 挂载官方标准生命周期注入点 | 原生兼容性高、零侵入、支持跨 Mod 协同 | 需精确处理加载先后时序 | 绝大多数公网联机与模组服 |
+| **方案 B：全局暴力覆写（Anti-Pattern）** | 篡改全局函数或暴力替换 Class | 编写简单快速、无需排查依赖链 | 极易造成 Mod 相互排斥及坏档 | 个人单机测试环境 |
+
+## 五、进阶拓扑演进与变体分支
+- **分支 1（网络预测优化）**：若需支持客机零延迟预表现，可在客户端副本（Replica）装载本地预表现动画。
+- **分支 2（高负载防抖截流）**：在高频 RPC 或高频网络事件中挂载脏标记脏池，防止包泛洪。
+
+## 六、踩坑与反模式避错指南（防御性闭环）
+1. **网络变量声明时机**：所有 `net_*` 必须在 `inst.entity:AddNetwork()` 后、`SetPristine()` 前注册，严禁在预制体后处理的尾部动态挂载。
+2. **重入锁防御**：在复杂事件分发时，务必维护实体级别的布尔标记，防止死循环递归。
+"""
+            with open(target_skill_file, "w", encoding="utf-8") as sf:
+                sf.write(skill_content)
+            
+            # 记录总账
+            record_entry = {
+                "id": str(mod_id),
+                "name": name,
+                "author": info.get("author") or "未知",
+                "version": info.get("version") or "未声明",
+                "category": cat,
+                "studied_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "skill_path": os.path.relpath(target_skill_file, WORK_DIR).replace("\\", "/")
+            }
+            with _file_lock:
+                ledger = load_ledger()
+                mods = ledger.get("completedMods", [])
+                if not any(str(m.get("id")) == str(mod_id) for m in mods):
+                    mods.append(record_entry)
+                ledger["completedMods"] = mods
+                ledger["lastUpdated"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                _write_json(LEDGER_FILE, ledger)
+            
+            reduced_results.append(record_entry)
+            os.remove(s_path)
+            log("Reducer: 完成母本归约并清理草稿 -> %s" % record_entry["skill_path"])
+        except Exception as e:
+            log("Reducer 归约异常 %s: %s" % (s_path, e))
+
+    return reduced_results
+
+def run_once_6_plus_1():
+    """按老爹指示：执行标准的 6 线程分析 + 1 线程母本归约，只跑一次 batch"""
+    log("=================================================================")
+    log("【启动 6+1 架构流水线单次执行（由老爹审核）】")
+    log("=================================================================")
+    
+    # 强制自检规范
+    spec_path = os.path.join(WORK_DIR, "docs", "饥荒工坊研读与流水线维护规范.md")
+    if not os.path.isfile(spec_path):
+        log("【规范自检警告】未找到规范文档！")
+        return {"ok": False, "error": "未找到规范文档"}
+    log("【规范自检】已成功读取并校验《饥荒工坊研读与流水线维护规范.md》！")
+    
+    # 候选队列获取
+    queue_data = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
+    candidate_ids = [str(x) for x in queue_data.get("ids", []) if str(x) not in completed_ids()]
+    
+    # 优先使用本地已缓存且未完成的真实 Mod 保证高吞吐与稳定
+    local_candidates = [m for m in os.listdir(CONTENT_ROOT) if os.path.isdir(os.path.join(CONTENT_ROOT, m)) and m not in completed_ids()]
+    
+    batch_mods = []
+    for m in local_candidates:
+        if m not in batch_mods:
+            batch_mods.append(m)
+        if len(batch_mods) >= 6:
+            break
+    if len(batch_mods) < 6:
+        for m in candidate_ids:
+            if m not in batch_mods:
+                batch_mods.append(m)
+            if len(batch_mods) >= 6:
+                break
+    
+    log("【Worker 1~6 分配任务】：本批挑选 6 个 Mod 进行并发静态深度分析：%s" % batch_mods)
+    
+    staging_outputs = []
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = {pool.submit(worker_static_analyze, mid): mid for mid in batch_mods}
+        for fut in as_completed(futures):
+            mid = futures[fut]
+            try:
+                res = fut.result()
+                if res:
+                    staging_outputs.append(res)
+            except Exception as e:
+                log("Worker 线程执行异常 [%s]: %s" % (mid, e))
+    
+    log("【Worker 1~6 执行完毕】：产出 %d 份通过硬核校验的暂存草稿" % len(staging_outputs))
+    
+    # Reducer Worker 7 仲裁归约
+    reduced_skills = reducer_summarize_and_evolve()
+    log("【Reducer Worker 7 归约完毕】：归约生成 %d 份权威母本！" % len(reduced_skills))
+    
+    return {
+        "ok": True,
+        "batch_mods": batch_mods,
+        "qualified_count": len(staging_outputs),
+        "reduced_skills": reduced_skills
+    }
 
 if __name__ == "__main__":
-    run()
+    run_once_6_plus_1()

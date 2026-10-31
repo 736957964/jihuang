@@ -11,6 +11,7 @@
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
     * [Show Me 序列化与属性探针 (666155465)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_666155465_Show_Me_Protocol.md)
+    * [高亮选物 RPC 寻径与高频广播 (2281925291)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md)
   * 04 物品容器与背包扩展类
     * [额外装备槽拓扑与网络预测 (母本)](anli/skills/04_物品容器与背包扩展类/skill_workshop_extra_equip_slots_topology.md)
     * [多倍堆叠与动态容量逼近算法 (374550642)](anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md)

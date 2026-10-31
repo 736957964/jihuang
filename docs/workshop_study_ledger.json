@@ -2982,8 +2982,17 @@
       "keyTags": [
         "AddPrefabPostInit:phonograph"
       ]
+    },
+    {
+      "id": "2281925291",
+      "name": "Mod 2281925291",
+      "author": "未知",
+      "version": "未声明",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 17:38:36",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 15:35:52"
+  "lastUpdated": "2026-10-31 17:38:36"
 }
