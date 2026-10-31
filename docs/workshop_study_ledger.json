@@ -4386,8 +4386,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 05:17:07",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3779830956",
+      "name": "The Lamb - English",
+      "author": "疯子",
+      "version": "1.2.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:21:52",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3792774753",
+      "name": "Shrimpo the Shrimp",
+      "author": "gobs",
+      "version": "1.0.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:21:52",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3799794331",
+      "name": "远古远古战争机器人",
+      "author": "卖女孩的小火柴",
+      "version": "12",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:21:52",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:17:07"
+  "lastUpdated": "2026-11-01 05:21:52"
 }

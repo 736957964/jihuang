@@ -10610,3 +10610,143 @@ function M.Install(G, H)
 
 ```
 
+
+
+### 变体演进：The Lamb - English (Mod 3779830956)
+- **变体场景与切面**：收录来自工坊 Mod 3779830956 (`The Lamb - English`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3779830956)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+    local old_GetAttacked = self.GetAttacked
+
+    function self:GetAttacked(attacker, damage, weapon, stimuli, spdamage, ...)
+        local armorbreak = self.inst.components.armorbreak_debuff
+        local mult = armorbreak ~= nil and armorbreak:GetDamageMultiplier() or 1
+
+        if mult ~= 1 then
+            if damage ~= nil and damage > 0 then
+                damage = damage * mult
+            end
+
+            if spdamage ~= nil and SpDamageUtil ~= nil and SpDamageUtil.ApplyMult ~= nil then
+                spdamage = SpDamageUtil.ApplyMult(spdamage, mult)
+            end
+        end
+
+        return old_GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:goldnugget
+
+AddPrefabPostInit("goldnugget", function(inst)
+    inst:AddTag("goldnugget")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:flint
+end)
+AddPrefabPostInit("flint", function(inst)
+    inst:AddTag("flint")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nitre
+end)
+AddPrefabPostInit("nitre", function(inst)
+    inst:AddTag("nitre")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:monstermeat
+end)
+AddPrefabPostInit("monstermeat", function(inst)
+    inst:AddTag("monstermeat")
+end)
+
+```
+
+
+
+### 变体演进：Shrimpo the Shrimp (Mod 3792774753)
+- **变体场景与切面**：收录来自工坊 Mod 3792774753 (`Shrimpo the Shrimp`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3792774753)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:shrimpo_brick
+
+AddPrefabPostInit("shrimpo_brick", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then return end
+	inst:AddComponent('brickthrowable')
+	inst.components.brickthrowable:SetRange(8, 10)
+	inst.components.brickthrowable:SetOnAttack(brickthrow_onattack)
+	inst.components.brickthrowable:SetProjectile("brick_projectile")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shrimpo_brick_gold
+
+AddPrefabPostInit("shrimpo_brick_gold", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then return end
+	inst:AddComponent('brickthrowable')
+	inst.components.brickthrowable:SetRange(8, 10)
+	inst.components.brickthrowable:SetOnAttack(brickthrow_onattack)
+	inst.components.brickthrowable:SetProjectile("gold_brick_projectile")
+end)
+
+```
+
+
+
+### 变体演进：远古远古战争机器人 (Mod 3799794331)
+- **变体场景与切面**：收录来自工坊 Mod 3799794331 (`远古远古战争机器人`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3799794331)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:dynamicmusic
+
+AddComponentPostInit ("dynamicmusic", function (self, inst)
+    if not TRIGGERED_DANGER_MUSIC then
+        TryAppendMusic (inst)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mnh_ancient_hulk_ice
+-- ========== 主PostInit ==========
+AddPrefabPostInit ("mnh_ancient_hulk_ice", function (inst)
+    -- 客户端也要执行inspectable，否则右键动作不触发
+    if not inst.components.inspectable then
+        inst:AddComponent ("inspectable")
+    end
+
+    if not TheWorld.ismastersim then return end
+
+    if inst.components.container ~= nil then
+        inst.components.container.canbeopened = true
+        inst.components.container:EnableInfiniteStackSize (true)
+        inst.components.container.openside = false
+    end
+
+    -- 只监听 death，不监听 onremove
+    inst:ListenForEvent("death", TransferItemsOnDeath)
+end)
+
+```
+
