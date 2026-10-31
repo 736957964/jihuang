@@ -104,6 +104,36 @@ def sync_desktop():
     with io.open(DESKTOP_LEDGER, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
+    # 同时全量同步更新仓库内公开文档 docs/workshop_studies/README.md
+    readme_path = os.path.join(STUDIES_DIR, "README.md")
+    readme_lines = [
+        "# 饥荒联机版（DST）创意工坊权威模组研读库",
+        "",
+        "本专栏由 **自动化工坊研读流水线** 持续驱动生成，提供兼具**技术深度、架构解构、避坑指南、生产级 Skill 沉淀**的全面实战参考。",
+        "",
+        "> 📊 **当前全量总账本**：已累计完成深度研读并沉淀架构分析 **%d** 个 MOD！" % len(mods),
+        "> 详细技术解析报告全部存放在 `docs/workshop_studies/` 目录下，Skill 工业级规范沉淀在 `anli/skills/` 目录下。",
+        "",
+        "---",
+        "",
+        "## 📚 权威模组研读全量索引表（共 %d 个）" % len(mods),
+        "",
+        "| 序号 | Mod ID | 模组名称 | 作者 | 架构拆解报告 | Skill 规范 |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
+    ]
+    for i, m in enumerate(mods, 1):
+        mid = m.get("id", "")
+        name = (m.get("name") or ("Mod %s" % mid)).replace("|", "/")
+        author = (m.get("author") or "未知").replace("|", "/")
+        study = m.get("studyDoc", "")
+        skill = m.get("skillDoc", "")
+        s_link = "[查看报告](/%s)" % study if study else "-"
+        k_link = "[查看Skill](/%s)" % skill if skill else "-"
+        readme_lines.append("| %d | `%s` | %s | %s | %s | %s |" % (i, mid, name, author, s_link, k_link))
+    readme_lines.extend(["", "---", "", "*持续更新中，8 并发流水线 24 小时自动巡检工坊榜单并推进。*"])
+    with io.open(readme_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(readme_lines) + "\n")
+
 
 def acquire_lock(mod_id):
     """原子去重：账本已收录或正在处理，都不重复做。"""
@@ -160,8 +190,8 @@ def fetch_workshop_ids(sort="trend", page=1):
     return pairs
 
 
-def refill_queue(need=40):
-    """队列不足就从工坊多个榜单抓真实 id。"""
+def refill_queue(need=200):
+    """队列不足就从工坊多个榜单抓真实 id，深度加码翻页。"""
     queue = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
     done = completed_ids()
     ids = [str(x) for x in queue.get("ids", [])]
@@ -169,10 +199,12 @@ def refill_queue(need=40):
     if len(ids) >= need:
         return ids
     for sort in ("trend", "toprated", "mostrecent"):
-        for page in (1, 2):
+        for page in range(1, 15):
             try:
                 got = fetch_workshop_ids(sort, page)
                 log("工坊抓取 %s p%d 得到 %d 条" % (sort, page, len(got)))
+                if not got:
+                    break
                 for mid in got:
                     if mid not in seen:
                         ids.append(mid)
@@ -185,7 +217,7 @@ def refill_queue(need=40):
                 break
         if len(ids) >= need:
             break
-    _write_json(QUEUE_FILE, {"ids": ids, "seen": sorted(seen)[-800:]})
+    _write_json(QUEUE_FILE, {"ids": ids, "seen": sorted(seen)[-3000:]})
     return ids
 
 
