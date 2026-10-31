@@ -10750,3 +10750,54 @@ end)
 
 ```
 
+
+
+### 变体演进：h1. (Mod 3660452522)
+- **变体场景与切面**：收录来自工坊 Mod 3660452522 (`h1.`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3660452522)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:ice
+
+AddPrefabPostInit("ice", function(inst)
+    if TheWorld.ismastersim then
+        inst:AddComponent("homura_ammo")
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:homura_rifle
+
+AddPrefabPostInit("homura_rifle", function(inst)
+    inst:AddTag("allow_action_on_impassable")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:homura_bow
+
+AddPrefabPostInit("homura_bow", function(inst)
+    inst:AddTag("allow_action_on_impassable")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:boat
+
+AddPrefabPostInit("boat", function(inst) 
+    inst.lw_timemagic_onstop = OnBoatStop
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:homura_1
+-- if USEBOW then
+--     AddPrefabPostInit("homura_1", function(inst)
+--         -- inst:AddTag("homura_bowmaker")
+--         inst.starting_inventory = inst.starting_inventory or {}
+--         table.insert(inst.starting_inventory, "homura_bow")
+--     end)
+
+```
+

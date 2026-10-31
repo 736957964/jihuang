@@ -2949,3 +2949,678 @@ local function SpawnStackSmoke(inst)
 
 ```
 
+
+
+### 变体演进：自动切手杖武器 Auto Switch Cane and Weapon (Mod 3225478506)
+- **变体场景与切面**：收录来自工坊 Mod 3225478506 (`自动切手杖武器 Auto Switch Cane and Weapon`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3225478506)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst:DoTaskInTime(0.5, function(inst)
+        if GLOBAL.ThePlayer then
+            GLOBAL.ThePlayer:AddComponent("autoswitch")
+            GLOBAL.ThePlayer.components.autoswitch:SetchipSlot(CHIP_SLOT)
+            GLOBAL.ThePlayer.components.autoswitch:SetWeaponList(WEAPON_LIST)
+            GLOBAL.ThePlayer.components.autoswitch:SetWeaponList(TOOL_LIST)
+        end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：Reforged Custom Achievements (Mod 3558878743)
+- **变体场景与切面**：收录来自工坊 Mod 3558878743 (`Reforged Custom Achievements`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3558878743)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:achievement_tracker
+-- overwrite reforged achievement detection to allow for achievements to use mutators less than their default value
+AddComponentPostInit("achievement_tracker", function(self)
+
+    if not _G.TheWorld or not _G.TheWorld.ismastersim then return end
+
+    local old_CheckRequirementsForAchievement = self.CheckRequirementsForAchievement
+
+    self.CheckRequirementsForAchievement = function(self, name, player)
+        --local AchievementTracker = _G.TheWorld.components.achievement_tracker
+        local REFORGED_DATA = _G.REFORGED_DATA
+        local REFORGED_SETTINGS = _G.REFORGED_SETTINGS
+
+        local settings_key = {difficulty = "difficulties", gametype = "gametypes", map = "maps", mode = "modes", mutators = "mutators", preset = "presets", waveset = "wavesets"}
+
+        if debug_prints then
+            print("Checking Requirements for " .. tostring(name))
+        end
+
+        local requirements = REFORGED_DATA.achievements[name].requirements
+        if requirements.player_count and requirements.player_count < _G.TheWorld.components.stat_tracker:GetTotalActivePlayerCount() or #requirements.presets > 0 and not HasRequirement(requirements.presets, REFORGED_SETTINGS.gameplay.preset) or #requirements.characters > 0 and not HasRequirement(requirements.characters, player.prefab) then
+            return false
+        -- Check settings if no preset is required.
+        elseif #requirements.presets <= 0 then
+
+            if debug_prints then
+                print("Checking Gameplay Settings...")
+            end
+
+            for setting,val in pairs(REFORGED_SETTINGS.gameplay) do
+                if setting == "mutators" then
+                    local ignore_mutators = type(requirements.mutators) ~= "table" and requirements.mutators ~= nil -- Setting the mutator requirements to anything but a table of mutators will set it to ignore all mutator values.
+                    if not ignore_mutators then
+                        for mutator,value in pairs(val) do
+
+                            if debug_prints then
+                                print("- mutator: " .. tostring(mutator))
+                                print("- req: " .. tostring(requirements.mutators[mutator]) .. " (" .. tostring(type(requirements.mutators[mutator])) .. ")")
+                                print("- val: " .. tostring(value) .. " (" .. tostring(type(value)) .. ")")
+                            end
+
+                            local values_match = requirements.mutators[mutator] and requirements.mutators[mutator] == value or nil
+                            if debug_prints then print("- do values match?: " .. tostring(values_match)) end
+
+                            -- ff = default 0, requires 1
+                            -- Pass on [values match requirements] OR [values are higher than requirements]
+                            -- SO
+                            -- fail on [values do not match requirements] AND [values are lower than requirements]
+
+                            if not values_match then -- [values do not match requirements]
+                                if value == true or type(requirements.mutators[mutator]) == "boolean" then -- if there is a t/f mutator enabled or required
+
+                                    if debug_prints then print("- - mutator is boolean. checking allowed mutators.") end
+
+                                    if not table.contains(permitted_mutators, mutator) or value == false then --[Is a boolean and not in the allowed mutators (i.e. makes the game easier)]''
+                                        if debug_prints then
+                                            print("- requirement failed")
+                                            print("- - " .. tostring(mutator) .. ": " .. tostring(value).." should be "..tostring(requirements.mutators[mutator]).." default is "..tostring(REFORGED_DATA.mutators[mutator].default_value))
+                                        end
+                                        return false
+                                    else
+                                        if debug_prints then print("- - mutator: " .. tostring(mutator) .. " is permitted") end
+                                    end
+
+                                elseif value ~= nil and requirements.mutators[mutator] ~= nil and requirements.mutators[mutator] > value then --[values are lower than requirements]
+                                    if debug_prints then
+                                        print("- requirement failed")
+                                        print("- - " .. tostring(mutator) .. ": " .. tostring(value).." should be "..tostring(requirements.mutators[mutator]).." default is "..tostring(REFORGED_DATA.mutators[mutator].default_value))
+                                    end
+                                    return false
+
+                                elseif requirements.mutators[mutator] == nil and value and value < REFORGED_DATA.mutators[mutator].default_value then --[no req is set and value is lower than default]
+                                    if debug_prints then
+                                        print("- requirement failed")
+                                        print("- - " .. tostring(mutator) .. ": " .. tostring(value).." should be "..tostring(requirements.mutators[mutator]).." default is "..tostring(REFORGED_DATA.mutators[mutator].default_value))
+                                    end
+                                    return false
+                                end
+                            end
+                        end
+                    end
+                elseif requirements[settings_key[setting]] and #requirements[settings_key[setting]] > 0 and not HasRequirement(requirements[settings_key[setting]], val) then
+
+                    if debug_prints then
+                        print("- requirement failed")
+                        print("- - " .. tostring(setting) .. ": " .. tostring(val).." should be "..tostring(requirements[settings_key[setting]]))
+                    end
+                    return false
+                end
+            end
+        end
+
+        if debug_prints then
+            print("[RCA] Achievements disabled because debug is enabled.")
+            return false
+        end
+
+        return true
+    end
+end)
+
+--------------------------------------------------------------------------
+-- Achievements -- Function and Formatting
+--------------------------------------------------------------------------
+--[[ Achievement Requirements
+local req = {
+        player_count = nil,
+        characters   = {},
+        difficulties = {},
+        gametypes    = {},
+        maps         = {},
+        modes        = {},
+        mutators     = {},
+        presets      = {},
+        wavesets     = {},
+    }
+]]
+
+--[[ Add Achievement Function
+_G.AddAchievement(
+"test",                     --is_valid_fn
+IsNonSpectator,             --track_fn
+nil,                        --track_fn
+VictoryOnMatchComplete,     --on_match_complete_fn
+nil,                        --max_progress
+achievement_req,            --req
+SetLevelXP(100),            --exp or 1000
+5,                          --tier
+achievement_icon,           --icon or {atlas = "images/reforged.xml", tex = "p_unknown.tex"}
+victory_id,                 --id
+"RCA"                       --mod
+)
+]]
+
+--[[ stat_tracker -- _G.TheWorld.components.stat_tracker.stats
+user_data = {
+				user = {
+					name = player.name,
+					prefab = player.prefab,
+					userid = player.userid,
+					netid = player.netid,
+					base = base,
+					body = clothing.body,
+					hands = clothing.hands,
+					legs = clothing.legs,
+					feet = clothing.feet,
+					colour = player.colour,
+					performance = player.performance,
+					portrait = portrait,
+				},
+				beststat = {"none", nil},
+				participation = true,
+			},
+]]
+
+local server_mods = nil
+
+if _G and _G.TheNet then
+    server_mods = _G.TheNet:GetServerModNames()
+end
+
+--------------------------------------------------------------------------
+-- Reforged
+--------------------------------------------------------------------------
+
+--[[--------Presets--------
+
+    forge_season_1          - -     "Forge S01",
+    forge_season_2          - -     "Forge S02",
+    half_the_wrath          - -     "Half The Wrath",
+    double_trouble          - -     "Double Trouble",
+    triple_threat           - -     "Triple Threat",
+    quintuple_struggle      - -     "Quintuple Struggle",
+    tenfold_terror          - -     "Tenfold Terror",
+    fast_but_weak           - -     "Fast/Weak",
+    x2                      - -     "x2",
+    x3                      - -     "x3",
+    half                    - -     "1/2",
+    mutated                 - -     "Mutated",
+    double_doom             - -     "Double Doom",
+    chaotic                 - -     "Chaotic",
+    coffee                  - -     "Coffee'd",
+    double_half             - -     "Double 1/2",
+    half_double             - -     "Half x2",
+    attack_of_titans        - -     "Attack of Titans",
+    insanity                - -     "Insanity",
+    custom                  - -     "Custom",
+]]
+
+--[[--------Wavesets--------
+
+    classic                 - -
+    boarilla                - -
+    boarillas               - -
+    rhinocebros             - -
+    swineclops              - -
+    default                 - -         <-- unused
+    double_trouble_classic  - -       <-- no swine
+    doubletrouble           - -      <-- unused
+    half_the_wrath          - -
+    sandbox                 - -
+    randomized              - -
+]]
+
+--[[--------Difficulties--------
+
+    normal                  - -
+    hard                    - -
+]]
+
+--[[--------Gametypes--------
+
+    forge                   - -
+    classic_rlgl            - -
+    rlgl                    - -    (rlglblol)
+]]
+
+--[[--------Modes--------
+
+    forge                   - -     <-- unused
+    forge_s01               - -
+    forge_s02               - -
+    reforged                - -
+    forged_forge            - -
+]]
+
+--[[--------Mutators--------
+
+    mob_damage_dealt            - -
+    mob_damage_received         - -
+    mob_health                  - -
+    mob_speed                   - -
+    mob_attack_rate             - -
+    mob_size                    - -
+    battlestandard_efficiency   - -
+    no_sleep                    - -
+    no_revives                  - -
+    no_hud                      - -
+    friendly_fire               - -
+    unbreakable_shields         - -     <-- unused
+    endless                     - -     
+    mob_duplicator              - -
+]]
+
+--[[--------Maps--------
+    lavaarena                   - -
+    reforged_tiles_arena        - -
+]]
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+--------------------------
+-- The Three Musketeers --
+--------------------------
+
+local hard_3p_req = {
+    player_count    = 3,
+    difficulties    = {"hard"},
+    gametypes       = {"forge"},
+    wavesets        = {"swineclops"},
+}
+local hard_3p_icon = {atlas = "images/hard_3p.xml", tex = "hard_3p.tex"}
+_G.AddAchievement("hard_3p", IsNonSpectator, nil, VictoryOnMatchComplete, nil, hard_3p_req, SetLevelXP(15), 4, hard_3p_icon, player_count_id, "RCA")
+
+---------------------
+-- Disco for Three --
+---------------------
+
+local lights_3p_req = {
+    player_count    = 3,
+    gametypes       = {"rlgl"},
+    wavesets        = {"swineclops"},
+}
+local lights_3p_icon = {atlas = "images/lights_3p.xml", tex = "lights_3p.tex"}
+_G.AddAchievement("lights_3p", IsNonSpectator, nil, VictoryOnMatchComplete, nil, lights_3p_req, SetLevelXP(20), 5, lights_3p_icon, player_count_id, "RCA")
+
+---------------
+-- Got Lucky --
+---------------
+
+local randomized_req = {
+    player_count    = 12,
+    gametypes       = {"forge"},
+    wavesets        = {"randomized"},
+}
+local randomized_icon = {atlas = "images/randomized.xml", tex = "randomized.tex"}
+_G.AddAchievement("randomized", IsNonSpectator, nil, VictoryOnMatchComplete, nil, randomized_req, SetLevelXP(3), 2, randomized_icon, victory_id, "RCA")
+
+-------------------
+-- Hardly Random --
+-------------------
+
+local randomized_hard_req = {
+    player_count    = 12,
+    difficulties    = {"hard"},
+    gametypes       = {"forge"},
+    wavesets        = {"randomized"},
+}
+local randomized_hard_icon = {atlas = "images/randomized_hard.xml", tex = "randomized_hard.tex"}
+_G.AddAchievement("randomized_hard", IsNonSpectator, nil, VictoryOnMatchComplete, nil, randomized_hard_req, SetLevelXP(6), 3, randomized_hard_icon, victory_id, "RCA")
+
+---------------------
+-- Go for the Neck --
+---------------------
+
+local AOT_hard_req = {
+    player_count    = 12,
+    difficulties    = {"hard"},
+    gametypes       = {"forge"},
+    wavesets        = {"swineclops"},
+    --presets         = {"attack_of_titans"},
+    mutators        = {
+        mob_damage_dealt = 2,
+        mob_size = 1.5,
+        mob_health = 1.5,
+    },
+}
+local AOT_hard_icon = {atlas = "images/aot.xml", tex = "aot.tex"}
+_G.AddAchievement("AOT_hard", IsNonSpectator, nil, VictoryOnMatchComplete, nil, AOT_hard_req, SetLevelXP(20), 4, AOT_hard_icon, victory_id, "RCA")
+
+---------------------
+-- Just Hold F 2.0 --
+---------------------
+
+local function NoSpecialOnMatchComplete(lavaarenaevent, userid, achievement_name)
+    local stat_tracker = _G.TheWorld.components.stat_tracker
+    local total_alt_attacks = stat_tracker:GetStatTotal("altattacks")
+    local total_spells = stat_tracker:GetStatTotal("spellscast")
+
+    if lavaarenaevent.victory and total_alt_attacks <= 0 and total_spells <= 0 then
+        local achievement_tracker = _G.TheWorld.components.achievement_tracker
+        achievement_tracker:UpdateAchievementProgress(achievement_name, userid, true)
+    end
+end
+
+local no_special_req = {
+    player_count = 6,
+    gametypes    = {"forge"},
+    wavesets     = {"swineclops"},
+}
+local no_special_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+_G.AddAchievement("no_special", IsNonSpectator, nil, NoSpecialOnMatchComplete, nil, no_special_req, SetLevelXP(12.5), 4, no_special_icon, victory_id, "RCA")
+
+--------------------------------------------------------------
+-- Invincible Fearless Sensual Mysterious Enchanting Vigor… --
+--------------------------------------------------------------
+
+local wes_req = {
+    characters   = {"wes"},
+    gametypes    = {"forge"},
+    wavesets     = {"swineclops"},
+}
+local wes_icon = {atlas = "images/wes.xml", tex = "wes.tex"}
+_G.AddAchievement("wes", IsNonSpectator, nil, VictoryOnMatchComplete, nil, wes_req, SetLevelXP(0.00285), 1, wes_icon, victory_id, "RCA")
+
+----------------
+-- Clone Army --
+----------------
+
+local function AllSameCharOnMatchComplete(lavaarenaevent, userid, achievement_name)
+
+    local characters = {}
+
+    for userid,player_info in pairs(_G.TheWorld.components.stat_tracker.stats) do
+        local character = player_info.user_data.user.prefab
+		characters[character] = (characters[character] or 0) + 1
+    end
+
+    local unique_character_count = 0
+    for character,count in pairs(characters) do
+        unique_character_count = unique_character_count + 1
+	end
+
+    if lavaarenaevent.victory and unique_character_count <= 1 then
+        local achievement_tracker = _G.TheWorld.components.achievement_tracker
+        achievement_tracker:UpdateAchievementProgress(achievement_name, userid, true)
+    end
+end
+
+local all_same_char_req = {
+    player_count = 6,
+    gametypes    = {"forge"},
+    wavesets     = {"swineclops"},
+}
+local all_same_char_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+_G.AddAchievement("all_same_char", IsNonSpectator, nil, AllSameCharOnMatchComplete, nil, all_same_char_req, SetLevelXP(3), 3, all_same_char_icon, victory_id, "RCA")
+
+-----------------------
+-- I'll Do It Myself --
+-----------------------
+
+local solo_swine_req = {
+    player_count = 1,
+    gametypes    = {"forge"},
+    wavesets     = {"swineclops"},
+}
+local solo_swine_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+_G.AddAchievement("solo_swine", IsNonSpectator, nil, AllSameCharOnMatchComplete, nil, solo_swine_req, SetLevelXP(50), 5, solo_swine_icon, player_count_id, "RCA")
+
+--------------------------
+-- Lower Your Standards --
+--------------------------
+
+local function StandardsMatchComplete(lavaarenaevent, userid, achievement_name)
+    local stat_tracker = _G.TheWorld.components.stat_tracker
+    local standards = stat_tracker:GetStatTotal("standards", userid)
+    local achievement_tracker = _G.TheWorld.components.achievement_tracker
+    achievement_tracker:UpdateAchievementProgress(achievement_name, userid, nil, standards)
+end
+local standards_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+_G.AddAchievement("standards", IsNonSpectator, nil, StandardsMatchComplete, 150, nil, SetLevelXP(2), 2, standards_icon, player_id, "RCA")
+
+---------------------
+-- High Pet Deaths --
+---------------------
+
+local function HighPetDeathsOnMatchComplete(lavaarenaevent, userid, achievement_name)
+    if lavaarenaevent.victory then
+        local stat_tracker = _G.TheWorld.components.stat_tracker
+        local petdeaths = stat_tracker:GetStatTotal("petdeaths", userid)
+        if petdeaths >= 50 then
+            local achievement_tracker = _G.TheWorld.components.achievement_tracker
+            achievement_tracker:UpdateAchievementProgress(achievement_name, userid, true)
+        end
+    end
+end
+local high_pet_deaths_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+_G.AddAchievement("high_pet_deaths", IsNonSpectator, nil, HighPetDeathsOnMatchComplete, nil, nil, SetLevelXP(0.75), 2, high_pet_deaths_icon, player_id, "RCA")
+
+---------------
+-- Blowdarts --
+---------------
+
+local function BlowdartsMatchComplete(lavaarenaevent, userid, achievement_name)
+    local stat_tracker = _G.TheWorld.components.stat_tracker
+    local blowdarts = stat_tracker:GetStatTotal("blowdarts", userid)
+    local achievement_tracker = _G.TheWorld.components.achievement_tracker
+    achievement_tracker:UpdateAchievementProgress(achievement_name, userid, nil, blowdarts)
+end
+
+local blowdarts_progress_icon = {atlas = "images/dart_progress.xml", tex = "dart_progress.tex"}
+_G.AddAchievement("blowdarts_progress", IsNonSpectator, nil, BlowdartsMatchComplete, 100000, nil, SetLevelXP(1.5), 2, blowdarts_progress_icon, player_id, "RCA")
+
+------------------------
+-- Jack of all Trades --
+------------------------
+
+--broken bc stuff wont save client side
+local function UniqueCharacterOnMatchComplete_progress(lavaarenaevent, userid, achievement_name, max_player_count)
+
+    local stat_tracker = _G.TheWorld.components.stat_tracker
+    local player_count = stat_tracker:GetTotalActivePlayerCount()
+
+    for setting,val in pairs(_G.REFORGED_SETTINGS.gameplay) do
+        --TODO
+    end
+
+    -- must win
+    if not lavaarenaevent.victory or (max_player_count and player_count > max_player_count) then return end
+
+    --TheSim:SetPersistentString("reforged_achievements_server", json.encode(achievements), false, function() Debug:Print("Achievements Progress Saved", "log") end)
+    --TheSim:SetPersistentString(filename, data, false, callback)
+
+    --TheSim:GetPersistentString(filename, onreadtimefile)
+
+    _G.TheSim:GetPersistentString(achievement_name, function(load_success, data)
+
+        local characters = {}
+        if load_success and data ~= nil then
+            local status, prev_characters = _G.pcall( function() return _G.json.decode(data) end )
+            if status and prev_characters then
+                characters = prev_characters
+            end
+        end
+
+        local curr_character = nil
+        for id, player_info in pairs(_G.TheWorld.components.stat_tracker.stats) do
+            if id == userid then
+                curr_character = player_info.user_data.user.prefab
+            end
+        end
+
+        if not characters[userid] then
+            characters[userid] = {}
+        end
+
+        if curr_character == nil then
+            print("[RCA] Achievement: "..tostring(achievement_name).." - Cannot find the player's character")
+        end
+
+        if curr_character and not table.contains(characters[userid], curr_character) then
+            table.insert(characters[userid], curr_character)
+            local achievement_tracker = _G.TheWorld.components.achievement_tracker
+            achievement_tracker:UpdateAchievementProgress(achievement_name, userid, nil, 1)
+        else
+            print("[RCA] Achievement: "..tostring(achievement_name).." - Character already counted or not found")
+        end
+
+        --_G.TheSim:SetPersistentString(achievement_name, _G.json.encode(characters), false, function() print("[RCA] Achievement: "..tostring(achievement_name).." - Progress updated successfully") end)
+
+        if not _G.TheNet:IsDedicated() then
+            _G.TheSim:SetPersistentString(tostring(achievement_name).."_client", _G.json.encode(characters), false, function() print("[RCA] Achievement: "..tostring(achievement_name).." - Progress updated successfully") end)
+        end
+
+        _G.TheSim:SetPersistentString(achievement_name, _G.json.encode(characters), false, function() print("[RCA] Achievement: "..tostring(achievement_name).." - Progress updated successfully") end)
+
+    end, false)
+end
+
+local function UniqueCharacterOnMatchComplete_progress_6p(lavaarenaevent, userid, achievement_name)
+    UniqueCharacterOnMatchComplete_progress(lavaarenaevent, userid, achievement_name)
+end
+
+local diff_characters_swine_progress_req = {
+    player_count = 6,
+    gametypes    = {"forge"},
+    wavesets     = {"swineclops"},
+}
+local diff_characters_swine_progress_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+--_G.AddAchievement("diff_characters_swine_progress", IsNonSpectator, nil, UniqueCharacterOnMatchComplete_progress_6p, 12, diff_characters_swine_progress_req, SetLevelXP(6), 2, diff_characters_swine_progress_icon, victory_id, "RCA")
+
+-------------------
+-- Master of All --
+-------------------
+
+local function UniqueCharacterOnMatchComplete_progress_2p(lavaarenaevent, userid, achievement_name)
+    UniqueCharacterOnMatchComplete_progress(lavaarenaevent, userid, achievement_name, 2)
+end
+
+local diff_characters_swine_progress_2p_req = {
+    player_count = 2,
+    gametypes    = {"forge"},
+    wavesets     = {"swineclops"},
+}
+local diff_characters_swine_progress_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+--_G.AddAchievement("diff_characters_swine_progress_2p", IsNonSpectator, nil, UniqueCharacterOnMatchComplete_progress_2p, 6, diff_characters_swine_progress_2p_req, SetLevelXP(30), 5, diff_characters_swine_progress_icon, victory_id, "RCA")
+
+----------------------
+-- Immovable Object --
+----------------------
+
+local highest_max_hp = {}
+local function PlayerMaxHealth(inst, data)
+    local user_id = _G.TheNet:GetUserID()
+    if user_id == nil then return end
+
+    --print(inst:GetDisplayName()..": My stats changed! ("..tostring(data)..")")
+    local max_hp = nil
+    if inst and inst.components and inst.components.health then
+        max_hp = inst.components.health:GetMaxWithPenalty()
+    end
+    if highest_max_hp[user_id] == nil and max_hp ~= nil then
+        highest_max_hp[user_id] = max_hp
+    end
+
+    --print("Prev Highest HP: "..tostring(highest_max_hp[user_id]))
+    --print("Curr Max HP: "..tostring(inst.components.health:GetMaxWithPenalty()))
+
+	if max_hp ~= nil and max_hp > highest_max_hp[user_id] then
+        --print("Higher Max HP Detected - "..tostring(max_hp))
+        highest_max_hp[user_id] = max_hp
+	end
+end
+
+--self.inst:PushEvent("healthdelta", { oldpercent = old_percent, newpercent = self:GetPercent(), overtime = overtime, cause = cause, afflicter = afflicter, amount = amount })
+-- AddPlayerPostInit(function(inst)
+--     inst:ListenForEvent("healthdelta", PlayerMaxHealth, inst)
+-- end)
+
+local function MaxHPMatchComplete(lavaarenaevent, userid, achievement_name, target_max_hp)
+    local max_hp = highest_max_hp[userid]
+    local achievement_tracker = _G.TheWorld.components.achievement_tracker
+
+    if max_hp and target_max_hp and max_hp >= target_max_hp then
+        achievement_tracker:UpdateAchievementProgress(achievement_name, userid, nil, true)
+    end
+end
+
+local function MaxHPMatchComplete_500(lavaarenaevent, userid, achievement_name)
+    MaxHPMatchComplete(lavaarenaevent, userid, achievement_name, 500)
+end
+
+local hp_500_icon = {atlas = "images/RCA_placeholder.xml", tex = "RCA_placeholder.tex"}
+--_G.AddAchievement("hp_500", IsNonSpectator, nil, MaxHPMatchComplete_500, nil, nil, SetLevelXP(0.25), 2, hp_500_icon, player_id, "RCA")
+
+------------------------------------
+-- And The Audience Goes Mild!!!! --
+------------------------------------
+
+local function GetPlayersClientTable() -- from reforged
+    local clients = _G.TheNet:GetClientTable() or {}
+    if not _G.TheNet:GetServerIsClientHosted() then
+        for i, v in ipairs(clients) do
+            if v.performance ~= nil then
+                table.remove(clients, i) -- remove "host" object
+                break
+            end
+        end
+    end
+    return clients
+end
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:roach_beetle
+
+    -- AddPrefabPostInit("roach_beetle", function(inst)
+    --     local function OnPickup()
+    --             if is_starved then
+    --                 is_starved = false
+    --                 inst:RemoveEventCallback("onpickup", OnPickup)
+    --             end
+    --         end
+    --     inst:ListenForEvent("onpickup", OnPickup)
+    -- end)
+
+```
+
+
+
+### 变体演进：Magiluminescence Auto Add Nightmarefuel (Mod 3575676768)
+- **变体场景与切面**：收录来自工坊 Mod 3575676768 (`Magiluminescence Auto Add Nightmarefuel`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3575676768)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:inventoryitem_classified
+
+AddPrefabPostInit("inventoryitem_classified", function(inst)
+    inst:DoTaskInTime(0, function() fn(inst) end)
+
+end)
+
+```
+
