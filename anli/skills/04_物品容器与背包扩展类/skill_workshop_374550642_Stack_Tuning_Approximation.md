@@ -76,3 +76,64 @@ end)
    - 绝不要在 `AddPrefabPostInitAny` 回调内执行 `TheSim:FindEntities`、字符串拼接、复杂正则表达式或大表遍历。实体生成每秒可能触发数十次，必须通过首行的 `if inst.components.xxx == nil then return end` 毫秒级退出。
 2. **`replica` 客户端显示对齐**：
    - 饥荒的 `stackable` 组件在主客机同步时，`replica.stackable:MaxSize()` 会自动拉取服务端的最新容量。无需在客户端手动再去 Hook `replica`，避免引发客户端本地与网络包的状态竞争（Race Condition）。
+
+
+## 五、进阶拓扑演进与变体分支
+
+### 变体演进：Houndius Shootius protects Chester (and beefalo) (Mod 3476470130)
+- **变体场景与切面**：收录来自工坊 Mod 3476470130 (`Houndius Shootius protects Chester (and beefalo)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3476470130)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    local RETARGET_MUST_TAGS = { "_combat" }
+
+    local RETARGET_CANT_TAGS = { "INLIMBO", "player", "eyeturret", "engineering" }
+
+    local function retargetfn(inst)
+        local target = inst.components.combat.target
+        if target ~= nil and
+            target:IsValid() and
+            inst:IsNear(target, TUNING.EYETURRET_RANGE + 3) then
+            --keep current target
+            return
+        end
+
+        local playertargets = {}
+        for i, v in ipairs(GLOBAL.AllPlayers) do
+            if v.components.combat.target ~= nil then
+                playertargets[v.components.combat.target] = true
+            end
+        end
+
+        local x, y, z = inst.Transform:GetWorldPosition()
+        local ents = TheSim:FindEntities(x, y, z, TUNING.EYETURRET_RANGE + 3, RETARGET_MUST_TAGS, RETARGET_CANT_TAGS)
+        for i, v in ipairs(ents) do
+            if v ~= inst and
+                v ~= target and
+                v.entity:IsVisible() and
+                inst.components.combat:CanTarget(v) and
+                (   playertargets[v] or
+                    v.components.combat:TargetIs(inst) or --anything targetting the turret
+                    (v.components.combat.target ~= nil and v.components.combat.target:HasTag("player")) or --anything targetting players
+                    (v.components.combat.target ~= nil and v.components.combat.target:HasTag("companion")) or --anything targetting chester etc
+                    (v.components.combat.target ~= nil and v.components.combat.target:HasTag("beefalo") and v.components.domesticatable and v.components.domesticatable.domestication > 0) --anything targetting beefalo that are at least partially tamed
+                ) then
+                    return v
+            end
+        end
+        return nil
+    end
+
+
+    UpvalueHacker.SetUpvalue(GLOBAL.Prefabs.eyeturret.fn, retargetfn, "retargetfn")
+end)
+
+```
+

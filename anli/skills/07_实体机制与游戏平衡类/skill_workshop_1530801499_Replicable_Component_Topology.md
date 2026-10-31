@@ -1555,3 +1555,52 @@ end)
 
 ```
 
+
+
+### 变体演进：万圣节部分内容禁用 (Mod 3488138790)
+- **变体场景与切面**：收录来自工坊 Mod 3488138790 (`万圣节部分内容禁用`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3488138790)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:hunter
+if GetModConfigData("enable2") then
+    AddComponentPostInit("hunter", function(self)
+        if self.OnDirtInvestigated then
+            local SpawnDirt = MOD_util:GetUpvalue_deekseek(self.OnDirtInvestigated, "SpawnDirt")
+            if SpawnDirt then
+                local SpawnBat = MOD_util:GetUpvalue_deekseek(SpawnDirt, "SpawnBat")
+                if SpawnBat then
+                    MOD_util:SetUpvalue_deekseek(SpawnDirt, "SpawnBat", function()
+                        --print("SpawnBat")
+                    end)
+                    --print("成功找到目标")
+                end
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mound
+    end)
+    AddPrefabPostInit("mound", function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+        local oldonfinish = inst.components.workable.onfinish
+        inst.components.workable:SetOnFinishCallback(function(...)
+            if TheWorld.components.specialeventsetup ~= nil then
+                TheWorld.components.specialeventsetup.halloween_bat_grave_spawn_chance = 0
+            end
+            oldonfinish(...)
+            if TheWorld.components.specialeventsetup ~= nil then
+                TheWorld.components.specialeventsetup.halloween_bat_grave_spawn_chance = 0
+            end
+        end)
+    end)
+
+```
+
