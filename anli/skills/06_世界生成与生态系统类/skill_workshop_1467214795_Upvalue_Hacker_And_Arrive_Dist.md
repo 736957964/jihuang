@@ -1077,3 +1077,44 @@ if syncronized == false then --this is pretty much just an identical version of 
 
 ```
 
+
+
+### 变体演进：Popo (Mod 3768627730)
+- **变体场景与切面**：收录来自工坊 Mod 3768627730 (`Popo`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3768627730)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- own list of vanilla HUD cases. Mods load after it, so this gets the last word.
+AddComponentPostInit("playercontroller", function(pc)
+  local old_is_enabled = pc.IsEnabled
+  pc.IsEnabled = function(self, ...)
+    if CTRL.IsNavigating() then return false, true end
+    return old_is_enabled(self, ...)
+  end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(world)
+  world:ListenForEvent("playeractivated", function(_, player)
+    if player ~= _G.ThePlayer then return end
+    -- Insight already serves exact closed-chest counts, so skip the disk file
+    -- (session memory still runs, covering Insight's async lag on fresh moves).
+    MEM.Configure({ persist = not InsightProvidesCounts(player) })
+    MEM.Load()
+    player:DoPeriodicTask(30, function() MEM.Save() end)
+    player:ListenForEvent("onremove", function()
+      EXE.Cancel()
+      MEM.Save()
+    end)
+  end)
+end)
+
+```
+

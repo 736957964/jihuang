@@ -19549,3 +19549,201 @@ AddPrefabPostInit(
 
 ```
 
+
+
+### 变体演进：GENERAL (Mod 2174681153)
+- **变体场景与切面**：收录来自工坊 Mod 2174681153 (`GENERAL`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2174681153)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:builder
+
+    AddComponentPostInit("builder", function(self)
+        _G.addsetter(self, "brainjellyhat", OnBrainJellyHat)
+        self.brainjellyhat = false
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+    local _GetAttacked = self.GetAttacked
+
+    function self:GetAttacked(...)
+        local inst = self.inst
+        local previous = inst._receiving_combat_damage
+
+        inst._receiving_combat_damage = true
+
+        local result = _GetAttacked(self, ...)
+
+        inst._receiving_combat_damage = previous
+
+        return result
+    end
+
+    --[[
+    function self:GetAttacked(...)
+        local inst = self.inst
+        local previous = inst._receiving_combat_damage
+
+        inst._receiving_combat_damage = true
+
+        local result = { _G.pcall(_GetAttacked, self, ...) }
+
+        inst._receiving_combat_damage = previous
+
+        if not result[1] then
+            _G.error(result[2])
+        end
+
+        return _G.unpack(result, 2)
+    end
+    ]]--
+
+    local _GetWeapon = self.GetWeapon
+
+    function self:GetWeapon(...)
+        if self.inst.wagstaff_goggles_shoot_proc then
+            return nil
+        end
+
+        if self.inst.components.inventory ~= nil then
+            local hand_item = self.inst.components.inventory:GetEquippedItem(_G.EQUIPSLOTS.HANDS)
+
+            -- Fryfocals should have higher priority over items with this tag.
+            if hand_item ~= nil and hand_item:HasTag("weaponlowpriority") then
+                local head_item = self.inst.components.inventory:GetEquippedItem(_G.EQUIPSLOTS.HEAD)
+
+                if head_item ~= nil and head_item.components.weapon ~= nil
+                and (head_item.components.projectile ~= nil
+                or not (self.inst.components.rider ~= nil and self.inst.components.rider:IsRiding())
+                or head_item:HasTag("rangedweapon")) then
+                    return head_item
+                end
+            end
+        end
+
+        local weapon = _GetWeapon(self, ...)
+
+        if weapon ~= nil then
+            return weapon
+        end
+
+        if self.inst.components.inventory ~= nil then
+            local head_item = self.inst.components.inventory:GetEquippedItem(_G.EQUIPSLOTS.HEAD)
+
+            return head_item ~= nil and head_item.components.weapon ~= nil
+            and (head_item.components.projectile ~= nil
+            or not (self.inst.components.rider ~= nil and self.inst.components.rider:IsRiding())
+            or head_item:HasTag("rangedweapon")) and head_item or nil
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:drownable
+
+AddComponentPostInit("drownable", function(self)
+    self.inst:ListenForEvent("on_washed_ashore", OnWashedAshore)
+
+    local _ShouldDropItems = self.ShouldDropItems
+
+    self.ShouldDropItems = function(self, ...)
+        if IsWearingLifeJacket(self.inst) then
+            return false
+        end
+
+        return _ShouldDropItems(self, ...)
+    end
+
+    local _OnFallInOcean = self.OnFallInOcean
+
+    self.OnFallInOcean = function(self, shore_x, shore_y, shore_z, ...)
+        if not IsWearingLifeJacket(self.inst) then
+            return _OnFallInOcean(self, shore_x, shore_y, shore_z, ...)
+        end
+
+        local inv = self.inst.components.inventory
+        local active_item = inv ~= nil and inv:GetActiveItem() or nil
+
+        local _keepondrown = nil
+
+        if active_item ~= nil and active_item.components.inventoryitem ~= nil then
+            _keepondrown = active_item.components.inventoryitem.keepondrown
+            active_item.components.inventoryitem.keepondrown = true
+        end
+
+        _OnFallInOcean(self, shore_x, shore_y, shore_z, ...)
+
+        if active_item ~= nil and active_item:IsValid() and active_item.components.inventoryitem ~= nil then
+            active_item.components.inventoryitem.keepondrown = _keepondrown
+        end
+    end
+
+    local _GetDrowningDamageTuning = self.GetDrowningDamageTuning
+
+    self.GetDrowningDamageTuning = function(self, ...)
+        local tunings = _GetDrowningDamageTuning(self, ...)
+
+        if not IsWearingLifeJacket(self.inst) or tunings == nil then
+            return tunings
+        end
+
+        local modified = {}
+
+        for k, v in pairs(tunings) do
+            modified[k] = v
+        end
+
+        modified.WETNESS = nil
+
+        return modified
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:fishingrod
+
+AddComponentPostInit("fishingrod", function(self)
+    local _Collect = self.Collect
+
+    function self:Collect(...)
+        local fisherman = self.fisherman
+        local caughtfish = self.caughtfish
+
+        if _Collect ~= nil then
+            _Collect(self, ...)
+        end
+
+        if fisherman and caughtfish then
+            if not fisherman.rainhat_fisherman then
+                return
+            end
+
+            local extrafish = _G.SpawnPrefab(caughtfish.prefab)
+
+            if extrafish ~= nil then
+                extrafish.Transform:SetPosition(caughtfish.Transform:GetWorldPosition())
+
+                if extrafish.components.weighable ~= nil then
+                    extrafish.components.weighable:SetPlayerAsOwner(fisherman)
+                end
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:fuel
+
+AddComponentPostInit("fuel", function(self)
+    _G.addsetter(self, "secondaryfueltype", onsecondaryfueltype)
+end)
+
+```
+

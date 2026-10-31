@@ -5385,8 +5385,26 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 07:27:22",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2174681153",
+      "name": "GENERAL",
+      "author": "Kyno 󰀃",
+      "version": "3.2-B",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:29:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3768627730",
+      "name": "Popo",
+      "author": "PopoSoHappy",
+      "version": "1.5.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 07:29:00",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:27:22"
+  "lastUpdated": "2026-11-01 07:29:00"
 }
