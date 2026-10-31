@@ -6882,3 +6882,256 @@ AddClassPostConstruct("screens/playerhud", function(self)
 
 ```
 
+
+
+### 变体演进：艾希,I see ! （修改版） (Mod 3814755564)
+- **变体场景与切面**：收录来自工坊 Mod 3814755564 (`艾希,I see ! （修改版）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3814755564)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if not TheNet:IsDedicated() then
+        if not inst:HasTag("cave") then 
+            -- GroundTiles.underground[1][2].name = "lavaarena_falloff"
+            -- MapLayerManager:SetSampleStyle(MAP_SAMPLE_STYLE.MARCHING_SQUARES)
+            if not inst.WaveComponent then 
+                inst.entity:AddWaveComponent()
+            end 
+            local scale = 1.3
+            inst.WaveComponent:SetWaveParams(13.5 * scale, 2.8 * (scale - .15),0.1) -- wave texture u repeat, forward distance between waves, world y-axis position
+            inst.WaveComponent:SetWaveSize(80 * scale, 3.5 * scale)                 -- wave mesh width and height
+            inst.WaveComponent:SetWaveMotion(.3, .5, .35)                           -- speed, horizontal travel, vertical travel                      -- wave mesh width and height
+            inst.WaveComponent:SetWaveTexture(resolvefilepath("images/fog_cloud.tex"))
+            inst.WaveComponent:SetWaveEffect("shaders/waves.ksh")  
+
+            inst:DoTaskInTime(0, function(inst)
+                if inst.has_ocean then
+                    return
+                end
+
+                -- inst.WaveComponent:SetWaveTexture("images/wave.tex")
+                inst.Map:SetTransparentOcean(false)
+            end)
+        end 
+    end 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:chester
+
+--[[AddPrefabPostInit("chester",function(inst)
+	if not TheWorld.ismastersim then
+		return inst
+	end
+	inst.enablemap = IceyUtil.EnableDrawOverFogOfWar
+	IceyUtil.EnableDrawOverFogOfWar(inst,true) 
+end) --]]
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mist
+
+AddPrefabPostInit("mist",function(inst)
+	local function InitEnvelopes()
+	    EnvelopeManager:AddColourEnvelope(
+	        "bloodmistcolourenvelope",
+	        {
+	            { 0,    { 167/255, 0, 0, 0 } },
+	            { .1,  {167/255, 0, 0, .12 } },
+	            { .75, { 167/255, 0, 0, .12 } },
+	            { 1,    { 167/255, 0, 0, 0 } },
+	        }
+	    )
+
+	    InitEnvelopes = nil
+	end
+
+	if InitEnvelopes ~= nil then
+        InitEnvelopes()
+    end
+
+	inst:AddComponent("areaaware")
+	inst:DoTaskInTime(1,function()
+		local current_area = inst.components.areaaware:GetCurrentArea()
+		if current_area and current_area.id and string.find(current_area.id,"bloodcity") then 
+			inst.VFXEffect:SetColourEnvelope(0,"bloodmistcolourenvelope")
+			inst.components.emitter.config.colour_envelope_name = "bloodmistcolourenvelope"
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:gunpowder
+
+AddPrefabPostInit("gunpowder",function(inst)
+	if not TheWorld.ismastersim then
+		return inst
+	end
+	inst:AddComponent("tradable")
+end) 
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:weapon
+
+AddComponentPostInit("weapon",function(self)
+	local old_OnAttack = self.OnAttack 
+	self.OnAttack = function(self,attacker, target, projectile,...)
+		old_OnAttack(self,attacker, target, projectile,...)
+		if self.inst.components.darksoulweapon then 
+			self.inst:PushEvent("darksoulweapon_onattack",{attacker = attacker,target = target,projectile = projectile})
+		end 
+	end
+end)
+
+```
+
+
+
+### 变体演进：！？饥友的酒？！ (Mod 3815821175)
+- **变体场景与切面**：收录来自工坊 Mod 3815821175 (`！？饥友的酒？！`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3815821175)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skinner
+-- 人物皮肤的init_fn 和 clear_fn
+AddComponentPostInit("skinner", function(self)
+    local oldfn = self.SetSkinName
+    if oldfn then
+        function self.SetSkinName(s, skinname, ...)
+            local old = s.skin_name
+            local new = skinname
+            if characterskins[old] and characterskins[old].clear_fn then characterskins[old].clear_fn(s.inst, old) end
+            if characterskins[new] and characterskins[new].init_fn then characterskins[new].init_fn(s.inst, new) end
+            oldfn(s, skinname, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+function dst_lan:_hookCombat()
+    AddComponentPostInit("combat", function(self)
+        self.dstlan_atkperiodmodifiers = SourceModifierList(self.inst)
+        self.dstlan_orig_min_attack_period = self.min_attack_period
+        local p = rawget(self, "_")["min_attack_period"]
+        local old_on_map = p[2]
+        p[2] = function(self, map)
+            if old_on_map ~= nil then
+                old_on_map(self, map)
+            end
+            if self.inst.replica.combat and self.inst.replica.combat.dstlan_atkperiodmult then
+                self.inst.replica.combat.dstlan_atkperiodmult:set(self.dstlan_atkperiodmodifiers:Get())
+            end
+        end
+
+        function self:SetAttackPeriod(val)
+            self.dstlan_orig_min_attack_period = val
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:SetAtkPeriodModifier(source, mult, key)
+            self.dstlan_atkperiodmodifiers:SetModifier(source, mult, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:RemoveAtkPeriodModifier(source, key)
+            self.dstlan_atkperiodmodifiers:RemoveModifier(source, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+function dst_lan:_hookSG()
+    AddStategraphPostInit("wilson", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local combat = inst.components.combat
+            local timeout = (math.floor(13/(combat.dstlan_atkperiodmodifiers:Get())))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(combat.dstlan_atkperiodmodifiers:Get())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+function dst_lan:_hookSGClient()
+    AddStategraphPostInit("wilson_client", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local timeout = (math.floor(13/inst.replica.combat.dstlan_atkperiodmult:value()))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(inst.replica.combat.dstlan_atkperiodmult:value())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformPreviewBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cook_certificate
+    --------------------------------------------
+    AddPrefabPostInit('cook_certificate',function (inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        local old_HarvestFoodFn = inst.HarvestFoodFn
+        ---@diagnostic disable-next-line: inject-field
+        inst.HarvestFoodFn = function(inst,foodname,harvester,cookpotname,...)
+            local fuelnum = GetThisMODDishConsume(foodname)
+            if foodname and fuelnum > 0 and not table.contains(inst.foodlist,foodname) then
+                --消耗耐久
+                if inst.components.finiteuses then
+                    inst.components.finiteuses:Use(fuelnum)
+                    inst.foodlist[#inst.foodlist+1]=foodname
+                    setFoodList(inst,harvester)--同步料理列表
+                    if not RewardToiler(harvester,0.1) then--天道酬勤
+                        SpawnMedalTips(harvester,fuelnum,10)--弹幕提示
+                    end
+                end
+            end
+            return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
+        end
+    end)
+
+```
+

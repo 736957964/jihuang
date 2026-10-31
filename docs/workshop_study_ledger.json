@@ -3909,8 +3909,26 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 03:57:01",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3814755564",
+      "name": "艾希,I see ! （修改版）",
+      "author": "灵衣女王的鬼铠, 咕噜喵",
+      "version": "3.0.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:58:43",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3815821175",
+      "name": "！？饥友的酒？！",
+      "author": "作者",
+      "version": "1.0.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:58:43",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:57:01"
+  "lastUpdated": "2026-11-01 03:58:43"
 }
