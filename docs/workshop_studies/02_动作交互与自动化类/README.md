@@ -23,15 +23,15 @@
 
 | 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
 | :--- | :--- | :--- |
-| 1 | study_1608191708_action_queue_reborn.md | [进入深度拆解报告](./study_1608191708_action_queue_reborn.md) |
-| 2 | study_2302837868_snapping_tills.md | [进入深度拆解报告](./study_2302837868_snapping_tills.md) |
-| 3 | study_2841310635_proper_switching.md | [进入深度拆解报告](./study_2841310635_proper_switching.md) |
-| 4 | study_2873533916_actionqueue_rb3.md | [进入深度拆解报告](./study_2873533916_actionqueue_rb3.md) |
-| 5 | study_3018652965_actionqueue_rb3.md | [进入深度拆解报告](./study_3018652965_actionqueue_rb3.md) |
-| 6 | study_3826759911_auto_explore.md | [进入深度拆解报告](./study_3826759911_auto_explore.md) |
-| 7 | study_3829443954_gekko_trap_advanced.md | [进入深度拆解报告](./study_3829443954_gekko_trap_advanced.md) |
-| 8 | study_501385076_quick_pick.md | [进入深度拆解报告](./study_501385076_quick_pick.md) |
-| 9 | study_588560555_auto_tooth_trap_reset.md | [进入深度拆解报告](./study_588560555_auto_tooth_trap_reset.md) |
+| 1 | study_1608191708_action_queue_reborn.md | [进入深度拆解报告](docs/workshop_studies/README/study_1608191708_action_queue_reborn.md) |
+| 2 | study_2302837868_snapping_tills.md | [进入深度拆解报告](docs/workshop_studies/README/study_2302837868_snapping_tills.md) |
+| 3 | study_2841310635_proper_switching.md | [进入深度拆解报告](docs/workshop_studies/README/study_2841310635_proper_switching.md) |
+| 4 | study_2873533916_actionqueue_rb3.md | [进入深度拆解报告](docs/workshop_studies/README/study_2873533916_actionqueue_rb3.md) |
+| 5 | study_3018652965_actionqueue_rb3.md | [进入深度拆解报告](docs/workshop_studies/README/study_3018652965_actionqueue_rb3.md) |
+| 6 | study_3826759911_auto_explore.md | [进入深度拆解报告](docs/workshop_studies/README/study_3826759911_auto_explore.md) |
+| 7 | study_3829443954_gekko_trap_advanced.md | [进入深度拆解报告](docs/workshop_studies/README/study_3829443954_gekko_trap_advanced.md) |
+| 8 | study_501385076_quick_pick.md | [进入深度拆解报告](docs/workshop_studies/README/study_501385076_quick_pick.md) |
+| 9 | study_588560555_auto_tooth_trap_reset.md | [进入深度拆解报告](docs/workshop_studies/README/study_588560555_auto_tooth_trap_reset.md) |
 
 ---
 

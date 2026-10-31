@@ -23,12 +23,12 @@
 
 | 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
 | :--- | :--- | :--- |
-| 1 | study_2189004162_insight.md | [进入深度拆解报告](./study_2189004162_insight.md) |
-| 2 | study_2281925291_finder_redux.md | [进入深度拆解报告](./study_2281925291_finder_redux.md) |
-| 3 | study_2657513551_global_positions_fix.md | [进入深度拆解报告](./study_2657513551_global_positions_fix.md) |
-| 4 | study_378160973_global_positions.md | [进入深度拆解报告](./study_378160973_global_positions.md) |
-| 5 | study_666155465_show_me.md | [进入深度拆解报告](./study_666155465_show_me.md) |
-| 6 | study_758532836_insight_protocol.md | [进入深度拆解报告](./study_758532836_insight_protocol.md) |
+| 1 | study_2189004162_insight.md | [进入深度拆解报告](docs/workshop_studies/04_网络同步与RPC辅助类/study_2189004162_insight.md) |
+| 2 | study_2281925291_finder_redux.md | [进入深度拆解报告](docs/workshop_studies/04_网络同步与RPC辅助类/study_2281925291_finder_redux.md) |
+| 3 | study_2657513551_global_positions_fix.md | [进入深度拆解报告](docs/workshop_studies/04_网络同步与RPC辅助类/study_2657513551_global_positions_fix.md) |
+| 4 | study_378160973_global_positions.md | [进入深度拆解报告](docs/workshop_studies/04_网络同步与RPC辅助类/study_378160973_global_positions.md) |
+| 5 | study_666155465_show_me.md | [进入深度拆解报告](docs/workshop_studies/04_网络同步与RPC辅助类/study_666155465_show_me.md) |
+| 6 | study_758532836_insight_protocol.md | [进入深度拆解报告](docs/workshop_studies/04_网络同步与RPC辅助类/study_758532836_insight_protocol.md) |
 
 ---
 

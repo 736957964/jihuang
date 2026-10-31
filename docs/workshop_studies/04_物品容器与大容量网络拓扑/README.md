@@ -17,22 +17,22 @@
 
 | 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
 | :--- | :--- | :--- |
-| 1 | `study_1240565842_russification_pack_for_dst.md` | [👉 进入该模组技术拆解](./study_1240565842_russification_pack_for_dst.md) |
-| 2 | `study_3624411781_storage_bags.md` | [👉 进入该模组技术拆解](./study_3624411781_storage_bags.md) |
-| 3 | `study_367546858_chinese_pack.md` | [👉 进入该模组技术拆解](./study_367546858_chinese_pack.md) |
-| 4 | `study_374550642_increased_stack_size.md` | [👉 进入该模组技术拆解](./study_374550642_increased_stack_size.md) |
-| 5 | `study_375850593_extra_equip_slots.md` | [👉 进入该模组技术拆解](./study_375850593_extra_equip_slots.md) |
-| 6 | `study_382177939_storm_cellar.md` | [👉 进入该模组技术拆解](./study_382177939_storm_cellar.md) |
-| 7 | `study_3825146333_maxstack.md` | [👉 进入该模组技术拆解](./study_3825146333_maxstack.md) |
-| 8 | `study_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md` | [👉 进入该模组技术拆解](./study_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md) |
-| 9 | `study_3827133829_stack_food.md` | [👉 进入该模组技术拆解](./study_3827133829_stack_food.md) |
-| 10 | `study_3827373438_beefalo_bell_storage.md` | [👉 进入该模组技术拆解](./study_3827373438_beefalo_bell_storage.md) |
-| 11 | `study_3828629465_equip_quick_slots.md` | [👉 进入该模组技术拆解](./study_3828629465_equip_quick_slots.md) |
-| 12 | `study_3830221580_upgradeable_backpacks.md` | [👉 进入该模组技术拆解](./study_3830221580_upgradeable_backpacks.md) |
-| 13 | `study_3830466017_extra_equip_slots_no_li_updated.md` | [👉 进入该模组技术拆解](./study_3830466017_extra_equip_slots_no_li_updated.md) |
-| 14 | `study_3830575143_item_slot_reservation.md` | [👉 进入该模组技术拆解](./study_3830575143_item_slot_reservation.md) |
-| 15 | `study_786556008_45_inventory_slots.md` | [👉 进入该模组技术拆解](./study_786556008_45_inventory_slots.md) |
-| 16 | `study_807516498_thai_language_pack.md` | [👉 进入该模组技术拆解](./study_807516498_thai_language_pack.md) |
+| 1 | `study_1240565842_russification_pack_for_dst.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_1240565842_russification_pack_for_dst.md) |
+| 2 | `study_3624411781_storage_bags.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3624411781_storage_bags.md) |
+| 3 | `study_367546858_chinese_pack.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_367546858_chinese_pack.md) |
+| 4 | `study_374550642_increased_stack_size.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_374550642_increased_stack_size.md) |
+| 5 | `study_375850593_extra_equip_slots.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_375850593_extra_equip_slots.md) |
+| 6 | `study_382177939_storm_cellar.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_382177939_storm_cellar.md) |
+| 7 | `study_3825146333_maxstack.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3825146333_maxstack.md) |
+| 8 | `study_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md) |
+| 9 | `study_3827133829_stack_food.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3827133829_stack_food.md) |
+| 10 | `study_3827373438_beefalo_bell_storage.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3827373438_beefalo_bell_storage.md) |
+| 11 | `study_3828629465_equip_quick_slots.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3828629465_equip_quick_slots.md) |
+| 12 | `study_3830221580_upgradeable_backpacks.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3830221580_upgradeable_backpacks.md) |
+| 13 | `study_3830466017_extra_equip_slots_no_li_updated.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3830466017_extra_equip_slots_no_li_updated.md) |
+| 14 | `study_3830575143_item_slot_reservation.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3830575143_item_slot_reservation.md) |
+| 15 | `study_786556008_45_inventory_slots.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_786556008_45_inventory_slots.md) |
+| 16 | `study_807516498_thai_language_pack.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_807516498_thai_language_pack.md) |
 
 ---
 

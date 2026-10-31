@@ -23,13 +23,13 @@
 
 | 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
 | :--- | :--- | :--- |
-| 1 | study_1467214795_island_adventures.md | [进入深度拆解报告](./study_1467214795_island_adventures.md) |
-| 2 | study_3322803908_above_the_clouds.md | [进入深度拆解报告](./study_3322803908_above_the_clouds.md) |
-| 3 | study_3350705530_limbus_company_characters.md | [进入深度拆解报告](./study_3350705530_limbus_company_characters.md) |
-| 4 | study_3383047161_the_winterlands.md | [进入深度拆解报告](./study_3383047161_the_winterlands.md) |
-| 5 | study_3513671528_plants_vs_dst.md | [进入深度拆解报告](./study_3513671528_plants_vs_dst.md) |
-| 6 | study_3583633595_the_fun_gang_deltarune.md | [进入深度拆解报告](./study_3583633595_the_fun_gang_deltarune.md) |
-| 7 | study_3828900356_wuthering_waves_aemeath_expansion.md | [进入深度拆解报告](./study_3828900356_wuthering_waves_aemeath_expansion.md) |
+| 1 | study_1467214795_island_adventures.md | [进入深度拆解报告](docs/workshop_studies/README/study_1467214795_island_adventures.md) |
+| 2 | study_3322803908_above_the_clouds.md | [进入深度拆解报告](docs/workshop_studies/README/study_3322803908_above_the_clouds.md) |
+| 3 | study_3350705530_limbus_company_characters.md | [进入深度拆解报告](docs/workshop_studies/README/study_3350705530_limbus_company_characters.md) |
+| 4 | study_3383047161_the_winterlands.md | [进入深度拆解报告](docs/workshop_studies/README/study_3383047161_the_winterlands.md) |
+| 5 | study_3513671528_plants_vs_dst.md | [进入深度拆解报告](docs/workshop_studies/README/study_3513671528_plants_vs_dst.md) |
+| 6 | study_3583633595_the_fun_gang_deltarune.md | [进入深度拆解报告](docs/workshop_studies/README/study_3583633595_the_fun_gang_deltarune.md) |
+| 7 | study_3828900356_wuthering_waves_aemeath_expansion.md | [进入深度拆解报告](docs/workshop_studies/README/study_3828900356_wuthering_waves_aemeath_expansion.md) |
 
 ---
 

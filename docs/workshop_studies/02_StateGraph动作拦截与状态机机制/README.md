@@ -17,13 +17,13 @@
 
 | 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
 | :--- | :--- | :--- |
-| 1 | `study_1608191708_action_queue_reborn.md` | [👉 进入该模组技术拆解](./study_1608191708_action_queue_reborn.md) |
-| 2 | `study_2302837868_snapping_tills.md` | [👉 进入该模组技术拆解](./study_2302837868_snapping_tills.md) |
-| 3 | `study_2841310635_proper_switching.md` | [👉 进入该模组技术拆解](./study_2841310635_proper_switching.md) |
-| 4 | `study_2873533916_actionqueue_rb3.md` | [👉 进入该模组技术拆解](./study_2873533916_actionqueue_rb3.md) |
-| 5 | `study_3018652965_actionqueue_rb3.md` | [👉 进入该模组技术拆解](./study_3018652965_actionqueue_rb3.md) |
-| 6 | `study_3830601380_actionqueue_rb3.md` | [👉 进入该模组技术拆解](./study_3830601380_actionqueue_rb3.md) |
-| 7 | `study_501385076_quick_pick.md` | [👉 进入该模组技术拆解](./study_501385076_quick_pick.md) |
+| 1 | `study_1608191708_action_queue_reborn.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_1608191708_action_queue_reborn.md) |
+| 2 | `study_2302837868_snapping_tills.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_2302837868_snapping_tills.md) |
+| 3 | `study_2841310635_proper_switching.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_2841310635_proper_switching.md) |
+| 4 | `study_2873533916_actionqueue_rb3.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_2873533916_actionqueue_rb3.md) |
+| 5 | `study_3018652965_actionqueue_rb3.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3018652965_actionqueue_rb3.md) |
+| 6 | `study_3830601380_actionqueue_rb3.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3830601380_actionqueue_rb3.md) |
+| 7 | `study_501385076_quick_pick.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_501385076_quick_pick.md) |
 
 ---
 

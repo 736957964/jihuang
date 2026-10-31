@@ -17,15 +17,15 @@
 
 | 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
 | :--- | :--- | :--- |
-| 1 | `study_1418746242_chinese_plus_plus.md` | [👉 进入该模组技术拆解](./study_1418746242_chinese_plus_plus.md) |
-| 2 | `study_1991746508_language.md` | [👉 进入该模组技术拆解](./study_1991746508_language.md) |
-| 3 | `study_1991746508_myth_words_architecture.md` | [👉 进入该模组技术拆解](./study_1991746508_myth_words_architecture.md) |
-| 4 | `study_3353852416_ch_lang.md` | [👉 进入该模组技术拆解](./study_3353852416_ch_lang.md) |
-| 5 | `study_3810943420_language.md` | [👉 进入该模组技术拆解](./study_3810943420_language.md) |
-| 6 | `study_3826531367_tradu_o_pt_br_don.md` | [👉 进入该模组技术拆解](./study_3826531367_tradu_o_pt_br_don.md) |
-| 7 | `study_3828123641_language.md` | [👉 进入该模组技术拆解](./study_3828123641_language.md) |
-| 8 | `study_3828782842_language.md` | [👉 进入该模组技术拆解](./study_3828782842_language.md) |
-| 9 | `study_3828925092_gd_language.md` | [👉 进入该模组技术拆解](./study_3828925092_gd_language.md) |
+| 1 | `study_1418746242_chinese_plus_plus.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_1418746242_chinese_plus_plus.md) |
+| 2 | `study_1991746508_language.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_1991746508_language.md) |
+| 3 | `study_1991746508_myth_words_architecture.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_1991746508_myth_words_architecture.md) |
+| 4 | `study_3353852416_ch_lang.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3353852416_ch_lang.md) |
+| 5 | `study_3810943420_language.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3810943420_language.md) |
+| 6 | `study_3826531367_tradu_o_pt_br_don.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3826531367_tradu_o_pt_br_don.md) |
+| 7 | `study_3828123641_language.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3828123641_language.md) |
+| 8 | `study_3828782842_language.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3828782842_language.md) |
+| 9 | `study_3828925092_gd_language.md` | [👉 进入该模组技术拆解](docs/workshop_studies/README/study_3828925092_gd_language.md) |
 
 ---
 

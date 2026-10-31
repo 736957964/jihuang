@@ -17,13 +17,13 @@
 
 | 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
 | :--- | :--- | :--- |
-| 1 | `study_2189004162_insight.md` | [👉 进入该模组技术拆解](./study_2189004162_insight.md) |
-| 2 | `study_2281925291_finder_redux.md` | [👉 进入该模组技术拆解](./study_2281925291_finder_redux.md) |
-| 3 | `study_2657513551_global_positions_fix.md` | [👉 进入该模组技术拆解](./study_2657513551_global_positions_fix.md) |
-| 4 | `study_378160973_global_positions.md` | [👉 进入该模组技术拆解](./study_378160973_global_positions.md) |
-| 5 | `study_3830062049_container_lag_fix.md` | [👉 进入该模组技术拆解](./study_3830062049_container_lag_fix.md) |
-| 6 | `study_666155465_show_me.md` | [👉 进入该模组技术拆解](./study_666155465_show_me.md) |
-| 7 | `study_758532836_insight_protocol.md` | [👉 进入该模组技术拆解](./study_758532836_insight_protocol.md) |
+| 1 | `study_2189004162_insight.md` | [👉 进入该模组技术拆解](docs/workshop_studies/03_网络通信RPC与专有协议体系/study_2189004162_insight.md) |
+| 2 | `study_2281925291_finder_redux.md` | [👉 进入该模组技术拆解](docs/workshop_studies/03_网络通信RPC与专有协议体系/study_2281925291_finder_redux.md) |
+| 3 | `study_2657513551_global_positions_fix.md` | [👉 进入该模组技术拆解](docs/workshop_studies/03_网络通信RPC与专有协议体系/study_2657513551_global_positions_fix.md) |
+| 4 | `study_378160973_global_positions.md` | [👉 进入该模组技术拆解](docs/workshop_studies/03_网络通信RPC与专有协议体系/study_378160973_global_positions.md) |
+| 5 | `study_3830062049_container_lag_fix.md` | [👉 进入该模组技术拆解](docs/workshop_studies/03_网络通信RPC与专有协议体系/study_3830062049_container_lag_fix.md) |
+| 6 | `study_666155465_show_me.md` | [👉 进入该模组技术拆解](docs/workshop_studies/03_网络通信RPC与专有协议体系/study_666155465_show_me.md) |
+| 7 | `study_758532836_insight_protocol.md` | [👉 进入该模组技术拆解](docs/workshop_studies/03_网络通信RPC与专有协议体系/study_758532836_insight_protocol.md) |
 
 ---
 
