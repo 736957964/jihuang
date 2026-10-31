@@ -4546,3 +4546,132 @@ AddPrefabPostInit("fused_shadeling_quickfuse_bomb", function(inst) aggro_ents[#a
 
 ```
 
+
+
+### 变体演进：Itachi Uchiha (Mod 1818702536)
+- **变体场景与切面**：收录来自工坊 Mod 1818702536 (`Itachi Uchiha`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1818702536)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(Combat, inst)
+    local DoAttack_prev = Combat.DoAttack
+    function Combat:DoAttack(target_override, weapon, ...)
+        if weapon and weapon.HasAmmo then
+            if weapon:HasAmmo(inst) then
+                return DoAttack_prev(self, target_override, weapon, ...)
+            end
+            return
+        end        
+        return DoAttack_prev(self, target_override, weapon, ...)
+    end
+end) 
+
+```
+
+
+
+### 变体演进：Amethyst (Mod 2272337557)
+- **变体场景与切面**：收录来自工坊 Mod 2272337557 (`Amethyst`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2272337557)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skinner
+
+AddComponentPostInit("skinner", function(self)
+	local _OnLoad = self.OnLoad
+	function self:OnLoad(data, ...)
+		_OnLoad(self, data, ...) --Hornet: The game checks if we own the item when we load in, But we don't really "own" the skins we are making
+									--so we have to do a little hijack and put our skin item back on our character when they're loading in
+		if SKINNABLE_CHARACTERS[self.inst.prefab] and data.skin_name ~= nil then
+			self:SetSkinName(data.skin_name)
+		end
+	end
+end)
+
+local _IsDefaultSkinOwned = _G.IsDefaultSkinOwned
+local _ValidateItemsLocal = _G.ValidateItemsLocal
+local _SpawnNewPlayerOnServerFromSim = _G.SpawnNewPlayerOnServerFromSim
+local _GetLockedSkinFilter = _G.GetLockedSkinFilter
+
+function _G.IsDefaultSkinOwned(item_key, ...)
+	local index = item_key:find("_")
+	local character = item_key:sub(1, index - 1)
+	if SKINNABLE_CHARACTERS[character] then
+		return true
+	end
+	
+	return _IsDefaultSkinOwned(item_key, ...)
+end
+
+--Hornet: Like I said, over and over. We technically don't "own" our skin, and the game gets rid of the base from our character, so we need to save
+--the base, run the original function, and then put our base back in place
+function _G.ValidateItemsLocal(currentcharacter, selected_skins)
+	local _base = selected_skins["base"]
+
+	_ValidateItemsLocal(currentcharacter, selected_skins)
+	
+	if _base ~= nil and SKINNABLE_CHARACTERS[currentcharacter] then
+		selected_skins["base"] = _base 
+	end
+end
+
+function _G.GetLockedSkinFilter()
+	local _LockedFilter = _GetLockedSkinFilter()
+	function LockedFilter(item_key)
+		local index = item_key:find("_")
+		local character = item_key:sub(1, index - 1)
+		if SKINNABLE_CHARACTERS[character] then
+			return true
+		end
+		
+		return _LockedFilter(item_key)
+	end
+	
+	return LockedFilter
+end
+
+function _G.SpawnNewPlayerOnServerFromSim(player_guid, skin_base, clothing_body, clothing_hand, clothing_legs, clothing_feet)
+	local player = _G.Ents[player_guid]
+	if player ~= nil and SKINNABLE_CHARACTERS[player.prefab] then
+		local skinner = player.components.skinner
+		skinner:SetClothing(clothing_body)
+		skinner:SetClothing(clothing_hand)
+		skinner:SetClothing(clothing_legs)
+		skinner:SetClothing(clothing_feet)
+		skinner:SetSkinMode("normal_skin")
+			
+		player:DoTaskInTime(0, function()
+			skinner:SetSkinName(player.components.skinner.skin_name)
+		end)
+	
+		if player.OnNewSpawn ~= nil then
+			player:OnNewSpawn()
+			player.OnNewSpawn = nil
+		end
+		_G.TheWorld.components.playerspawner:SpawnAtNextLocation(_G.TheWorld, player)
+		_G.SerializeUserSession(player, true)
+	else
+		_SpawnNewPlayerOnServerFromSim(player_guid, skin_base, clothing_body, clothing_hand, clothing_legs, clothing_feet)
+	end
+end
+
+AddModRPCHandler(modname, "moddedskins", function(inst, base)
+	inst.components.skinner.skin_name = base
+end)
+
+function AddSkinnableCharacter(name)
+	SKINNABLE_CHARACTERS[name] = true
+end
+
+```
+

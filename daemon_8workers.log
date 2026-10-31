@@ -4386,3 +4386,28 @@
 [2026-11-01 05:14:01] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
 [2026-11-01 05:14:01] Reducer: 成功将 Mod 3822900574 (LANGUAGE) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 05:14:01] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 05:14:07] Git 自动提交并推送成功！
+[2026-11-01 05:14:08] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 05:14:08] 【批次结算】：本批归约出 6 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 05:14:38] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3805239337', '3808204425', '3744085911', '3677284770', '2272337557', '1818702536']
+[2026-11-01 05:14:38] SteamCMD 下载 3805239337 ...
+[2026-11-01 05:14:38] SteamCMD 下载 3677284770 ...
+[2026-11-01 05:14:38] SteamCMD 下载 3744085911 ...
+[2026-11-01 05:14:38] SteamCMD 下载 3808204425 ...
+[2026-11-01 05:14:38] SteamCMD 下载 2272337557 ...
+[2026-11-01 05:14:38] SteamCMD 下载 1818702536 ...
+[2026-11-01 05:15:39] Worker [3805239337] 过滤拦截: QiNeko Wiki 快速查询 (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 05:16:09] Worker [3677284770] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 05:16:21] Worker [3744085911] 成功解析入库暂存区 -> grow_time (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 05:16:42] Worker [3808204425] 成功解析入库暂存区 -> language (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 05:16:56] Worker [2272337557] 成功解析入库暂存区 -> Amethyst (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 05:17:07] Worker [1818702536] 成功解析入库暂存区 -> Itachi Uchiha (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 05:17:07] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 05:17:07] Reducer: 成功将 Mod 1818702536 (Itachi Uchiha) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 05:17:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 05:17:07] Reducer: 成功将 Mod 2272337557 (Amethyst) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 05:17:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 05:17:07] Reducer: 成功将 Mod 3744085911 (grow_time) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 05:17:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 05:17:07] Reducer: 成功将 Mod 3808204425 (language) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 05:17:07] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md

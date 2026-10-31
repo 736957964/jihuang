@@ -4350,8 +4350,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 05:14:01",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1818702536",
+      "name": "Itachi Uchiha",
+      "author": "Yakuzashi",
+      "version": "2.2.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:17:07",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2272337557",
+      "name": "Amethyst",
+      "author": "Adipup",
+      "version": "1.0.9",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:17:07",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3744085911",
+      "name": "grow_time",
+      "author": "源",
+      "version": "0.1.50",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:17:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3808204425",
+      "name": "language",
+      "author": "BaiMan",
+      "version": "1.6.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:17:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:14:01"
+  "lastUpdated": "2026-11-01 05:17:07"
 }

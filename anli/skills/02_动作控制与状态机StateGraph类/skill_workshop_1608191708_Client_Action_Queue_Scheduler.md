@@ -10523,3 +10523,90 @@ return M
 
 ```
 
+
+
+### 变体演进：grow_time (Mod 3744085911)
+- **变体场景与切面**：收录来自工坊 Mod 3744085911 (`grow_time`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3744085911)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:horn
+local function Install(AddPrefabPostInit, enabled)
+    AddPrefabPostInit("horn", enabled == true and HornPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("tallbirdegg", enabled == true and TallbirdEggPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("ancienttree_gem_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("ancienttree_nightvision_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+end
+
+return { Install = Install }
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tallbirdegg
+    AddPrefabPostInit("horn", enabled == true and HornPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("tallbirdegg", enabled == true and TallbirdEggPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("ancienttree_gem_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("ancienttree_nightvision_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+end
+
+return { Install = Install }
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ancienttree_gem_sapling_item
+    AddPrefabPostInit("tallbirdegg", enabled == true and TallbirdEggPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("ancienttree_gem_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("ancienttree_nightvision_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+end
+
+return { Install = Install }
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ancienttree_nightvision_sapling_item
+    AddPrefabPostInit("ancienttree_gem_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+    AddPrefabPostInit("ancienttree_nightvision_sapling_item", enabled == true and SaplingPostInit or RestoreUnstackedSave)
+end
+
+return { Install = Install }
+
+```
+
+
+
+### 变体演进：language (Mod 3808204425)
+- **变体场景与切面**：收录来自工坊 Mod 3808204425 (`language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3808204425)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:berrybush_juicy
+})
+AddPrefabPostInit("berrybush_juicy", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        inst:ListenForEvent("picked", require("growth/lumine_harvest").OnDroppedPick)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:farmplanttendable
+function M.Install(G, H)
+    H.AddComponentPostInit("farmplanttendable", function(component)
+        if G.TheWorld.ismastersim then
+            component.inst:ListenForEvent("on_planted", M.OnPlanted)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+    G.require("paimon/guide").InstallRPC(G,hooks)
+    hooks.AddPrefabPostInit("world", function(inst)
+        if inst.ismastersim then inst:AddComponent("paimonworld") end
+    end)
+
+```
+
