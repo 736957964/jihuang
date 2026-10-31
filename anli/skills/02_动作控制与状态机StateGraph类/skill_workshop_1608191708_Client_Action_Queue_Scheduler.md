@@ -19242,3 +19242,310 @@ end)
 
 ```
 
+
+
+### 变体演进：零 (Mod 3712061130)
+- **变体场景与切面**：收录来自工坊 Mod 3712061130 (`零`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3712061130)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddBrainPostInit:bunnymanbrain
+---給牛，獵犬和青蛙添加害怕的腦子
+AddBrainPostInit("bunnymanbrain", ScareBrain)
+AddBrainPostInit("mermbrain", ScareBrain)
+AddBrainPostInit("pigbrain", ScareBrain)
+AddBrainPostInit("spiderbrain", ScareBrain)
+AddBrainPostInit("frogbrain", ScareBrain)
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("pigguardbrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("lightninggoatbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+AddBrainPostInit("rabbitbrain", ScareBrain)
+AddBrainPostInit("smallbirdbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("rockybrain", ScareBrain)
+AddBrainPostInit("spatbrain", ScareBrain)
+AddBrainPostInit("wargbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("rookbrain", ScareBrain)
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:mermbrain
+AddBrainPostInit("bunnymanbrain", ScareBrain)
+AddBrainPostInit("mermbrain", ScareBrain)
+AddBrainPostInit("pigbrain", ScareBrain)
+AddBrainPostInit("spiderbrain", ScareBrain)
+AddBrainPostInit("frogbrain", ScareBrain)
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("pigguardbrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("lightninggoatbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+AddBrainPostInit("rabbitbrain", ScareBrain)
+AddBrainPostInit("smallbirdbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("rockybrain", ScareBrain)
+AddBrainPostInit("spatbrain", ScareBrain)
+AddBrainPostInit("wargbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("rookbrain", ScareBrain)
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:pigbrain
+AddBrainPostInit("mermbrain", ScareBrain)
+AddBrainPostInit("pigbrain", ScareBrain)
+AddBrainPostInit("spiderbrain", ScareBrain)
+AddBrainPostInit("frogbrain", ScareBrain)
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("pigguardbrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("lightninggoatbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+AddBrainPostInit("rabbitbrain", ScareBrain)
+AddBrainPostInit("smallbirdbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("rockybrain", ScareBrain)
+AddBrainPostInit("spatbrain", ScareBrain)
+AddBrainPostInit("wargbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("rookbrain", ScareBrain)
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:spiderbrain
+AddBrainPostInit("pigbrain", ScareBrain)
+AddBrainPostInit("spiderbrain", ScareBrain)
+AddBrainPostInit("frogbrain", ScareBrain)
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("pigguardbrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("lightninggoatbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+AddBrainPostInit("rabbitbrain", ScareBrain)
+AddBrainPostInit("smallbirdbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("rockybrain", ScareBrain)
+AddBrainPostInit("spatbrain", ScareBrain)
+AddBrainPostInit("wargbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("rookbrain", ScareBrain)
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:frogbrain
+AddBrainPostInit("spiderbrain", ScareBrain)
+AddBrainPostInit("frogbrain", ScareBrain)
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("pigguardbrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("lightninggoatbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+AddBrainPostInit("rabbitbrain", ScareBrain)
+AddBrainPostInit("smallbirdbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("rockybrain", ScareBrain)
+AddBrainPostInit("spatbrain", ScareBrain)
+AddBrainPostInit("wargbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("rookbrain", ScareBrain)
+
+
+
+
+
+```
+
+
+
+### 变体演进：【Solo Leveling】 (Mod 3780347550)
+- **变体场景与切面**：收录来自工坊 Mod 3780347550 (`【Solo Leveling】`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3780347550)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minotaur
+end
+AddPrefabPostInit(
+    "minotaur",
+    function(nFfugCnKg)
+        if not TheWorld["ismastersim"] then
+            return nFfugCnKg
+        end
+        nFfugCnKg:AddComponent("constructionsite")
+        nFfugCnKg["components"]["constructionsite"]:SetConstructionPrefab("construction_container")
+        nFfugCnKg["components"]["constructionsite"]:SetOnConstructedFn(uFguuCikc)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+    gFcunckku["gotkilledby"] = " đã bị tiêu diệt bởi "
+    AddPrefabPostInit(
+        "forest",
+        function(nFuUucfkk)
+            nFuUucfkk:WatchWorldState(
+                "isspring",
+                function(nFuUucfkk)
+                    if TheWorld["state"]["isspring"] then
+                        ufiUcCcKc:Announce("Mùa Xuân" .. gFcunckku["iscoming"])
+                    end
+                end
+            )
+            nFuUucfkk:WatchWorldState(
+                "issummer",
+                function(nFuUucfkk)
+                    if TheWorld["state"]["issummer"] then
+                        ufiUcCcKc:Announce("Mùa Hạ" .. gFcunckku["iscoming"])
+                    end
+                end
+            )
+            nFuUucfkk:WatchWorldState(
+                "isautumn",
+                function(nFuUucfkk)
+                    if TheWorld["state"]["isautumn"] then
+                        ufiUcCcKc:Announce("Mùa Thu" .. gFcunckku["iscoming"])
+                    end
+                end
+            )
+            nFuUucfkk:WatchWorldState(
+                "iswinter",
+                function(nFuUucfkk)
+                    if TheWorld["state"]["iswinter"] then
+                        ufiUcCcKc:Announce("Mùa Đông" .. gFcunckku["iscoming"])
+                    end
+                end
+            )
+        end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:klaus
+    )
+    AddPrefabPostInit(
+        "klaus",
+        function(kFiUicfKc)
+            local function gFuUnCkkg(kFiUicfKc, ifuuccnki)
+                local kfnuicikn =
+                    kFiUicfKc["components"]["combat"] and kFiUicfKc["components"]["combat"]["lastattacker"]
+                if kfnuicikn ~= nil then
+                    ufiUcCcKc:Announce(
+                        FormatBossName(kFiUicfKc) .. gFcunckku["gotkilledby"] .. kfnuicikn["name"],
+                        nil,
+                        nil,
+                        "item_drop"
+                    )
+                else
+                    ufiUcCcKc:Announce(kFiUicfKc:GetDisplayName() .. gFcunckku["killed"], nil, nil, "item_drop")
+                end
+            end
+            local function ifgUcCnkg(kFiUicfKc)
+                if kFiUicfKc:IsUnchained() then
+                    kFiUicfKc:ListenForEvent("attacked", gFuUnCkkg)
+                end
+            end
+            kFiUicfKc:ListenForEvent("death", ifgUcCnkg)
+        end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:glommer
+    )
+    AddPrefabPostInit(
+        "glommer",
+        function(cfiUkCgKc)
+            local function cfgUgCuku(cfiUkCgKc)
+                if cfiUkCgKc:HasTag("companion") then
+                    local kfguiCuKc = cfiUkCgKc["components"]["follower"]["leader"]
+                    if kfguiCuKc["components"]["inventoryitem"]:IsHeld() then
+                        local cfnUccikf = kfguiCuKc["components"]["inventoryitem"]["owner"]
+                        if
+                            cfnUccikf["prefab"] == "backpack" or cfnUccikf["prefab"] == "krampus_sack" or
+                                cfnUccikf["prefab"] == "piggyback" or
+                                cfnUccikf["prefab"] == "icepack" or
+                                cfnUccikf["prefab"] == "klaus_sack" or
+                                cfnUccikf["prefab"] == "backcub" or
+                                cfnUccikf["prefab"] == "giantsfoot" or
+                                cfnUccikf["prefab"] == "boltwingout" or
+                                cfnUccikf["prefab"] == "kam_lan_cassock"
+                         then
+                            cfnUccikf = cfnUccikf["components"]["inventoryitem"]["owner"]
+                        end
+                        ufiUcCcKc:Announce(cfnUccikf["name"] .. " đang sở hữu " .. cfiUkCgKc["name"])
+                    end
+                else
+                    ufiUcCcKc:Announce(cfiUkCgKc["name"] .. " vừa xuất thế. Tới và lấy nó nào!")
+                end
+            end
+            cfiUkCgKc:ListenForEvent("startfollowing", cfgUgCuku)
+        end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:toadstool_cap
+    end
+    AddPrefabPostInit(
+        "toadstool_cap",
+        function(cFuUgCkkn)
+            cFuUgCkkn:ListenForEvent(
+                "ms_spawntoadstool",
+                function()
+                    ufiUcCcKc:SystemMessage(cFuUgCkkn:GetDisplayName() .. gFcunckku["reflash"])
+                end
+            )
+        end
+
+```
+

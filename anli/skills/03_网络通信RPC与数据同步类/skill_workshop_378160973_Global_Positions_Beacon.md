@@ -5577,3 +5577,55 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod 3678295700 (Mod 3678295700)
+- **变体场景与切面**：收录来自工坊 Mod 3678295700 (`Mod 3678295700`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3678295700)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:talker
+---
+AddComponentPostInit("talker",function(self)
+    local old_Say = self.Say
+    function self:Say(script, ...)
+      if type(script) == "string" and (string.find(script, "//张贴//", 1, true) or string.find(script, "//空白//", 1, true)) then
+        return
+      end
+      old_Say(self, script, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Honeymoon Tent - Shared Sleep & Infinite Uses (Mod 3815339596)
+- **变体场景与切面**：收录来自工坊 Mod 3815339596 (`Honeymoon Tent - Shared Sleep & Infinite Uses`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3815339596)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:tent
+
+AddPrefabPostInit("tent", PatchTent)
+
+if SIESTA_SUPPORT then
+    AddPrefabPostInit("siestahut", PatchTent)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:siestahut
+if SIESTA_SUPPORT then
+    AddPrefabPostInit("siestahut", PatchTent)
+end
+
+```
+

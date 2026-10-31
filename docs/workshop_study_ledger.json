@@ -5349,8 +5349,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 07:20:07",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3678295700",
+      "name": "Mod 3678295700",
+      "author": "驯猫糕手",
+      "version": "26.08.24",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 07:27:21",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3712061130",
+      "name": "零",
+      "author": "酥签",
+      "version": "1.9.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:27:22",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3780347550",
+      "name": "【Solo Leveling】",
+      "author": "Saikuno",
+      "version": "2.2.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:27:22",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3815339596",
+      "name": "Honeymoon Tent - Shared Sleep & Infinite Uses",
+      "author": "Sharethylove",
+      "version": "0.4.5",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 07:27:22",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:20:07"
+  "lastUpdated": "2026-11-01 07:27:22"
 }
