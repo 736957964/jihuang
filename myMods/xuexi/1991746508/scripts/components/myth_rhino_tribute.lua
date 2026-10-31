@@ -1,1 +1,0 @@
-return Class(function(self, inst) inst:AddTag('myth_rhino_tribute') end)

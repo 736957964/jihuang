@@ -470,9 +470,12 @@ def run():
     spec_path = os.path.join(WORK_DIR, "docs", "饥荒工坊研读与流水线维护规范.md")
     if os.path.isfile(spec_path):
         log("【规范自检】已成功读取并加载老爹铁律：《饥荒工坊研读与流水线维护规范.md》")
+        log("【质量标准】研读必须严格以 study_2841310635_proper_switching 为标杆，禁止流水账！")
     else:
         log("【规范自检警告】未找到规范文档！")
-    log("8 并发真实研读流水线启动，工作线程=%d" % WORKERS)
+    # 严格遵照老爹指令，当前暂停研读，防止生成无用流水账
+    log("【老爹指令拦截】研读流水线当前处于暂停状态（待老爹验收清洗结果并确认后方可重新启动）")
+    return
     sync_desktop()
     last_report_count = len(completed_ids())
     while True:
