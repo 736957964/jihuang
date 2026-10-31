@@ -4836,8 +4836,53 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 06:06:36",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3772683476",
+      "name": "Mod 3772683476",
+      "author": "Sydney & Ardent & Kiseru",
+      "version": "1.0.9.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:08:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3793272421",
+      "name": "WX-78 Scan Meter",
+      "author": "Jhn",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 06:08:45",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3800582948",
+      "name": "麦斯威尔调整",
+      "author": "芝士",
+      "version": "1.0.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:08:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3803772794",
+      "name": "饮食均衡测试前瞻版",
+      "author": "b站能蒸能煮达达鸭，1013855025(可加q反馈bug与兼容和联动)",
+      "version": "0.1（先行版)",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:08:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3816520491",
+      "name": "更爽的鱼人语音和行为",
+      "author": "snack",
+      "version": "1.0.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:08:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 06:06:36"
+  "lastUpdated": "2026-11-01 06:08:45"
 }

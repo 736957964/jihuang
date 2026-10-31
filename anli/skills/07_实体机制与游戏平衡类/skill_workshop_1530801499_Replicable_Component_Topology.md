@@ -4210,3 +4210,27 @@ end)
 
 ```
 
+
+
+### 变体演进：WX-78 Scan Meter (Mod 3793272421)
+- **变体场景与切面**：收录来自工坊 Mod 3793272421 (`WX-78 Scan Meter`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3793272421)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wx78_scanner
+
+AddPrefabPostInit("wx78_scanner", function(inst)
+	-- client_only_mod, so this only runs in a client process; on a listen-server
+	-- host that process is also the client and still wants the readout.
+	if _G.TheWorld ~= nil and _G.TheWorld.ismastersim and _G.TheNet:IsDedicated() then
+		return
+	end
+	ClientScannerPostInit(inst)
+end)
+
+```
+

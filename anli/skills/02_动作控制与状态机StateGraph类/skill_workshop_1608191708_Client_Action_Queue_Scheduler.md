@@ -15473,3 +15473,750 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod 3772683476 (Mod 3772683476)
+- **变体场景与切面**：收录来自工坊 Mod 3772683476 (`Mod 3772683476`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3772683476)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:colourcube
+
+AddComponentPostInit("colourcube", function(self, inst)
+    if TheWorld.is_adventure then
+        self:AddSeasonColourCube(AD_SEASON_COLOURCUBES)
+        self.adventure_mode = true
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:moisture
+
+AddComponentPostInit("moisture", function(self, inst)
+    if not inst:HasTag("player") or not TheWorld:IsAdventurePreset("RAINY") then
+        return
+    end
+
+    local _GetMoistureRateAssumingRain = self._GetMoistureRateAssumingRain
+    function self:_GetMoistureRateAssumingRain()
+        return _GetMoistureRateAssumingRain(self) * RAIN_MOISTURE_RATE_MULTIPLIER
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:weather
+
+AddComponentPostInit("weather", function(self)
+    if not TheWorld:IsAdventurePreset("RAINY") then
+        return
+    end
+
+    local CalculateWetnessRate, scope_fn, index =
+        ToolUtil.GetUpvalue(self.OnUpdate, "CalculateWetnessRate")
+    if CalculateWetnessRate == nil then
+        print("[weather] failed to find CalculateWetnessRate upvalue")
+    else
+        debug.setupvalue(scope_fn, index, function(temperature, preciprate)
+            local rate = CalculateWetnessRate(temperature, preciprate)
+            return rate > 0 and rate * RAIN_WETNESS_RATE_MULTIPLIER or rate
+        end)
+    end
+
+    local hasfx = ToolUtil.GetUpvalue(self.OnUpdate, "_hasfx")
+    if not hasfx then
+        return
+    end
+
+    local rainfx = ToolUtil.GetUpvalue(self.OnUpdate, "_rainfx")
+    if rainfx == nil then
+        print("[weather] failed to find _rainfx upvalue")
+        return
+    end
+
+    local OnUpdate = self.OnUpdate
+    local LongUpdate = self.LongUpdate
+    function self:OnUpdate(dt)
+        OnUpdate(self, dt)
+        rainfx.particles_per_tick = rainfx.particles_per_tick * RAIN_FX_MULTIPLIER
+        rainfx.splashes_per_tick = rainfx.splashes_per_tick * RAIN_FX_MULTIPLIER
+    end
+
+    if LongUpdate == OnUpdate then
+        self.LongUpdate = self.OnUpdate
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:worldreset
+
+AddComponentPostInit("worldreset", function(self)
+    if not TheWorld.ismastershard then
+        return
+    end
+
+    -- Keep the vanilla countdown and replace only its terminal action.
+    local WorldReset, OnUpdate, index = ToolUtil.GetUpvalue(self.OnUpdate, "WorldReset")
+    if WorldReset == nil then
+        return
+    end
+
+    debug.setupvalue(OnUpdate, index, function()
+        if TheWorld.is_adventure then
+            WorldResetFromSim()
+            return
+        end
+
+        WorldReset()
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:worldstate
+
+AddComponentPostInit("worldstate", function(self, inst)
+    local _watchers = ToolUtil.GetUpvalue(self.AddWatcher, "_watchers")
+    if _watchers == nil then
+        print("[worldstate] failed to find _watchers upvalue")
+        return
+    end
+
+    local function GetFunctionInfo(fn)
+        return debug ~= nil and debug.getinfo(fn, "Sln") or nil
+    end
+
+    local BuildCallbackEntry
+
+    local function BuildListenerEntry(listener_inst, var, watcherfns)
+        local entry = {
+            inst = listener_inst,
+            target = nil,
+            fns = {},
+            entries = {},
+        }
+
+        for i, raw in ipairs(watcherfns) do
+            local callback = BuildCallbackEntry(raw[1], raw[2], i, listener_inst, var)
+            entry.target = entry.target or callback.target
+            table.insert(entry.fns, callback.fn)
+            table.insert(entry.entries, callback)
+        end
+
+        return entry
+    end
+
+    BuildCallbackEntry = function(fn, target, index, listener_inst, var)
+        local info = GetFunctionInfo(fn) or {}
+        return {
+            fn          = fn,
+            target      = target,
+            inst        = listener_inst,
+            var         = var,
+            source      = info.source,
+            short_src   = info.short_src,
+            linedefined = info.linedefined,
+            lastlinedefined = info.lastlinedefined,
+            name        = info.name,
+            namewhat    = info.namewhat,
+            what        = info.what,
+            index       = index,
+        }
+    end
+
+    function self:GetWorldStateWatchFns(var, listener_inst)
+        local watchers = _watchers[var]
+        if watchers == nil then
+            return {}
+        end
+
+        if listener_inst ~= nil then
+            local watcherfns = watchers[listener_inst]
+            local out = {}
+            if watcherfns ~= nil then
+                for _, raw in ipairs(watcherfns) do
+                    table.insert(out, raw[1])
+                end
+            end
+            return out
+        end
+
+        local out = {}
+        for watcher_inst, watcherfns in pairs(watchers) do
+            table.insert(out, BuildListenerEntry(watcher_inst, var, watcherfns))
+        end
+        return out
+    end
+
+    function self:GetWorldStateWatchEntries(var, listener_inst)
+        local watchers = _watchers[var]
+        local out = {}
+        if watchers == nil then
+            return out
+        end
+
+        if listener_inst ~= nil then
+            local watcherfns = watchers[listener_inst]
+            if watcherfns ~= nil then
+                for i, raw in ipairs(watcherfns) do
+                    table.insert(out, BuildCallbackEntry(raw[1], raw[2], i, listener_inst, var))
+                end
+            end
+            return out
+        end
+
+        for watcher_inst, watcherfns in pairs(watchers) do
+            for i, raw in ipairs(watcherfns) do
+                table.insert(out, BuildCallbackEntry(raw[1], raw[2], i, watcher_inst, var))
+            end
+        end
+        return out
+    end
+
+    function self:GetWorldStateWatchFn(var, listener_inst, target, source_query, test_fn)
+        local fallback = nil
+
+        for _, entry in ipairs(self:GetWorldStateWatchEntries(var, listener_inst)) do
+            if target == nil or entry.target == target then
+                local source_match = source_query ~= nil and SourceMatches(entry.source, source_query)
+                local test_match = test_fn ~= nil and test_fn(entry.fn, entry)
+
+                if source_match or test_match then
+                    return entry.fn
+                elseif source_query == nil and test_fn == nil then
+                    fallback = fallback or entry.fn
+                end
+            end
+        end
+
+        local watcherfns = listener_inst ~= nil
+            and listener_inst.worldstatewatching ~= nil
+            and listener_inst.worldstatewatching[var]
+            or nil
+        if watcherfns ~= nil and (source_query ~= nil or test_fn ~= nil) then
+            for i, fn in ipairs(watcherfns) do
+                if type(fn) == "function" then
+                    local entry = BuildCallbackEntry(fn, nil, i, listener_inst, var)
+                    local source_match = source_query ~= nil and SourceMatches(entry.source, source_query)
+                    local test_match = test_fn ~= nil and test_fn(entry.fn, entry)
+
+                    if source_match or test_match then
+                        return entry.fn
+                    end
+                end
+            end
+        end
+
+        return fallback
+    end
+
+    function self:FindWorldStateWatchFn(...)
+        return self:GetWorldStateWatchFn(...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：麦斯威尔调整 (Mod 3800582948)
+- **变体场景与切面**：收录来自工坊 Mod 3800582948 (`麦斯威尔调整`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3800582948)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:waxwelljournal
+
+    AddPrefabPostInit("waxwelljournal", function(inst)
+        if inst.components.spellbook ~= nil then
+            if not table.contains(inst.components.spellbook.items, RECALL_SPELL) then
+                table.insert(inst.components.spellbook.items, RECALL_SPELL)
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:waxwell
+    -- ===== 读书理智消耗倍率（原版 2.5 倍） =====
+    AddPrefabPostInit("waxwell", function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+        if inst.components.reader ~= nil and inst.components.reader.SetSanityPenaltyMultiplier ~= nil then
+            inst.components.reader:SetSanityPenaltyMultiplier(reading_sanity_mult)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadowprotector
+        -- 暗影角斗士：加入暗影阵营
+        AddPrefabPostInit("shadowprotector", function(inst)
+            if not TheWorld.ismastersim then
+                return
+            end
+
+            AddShadowAllegiance(inst)
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tophat
+    if tophat_enhanced then
+        AddPrefabPostInit("tophat", function(inst)
+            if not TheWorld.ismastersim then
+                return
+            end
+
+            -- 对魔术师高礼帽应用增强（只应用一次）
+            local function apply_magician_buff(owner)
+                if inst._magician_buff_applied then
+                    return
+                end
+                inst._magician_buff_applied = true
+
+                -- 冬保暖夏隔热（按季节自动切换，冬夏均为 120）
+                if enable_tophat_insulation then
+                    if inst.components.insulator == nil then
+                        inst:AddComponent("insulator")
+                        inst.components.insulator:SetInsulation(0)
+                    end
+                    local function update_insulation()
+                        if TheWorld.state.issummer then
+                            inst.components.insulator:SetSummer()
+                        else
+                            inst.components.insulator:SetWinter()
+                        end
+                        inst.components.insulator:SetInsulation(120)
+                    end
+                    update_insulation()
+                    inst:WatchWorldState("issummer", update_insulation)
+                    inst:WatchWorldState("iswinter", update_insulation)
+                end
+
+                -- 防水（默认 20% = 原版）
+                if inst.components.waterproofer ~= nil then
+                    inst.components.waterproofer:SetEffectiveness(tophat_waterproof / 100)
+                end
+            end
+
+            -- 老麦佩戴不掉耐久
+            if enable_tophat_durability and inst.components.fueled ~= nil then
+                local ORIGINAL_DELTA_KEY = "_orig_tophat_fueled_delta"
+                inst[ORIGINAL_DELTA_KEY] = inst.components.fueled.DoDelta
+                local function ProxyDoDelta(self, delta, overtime, ignore_depleted_fn)
+                    local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+                    if inst:HasTag("magiciantool") and owner ~= nil and owner.prefab == "waxwell" and delta < 0 then
+                        delta = 0
+                    end
+                    local original_func = inst[ORIGINAL_DELTA_KEY]
+                    if original_func then
+                        return original_func(self, delta, overtime, ignore_depleted_fn)
+                    end
+                end
+                inst.components.fueled.DoDelta = ProxyDoDelta
+                inst:DoTaskInTime(0, function()
+                    if inst.components.fueled and inst.components.fueled.DoDelta ~= ProxyDoDelta then
+                        inst.components.fueled.DoDelta = ProxyDoDelta
+                    end
+                end)
+            end
+
+            -- 触发方式1：PostInit时标签已存在（读档时帽子已是魔术师高礼帽）
+            if inst:HasTag("magiciantool") then
+                apply_magician_buff()
+            end
+            -- 触发方式2：Hook AddTag，捕获运行时 magiciantool 标签的添加
+            local _orig_AddTag = inst.AddTag
+            inst.AddTag = function(self, tag)
+                _orig_AddTag(self, tag)
+                if tag == "magiciantool" then
+                    apply_magician_buff()
+                end
+            end
+            -- 触发方式3：装备回调（增强）
+            if inst.components.equippable ~= nil then
+                local _old_onequip = inst.components.equippable.onequipfn
+                inst.components.equippable.onequipfn = function(item, owner)
+                    if _old_onequip ~= nil then
+                        _old_onequip(item, owner)
+                    end
+                    if owner ~= nil and owner:HasTag("magician") then
+                        apply_magician_buff(owner)
+                    end
+                end
+                local _old_onunequip = inst.components.equippable.onunequipfn
+                inst.components.equippable.onunequipfn = function(item, owner)
+                    if _old_onunequip ~= nil then
+                        _old_onunequip(item, owner)
+                    end
+                end
+            end
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+        AddComponentPostInit("inventory", function(self)
+            local old_GiveActiveItem = self.GiveActiveItem
+            self.GiveActiveItem = function(self, inst, ...)
+                if inst ~= nil and inst.components.stackable ~= nil
+                    and inst.prevcontainer ~= nil and inst.prevslot ~= nil then
+                    local shadow_container = TheWorld:GetPocketDimensionContainer(Synchronize_Name)
+                    if shadow_container ~= nil then
+                        local container = shadow_container.components.container
+                        if container ~= nil and container == inst.prevcontainer then
+                            local stacksize = inst.components.stackable:StackSize()
+                            SynchronizeContainerRemoveActive(inst.prevslot, stacksize)
+                        end
+                    end
+                end
+                old_GiveActiveItem(self, inst, ...)
+            end
+        end)
+
+```
+
+
+
+### 变体演进：饮食均衡测试前瞻版 (Mod 3803772794)
+- **变体场景与切面**：收录来自工坊 Mod 3803772794 (`饮食均衡测试前瞻版`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3803772794)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:builder
+-- 强化 tag 其他角色也有，配方再限制成韦斯
+AddComponentPostInit("builder", function(self)
+    local old_KnowsRecipe = self.KnowsRecipe
+    if old_KnowsRecipe ~= nil then
+        self.KnowsRecipe = function(builder, recipe, ignore_tempbonus, cached_tech_trees)
+            if type(recipe) == "string" then
+                recipe = GLOBAL.GetValidRecipe(recipe)
+            end
+            if recipe ~= nil
+                and recipe.builder_tag == "diet_hero_buff"
+                and builder.inst.prefab ~= "wes" then
+                return false
+            end
+            return old_KnowsRecipe(builder, recipe, ignore_tempbonus, cached_tech_trees)
+        end
+    end
+
+    -- 让饱食度作为一种角色材料参与检查
+    local old_HasCharacterIngredient = self.HasCharacterIngredient
+    if old_HasCharacterIngredient ~= nil then
+        self.HasCharacterIngredient = function(builder, ingredient)
+            if ingredient ~= nil and ingredient.type == BALLOON_HUNGER_TYPE then
+                local hunger = builder.inst.components.hunger
+                if hunger == nil then
+                    return false, 0
+                end
+                return hunger.current >= ingredient.amount, hunger.current
+            end
+            return old_HasCharacterIngredient(builder, ingredient)
+        end
+    end
+
+    -- 制作完成时扣除饱食度（批量由 batchcraft 统一扣）
+    local old_RemoveIngredients = self.RemoveIngredients
+    if old_RemoveIngredients ~= nil then
+        self.RemoveIngredients = function(builder, ingredients, recname, discounted)
+            local recipe = GLOBAL.AllRecipes and GLOBAL.AllRecipes[recname] or nil
+            local hunger_cost = 0
+            for _, v in ipairs(recipe ~= nil and recipe.character_ingredients or {}) do
+                if v.type == BALLOON_HUNGER_TYPE then
+                    hunger_cost = hunger_cost + v.amount
+                end
+            end
+
+            local skip = builder._nutritional_batch_skip
+            local is_batch = skip ~= nil
+                and skip.recipe == recname
+                and GLOBAL.GetTime() - (skip.time or 0) <= 10
+
+            old_RemoveIngredients(builder, ingredients, recname, discounted)
+
+            if hunger_cost > 0 and not is_batch then
+                local hunger = builder.inst.components.hunger
+                if hunger ~= nil then
+                    hunger:DoDelta(-hunger_cost)
+                end
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beebox
+
+    AddPrefabPostInit("beebox", function(inst)
+        local harvestable = inst.components.harvestable
+        if harvestable ~= nil then
+            harvestable.maxproduce = BASE_HONEY + EXTRA_HONEY
+        end
+
+        local spawner = inst.components.childspawner
+        if spawner ~= nil then
+            -- 原版 SetMaxChildren 会立刻把 childreninside 填满；
+            -- 这里保持初始 4 只，只把上限提到 6，让原版 regen 自然补满
+            local old_SetMaxChildren = spawner.SetMaxChildren
+            spawner.SetMaxChildren = function(self, max)
+                if max <= BASE_BEES then
+                    self.maxchildren = MAX_BEES
+                    if self.childreninside < BASE_BEES then
+                        self.childreninside = math.max(0, BASE_BEES - self:CountChildrenOutside())
+                    end
+                    self:StartUpdate()
+                else
+                    old_SetMaxChildren(self, max)
+                end
+            end
+
+            spawner.maxchildren = MAX_BEES
+            spawner:StartUpdate()
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:childspawner
+    -- 蜂箱 / 蜂巢放出来的孩子不要把戴帽者当成目标
+    AddComponentPostInit("childspawner", function(self)
+        local old_ReleaseAllChildren = self.ReleaseAllChildren
+        if old_ReleaseAllChildren == nil then return end
+
+        self.ReleaseAllChildren = function(comp, target, prefab, ...)
+            if target ~= nil and target:HasTag("player") then
+                local hat = GetHeadItem(target)
+                if IsPeaceHat(hat) then
+                    if comp.inst:HasTag("beebox") then
+                        -- 收取蜂箱：养蜂帽 / 蜂王冠都不惊动蜜蜂
+                        target = nil
+                    elseif comp.inst:HasTag("beehive") and IsCrown(hat) then
+                        -- 蜂王冠：额外不惊动杀人蜂
+                        target = nil
+                    end
+                end
+            end
+            return old_ReleaseAllChildren(comp, target, prefab, ...)
+        end
+    end)
+
+    -- 蜂王冠全免疫：蜜蜂重新选目标时跳过没有主动攻击的戴冠者
+    AddComponentPostInit("combat", function(self)
+        local old_CanTarget = self.CanTarget
+        if old_CanTarget == nil then return end
+
+        self.CanTarget = function(comp, target)
+            if target ~= nil
+                and comp.inst:HasTag("bee")
+                and IsCrownWearer(target)
+                and not HasBeeHostility(target)
+            then
+                return false
+            end
+            return old_CanTarget(comp, target)
+        end
+    end)
+
+    -- 兜底：已经锁定了戴冠者的蜜蜂，定期取消目标
+    AddPlayerPostInit(function(inst)
+        inst:DoPeriodicTask(1, function(player)
+            if not player:IsValid() then return end
+            if not IsCrownWearer(player) or HasBeeHostility(player) then return end
+
+            local x, y, z = player.Transform:GetWorldPosition()
+            local bees = GLOBAL.TheSim:FindEntities(x, y, z, 30, { "bee" }, { "INLIMBO" })
+            for _, bee in ipairs(bees) do
+                local combat = bee.components.combat
+                if combat ~= nil and combat.target == player then
+                    combat:SetTarget(nil)
+                end
+            end
+        end)
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+    -- 蜂王冠全免疫：蜜蜂重新选目标时跳过没有主动攻击的戴冠者
+    AddComponentPostInit("combat", function(self)
+        local old_CanTarget = self.CanTarget
+        if old_CanTarget == nil then return end
+
+        self.CanTarget = function(comp, target)
+            if target ~= nil
+                and comp.inst:HasTag("bee")
+                and IsCrownWearer(target)
+                and not HasBeeHostility(target)
+            then
+                return false
+            end
+            return old_CanTarget(comp, target)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:finiteuses
+-- ------------------------------------------------------------
+AddComponentPostInit("finiteuses", function(self)
+    local old_Use = self.Use
+    if not old_Use then return end
+    self.Use = function(inst_self, amount, ...)
+        amount = amount or 1
+        local ent = inst_self and inst_self.inst
+        local inv = ent and ent.components and ent.components.inventoryitem
+        local owner = inv and inv.owner
+        local bal = owner and owner.components and owner.components.nutritionalbalance
+        local mult = bal and bal.vitality_mult
+        if mult and mult > 0 and math.random() < mult then return end
+        return old_Use(inst_self, amount, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：更爽的鱼人语音和行为 (Mod 3816520491)
+- **变体场景与切面**：收录来自工坊 Mod 3816520491 (`更爽的鱼人语音和行为`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3816520491)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:mermking
+local function ApplyMermKingStorage()
+    AddPrefabPostInit("mermking", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+        if not MERM_KING_STORAGE_ENABLED then
+            return
+        end
+
+        -- 储物格（右键打开，手动放入）
+        if inst.components.container == nil then
+            inst:AddComponent("container")
+            inst.components.container:WidgetSetup("chester")
+        end
+
+        -- 关键：阻止原版把「持物左键」识别成往容器里放东西（STORE），
+        -- 这样持物左键会走 GIVE（喂食/交易/递交任务物品），而不是放容器。
+        inst:AddTag("no_container_store")
+
+        -- 保鲜（和鱼人同一个倍率）
+        if inst.components.preserver == nil then
+            inst:AddComponent("preserver")
+        end
+        inst.components.preserver:SetPerishRateMultiplier(MERM_PRESERVE_MULT)
+
+        -- 左键喂食/交易/递交走原版 trader 逻辑，不再自动存进储物格；
+        -- 储物格改为纯手动：右键打开后由玩家自己放入食物。
+
+        -- 记录「点了饱食君主的沃特」，用于自动吃时保持技能加成（普通喂食/没技能的不记录）
+        if inst.RefreshHungerParameters ~= nil then
+            local old_refresh = inst.RefreshHungerParameters
+            inst.RefreshHungerParameters = function(inst2, feeder)
+                if feeder ~= nil
+                    and feeder.components.skilltreeupdater ~= nil
+                    and feeder.components.skilltreeupdater:CountSkillTag("merm_king_max_hunger") > 0 then
+                    inst2._mermking_skilled_feeder = feeder
+                end
+                return old_refresh(inst2, feeder)
+            end
+        end
+
+        -- 饿了自动食用
+        inst:ListenForEvent("hungerdelta", function(inst2, data)
+            local percent = data and data.newpercent
+            if percent ~= nil and percent < 0.9 then
+                TryEatFromStorage(inst2)
+            end
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+-- 这里手动构造 GIVE，确保所有物品（含三叉戟/王冠/肩甲）持物左键都能递交。
+AddComponentPostInit("playeractionpicker", function(self)
+    local old_left = self.GetLeftClickActions
+    if old_left ~= nil then
+        self.GetLeftClickActions = function(self2, position, target)
+            if target ~= nil and target.prefab == "mermking" then
+                local useitem = self2.inst.replica.inventory:GetActiveItem()
+                if useitem ~= nil and useitem:IsValid() then
+                    return { GLOBAL.BufferedAction(self2.inst, target, GLOBAL.ACTIONS.GIVE, useitem) }
+                end
+            end
+            return old_left(self2, position, target)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:hounded
+local last_hound_warning_time = -math.huge
+AddComponentPostInit("hounded", function(self)
+    local old = self.DoWarningSpeech
+    if old ~= nil and not self._merm_hound_hooked then
+        self._merm_hound_hooked = true
+        self.DoWarningSpeech = function(...)
+            if GLOBAL.TheWorld.ismastersim then
+                local now = GetTime()
+                if now - last_hound_warning_time > 60 then
+                    last_hound_warning_time = now
+                    SayAllMerms("MERM_TALK_HOUNDS")
+                end
+            end
+            return old(...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:walrus
+-- 精确检测海象刷新：海象（walrus）实体生成时触发（冬天 walrus camp 刷出海象）
+AddPrefabPostInit("walrus", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    SayAllMerms("MERM_TALK_WALRUS")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:merm
+-- 新增一个持续约 3 秒的欢呼状态（复用 cheer 的 buff 动画，连播三次凑时长）
+AddStategraphPostInit("merm", function(sg)
+    sg.states["cheer_long"] = GLOBAL.State{
+        name = "cheer_long",
+        tags = { "busy" },
+        onenter = function(inst)
+            inst.Physics:Stop()
+            inst.AnimState:PlayAnimation("buff")
+            inst.AnimState:PushAnimation("buff", false)
+        end,
+        timeline = {
+            -- 进入状态立刻执行动作 fn（TendTo 照料 / ReleaseAllChildren 召唤），否则不会触发效果
+            GLOBAL.TimeEvent(0 * GLOBAL.FRAMES, function(inst)
+                inst:PerformBufferedAction()
+            end),
+        },
+        events = {
+            GLOBAL.EventHandler("animqueueover", function(inst)
+                inst.sg:GoToState("idle")
+            end),
+        },
+    }
+end)
+
+```
+
