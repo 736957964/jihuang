@@ -1,0 +1,42 @@
+# 物品容器与背包扩展类模组研读全景综述
+
+> 📊 **本分类收录研读 MOD**：共 **13** 个模组
+> 💡 **领域概述**：涵盖45格背包、多格箱子、大堆叠、专属收纳背包等。核心解析 Inventory 组件网络变量拓扑、UI 网格重绘、Container 代理机制与防掉落防爆逻辑。
+
+---
+
+## 一、核心设计范式与公用底层机制
+
+本类模组在饥荒（DST）引擎生态中具备极高的一致性特征与代码模式。通过横向对比各权威模组的实现方案，我们提炼出以下核心架构规范：
+
+### 1. 典型钩子与生命周期管理
+- 统一采用非侵入式 PostInit 扩展，严禁直接覆盖底层核心文件。
+- 网络变量与 RPC 通信必须区分客户端与服务端边界，严格防范不同步与内存泄漏。
+
+### 2. 经典避坑与生产级守则
+- **空指针守卫**：客户端 UI 与实体可能存在初始化时序差异，任何访问必须具备 if inst ~= nil and inst:IsValid() 防护。
+- **持久化隔离**：模组数据保存与读取必须挂载独立命名空间，避免与官服存档产生不可逆的耦合损坏。
+
+---
+
+## 二、已研读模组拆解索引表
+
+| 序号 | 研读报告文件 | 核心技术亮点与查看入口 |
+| :--- | :--- | :--- |
+| 1 | study_1240565842_russification_pack_for_dst.md | [进入深度拆解报告](./study_1240565842_russification_pack_for_dst.md) |
+| 2 | study_3624411781_storage_bags.md | [进入深度拆解报告](./study_3624411781_storage_bags.md) |
+| 3 | study_367546858_chinese_pack.md | [进入深度拆解报告](./study_367546858_chinese_pack.md) |
+| 4 | study_374550642_increased_stack_size.md | [进入深度拆解报告](./study_374550642_increased_stack_size.md) |
+| 5 | study_375850593_extra_equip_slots.md | [进入深度拆解报告](./study_375850593_extra_equip_slots.md) |
+| 6 | study_382177939_storm_cellar.md | [进入深度拆解报告](./study_382177939_storm_cellar.md) |
+| 7 | study_3825146333_maxstack.md | [进入深度拆解报告](./study_3825146333_maxstack.md) |
+| 8 | study_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md | [进入深度拆解报告](./study_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md) |
+| 9 | study_3827373438_beefalo_bell_storage.md | [进入深度拆解报告](./study_3827373438_beefalo_bell_storage.md) |
+| 10 | study_3828629465_equip_quick_slots.md | [进入深度拆解报告](./study_3828629465_equip_quick_slots.md) |
+| 11 | study_3830062049_container_lag_fix.md | [进入深度拆解报告](./study_3830062049_container_lag_fix.md) |
+| 12 | study_786556008_45_inventory_slots.md | [进入深度拆解报告](./study_786556008_45_inventory_slots.md) |
+| 13 | study_807516498_thai_language_pack.md | [进入深度拆解报告](./study_807516498_thai_language_pack.md) |
+
+---
+
+*持续同步更新中，由 8 并发工坊研读流水线动态归纳注入。*
