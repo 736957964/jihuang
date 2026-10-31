@@ -364,3 +364,62 @@ end)
 
 ```
 
+
+
+### 变体演进：Roman (Mod 3820783686)
+- **变体场景与切面**：收录来自工坊 Mod 3820783686 (`Roman`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3820783686)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:eater
+
+AddComponentPostInit("eater", function(self)
+	function self:SetCanEatShadows()
+		table.insert(self.preferseating, FOODTYPE.SHADOW)
+		table.insert(self.caneat, FOODTYPE.SHADOW)
+		self.inst:AddTag(FOODTYPE.SHADOW.."_eater")
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nightmarefuel
+
+AddPrefabPostInit("nightmarefuel", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	inst:AddComponent("edible")
+	inst.components.edible.foodtype = FOODTYPE.SHADOW
+	inst.components.edible.healthvalue = 0--CHANGE THESE 3 VALUES TO ANYTHING YOU WANT
+	inst.components.edible.hungervalue = 0
+	inst.components.edible.sanityvalue = -10
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat",function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    local oldbonusdamagefn = inst.bonusdamagefn
+    inst.bonusdamagefn = function(attacker, target, damage, weapon)
+        local bonus = 0
+        if oldbonusdamagefn then
+            bonus = oldbonusdamagefn(attacker, target, damage, weapon) or 0
+        end
+        -- things above are just for compatibility
+        -- notice that shadow chesspieces has no "shadow" or "shadowcreature" tag
+        if target.prefab == CHARACTER_PREFAB and (attacker:HasTag("shadow") or attacker:HasTag("shadowchesspiece")) then
+            bonus = bonus - (damage + bonus) * DAMAGE_RESISTENCE
+        end
+        return bonus
+    end
+end)
+
+```
+

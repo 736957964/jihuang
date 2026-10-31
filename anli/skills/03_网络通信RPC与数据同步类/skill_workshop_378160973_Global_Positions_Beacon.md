@@ -4898,3 +4898,80 @@ end)
 
 ```
 
+
+
+### 变体演进：Sung Jin-woo (Solo Leveling) [Beta] (Mod 3818390299)
+- **变体场景与切面**：收录来自工坊 Mod 3818390299 (`Sung Jin-woo (Solo Leveling) [Beta]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3818390299)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:workable
+-- shadow "works" stays untouched, except trees (CHOP_workable), which it may still fell.
+AddComponentPostInit("workable", function(self)
+    local original = self.WorkedBy
+    self.WorkedBy = function(comp, worker, ...)
+        if worker ~= nil and worker:HasTag("jinwoo_shadow") and not comp.inst:HasTag("CHOP_workable") then
+            return
+        end
+        return original(comp, worker, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:leader
+
+AddComponentPostInit("leader", function(self)
+    local original = self.AddFollower
+    self.AddFollower = function(comp, follower, ...)
+        if comp.inst:HasTag("jinwoo_shadow") then
+            return DropMinion(follower)
+        end
+        return original(comp, follower, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:follower
+
+AddComponentPostInit("follower", function(self)
+    local original = self.SetLeader
+    self.SetLeader = function(comp, new_leader, ...)
+        if new_leader ~= nil and new_leader:HasTag("jinwoo_shadow") then
+            return DropMinion(comp.inst)
+        end
+        return original(comp, new_leader, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:commander
+
+AddComponentPostInit("commander", function(self)
+    local original = self.AddSoldier
+    self.AddSoldier = function(comp, soldier, ...)
+        if comp.inst:HasTag("jinwoo_shadow") then
+            return DropMinion(soldier)
+        end
+        return original(comp, soldier, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+    local original = self.GetAttacked
+    self.GetAttacked = function(comp, attacker, ...)
+        if attacker ~= nil and attacker:HasTag("jinwoo_shadow") and IsFriendOfShadows(comp.inst) then
+            return false
+        end
+        return original(comp, attacker, ...)
+    end
+end)
+
+```
+
