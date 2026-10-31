@@ -178,3 +178,458 @@ end )
 
 ```
 
+
+
+### 变体演进：装备大师 (Mod 3123028409)
+- **变体场景与切面**：收录来自工坊 Mod 3123028409 (`装备大师`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3123028409)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+end
+AddComponentPostInit("playercontroller", function(self, inst)
+	if inst ~= ThePlayer then return end
+	local player = inst
+	local function Doeat(food)
+		if ThePlayer.components.playercontroller:CanLocomote()
+			and not ThePlayer.components.playercontroller.ismastersim then
+			local buffaction = BufferedAction(ThePlayer, food, ACTIONS.EAT)
+			ThePlayer.components.playercontroller:RemoteControllerUseItemOnSelfFromInvTile(buffaction,
+				food)
+		else
+			SendRPCToServer(RPC.ControllerUseItemOnSelfFromInvTile, ACTIONS.EAT.code, food)
+		end
+	end
+	local function checkandeat()
+		if MOD_util:GetMOption("equipmaster_closeeat", closeeat) then return end --关闭了自动吃
+		local hunger = ThePlayer and ThePlayer.replica and ThePlayer.replica.hunger and
+			ThePlayer.replica.hunger:GetCurrent()
+		if hunger and hunger <= 1 then
+			if BestEquiments['auto_eat'].item and PLAYER_util:IsHoldingItem(BestEquiments['auto_eat'].item, true) then
+				Doeat(BestEquiments['auto_eat'].item)
+			else
+				if BestEquiments['walk_hands'] then
+					updateequip({ eat = true }) --强制更新食物
+				end
+				Doeat(BestEquiments['auto_eat'].item)
+			end
+		end
+	end
+	player:ListenForEvent("healthdelta", checkandeat)
+	player:ListenForEvent('hungerdelta', checkandeat)
+	player:DoTaskInTime(0, function()
+		if player ~= ThePlayer then return end
+		--监听走a里面推送的事件
+		ThePlayer:ListenForEvent("EquipItem", function(inst, data)
+			if not closeequip and MOD_util:GetMOption("equipmaster_hitrun", true) then
+				if type(data.target) == "table" and dontneed[data.target.prefab] then
+				else
+					if string.find(data.type, 'fight') then
+						if not MOD_util:GetMOption("equipmaster_closefight", closefight) then
+							EquipMaster:equipbystring(data.type, data.target)
+						end
+					elseif string.find(data.type, 'walk') then
+						if not MOD_util:GetMOption("equipmaster_closewalk", closewalk) then
+							EquipMaster:equipbystring(data.type, data.target)
+						end
+					else
+						EquipMaster:equipbystring(data.type, data.target)
+					end
+				end
+			end
+		end)
+		--
+		local oldsay = ThePlayer.components.talker.Say
+		function ThePlayer.components.talker:Say(...)
+			local args = { ... }
+			if args[1] == GetString(ThePlayer, "ANNOUNCE_ENTER_DARK") then
+				if not MOD_util:GetMOption("equipmaster_closelight", closelight) and BestEquiments['auto_light'].item then
+					equipitem(BestEquiments['auto_light'].item, 'auto_light')
+				end
+			end
+			return oldsay(self, ...)
+		end
+
+		for k, v in pairs(EQUIPSLOTS) do
+			BestEquiments['walk_' .. v] = {}
+			BestEquiments['fight_' .. v] = {}
+			--print('mmdx_walk_' .. v)
+		end
+		-- print('updateequip_1')
+		updateequip() --进游戏先加载一边
+		player:ListenForEvent("itemget",
+			function(self, data)
+				local item = data and data.item
+				if item and (item:HasTag("_equippable") or item:HasTag("fresh")) and isbetteritem(item) then
+					--print("updateequip()")
+					if TheNet:GetIsServer() then
+						player:DoTaskInTime(0, updateequip)
+					else
+						updateequip()
+					end
+				end
+			end)
+	end)
+end)
+local function checkplayerindark() --1.4258233308792
+	if ThePlayer.LightWatcher:GetTimeInDark() > 0 and
+		not ThePlayer.components.playervision:HasNightVision() and ThePlayer.prefab ~= 'wathom' then
+		return true
+	else
+	end
+end
+local creaturedata = {}
+local function istargetcanburn(target)
+	return target:HasTag("canlight")
+end
+local equiptask
+function EquipMaster:equipbystring(str, target) --target可能是nil
+	if str == 'walk' and (string.find(ThePlayer.entity:GetDebugString(), 'channelcast_')
+			or ThePlayer.replica.inventory:IsHeavyLifting()) then
+		return
+	end
+	for k, v in pairs(BestEquiments) do
+		if str == k then
+			equipitem(BestEquiments[k].item, k)
+			break
+		elseif string.find(k, str) then
+			if willow_fire_attack and target and k == 'fight_hands' and ThePlayer.prefab == 'willow' and not target:HasTag('fire')
+				and istargetcanburn(target) and BestEquiments['firer'].item then --willow点火
+				equipitem(BestEquiments['firer'].item, 'firer')
+			else
+				equipitem(BestEquiments[k].item, k)
+			end
+		end
+	end
+	if not MOD_util:GetMOption("equipmaster_closelight", closelight) and str == 'walk' and BestEquiments['auto_light'].item then --WORLD_util:IsDarkNight()
+		if equiptask then equiptask:Cancel() end
+		if checkplayerindark() then
+			equipitem(BestEquiments['auto_light'].item, 'auto_light')
+		end
+		equiptask = ThePlayer and ThePlayer:DoTaskInTime(5 * FRAMES, function()
+			if checkplayerindark() then
+				equipitem(BestEquiments['auto_light'].item, 'auto_light')
+			end
+		end)
+	end
+end
+
+local MOD_CTRL_LEFT = function(act)
+	local set = INV_util:GetActiveItem()
+	if set and set:HasTag("_equippable") then
+		if haveknoweddata[set.prefab] then
+			if not BestEquiments['fight_' .. haveknoweddata[set.prefab].equipslot] then return end
+			local old = BestEquiments['fight_' .. haveknoweddata[set.prefab].equipslot].item
+			if old and old.prefab == set.prefab then
+				BestEquiments['fight_' .. haveknoweddata[set.prefab].equipslot] = {}
+				ThePlayer.components.talker:Say('装备大师:' .. '战斗装备移除' .. set.name)
+				return
+			end
+			BestEquiments['fight_' .. haveknoweddata[set.prefab].equipslot].item = set
+			BestEquiments['fight_' .. haveknoweddata[set.prefab].equipslot].wasplayerset = true
+			ThePlayer.components.talker:Say('装备大师:' .. '设置' .. set.name .. '为战斗装备')
+		end
+	else
+		closefight = not closefight
+		ThePlayer.components.talker:Say(not closefight and '开启切武器' or '关闭切武器')
+
+		MOD_util:ChangeMOption("equipmaster_closefight", closefight)
+	end
+end
+local MOD_CTRL_RIGHT = function(act)
+	local set = INV_util:GetActiveItem()
+	if set and set:HasTag("_equippable") then
+		if haveknoweddata[set.prefab] then
+			if not BestEquiments['walk_' .. haveknoweddata[set.prefab].equipslot] then return end
+			local old = BestEquiments['walk_' .. haveknoweddata[set.prefab].equipslot].item
+			if old and old.prefab == set.prefab then
+				BestEquiments['walk_' .. haveknoweddata[set.prefab].equipslot] = {}
+				ThePlayer.components.talker:Say('装备大师:' .. '行走装备移除' .. set.name)
+				return
+			end
+			BestEquiments['walk_' .. haveknoweddata[set.prefab].equipslot].item = set
+			BestEquiments['walk_' .. haveknoweddata[set.prefab].equipslot].wasplayerset = true
+			ThePlayer.components.talker:Say('装备大师:' .. '设置' .. set.name .. '为行走装备')
+		end
+	else
+		closewalk = not closewalk
+		ThePlayer.components.talker:Say(not closewalk and '开启切行走' or '关闭切行走')
+
+		MOD_util:ChangeMOption("equipmaster_closewalk", closewalk)
+	end
+end
+local MOD_ALT_LEFT = function(act)
+	local set = INV_util:GetActiveItem()
+	if set then
+		BestEquiments['auto_light'].item = set
+		BestEquiments['auto_light'].dontlosewhenlost = true
+		ThePlayer.components.talker:Say('装备大师:' .. '设置' .. set.name .. '为夜晚光源')
+	else
+		closelight = not closelight
+		ThePlayer.components.talker:Say(not closelight and '开启切光源' or '关闭切光源')
+
+		MOD_util:ChangeMOption("equipmaster_closelight", closelight)
+	end
+end
+
+
+local MOD_ALT_RIGHT = function(act)
+	local set = INV_util:GetActiveItem()
+	if set then --你敢设置我就相信这是可以吃的
+		BestEquiments['auto_eat'].item = set
+		BestEquiments['auto_eat'].dontlosewhenlost = true
+		ThePlayer.components.talker:Say('装备大师:' .. '设置' .. set.name .. '为吃饭食物')
+	else
+		closeeat = not closeeat
+		ThePlayer.components.talker:Say(not closeeat and '开启自动吃饭' or '关闭自动吃饭')
+
+		MOD_util:ChangeMOption("equipmaster_closeeat", closeeat)
+	end
+end
+
+--GLOBAL.STRINGS.RMB
+local function showtoggle()
+	if TheInput:GetWorldEntityUnderMouse() == ThePlayer then
+		if TheInput:IsControlPressed(CONTROL_FORCE_STACK) then
+			return 1
+		elseif TheInput:IsControlPressed(CONTROL_FORCE_INSPECT) then
+			return 2
+			--[[ elseif TheInput:IsControlPressed(CONTROL_FORCE_TRADE) then
+            return 3 ]]
+		end
+	end
+end
+local actionselect = {
+	[1] = { lmb = MOD_CTRL_LEFT, rmb = MOD_CTRL_RIGHT },
+	[2] = { lmb = MOD_ALT_LEFT, rmb = MOD_ALT_RIGHT },
+}
+
+AddComponentPostInit("playercontroller", function(self, inst)
+	if inst ~= ThePlayer then return end
+	local OldOnControl = self.OnControl --这里是人物按的时候实现功能
+	self.OnControl = function(self, control, down)
+		local mod = showtoggle()
+		if down and mod then
+			if control == CONTROL_PRIMARY then
+				actionselect[mod].lmb()
+				--return
+			elseif control == CONTROL_SECONDARY then
+				actionselect[mod].rmb()
+				--return
+			end
+		end
+		return OldOnControl(self, control, down)
+	end
+	local closetask
+	local oldUse = self.RemoteUseItemFromInvTile --这里是人物使用东西暂时关闭一秒装备自动切
+	function self:RemoteUseItemFromInvTile(buffaction, item)
+		if buffaction and buffaction.action and buffaction.action.id == 'EQUIP' and MOD_util:GetMOption("equipmaster_ppriority", true) then
+			if haveknoweddata[item.prefab] and haveknoweddata[item.prefab].equipslot == 'hands' then
+				if closetask then closetask:Cancel() end
+				closeequip = true
+				closetask = inst:DoTaskInTime(1, function()
+					closeequip = false
+				end)
+			end
+		end
+		return oldUse(self, buffaction, item)
+	end
+
+	--行走
+	local olddirecttwalk = self.RemoteDirectWalking
+	function self:RemoteDirectWalking(x, z)
+		if not closeequip and not MOD_util:GetMOption("equipmaster_closewalk", closewalk) and (self.remote_vector.x ~= x or self.remote_vector.z ~= z or self.remote_vector.y ~= 1) then
+			local str = ThePlayer.entity:GetDebugString()
+			if EQUIP_util:IsEquipped(BestEquiments['auto_light'].item) then
+				if not str:find('run_loop') then
+					EquipMaster:equipbystring('walk')
+				end
+			else
+				EquipMaster:equipbystring('walk')
+			end
+		end
+		return olddirecttwalk(self, x, z)
+	end
+
+	--开延迟行走
+	local oldRemotePredictWalking = self.RemotePredictWalking
+	function self:RemotePredictWalking(x, z, isstart)
+		local y = self.directwalking and 3 or 4
+		if self.remote_vector.x ~= x or self.remote_vector.z ~= z or (self.remote_vector.y ~= y and self.remote_vector.y ~= 0) then
+			if not closeequip and not MOD_util:GetMOption("equipmaster_closewalk", closewalk) and isstart and self.directwalking then
+				EquipMaster:equipbystring('walk')
+			end
+		end
+		return oldRemotePredictWalking(self, x, z, isstart)
+	end
+
+	--攻击
+	local oldget = self.GetAttackTarget
+	function self:GetAttackTarget(force_attack, force_target, isretarget, use_remote_predict)
+		local resulttarget = oldget(self, force_attack, force_target, isretarget, use_remote_predict)
+		if not closeequip and not MOD_util:GetMOption("equipmaster_closefight", closefight) and resulttarget then
+			if type(resulttarget) == "table" and dontneed[resulttarget.prefab] then
+			else
+				EquipMaster:equipbystring('fight', resulttarget)
+			end
+		end
+		return resulttarget
+	end
+end)
+--自动回旋镖
+AddPrefabPostInit("inventory_classified", function(inst)
+	--[[ if inst:HasTag("catchable") and doer:HasTag("cancatch") then
+                table.insert(actions, ACTIONS.CATCH)
+            end ]]
+	local function catchBoomerang(doer, ppos, boomerang)
+		if INV_util:GetActiveItem() then
+			SendRPCToServer(RPC.ActionButton, ACTIONS.CATCH.code, boomerang)
+		else
+			SendRPCToServer(RPC.RightClick, ACTIONS.CATCH.code, ppos.x, ppos.z, doer)
+		end
+	end
+	local function checkBoomerang()
+		local boomerang = ENT_util:FindEntities(ThePlayer, nil,
+			4, function(ent) return ent:HasTag("catchable") end)
+		return boomerang
+	end
+	if MOD_util:GetMOption("equipmaster_catch", true) then
+		inst:DoPeriodicTask(3 * FRAMES, function()
+			if ThePlayer and ThePlayer:HasTag("cancatch") then
+				local ppos = ThePlayer:GetPosition()
+				do
+					local boomerang = checkBoomerang()
+					if boomerang then
+						catchBoomerang(ThePlayer, ppos, boomerang)
+					end
+				end
+				inst:DoTaskInTime(FRAMES, function()
+					local boomerang = checkBoomerang()
+					if boomerang then
+						catchBoomerang(ThePlayer, ppos, boomerang)
+					end
+				end)
+				inst:DoTaskInTime(2 * FRAMES, function()
+					local boomerang = checkBoomerang()
+					if boomerang then
+						catchBoomerang(ThePlayer, ppos, boomerang)
+					end
+				end)
+			end
+		end)
+	end
+end)
+--------------------模组设置界面-------------------
+if MOD_util:CanAddSetting() then
+	local pagename = "装备大师"
+	local pageorder = 1
+	local buttonname = pagename
+	local pagetitle = pagename .. "设置"
+	local enabledisableoption = { { text = "禁用", data = false }, { text = "启用", data = true } }
+	local function MakeOption(key, describe, default, options)
+		if default == nil then default = true end
+		return {
+			description = describe,
+			key = key,
+			default = default,
+			options = options or enabledisableoption,
+		}
+	end
+	MOD_util:CreatePage(pagename, {
+		title = pagetitle,
+		buttondata = { name = buttonname },
+		order = pageorder,
+		all_options = {
+
+			MakeOption("equipmaster_closewalk", "切换行走道具", closewalk,
+				{ { text = "开启", data = false }, { text = "关闭", data = true } }),
+			MakeOption("equipmaster_closefight", "切换战斗道具", closefight,
+				{ { text = "开启", data = false }, { text = "关闭", data = true } }),
+			MakeOption("equipmaster_closeeat", "自动吃饭", closeeat,
+				{ { text = "开启", data = false }, { text = "关闭", data = true } }),
+			MakeOption("equipmaster_closelight", "自动切光源", closelight,
+				{ { text = "开启", data = false }, { text = "关闭", data = true } }),
+
+			MakeOption("equipmaster_ppriority", "玩家使用装备关闭一秒功能", true),
+
+			MakeOption("equipmaster_hitrun", "是否走a模组联动", true),
+
+			MakeOption("equipmaster_catch", "自动接回旋镖(开关需要重启)", true),
+
+		}
+	})
+end
+
+do --外部接口(供自动战斗 boss_dealer 等外部模组使用)
+	--kind: "walk" / "fight"；当前是否会响应 EquipItem 事件去切换这一类装备
+	function GLOBAL.EquipMaster_IsEnabled(kind)
+		if closeequip or not MOD_util:GetMOption("equipmaster_hitrun", true) then
+			return false
+		end
+		if kind == "walk" then
+			return not MOD_util:GetMOption("equipmaster_closewalk", closewalk)
+		elseif kind == "fight" then
+			return not MOD_util:GetMOption("equipmaster_closefight", closefight)
+		end
+		return true
+	end
+
+	--当前记录的最佳装备(只读)，key 如 "walk_hands" / "fight_hands"
+	function GLOBAL.EquipMaster_GetBest(key)
+		local data = BestEquiments[key]
+		return data ~= nil and data.item or nil
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+--自动回旋镖
+AddPrefabPostInit("inventory_classified", function(inst)
+	--[[ if inst:HasTag("catchable") and doer:HasTag("cancatch") then
+                table.insert(actions, ACTIONS.CATCH)
+            end ]]
+	local function catchBoomerang(doer, ppos, boomerang)
+		if INV_util:GetActiveItem() then
+			SendRPCToServer(RPC.ActionButton, ACTIONS.CATCH.code, boomerang)
+		else
+			SendRPCToServer(RPC.RightClick, ACTIONS.CATCH.code, ppos.x, ppos.z, doer)
+		end
+	end
+	local function checkBoomerang()
+		local boomerang = ENT_util:FindEntities(ThePlayer, nil,
+			4, function(ent) return ent:HasTag("catchable") end)
+		return boomerang
+	end
+	if MOD_util:GetMOption("equipmaster_catch", true) then
+		inst:DoPeriodicTask(3 * FRAMES, function()
+			if ThePlayer and ThePlayer:HasTag("cancatch") then
+				local ppos = ThePlayer:GetPosition()
+				do
+					local boomerang = checkBoomerang()
+					if boomerang then
+						catchBoomerang(ThePlayer, ppos, boomerang)
+					end
+				end
+				inst:DoTaskInTime(FRAMES, function()
+					local boomerang = checkBoomerang()
+					if boomerang then
+						catchBoomerang(ThePlayer, ppos, boomerang)
+					end
+				end)
+				inst:DoTaskInTime(2 * FRAMES, function()
+					local boomerang = checkBoomerang()
+					if boomerang then
+						catchBoomerang(ThePlayer, ppos, boomerang)
+					end
+				end)
+			end
+		end)
+	end
+end)
+
+```
+

@@ -4584,8 +4584,62 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 05:35:36",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3096210166",
+      "name": "【附魔-强化】",
+      "author": "宇宙超级霹雳闪电大煎蛋",
+      "version": "3.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:41:54",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3123028409",
+      "name": "装备大师",
+      "author": "萌萌的新",
+      "version": "1.1.47",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-01 05:41:54",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3709314660",
+      "name": "【附魔2.0-重制版】",
+      "author": "原作者-宇宙超级霹雳闪电大煎蛋，重制版-ouroboros",
+      "version": "3.2.4.40",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:41:54",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3794697781",
+      "name": "Reset Insight",
+      "author": "Tovaritch",
+      "version": "1.0.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:41:54",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3818503264",
+      "name": "雅珂达",
+      "author": "eins",
+      "version": "0.1.8",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:41:54",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3823324222",
+      "name": "江主任（江惠莲）",
+      "author": "wdasd",
+      "version": "1.5.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:41:55",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:35:36"
+  "lastUpdated": "2026-11-01 05:41:55"
 }
