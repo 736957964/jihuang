@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 饥荒工坊 MOD 6+1 架构权威研读流水线（24H 持续运转版）
 - Worker 1~6：并发源码静态深度解析，硬核准入过滤链拦截水货，产出 staging 草稿
@@ -333,11 +333,52 @@ def reducer_summarize_and_evolve():
             else:
                 snippet_code = "-- 暂无高频切面钩子"
 
-            slug = re.sub(r"[^0-9A-Za-z]+", "_", name).strip("_").lower() or mod_id
-            target_skill_file = os.path.join(cat_dir, "skill_workshop_%s_%s.md" % (mod_id, slug[:32]))
+            # 核心归约铁律（老爹 2026/11/01 指示）：
+            # 严格控制母本数量（越少越好），绝不按 Mod 独立新建 Skill！
+            # 优先在同分类下寻找已有的黄金母本并追加【进阶拓扑演进与变体分支】与【Trade-off 对比矩阵】
+            existing_skills = [f for f in os.listdir(cat_dir) if f.endswith(".md")]
             
-            # 若已有可归约母本，则优先进行变体追加与归约；否则建立新母本
-            skill_content = f"""# 饥荒工业级最佳实践范式：{name}
+            if existing_skills:
+                # 命中已有母本，执行增量归约演进 (Merge & Evolve)
+                target_skill_file = os.path.join(cat_dir, sorted(existing_skills)[0])
+                with open(target_skill_file, "r", encoding="utf-8") as mf:
+                    master_content = mf.read()
+                
+                evolve_header = "## 五、进阶拓扑演进与变体分支"
+                evolve_block = f"""
+### 变体演进：{name} (Mod {mod_id})
+- **变体场景与切面**：收录来自工坊 Mod {mod_id} (`{name}`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod {mod_id})
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+{snippet_code}
+```
+"""
+                if evolve_header in master_content:
+                    parts = master_content.split(evolve_header, 1)
+                    next_sec = re.search(r"\n## ", parts[1])
+                    if next_sec:
+                        insert_pos = next_sec.start()
+                        master_content = parts[0] + evolve_header + parts[1][:insert_pos] + "\n" + evolve_block + "\n" + parts[1][insert_pos:]
+                    else:
+                        master_content = parts[0] + evolve_header + parts[1] + "\n" + evolve_block + "\n"
+                else:
+                    master_content += "\n\n" + evolve_header + "\n" + evolve_block + "\n"
+                
+                with open(target_skill_file, "w", encoding="utf-8") as mf:
+                    mf.write(master_content)
+                
+                rel_path = os.path.relpath(target_skill_file, WORK_DIR).replace("\\", "/")
+                log("Reducer: 成功将 Mod %s (%s) 增量归约合入既有权威母本 -> %s" % (mod_id, name, rel_path))
+            else:
+                # 该分类下尚无任何母本（新开领域分类），建立领域第一份奠基黄金母本
+                slug = re.sub(r"[^0-9A-Za-z]+", "_", name).strip("_").lower() or mod_id
+                target_skill_file = os.path.join(cat_dir, "skill_workshop_%s_%s.md" % (mod_id, slug[:32]))
+                skill_content = f"""# 饥荒工业级最佳实践范式：{name}
 > 对应工坊权威基准：Mod {mod_id} (`{name}`)
 > 技术分类：{cat} | 源码规模：{len(stats['lua_files'])} 文件 / {stats['total_lines']} 行
 
@@ -378,11 +419,11 @@ local GLOBAL = GLOBAL
 1. **网络变量声明时机**：所有 `net_*` 必须在 `inst.entity:AddNetwork()` 后、`SetPristine()` 前注册，严禁在预制体后处理的尾部动态挂载。
 2. **重入锁防御**：在复杂事件分发时，务必维护实体级别的布尔标记，防止死循环递归。
 """
-            with open(target_skill_file, "w", encoding="utf-8") as sf:
-                sf.write(skill_content)
-            
-            rel_path = os.path.relpath(target_skill_file, WORK_DIR).replace("\\", "/")
-            sync_sidebar(name[:20], rel_path, cat)
+                with open(target_skill_file, "w", encoding="utf-8") as sf:
+                    sf.write(skill_content)
+                rel_path = os.path.relpath(target_skill_file, WORK_DIR).replace("\\", "/")
+                sync_sidebar(name[:20], rel_path, cat)
+                log("Reducer: 新领域分类首建奠基母本 -> %s" % rel_path)
             
             record_entry = {
                 "id": str(mod_id),

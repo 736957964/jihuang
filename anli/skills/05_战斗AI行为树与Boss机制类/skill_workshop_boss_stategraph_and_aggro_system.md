@@ -115,3 +115,82 @@ end
    - 饥荒怪物如果只写 `SetRetargetFunction` 而不配置 `SetKeepTargetFunction`，一旦玩家通过传送杖或虫洞飞到地图另一端，BOSS 会保持目标并在服务器后台进行每帧数千次的超远距离寻路计算，直接拉爆 CPU。务必设置安全脱战平方距离（如 `900` 即 30 码）。
 2. **`INLIMBO` 实体击打导致坏档**：
    - 在范围伤害（AOE）遍历实体时，绝对不能碰处于 `INLIMBO`（背包中/被装入箱子）状态的物体，否则会导致存放在玩家包裹内的物品受到伤害，触发无效物理销毁，引发世界保存时数据结构断裂！
+
+
+## 五、进阶拓扑演进与变体分支
+
+### 变体演进：附魔拓展补丁 (Mod 3605108247)
+- **变体场景与切面**：收录来自工坊 Mod 3605108247 (附魔拓展补丁) 的生产级切面。
+- **核心切面代码**：
+`lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3605108247)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 事件监听方式：最安全的过滤方法
+AddPrefabPostInit("killerbee", function(inst)
+
+   -- 将配置获取移到函数外部，避免每次创建都调用
+    if not GLOBAL.TheNet:GetIsServer() then return end
+    
+    -- 使用缓存的配置值
+    local config_value = GLOBAL.KillerBeeEnchantDropsEnabled
+    if config_value == nil then
+        config_value = GetModConfigData("ENABLE_KILLERBEE_ENCHANT_DROPS") or false
+        GLOBAL.KillerBeeEnchantDropsEnabled = config_value
+    end
+
+
+    if not inst.components.lootdropper then
+        return
+    end
+    
+    print("[KillerBee Event] 加载杀人蜂事件过滤...")
+    
+    -- 获取配置
+    local function GetConfig()
+        if GetModConfigData then
+            local success, result = pcall(GetModConfigData, "ENABLE_KILLERBEE_ENCHANT_DROPS")
+            if success then
+                return result
+            end
+        end
+        return false
+    end
+    
+    local config_value = GetConfig()
+    print("[KillerBee Event] 杀人蜂配置: " .. (config_value and "允许掉落" or "禁止掉落"))
+    
+    if config_value then
+        return
+    end
+    
+    -- 过滤列表
+    local FILTER_ITEMS = {
+        "hh_effect_stone",
+        "hh_essence",
+        "hh_remove_stone", 
+        "hh_effect_tally",
+    }
+    
+    -- 监听掉落生成事件
+    inst:ListenForEvent("spawnloot", function(inst, data)
+        if not data or not data.item then
+            return
+        end
+        
+        local item_prefab = data.item.prefab
+        for _, filter_item in ipairs(FILTER_ITEMS) do
+            if item_prefab == filter_item then
+                print("[KillerBee Event] 🚫 销毁杀人蜂掉落的附魔石: " .. tostring(item_prefab))
+                data.item:Remove()
+                break
+            end
+        end
+    end)
+    
+    print("[KillerBee Event] 杀人蜂事件过滤加载完成")
+end)
+`
+
