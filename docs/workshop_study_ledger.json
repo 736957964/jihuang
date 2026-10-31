@@ -4017,8 +4017,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 04:12:29",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3820792693",
+      "name": "Flowery (DELTARUNE)",
+      "author": "Yehor",
+      "version": "0.3.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 04:14:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3822079448",
+      "name": "饥荒懒人",
+      "author": "江雨落",
+      "version": "2.4.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 04:14:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 04:12:29"
+  "lastUpdated": "2026-11-01 04:14:20"
 }

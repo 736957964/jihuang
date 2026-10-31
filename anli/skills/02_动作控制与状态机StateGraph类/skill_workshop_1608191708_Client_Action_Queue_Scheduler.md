@@ -7304,3 +7304,1300 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Flowery (DELTARUNE) (Mod 3820792693)
+- **变体场景与切面**：收录来自工坊 Mod 3820792693 (`Flowery (DELTARUNE)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3820792693)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    local _OnControl = self.OnControl
+    self.OnControl = function(pc, control, down, ...)
+        local p = pc.inst
+        if p.flw_role ~= nil and p.flw_role:value() ~= 0 then
+            if control >= CONTROL_INV_1 and control <= CONTROL_INV_10 then return end
+        end
+        return _OnControl(pc, control, down, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：饥荒懒人 (Mod 3822079448)
+- **变体场景与切面**：收录来自工坊 Mod 3822079448 (`饥荒懒人`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3822079448)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    local _OnLeftClick = self.OnLeftClick
+    if _OnLeftClick == nil then
+        return
+    end
+    self.OnLeftClick = function(self, down, ...)
+        if down
+            and self.placer_recipe ~= nil
+            and LAZY_SKIP_BUSY_PLACERS[self.placer_recipe.name]
+            and self.placer ~= nil
+            and self.placer.components.placer ~= nil
+            and self.placer.components.placer.can_build
+            and self.inst.replica.builder ~= nil
+            and self.inst.replica.builder:IsBusy() then
+            -- 照抄原版 :4705-4712 那一小段，只去掉 IsBusy 这一条 ✓
+            local placer = self.placer.components.placer
+            self.inst.replica.builder:MakeRecipeAtPoint(
+                self.placer_recipe,
+                placer.override_build_point_fn ~= nil
+                    and placer.override_build_point_fn(self.placer)
+                    or self.placer:GetPosition(),
+                self.placer:GetRotation(),
+                self.placer_recipe_skin)
+            self:CancelPlacement()
+            return
+        end
+        return _OnLeftClick(self, down, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+    --   ⚠ 用**点调用**包装方法 ⇒ 第一个参数要显式带上 inv（也就是 self）✗ 别写成冒号 ✗
+    AddComponentPostInit("inventory", function(self)
+        local old_dropitem = self.DropItem
+        self.DropItem = function(inv, item, wholestack, randomdir, pos, keepoverstacked)
+            if item ~= nil and item:IsValid() and item:HasTag("lazy_nodrop") then
+                local stamped = item._lazy_allowdrop
+                if stamped == nil or GetTime() - stamped > GLOBAL.LAZY_DROP_GRACE then
+                    -- ★ 外力 ⇒ 拦下，武器一点都不动 ✓
+                    return
+                end
+                item._lazy_allowdrop = nil      -- 用掉就清 ✓
+            end
+            return old_dropitem(inv, item, wholestack, randomdir, pos, keepoverstacked)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+--          ⇒ 这一下动画早开播了 ⇒ 用的是上一个工具 ✗
+--   真因②：改用 `AddStategraphPostInit("wilson")` hook 状态 onenter —— **挂不上** ✗✗✗
+--          用户玩的是**自定义角色**（xd_gyfy），它有自己的 stategraph ✗
+--          ⇒ 日志实锤：打印了"命中 0/4"（hook 从没被调用 ✗）
+--
+--   ✓ 最终方案：用 **`newstate` 事件**（stategraph.lua:594 推的 ✓ **跟角色无关** ✓）
+--      顺序：onenter（播动画）→ PushEvent("newstate") ⇒ 只差 1 帧 ✓ 肉眼看不出 ✓
+--      data.statename = 状态名（就是 chop / mine / dig / hammer ✓）
+-- ==========================================================
+do
+    local MT_STATE_TOOL = {
+        -- ★ 第 9 版：自己的美术 + 多帧结构（4 帧 / length=400 ✓）
+        chop = "swap_lazy_mt_axe",
+        mine = "swap_lazy_mt_pick",
+        dig = "swap_lazy_mt_shovel",
+        hammer = "swap_lazy_mt_hammer",
+    }
+    -- ★★★ 2026/10/05 再往前一步：**动作一被下发就切**（修"准备动作看不到工具" ✗）
+    --   用户实测："采集时一开始那个准备动作看不到工具" ✗
+    --   真因：`chop` 状态的 onenter **直接播 chop_loop**（SGwilson.lua:4936 ✓）
+    --         而 newstate 事件在 onenter **之后** ⇒ 动画第 0 帧已经用旧符号渲染了 ✗
+    --   ⇒ 改 hook `PlayerController:DoAction`：这是**玩家动作下发的最早时机** ✓
+    --     比 stategraph 早 ⇒ 动画一开播符号就已经对了 ✓
+    --   （newstate 那套保留 ✓ 用于"回到非采集状态时收掉工具" ✓）
+    do
+        local ACTION_TOOL = {
+            [ACTIONS.CHOP] = "swap_lazy_mt_axe",
+            [ACTIONS.MINE] = "swap_lazy_mt_pick",
+            [ACTIONS.DIG] = "swap_lazy_mt_shovel",
+            [ACTIONS.HAMMER] = "swap_lazy_mt_hammer",
+        }
+        local function EquipToolNow(doer, action)
+            local build = action ~= nil and ACTION_TOOL[action] or nil
+            if build == nil or doer == nil or not doer:IsValid() then
+                return
+            end
+            local inv = doer.components ~= nil and doer.components.inventory or nil
+            local item = inv ~= nil and inv:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+            if item == nil or item.prefab ~= "lazy_multitool" then
+                return                  -- 手里不是匣子 ⇒ 不管 ✓
+            end
+            pcall(function()
+                doer.AnimState:OverrideSymbol("swap_object", build, build)
+                doer.AnimState:Show("ARM_carry")
+                doer.AnimState:Hide("ARM_normal")
+            end)
+        end
+
+        AddComponentPostInit("playercontroller", function(self)
+            local old_doaction = self.DoAction
+            if type(old_doaction) ~= "function" then
+                return
+            end
+            self.DoAction = function(pc, buffaction, ...)
+                pcall(function()
+                    EquipToolNow(pc.inst, buffaction ~= nil and buffaction.action or nil)
+                end)
+                return old_doaction(pc, buffaction, ...)
+            end
+        end)
+        print("[饥荒懒人][MT] 已挂 DoAction 提前切换 ✓（准备动作也能看到工具 ✓）")
+    end
+
+    -- ★★★ 2026/10/05 再往前一步：**跟着鼠标指向预判**（修"准备动作看不到工具" ✗）
+    --   用户实测：右键砍树时，"准备动作"那一下还是空的 ✗
+    --   真因：`DoAction` 虽然早于 stategraph，但动画第一帧仍可能抢在符号刷新之前 ✗
+    --   ⇒ 用 `pc.RMBaction`：它是**每帧根据鼠标指向算出来的**（playercontroller.lua:2827 ✓）
+    --     ⇒ **鼠标一指到树上，动作就已经知道了** ⇒ 根本不用等右键 ✓✓
+    --   ⚠ 只在**客户端**跑（RMBaction 是客户端算的 ✓ 本地切换立即生效 ✓）
+    --     服务端那两道（DoAction / newstate）保留 ⇒ 联机时队友那边也对 ✓
+    do
+        local ACTION_TOOL = {
+            [ACTIONS.CHOP] = "swap_lazy_mt_axe",
+            [ACTIONS.MINE] = "swap_lazy_mt_pick",
+            [ACTIONS.DIG] = "swap_lazy_mt_shovel",
+            [ACTIONS.HAMMER] = "swap_lazy_mt_hammer",
+        }
+        AddPlayerPostInit(function(player)
+            if TheWorld ~= nil and TheWorld.ismastersim then
+                return                  -- 服务端走 DoAction 那道 ✓
+            end
+            player:DoPeriodicTask(0.1, function(inst)
+                pcall(function()
+                    local pc = inst.components ~= nil and inst.components.playercontroller or nil
+                    local inv = inst.components ~= nil and inst.components.inventory or nil
+                    if pc == nil or inv == nil then
+                        return
+                    end
+                    local item = inv:GetEquippedItem(EQUIPSLOTS.HANDS)
+                    if item == nil or item.prefab ~= "lazy_multitool" then
+                        return
+                    end
+                    local act = pc.RMBaction
+                    local build = act ~= nil and act.action ~= nil and ACTION_TOOL[act.action] or nil
+                    if build ~= nil then
+                        inst.AnimState:OverrideSymbol("swap_object", build, build)
+                        inst.AnimState:Show("ARM_carry")
+                        inst.AnimState:Hide("ARM_normal")
+                    end
+                end)
+            end)
+        end)
+        print("[饥荒懒人][MT] 客户端鼠标预判已挂 ✓（指向就出工具 ✓ 比右键更早 ✓）")
+    end
+
+    -- ★ 第二道：newstate —— 非采集状态时**收掉工具**（回到空手 ✓）
+    AddPlayerPostInit(function(player)
+        player:ListenForEvent("newstate", function(inst, data)
+            local sname = data ~= nil and data.statename or nil
+            local build = sname ~= nil and MT_STATE_TOOL[sname] or nil
+            pcall(function()
+                local inv = inst.components ~= nil and inst.components.inventory or nil
+                local item = inv ~= nil and inv:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+                if item == nil or item.prefab ~= "lazy_multitool" then
+                    return                  -- 手里不是匣子 ⇒ 一点都不管 ✓
+                end
+                if build ~= nil then
+                    -- ★ 采集状态 ⇒ **立即调出对应工具** ✓（用户要的 ✓）
+                    inst.AnimState:OverrideSymbol("swap_object", build, build)
+                    inst.AnimState:Show("ARM_carry")
+                    inst.AnimState:Hide("ARM_normal")
+                else
+                    -- ★ 其他状态 ⇒ **手空** ✓（用户要的"像啥也没拿"✓ 走路不摆持物姿势 ✓）
+                    inst.AnimState:ClearOverrideSymbol("swap_object")
+                    inst.AnimState:Hide("ARM_carry")
+                    inst.AnimState:Show("ARM_normal")
+                end
+            end)
+        end)
+    end)
+    print("[饥荒懒人][MT] 采集切换已改走 newstate 事件 ✓（角色无关 ✓ 采集才拿工具 ✓ 平时手空 ✓）")
+end
+
+-- ==========================================================
+-- ★ 2026/10/05 虚空背包（30 格背部容器 ✓）
+--   预制体在 scripts/prefabs/lazy_voidbag.lua ✓（结构照原版 backpack.lua ✓）
+--   30 个格位的坐标 = 底图上画好的 30 个格子（实测反查出来的 ✓ 见下）
+-- ==========================================================
+
+-- ---- ① UI 贴图必须挂在 modmain 的 Assets 上（HUD 一直要用 ✓）----
+--   ⚠ 这两个 tex/xml 由 autocompiler 从 png 生成 ⇒ 别手改 xml ✗
+table.insert(Assets, Asset("IMAGE", "images/voidbag_ui.tex"))
+table.insert(Assets, Asset("ATLAS", "images/voidbag_ui.xml"))
+table.insert(Assets, Asset("IMAGE", "images/voidbag_slot.tex"))
+table.insert(Assets, Asset("ATLAS", "images/voidbag_slot.xml"))
+
+-- ---- ② 30 格布局 ----
+--   坐标怎么来的（可复现 ✓）：
+--     在用户原图 背包ui.png（1024×1024）里，用 格子ui.png（105×103）当模板做全图匹配，
+--     反查出一张 **5 列 × 6 行 = 30 格** 的规则网格：
+--        第 1 格左上角 (256, 284)，列距 102，行距 101，格子 105×103
+--     底图整体 ×0.5996（1024 ⇒ 614）⇒ 所有量一起乘 0.5996
+--     614×614 的图在 widget 里居中于原点 ⇒ 再减 307
+--     最终：格心 X = 0.5996 × (256 + 102i + 52.5) − 307 = −122.02 + 61.160 × i
+--           格心 Y = 307 − 0.5996 × (284 + 101j + 51.5) =  105.83 − 60.561 × j
+local LAZY_VB_UI_OK = false
+do
+    local ok, err = pcall(function()
+        local containers = require("containers")
+        if containers == nil or containers.params == nil then
+            error("containers.params 拿不到")
+        end
+
+        local VB_COLS, VB_ROWS = 5, 6
+        local VB_X0, VB_Y0   = -122.02, 105.83
+        local VB_DX, VB_DY   = 61.160, -60.561
+
+        local params =
+        {
+            widget =
+            {
+                slotpos = {},
+                slotbg  = {},          -- 每一格自己的底图（格子ui.png × 0.6 ✓）
+                bgimage = "voidbag_ui.tex",
+                bgatlas = "images/voidbag_ui.xml",
+                -- 放屏幕左侧，避开底部物品栏和人物 ✓
+                pos = Vector3(-340, 0, 0),
+
+                -- ★★★ 2026/10/05 整体放大：containerwidget.lua:11 写死 0.6 ✗
+                --   0.6 那版用户实测「有点小，物品放进去也有点小」✗
+                --   1.0 那版用户实测「可以，就是 ui 真可以稍微小点」⇒ 落到 0.85 ✓
+                --   这里让底下的 hook 把**这一块**面板的 widget 缩放改成这个数 ✓
+                --   （0.85 ⇒ 底图 614→522、每格 63→53.6、里面的物品图标 64→54.4 ✓）
+                --   改这一个数就能整体调大小 ✓ **不用重编译素材** ✓
+                lazy_widget_scale = 0.85,
+            },
+            issidewidget = true,       -- 和原版背包一样挂侧面 ✓
+            -- ★★★ 2026/10/06【type 改回 "pack"】✗
+            --   试过改成 side_inv（想让九格放行、走原版侧面板 ✓）⇒ **实测没效果** ✗
+            --   用户："还是没 ui" ✓ ⇒ 说明不是这一项决定的 ⇒ **改回来** ✗
+            --   （保持和"身上/物品栏里能开"那两种情况完全一致 ✓ 那两种是好的 ✓）
+            type = "pack",             -- 占"背包"这一个窗口位（同时只开一个 ✓）
+            openlimit = 1,
+        }
+
+        for row = 0, VB_ROWS - 1 do
+            for col = 0, VB_COLS - 1 do
+                table.insert(params.widget.slotpos,
+                    Vector3(VB_X0 + col * VB_DX, VB_Y0 + row * VB_DY, 0))
+                table.insert(params.widget.slotbg,
+                    { atlas = "images/voidbag_slot.xml", image = "voidbag_slot.tex" })
+            end
+        end
+
+        containers.params.lazy_voidbag = params
+        -- ★ 原版在 containers.lua 末尾按已有容器算好格子池上限；
+        --   模组后注册必须自己抬高，否则 container_classified 池子不够 ⇒ 报错禁用模组 ✗
+        containers.MAXITEMSLOTS = math.max(containers.MAXITEMSLOTS,
+            #params.widget.slotpos, VB_COLS * VB_ROWS)
+
+        LAZY_VB_UI_OK = true
+    end)
+    if LAZY_VB_UI_OK then
+        print("[饥荒懒人][VB] 虚空背包 30 格布局已注册 ✓（5 列 × 6 行 ✓ 已对齐底图格子 ✓）")
+    else
+        print("[饥荒懒人][VB] ✗ 布局注册失败：" .. tostring(err))
+    end
+end
+
+-- ---- ②b 让"虚空背包"这块面板能整体放大 ----
+--   原版 containerwidget.lua:11 在构造里写死 `local scale = .6` ✗
+--   ⇒ 模组的容器想放大只能**在 Open 之后自己重设** ✓
+--   Open 是每次开面板都走的 ✓（而且它开头会先 self:Close()，Close 不动缩放 ✓）
+--   ⇒ 这样"每次打开都按我们的数来" ✓，别人的容器照旧 0.6 ✓
+--   ★★ 2026/10/06【日志措辞修正】✗
+--     原来这里在**服务端**也打了「✗ 缩放接管失败（不影响别的功能）：nil」✗
+--     而那其实是**故意的**：服务端进程没有 UI ⇒ 这段本来就该跳过 ✓
+--     用户看到那行会以为坏了 ✗（而且排查联机问题时会被它带偏 ✗）
+--     ⇒ 现在分开报：「服务端无 UI ⇒ 跳过（正常 ✓）」
+--     ★ 铁证：客户端日志里是「面板缩放已接管 ✓」✓ 服务端才是"跳过" ✓
+local LAZY_VB_SCALE_OK = false
+local LAZY_VB_SCALE_SKIP = false
+do
+    local ok, err = pcall(function()
+        -- 专用服务器 / 服务端进程上没有 UI ⇒ 别碰 widget ✗（这是正常跳过 ✓ 不是失败 ✗）
+        if TheNet ~= nil and TheNet.IsDedicated ~= nil and TheNet:IsDedicated() then
+            LAZY_VB_SCALE_SKIP = true
+            return
+        end
+        local CW = GLOBAL.require("widgets/containerwidget")
+        if CW == nil or CW.Open == nil then
+            error("widgets/containerwidget 拿不到")
+        end
+        local _VB_Open = CW.Open
+        CW.Open = function(self, container, doer)
+            _VB_Open(self, container, doer)
+            -- ★ 这是**全局钩子**（所有容器都会走）⇒ 里面出错会连累别人 ✗
+            --   所以查缩放这段单独 pcall 兜住，查不到就退回原版的 0.6 ✓
+            local ok2, s = pcall(function()
+                local rep = container ~= nil and container.replica ~= nil
+                    and container.replica.container or nil
+                local w = rep ~= nil and rep.GetWidget ~= nil and rep:GetWidget() or nil
+                return (w ~= nil and w.lazy_widget_scale) or 0.6
+            end)
+            if not ok2 or type(s) ~= "number" then
+                s = 0.6
+            end
+            self:SetScale(s, s, s)
+        end
+        LAZY_VB_SCALE_OK = true
+    end)
+    if LAZY_VB_SCALE_OK then
+        print("[饥荒懒人][VB] 面板缩放已接管 ✓（虚空背包 ×0.85 ✓ 其他容器照旧 ×0.6 ✓）")
+    elseif LAZY_VB_SCALE_SKIP then
+        print("[饥荒懒人][VB] 面板缩放：服务端无 UI ⇒ 跳过（正常 ✓ 客户端那边会装 ✓）")
+    else
+        print("[饥荒懒人][VB] ✗ 缩放接管**真失败**了（不影响别的功能）：" .. tostring(err))
+    end
+end
+
+-- ==========================================================
+-- ★ 2026/10/05 虚空背包：**右键长按面板空白处 = 拖动**（位置记住 ✓）
+--
+--   整套照搬用户自己「鬼域空间」那套
+--   （神秘复苏 smfs_shenmifusu\smfs_yj_domain_ui.lua ✓ 已经实机验证过 ✓）
+--
+--   四个要点（都是踩过的坑 ✓ 别自作聪明改 ✗）：
+--     ① 位置用 TheSim:SetPersistentString 存 ⇒ 关游戏再进也记得 ✓
+--     ② 鼠标停在**格子**上时不拖 ⇒ 交给格子自己处理 ✓
+--          判断用**格子的 focus**（引擎给的悬停焦点 ✓）
+--          **绝不去读格子的坐标** ✗ 别的模组会换掉格子控件 ⇒ 读 transform 会 nil ✗
+--     ③ 拖动期间 player.HUD:SetModFocus(...) ⇒ 右键不会顺手放出技能/动作 ✓
+--     ④ 右键按下时若在面板空白处 ⇒ 就地开拖 ✓ 并 return true 把这次右键吃掉 ✓
+--          （不然它会穿到世界里去 ✗）
+--
+--   我们面板的空白边够用 ✓（614 本地尺寸里，格子阵只占中间 308×365：
+--     左右各留 153、上留 170、下留 79 ⇒ 乘缩放 0.85 后屏上左右各 130 像素 ✓ 好抓 ✓）
+-- ==========================================================
+-- ★ strict 声明：控制台命令 c_lazyvbpos（下面 pcall 里才真正赋值 ✓）
+--   ⚠ 不先声明就会报 `assign to undeclared variable 'c_lazyvbpos'` ✗
+--     ⇒ 整个 pcall 中断 ⇒ 后面的 CW.OnControl 右键拖动**装不上** ✗
+--     （2026/10/18 根因：日志里"右键拖动接管真失败了"就是这一行 ✓）
+GLOBAL.c_lazyvbpos = nil
+
+local LAZY_VB_DRAG_OK = false
+local LAZY_VB_DRAG_SKIP = false
+do
+    local ok, err = pcall(function()
+        -- ★ 同样是"服务端无 UI ⇒ 正常跳过" ✓ 不是失败 ✗（理由见上面缩放那段 ✓）
+        if TheNet ~= nil and TheNet.IsDedicated ~= nil and TheNet:IsDedicated() then
+            LAZY_VB_DRAG_SKIP = true
+            return
+        end
+        local TheInput = GLOBAL.TheInput
+        local TheSim = GLOBAL.TheSim
+        local CW = GLOBAL.require("widgets/containerwidget")
+        if CW == nil or CW.OnControl == nil then
+            error("widgets/containerwidget 拿不到")
+        end
+
+        local DRAG_PREFAB = "lazy_voidbag"
+        local SAVE_KEY = "lazy_voidbag_ui_pos"
+        local PANEL_W, PANEL_H = 614, 614      -- 贴图本体的**本地**尺寸（没乘缩放 ✓）
+
+        local saved_pos = nil
+        local drag_widget = nil
+        local drag_from = nil
+
+        local function VB_Safe(fn, ...)
+            local ok2, err2 = pcall(fn, ...)
+            if not ok2 then
+                print("[饥荒懒人][VB] 拖动出错（已拦下 ✓）: " .. tostring(err2))
+            end
+            return ok2
+        end
+
+        -- ① 读回上次的位置（异步 ⇒ 进游戏时就读完了 ✓）
+        if TheSim ~= nil and TheSim.GetPersistentString ~= nil then
+            TheSim:GetPersistentString(SAVE_KEY, function(success, data)
+                if success and data ~= nil and #data > 0 then
+                    local xs, ys = string.match(data, "^(-?%d+%.?%d*),(-?%d+%.?%d*)$")
+                    if xs ~= nil and ys ~= nil then
+                        saved_pos = { tonumber(xs), tonumber(ys) }
+                        print("[饥荒懒人][VB] 已读回上次的面板位置：" .. tostring(data))
+                    end
+                end
+            end)
+        end
+
+        local function GetScaleOf(widget)
+            if widget == nil then return 1, 1 end
+            local ok2, s = pcall(function() return widget:GetWorldScale() end)
+            if ok2 and s ~= nil and s.x ~= nil and s.y ~= nil and s.x ~= 0 and s.y ~= 0 then
+                return s.x, s.y
+            end
+            return 1, 1
+        end
+
+        -- ★★★ 2026/10/18【位置改成"相对默认位置的偏移"】✗✗✗
+        --   原来存的是**绝对坐标**：10/6 存了 527.3,-11.6 ⇒ 换屏幕/HUD 后直接飞到屏幕外 ✗
+        --   ⇒ 现在只存"相对 containers.params 里 pos(-340,0) 的偏移" ✓
+        --     偏移还夹在 ±200 / ±150 内 ⇒ 永远贴着默认那块地方，不会再丢 ✓
+        local function GetDefaultPos(container)
+            local ok2, px, py = pcall(function()
+                local w = container ~= nil and container.replica ~= nil
+                    and container.replica.container ~= nil
+                    and container.replica.container:GetWidget() or nil
+                local pos = w ~= nil and w.pos or nil
+                return (pos ~= nil and pos.x or -340), (pos ~= nil and pos.y or 0)
+            end)
+            if ok2 and px ~= nil then return px, py end
+            return -340, 0
+        end
+
+        -- ★★★ 2026/10/18【别猜单位了：用 world 坐标现场标定】✓✓✓
+        --   实测：local=-1091 时 world=878 ⇒ local→world 有缩放+偏移，
+        --   之前按 local 硬算边界，怎么改都对不上 ✗
+        --   ⇒ 打开时标定一次：local 走 100，看 world 走多少 ⇒ 得到 k 和偏移 ✓
+        local function Calibrate(widget)
+            local ok2 = pcall(function()
+                local p0 = widget:GetPosition()
+                local w0 = widget:GetWorldPosition()
+                widget:SetPosition(p0.x + 100, p0.y, 0)
+                local w1 = widget:GetWorldPosition()
+                widget:SetPosition(p0.x, p0.y + 100, 0)
+                local w2 = widget:GetWorldPosition()
+                widget:SetPosition(p0.x, p0.y, 0)
+                local kx = (w1.x - w0.x) / 100
+                local ky = (w2.y - w0.y) / 100
+                if kx == 0 then kx = 1 end
+                if ky == 0 then ky = 1 end
+                widget.lazy_vb_kx, widget.lazy_vb_ky = kx, ky
+                widget.lazy_vb_cx = w0.x - kx * p0.x
+                widget.lazy_vb_cy = w0.y - ky * p0.y
+            end)
+            return ok2
+        end
+
+        -- 把面板的 world 位置夹进屏幕（world 是屏幕像素，左上角原点 ✓）
+        --   面板屏幕尺寸 = 522 × k（local 522 → world 522*k）
+        local function ClampToScreen(widget, x, y)
+            local kx = widget.lazy_vb_kx or 1
+            local ky = widget.lazy_vb_ky or 1
+            local cx = widget.lazy_vb_cx or 0
+            local cy = widget.lazy_vb_cy or 0
+            local sw, sh = 2560, 1600
+            pcall(function()
+                local w, h = TheSim:GetScreenSize()
+                if w ~= nil and w > 0 and h ~= nil and h > 0 then sw, sh = w, h end
+            end)
+            local pw = PANEL_W * 0.85 * kx       -- 面板在屏幕上的实际宽（像素）
+            local ph = PANEL_W * 0.85 * ky
+            local m = 40
+            local wx = math.max(m, math.min(sw - pw - m, kx * x + cx))
+            local wy = math.max(m, math.min(sh - ph - m, ky * y + cy))
+            return (wx - cx) / kx, (wy - cy) / ky
+        end
+
+        local function SavePos(widget)
+            if TheSim == nil or TheSim.SetPersistentString == nil then return end
+            local p = widget:GetPosition()
+            local bx = widget.lazy_vb_defx or -340
+            local by = widget.lazy_vb_defy or 0
+            -- 原样存（拖动时不夹边 ✓）；打开时若跑出屏幕会自动回默认 ✓
+            local dx, dy = p.x - bx, p.y - by
+            saved_pos = { dx, dy }
+            TheSim:SetPersistentString(SAVE_KEY, string.format("%.1f,%.1f", dx, dy), false)
+            print(string.format("[饥荒懒人][VB] 面板偏移已记住 ✓（相对默认 %+.1f,%+.1f）", dx, dy))
+        end
+
+        -- ② 鼠标是不是停在某个格子上 ⇒ 是就不拖 ✓
+        local function IsOverSlotWidget(widget)
+            if widget.inv == nil then return false end
+            for _, slot in pairs(widget.inv) do
+                if slot ~= nil and slot.focus then return true end
+            end
+            return false
+        end
+
+        -- ③ 拖动期间屏蔽角色操作（不然右键会顺手放技能 ✗）
+        local function SetDragFocus(on)
+            local player = GLOBAL.ThePlayer
+            if player ~= nil and player.HUD ~= nil and player.HUD.SetModFocus ~= nil then
+                player.HUD:SetModFocus("dst_lazy", "lazy_vb_drag", on)
+            end
+        end
+
+        local function StopDrag(save)
+            local w = drag_widget
+            drag_widget = nil
+            drag_from = nil
+            SetDragFocus(false)
+            if save and w ~= nil and w.inst ~= nil and w.inst:IsValid() then
+                -- ★ 2026/10/18 诊断：拖完打一行，用真实坐标反推"锚点在哪、单位怎么换" ✓
+                --   ⚠ GetSize 在 ContainerWidget 上可能没有 ⇒ 单独 pcall，别把整行吞了 ✗
+                pcall(function()
+                    local p = w:GetPosition()
+                    local wp = w:GetWorldPosition()
+                    local sw, sh = TheSim:GetScreenSize()
+                    print(string.format(
+                        "[VB-POS] local=%.0f,%.0f world=%.0f,%.0f screen=%.0fx%.0f k=%.3f,%.3f c=%.0f,%.0f",
+                        p.x, p.y, wp.x, wp.y, sw, sh,
+                        w.lazy_vb_kx or -1, w.lazy_vb_ky or -1,
+                        w.lazy_vb_cx or 0, w.lazy_vb_cy or 0))
+                end)
+                SavePos(w)
+            end
+        end
+
+        local function StartDrag(widget)
+            if drag_widget == widget then return end
+            local mp = TheInput:GetScreenPosition()
+            local p = widget:GetPosition()
+            drag_widget = widget
+            drag_from = { mx = mp.x, my = mp.y, px = p.x, py = p.y }
+            SetDragFocus(true)
+        end
+
+        -- 鼠标是否在面板范围内（位移用父控件的缩放换算 ✓ HUD 一般是 1 ✓）
+        local function IsInPanel(widget, x, y)
+            local ok2, wp = pcall(function() return widget:GetWorldPosition() end)
+            if not ok2 or wp == nil then return false end
+            local sx, sy = GetScaleOf(widget)
+            return math.abs((x - wp.x) / sx) <= PANEL_W * 0.5
+               and math.abs((y - wp.y) / sy) <= PANEL_H * 0.5
+        end
+
+        local function FindDragTarget(x, y)
+            local player = GLOBAL.ThePlayer
+            local hud = player ~= nil and player.HUD or nil
+            local containers = hud ~= nil and hud.controls ~= nil
+                and hud.controls.containers or nil
+            if containers == nil then return nil end
+            for c, w in pairs(containers) do
+                if w ~= nil and w.isopen and w.lazy_vb_drag
+                    and c ~= nil and c.prefab == DRAG_PREFAB
+                    and IsInPanel(w, x, y) and not IsOverSlotWidget(w) then
+                    return w
+                end
+            end
+            return nil
+        end
+
+        local function OnMove(x, y)
+            local w = drag_widget
+            if w == nil then return end
+            if w.inst == nil or not w.inst:IsValid() then
+                StopDrag(false)
+                return
+            end
+            local sx, sy = GetScaleOf(w.parent)
+            -- ★ 2026/10/18【拖动时不再夹边】✗
+            --   实测 k=1.542 / c=2560,800 —— local↔屏幕像素的关系太绕，
+            --   硬夹只会出现"右边/上面到不了" ✗
+            --   ⇒ 拖动范围 = 全屏随便拖 ✓
+            --   ⇒ 防丢：打开时检查 world 是否跑出屏幕，跑出去就自动回默认 ✓
+            local kx = w.lazy_vb_kx or sx
+            local ky = w.lazy_vb_ky or sy
+            w:SetPosition(drag_from.px + (x - drag_from.mx) / kx,
+                drag_from.py + (y - drag_from.my) / ky, 0)
+        end
+
+        TheInput:AddMoveHandler(function(x, y) VB_Safe(OnMove, x, y) end)
+        TheInput:AddMouseButtonHandler(function(button, down, x, y)
+            if button ~= GLOBAL.MOUSEBUTTON_RIGHT then return end
+            if down then
+                VB_Safe(function()
+                    if drag_widget == nil then
+                        local w = FindDragTarget(x, y)
+                        if w ~= nil then StartDrag(w) end
+                    end
+                end)
+            else
+                VB_Safe(StopDrag, true)
+            end
+        end)
+
+        -- ==========================================================
+        -- ★★★ 2026/10/07【把记住的位置**夹进屏幕里**】✗✗✗
+        --   用户问：「看看我背包的 ui 是不是在屏幕外？」
+        --   日志实锤：记住的位置是 **527.3,-11.6**（2560×1600 屏 ✓ 数出来是能看见的 ✓）
+        --   但**换个分辨率 / 窗口化 / 改过 HUD 大小**之后，这个老位置就可能整块飘到屏幕外 ✗
+        --     ⇒ 而它又是**存在磁盘上的**（lazy_voidbag_ui_pos ✓）⇒ 会一直错下去 ✗
+        --   ⇒ 保险做法：套用之前先**夹**一下 ✓ 永远留半块在屏幕里 ✓
+        --   ★ 坐标换算（和拖动那段用的是同一套 ✓ 不是猜的 ✓）：
+        --       这个 widget 的坐标单位 = **像素 ÷ HUDScale** ✓
+        --       （证据：拖动时鼠标位移要 ÷ GetWorldScale() ✓ 见 OnMove ✓）
+        --       面板在 HUD 单位下的尺寸 = 614 × 0.6 × 0.85 ≈ 313 ✓（HUDScale 在两边抵消 ✓）
+        -- ==========================================================
+        local PANEL_HUD_W = PANEL_W * 0.6 * 0.85      -- ≈ 313（HUD 单位 ✓）
+        local function ClampPos(widget, x, y)
+            local ok2, cx, cy = pcall(function()
+                local sx, sy = GetScaleOf(widget)
+                local sw, sh = 1280 * sx, 720 * sy   -- 兜底：按 1280×720 虚拟屏算 ✓
+                pcall(function()
+                    local w, h = TheSim:GetScreenSize()
+                    if w ~= nil and w > 0 and h ~= nil and h > 0 then
+                        sw, sh = w, h
+                    end
+                end)
+                local halfw = (sw / 2) / sx
+                local halfh = (sh / 2) / sy
+                local mx = math.max(0, halfw - PANEL_HUD_W / 2 - 10)
+                local my = math.max(0, halfh - PANEL_HUD_W / 2 - 10)
+                local nx = math.max(-mx, math.min(mx, x or 0))
+                local ny = math.max(-my, math.min(my, y or 0))
+                return nx, ny
+            end)
+            if ok2 and cx ~= nil then
+                if math.abs((x or 0) - cx) > 1 or math.abs((y or 0) - cy) > 1 then
+                    print("[饥荒懒人][VB] 记住的面板位置超出屏幕 ⇒ 已夹回来 ✓（"
+                        .. string.format("%.0f,%.0f", x or 0, y or 0) .. " → "
+                        .. string.format("%.0f,%.0f", cx, cy) .. "）")
+                end
+                return cx, cy
+            end
+            return x or 0, y or 0
+        end
+
+        -- ★ 万一还是找不着：控制台敲 `c_lazyvbpos()` ⇒ 回屏幕正中 ✓ 并记住 ✓
+        GLOBAL.c_lazyvbpos = function()
+            saved_pos = { 0, 0 }
+            if TheSim ~= nil and TheSim.SetPersistentString ~= nil then
+                TheSim:SetPersistentString(SAVE_KEY, "0.0,0.0", false)
+            end
+            local hud = GLOBAL.ThePlayer ~= nil and GLOBAL.ThePlayer.HUD or nil
+            if hud ~= nil and hud.controls ~= nil then
+                for _, w in pairs(hud.controls.children or {}) do
+                    if w ~= nil and w.lazy_vb_drag then
+                        -- ★ 回**默认位置**（不是 (0,0)：美术不是正中，写 0 会一半在屏外 ✗）
+                        w:SetPosition(w.lazy_vb_defx or -340, w.lazy_vb_defy or 0, 0)
+                    end
+                end
+            end
+            print("[饥荒懒人][VB] 面板位置已重置到默认位置 ✓（重开一次面板就生效 ✓）")
+        end
+
+        -- 面板一开 ⇒ 打标记 + 套用记住的位置 ✓
+        local _VB2_Open = CW.Open
+        CW.Open = function(self, container, doer)
+            _VB2_Open(self, container, doer)
+            if container ~= nil and container.prefab == DRAG_PREFAB then
+                VB_Safe(function()
+                    self.lazy_vb_drag = true
+                    -- ★★★ 2026/10/18【位置 = 默认 pos + 记住的偏移】✓
+                    --   默认 pos 在 containers.params 里是 (-340, 0)（避开物品栏 ✓）
+                    --   Open 自己已经套过默认值 ⇒ 这里只加偏移 ✓
+                    --   ⚠ 千万别写死 (0,0)：面板美术不是正中对齐的 ⇒ 会有一半在屏幕外 ✗
+                    local bx, by = GetDefaultPos(container)
+                    self.lazy_vb_defx, self.lazy_vb_defy = bx, by
+                    -- ★ 先标定 local→world 的换算（拖动/夹边都靠它 ✓）
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+-- ==========================================================
+AddComponentPostInit("container", function(self)
+    if self.inst == nil or self.inst.prefab ~= "lazy_voidbag" then
+        return
+    end
+    local _VB_Open = self.Open
+    if _VB_Open ~= nil then
+        self.Open = function(c, doer)
+            print("[饥荒懒人][VB][诊断] 服务端收到「开」请求 ✓（谁="
+                .. tostring(doer ~= nil and doer.prefab or "nil") .. "）")
+            local r = _VB_Open(c, doer)
+            print("[饥荒懒人][VB][诊断] 开完 ⇒ opencount=" .. tostring(c.opencount)
+                .. " / openlist 人数=" .. tostring((function()
+                    local n = 0
+                    pcall(function() for _ in pairs(c.openlist) do n = n + 1 end end)
+                    return n
+                end)()))
+            return r
+        end
+    end
+    local _VB_Close = self.Close
+    if _VB_Close ~= nil then
+        self.Close = function(c, doer)
+            print("[饥荒懒人][VB][诊断] 服务端收到「关」请求 ✓")
+            return _VB_Close(c, doer)
+        end
+    end
+end)
+
+-- ==========================================================
+-- ★★★ 2026/10/07 虚空背包：**记住玩家关没关面板** ✓（用户点名要的 ✓）
+--   用户原话：「装备背包关闭 ui 了，然后每次死了复活都会自动打开背包，这个设定不要，
+--              记住玩家的选择，我关闭了除非我在开不然不自动打开」
+--
+--   ★ 为什么钩 **ACTIONS.RUMMAGE.fn** 而不是 Container:Close ✗（这条最关键 ✗）
+--     Close 会被一堆**非玩家意愿**的路径调到：卸下 / 死亡 / 换人 / 远距离自动关…
+--     钩在那里 ⇒ 只要自动关过一次，就永远不再自动开了 ✗ 比原来还糟 ✗
+--     RUMMAGE.fn 才是**玩家右键那一条路**：
+--       actions.lua:1084  开着 → Close / 关着 → Open（本身就是开/关切换 ✓）
+--     ⇒ 只有玩家自己右键，才算"他的选择" ✓
+--   ★ 标记存在背包实体身上（_lazy_vb_user_closed）⇒ 死亡复活后同一只包 ⇒ 记得住 ✓
+-- ==========================================================
+do
+    local ok, err = pcall(function()
+        local _VB_RUMMAGE = ACTIONS.RUMMAGE.fn
+        if _VB_RUMMAGE == nil then
+            error("ACTIONS.RUMMAGE.fn 拿不到")
+        end
+        ACTIONS.RUMMAGE.fn = function(act)
+            local targ = act ~= nil and act.target or nil
+            local doer = act ~= nil and act.doer or nil
+            local isvb = (targ ~= nil and targ.prefab == "lazy_voidbag")
+            local wasopen = false
+            if isvb and doer ~= nil and targ.components ~= nil and targ.components.container ~= nil then
+                local okq, v = pcall(function()
+                    return targ.components.container:IsOpenedBy(doer)
+                end)
+                wasopen = (okq and v == true)
+            end
+            local r = _VB_RUMMAGE(act)
+            if isvb and targ:IsValid() then
+                -- 开着被点 ⇒ 是玩家自己关的 ⇒ 记住"以后别再自动开" ✓
+                -- 关着被点 ⇒ 是玩家自己开的 ⇒ 取消那个偏好 ✓
+                targ._lazy_vb_user_closed = wasopen
+                print("[饥荒懒人][VB] 玩家右键" .. (wasopen and "关闭" or "打开") .. "了面板 ⇒ "
+                    .. (wasopen and "以后不再自动打开 ✓（除非他自己再开）" or "恢复自动打开 ✓"))
+            end
+            return r
+        end
+    end)
+    if ok then
+        print("[饥荒懒人][VB] 「记住玩家开关」已接管 ✓")
+    else
+        print("[饥荒懒人][VB] ✗ 「记住玩家开关」没装上（不影响别的功能 ✓）：" .. tostring(err))
+    end
+end
+
+-- ==========================================================
+-- ★ 2026/10/05 虚空背包：**右键开关面板** —— 走原版那条路，不自造动作 ✓
+--
+--   用户要求：「装备上后右键是关闭背包而不是卸下，
+--              要卸下就是左键自己点了放物品栏里」✓
+--   用户还提醒：「原版背包右键就是关闭背包」✓ —— 确实如此 ✓
+--
+--   ★ 原版这条链（查证过 ✓ 一开始我差点自己造一个动作 ✗ 幸好核了）：
+--     右键装备格 ⇒ equipslot.lua:66 inventory:UseItemFromInvTile(item)
+--                ⇒ inventory_classified.lua:911 GetInventoryActions(item)
+--                ⇒ playeractionpicker.lua:272 useitem:CollectActions("INVENTORY", ...)
+--                ⇒ componentactions.lua:2548（**INVENTORY 段**的 container 处理）
+--                     if container:CanBeOpened() then ... table.insert(actions, ACTIONS.RUMMAGE)
+--                ⇒ actions.lua:1084
+--                     elseif targ.components.container:IsOpenedBy(act.doer) then
+--                         targ.components.container:Close(act.doer)      ← 开着 ⇒ 关 ✓
+--                         act.doer:PushEvent("closecontainer", {container = targ})
+--                     else ... Open(act.doer)                            ← 关着 ⇒ 开 ✓
+--     ⇒ **ACTIONS.RUMMAGE.fn 本身就是开/关切换** ✓ 而且它会推 closecontainer 事件 ✓
+--       （自造动作漏了这个事件 ⇒ HUD 那边可能不认 ⇒ 反而出问题 ✗）
+--
+--   ★ 那我们唯一要做的事：**别把 CanBeOpened() 掐掉** ✓
+--       预制体 lazy_voidbag.lua 里**故意不写** inst.components.container.canbeopened = false ✗
+--       （鬼棺材写 false 是因为它不想让人手动开 ✗ 我们的需求正好相反 ✓）
+--     ⇒ 顺带白拿一个原版行为：背包放在物品栏里（没穿）也能右键打开 ✓
+--     ⇒ 控制器(手柄)下原版会主动不给侧栏这条件动作（componentactions.lua:2555 ✓）保持一致 ✓
+--
+--   卸下不变，还是原版那条：左键把包装到手上 ⇒ 再点物品栏格子放下 ✓
+-- ==========================================================
+
+-- ==========================================================
+-- ★ 2026/10/05 物质连接器（远程链接物质转换机 ✓）
+--
+--   用户要的：拿着它左键点世界上的物质转换机 ⇒ 绑定
+--             绑定后放物品栏里右键 ⇒ 直接开那台机器的界面（**无限距离** ✓）
+--             能量、格子里的东西都同步 ✓
+--
+--   ★★★ 无限距离的关键（这条最容易被漏掉 ✗✗✗）
+--     container.lua:1059 OnUpdate 里会**按距离**把面板关掉：
+--         elseif mount or not (opener:IsValid()
+--                 and opener:IsNear(self.inst, CONTAINER_AUTOCLOSE_DISTANCE) ...) then
+--             self:Close(opener)          ← 走远了就关 ✗
+--     而 container.lua:620 打开时是这么起定时器的：
+--         if not self.skipautoclose then self.inst:StartUpdatingComponent(self) end
+--     ⇒ **打开前把 skipautoclose 顶成 true** ⇒ 那个定时器压根不会起 ⇒ 距离就管不着了 ✓
+--     ★ 记住原值、关干净了再还原 ✓（这台机器以后正常开的时候行为不变 ✓）
+--       （用户自己「鬼域空间」也是靠 skipautoclose 做到"跟着角色永不自动关闭"的 ✓ 同一条路 ✓）
+--
+--   ★ 绑定信息存**坐标**（预制体里解释过为什么不是实体引用 ✓ 引用存不进存档 ✗）
+-- ==========================================================
+local MCLINK_BUILD = "lazy_mclink"
+local MCLINK_MC    = "lazy_matter_converter"
+local MCL_DEBUG    = false
+
+-- 手上/身上的连接器：先看动作自带的对象 ✓ 再兜底查手上拿的 ✓
+--   （拆除器那套也是这么兜底的 ✓ 见上面 _gm_held_remover ✓）
+local function MCL_Linker(act, doer)
+    local o = act ~= nil and act.invobject or nil
+    if o ~= nil and o:IsValid() and o.prefab == MCLINK_BUILD then
+        return o
+    end
+    if doer ~= nil and doer:IsValid() and doer.components.inventory ~= nil then
+        local inv = doer.components.inventory
+        local h = inv:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if h ~= nil and h:IsValid() and h.prefab == MCLINK_BUILD then
+            return h
+        end
+        -- ★ 兜底②：动作没带对象、手上也没装备 ⇒ 把背包翻一遍 ✓
+        --   （正常走不到这 ✓ 但多一层就不会出现"莫名其妙打不开"✗）
+        local found = nil
+        pcall(function()
+            found = inv:FindItem(function(it)
+                return it ~= nil and it.prefab == MCLINK_BUILD
+            end)
+        end)
+        if found ~= nil and found:IsValid() then
+            return found
+        end
+    end
+    return nil
+end
+
+-- 找出这台连接器绑定的转换机
+--   ① 活引用还在 ⇒ 直接用 ✓
+--   ② 引用没了（读档了 / 跨过了存档）⇒ 按坐标 + 半径重找 ✓
+local function MCL_FindConverter(linker)
+    if linker == nil or not linker:IsValid() then
+        return nil
+    end
+    local live = linker._linked_mc
+    if live ~= nil and live:IsValid() then
+        return live
+    end
+    linker._linked_mc = nil
+    local x, y, z = linker._lx, linker._ly, linker._lz
+    if x == nil or y == nil or z == nil then
+        return nil
+    end
+    local ok, ents = pcall(function()
+        return TheSim:FindEntities(x, y, z, 4, { "structure" })
+    end)
+    if not ok or ents == nil then
+        return nil
+    end
+    for _, e in ipairs(ents) do
+        if e.prefab == MCLINK_MC then
+            linker._linked_mc = e
+            if MCL_DEBUG then
+                print("[饥荒懒人][MCL] 按坐标找回绑定的转换机 ✓（读档后走这条路 ✓）")
+            end
+            return e
+        end
+    end
+    return nil
+end
+
+local function MCL_Say(doer, msg)
+    if doer ~= nil and doer:IsValid() and doer.components.talker ~= nil then
+        local ok = pcall(function() doer.components.talker:Say(msg) end)
+        if not ok then return end
+    end
+end
+
+-- ---- ①【绑定】左键点物质转换机 ----
+AddAction("LAZY_MC_LINK", "绑定", function(act)
+    if act == nil then return false end
+    local doer = act.doer
+    local mc = act.target
+    local linker = MCL_Linker(act, doer)
+    if linker == nil then
+        print("[饥荒懒人][MCL] 绑定：✗ 手上没拿到物质连接器")
+        return false
+    end
+    if mc == nil or not mc:IsValid() or mc.prefab ~= MCLINK_MC then
+        print("[饥荒懒人][MCL] 绑定：✗ 目标不是物质转换机（"
+            .. tostring(mc ~= nil and mc.prefab or "nil") .. "）")
+        return false
+    end
+    -- 客机只举手 ✓（和放生那套一致 ✓）
+    if not TheWorld.ismastersim then
+        return true
+    end
+    local ok, err = pcall(function()
+        linker._linked_mc = mc
+        local x, y, z = mc.Transform:GetWorldPosition()
+        linker._lx, linker._ly, linker._lz = x, y, z
+        if linker._mclink_bound ~= nil then
+            linker._mclink_bound:set(true)
+        end
+        -- ★ 把"绑的是哪台机器"同步给客户端 ✓（客机远距离要自己开面板 ✓ 见下面远程打开）
+        if linker._mclink_target ~= nil then
+            linker._mclink_target:set(mc)
+        end
+    end)
+    if not ok then
+        print("[饥荒懒人][MCL] 绑定：✗ 出错（已拦下 ✓）：" .. tostring(err))
+        return false
+    end
+    MCL_Say(doer, "连上了。")
+    print("[饥荒懒人][MCL] 绑定成功 ✓（放物品栏里右键就能远程开这台机器 ✓）")
+    return true
+end)
+
+-- ---- ②【远程打开】物品栏里右键连接器 ----
+AddAction("LAZY_MC_REMOTE_OPEN", "远程打开", function(act)
+    if act == nil then return false end
+    local doer = act.doer
+    local linker = MCL_Linker(act, doer)
+    if linker == nil then
+        print("[饥荒懒人][MCL] 远程打开：✗ 没拿到连接器")
+        return false
+    end
+    -- ★★★ 客机：远距离下**服务端管不到我们** ✗✗✗
+    --   实测（master_server_log.txt）：
+    --     服务端 opencount 一直是 1、面板一直开着 ✓ 可客户端什么都没显示 ✗
+    --   真因：客户端是靠引擎把 container_classified / container_opener 这两个
+    --         **classified 实体**送过来，才自动开面板的
+    --         （container_replica.lua:49-59 ✓）
+    --         **远距离下引擎不送** ⇒ 客户端永远不知道要开 ✗
+    --         ★ 这就是为什么「简易储存」那个模组要自造**假容器 + 自绘 UI** 来绕开 ✗
+    --   ⇒ 折中：客机自己动手开本地面板 ✓ 目标从 net_entity 拿 ✓
+    --     内容能不能显示要看引擎有没有把 container_classified 送过来（下面有日志 ✓ 一看就知道 ✓）
+    if not TheWorld.ismastersim then
+        local okc, errc = pcall(function()
+            local mc = linker._mclink_target ~= nil and linker._mclink_target:value() or nil
+            if mc == nil or not mc:IsValid() then
+                print("[饥荒懒人][MCL] 客机：✗ net_entity 还没同步到目标转换机")
+                return
+            end
+            -- ★★★ 不再自己开真容器了 ✗✗✗
+            --   实测：直接 ThePlayer.HUD:OpenContainer(mc) 在远距离下**一片空白** ✗
+            --   因为引擎不把 container_classified 送给远处的人 ✗（网络层，改不了 ✗）
+            --   ⇒ 改成举手：让服务端把「机器的样子」打包发过来 ✓（假容器方案 ✓）
+            SendModRPCToServer(GetModRPC("LAZY_MCL", "request"), mc.GUID)
+            print("[饥荒懒人][MCL] 客机：已请求服务端把机器的样子发过来 ✓")
+        end)
+        if not okc then
+            print("[饥荒懒人][MCL] 客机请求出错：" .. tostring(errc))
+        end
+        return true
+    end
+    local ok, err = pcall(function()
+        local mc = MCL_FindConverter(linker)
+        if mc == nil then
+            print("[饥荒懒人][MCL] 远程打开：✗ 找不到绑定的转换机（拆了？或者没绑过？）")
+            MCL_Say(doer, "那头没东西了。")
+            return
+        end
+        local c = mc.components.container
+        if c == nil then
+            print("[饥荒懒人][MCL] 远程打开：✗ 那台机器没有 container 组件")
+            return
+        end
+
+        -- ★★★ 无限距离：把"走远自动关"顶掉（见本段开头 ★★★ 那段说明 ✓）
+        --   ⚠⚠ 还原标记必须**独立**，不能拿原值当"改没改过"的判断依据 ✗✗✗
+        --      skipautoclose 默认是 **nil** 不是 false ✗
+        --      上一版写 `if c._lazy_prev_autoclose ~= nil then 还原 end`
+        --      ⇒ 原值是 nil ⇒ 条件永远不成立 ⇒ **还原从来没跑过** ✗
+        --      ⇒ 这台机器从此再也不自动关了 ✗（用户实测就是这个 ✗）
+        if c._mcl_saved == nil then
+            c._mcl_saved = true
+            c._mcl_prev  = c.skipautoclose      -- 可能是 nil ✓ 原样存着 ✓
+        end
+        c.skipautoclose = true
+        -- ★★ 远程打开期间：让 OnUpdate **整个跳过**这台机器 ✓✓✓
+        --   为什么光靠 skipautoclose 不够 ✗：
+        --     container.lua:620 `if not self.skipautoclose then StartUpdatingComponent()` ✓
+        --     ⇒ 它只能**阻止开定时器**，管不了**已经开着**的定时器 ✗
+        --     （物理开过一次就把定时器点着了；只要没关干净，它就一直在跑 ✗
+        --       用户实测：物理那次开着没关 ⇒ 远程打开后走远照样被关 ✗）
+        --   ⇒ 直接在下层把 OnUpdate 挡掉 ⇒ 不管定时器起没起、谁起的，都不可能按距离关 ✓
+        c._mcl_remote_open = true
+
+        -- ★★★ 2026/10/05 只有**主机**才开真容器 ✗✗✗
+        --   用户实测过一个很怪的现象：
+        --     「在范围外右键没反应，然后**走进范围面板自己弹出来**」✗
+        --   真因就在这里：服务端对**客机**也调了 c:Open(doer) ✗
+        --     ⇒ 那台机器在服务端变成"开着"状态 ✓
+        --     ⇒ 客机一走进网络范围、收到 container_classified ⇒ 面板自己冒出来 ✗
+        --   ⇒ 客机走的是**假容器**那条路（客户端举手 → 服务端发包 ✓）
+        --     服务端**绝不能**再给它开真容器 ✗
+        --   ★ doer.HUD 只有"主机自己/本地玩家"才有 ⇒ 拿它当判据最准 ✓
+        if doer ~= nil and doer.HUD ~= nil then
+            -- 主机：直接开真容器 ✓（同一个进程，没有任何网络问题 ✓）
+            if c.openlist == nil or c.openlist[doer] == nil then
+                c:Open(doer)
+            end
+        else
+            -- ★★★ 客机：**服务端直接发包给它** ✗✗✗
+            --   原来我写的是"客机自己举手发 RPC 来要" ✗ —— 那条路根本不通 ✗
+            --   实锤：日志里服务端打了「客机 ⇒ 不开真容器」，可客机那边
+            --         `客机：已请求服务端把机器的样子发过来` **一条都没有** ✗
+            --   真因：DST 里**客机的动作 fn 压根不跑** ✗（只有服务端跑那份 ✗）
+            --         INVENTORY 那条右键动作是 RemoteUseItemFromInvTile 发 RPC 上去的，
+            --         执行只在服务端 ✓
+            --   ⇒ 根本不用客机举手 ✗ **服务端本来就知道是谁点的** ✓ 直接发给他就行 ✓
+            print("[饥荒懒人][MCL] 客机 ⇒ 不开真容器 ✓ 走假容器那条路 ✓")
+            -- ★★★ 2026/10/05 右键改成**一开一关** ✗✗✗
+            --   用户要的：「在物品栏再右键一下关闭，一开一关」✓
+            --   为什么开关必须由**服务端**来判 ✗
+            --     已经查死：客机的动作 fn 压根不跑 ✗（只有服务端那份跑 ✓）
+            --     ⇒ 客机没法自己判断"现在开着没有" ⇒ 只能服务端记着 ✓
+            --   ⇒ 交给 LAZY_MCL_TOGGLE 处理：开着就发关闭包、关着就发开面板包 ✓
+            if GLOBAL.LAZY_MCL_TOGGLE ~= nil then
+                GLOBAL.LAZY_MCL_TOGGLE(doer, mc)
+            else
+                print("[饥荒懒人][MCL] ✗ LAZY_MCL_TOGGLE 还没挂上（假容器模块没载入？）")
+            end
+        end
+
+        -- ★ 双保险：直接把"看距离自动关"那个定时器停掉 ✓
+        --   container.lua:1059 OnUpdate 就是它跑出来的；没起过就停一下也无害 ✓
+        if c.opencount ~= nil and c.opencount > 0 then
+            pcall(function() c.inst:StopUpdatingComponent(c) end)
+        end
+
+        -- ★★ 2026/10/05 拆掉"自动重开"兜底 ✗✗✗
+        --   用户实测：加上它之后游戏崩了一次 ✗
+        --   原因：它在 DoPeriodicTask 里调 c:Open(doer) ✗
+        --         一旦 doer 失效（下线/读档/提前退出），
+        --         就会在**定时任务里抛错** ⇒ 定时任务里抛错能把服务端直接带崩 ✗
+        --   ★ 而且这个兜底本来就是"猜着补"✗
+        --     真正的问题已经查清了：**客机远距离收不到容器数据**（引擎不送 ✗）
+        --     那是网络层的事，重开多少次客户端都不会有内容 ✗
+        --   ⇒ 改用用户指定的方案：**假容器 + 自绘/复用界面**（照 简易储存 那套 ✓）
+        if MCL_DEBUG then
+            print("[饥荒懒人][MCL] 远程打开 ✓ 面板已开"
+                .. "（opencount=" .. tostring(c.opencount)
+                .. " / skipautoclose=" .. tostring(c.skipautoclose)
+                .. " / 原值=" .. tostring(c._mcl_prev) .. " ✓）")
+        end
+    end)
+    if not ok then
+        print("[饥荒懒人][MCL] 远程打开：✗ 出错（已拦下 ✓）：" .. tostring(err))
+        return false
+    end
+    return true
+end)
+
+-- ---- ③ container 组件：远程打开期间挡住"按距离自动关" + 关干净后还原 ----
+--   ★★ 判断"改过没有"用的是 **_mcl_saved** 这个独立标记 ✗✗✗
+--      绝不能用"原值是不是 nil"来判断 ✗（skipautoclose 默认就是 nil ✗ 第一版就死在这 ✓）
+--
+--   ★★ 光设 skipautoclose **不够** ✗✗✗（用户实测：离一点点远还是被关 ✓）
+--      container.lua:620 那句只能**阻止开定时器**，
+--      管不了**已经开着**的定时器 —— 物理开过一次就点着了，
+--      只要那次没关干净，它就一直跑，一样按距离关 ✗
+--      （唯一按距离关的地方：container.lua:1079，用 CONSTANTS.CONTAINER_AUTOCLOSE_DISTANCE = 3 ✓
+--        全原版只有这一处 ✓ 所以只要挡住这一处就绝对安全 ✓）
+--   ⇒ 直接在 OnUpdate 上挡：远程打开期间**整个跳过**这台机器 ✓
+AddComponentPostInit("container", function(self)
+    -- ① 远程打开期间 ⇒ 这个定时器做什么都不做 ✓（确定性 ✓ 不依赖谁先谁后 ✓）
+    local _MCL_OnUpdate = self.OnUpdate
+    self.OnUpdate = function(c, dt)
+        if c._mcl_remote_open then
+            return
+        end
+        return _MCL_OnUpdate(c, dt)
+    end
+
+    -- ② 关干净了 ⇒ 还原 skipautoclose + 清标记 + 顺手把定时器停掉 ✓
+    local _MCL_Close = self.Close
+    self.Close = function(c, doer)
+        _MCL_Close(c, doer)
+        if c.opencount == 0 and c._mcl_saved then
+            c.skipautoclose = c._mcl_prev      -- 还原（可能是 nil ✓ 那就还成 nil ✓）
+            c._mcl_saved = nil
+            c._mcl_prev = nil
+            c._mcl_remote_open = nil
+            pcall(function() c.inst:StopUpdatingComponent(c) end)
+            if MCL_DEBUG then
+                print("[饥荒懒人][MCL] 关干净了 ⇒ skipautoclose 已还原 ✓ 定时器已停 ✓")
+            end
+        end
+    end
+end)
+
+-- ---- ④ 状态机：主机和客机都要认这两条动作 ✓（客机少了连点击反馈都没有 ✗）----
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.LAZY_MC_LINK, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.LAZY_MC_LINK, "doshortaction"))
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.LAZY_MC_REMOTE_OPEN, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.LAZY_MC_REMOTE_OPEN, "doshortaction"))
+
+-- ---- ⑤ 左键绑定：装备在手上那条路（挂进本模组的左键分发表 ✓ 不另开 AddComponentAction ✗）----
+GLOBAL.LAZY_EQUIP_ACTIONS_LMB[MCLINK_BUILD] = function(inst, doer, target, actions, right)
+    if target ~= nil and target:IsValid() and target.prefab == MCLINK_MC then
+        table.insert(actions, ACTIONS.LAZY_MC_LINK)
+    end
+end
+
+-- ---- ⑥ 兜底：道具拿在鼠标上那条路也支持 ✓（多一条路不会错 ✓）----
+--   ★ USEITEM/inventoryitem 这个槽位本模组**之前没用过** ⇒ 不会覆盖任何人 ✓
+AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right)
+    if inst ~= nil and inst.prefab == MCLINK_BUILD
+        and target ~= nil and target:IsValid() and target.prefab == MCLINK_MC then
+        table.insert(actions, ACTIONS.LAZY_MC_LINK)
+        return
+    end
+    -- ==========================================================
+    -- ★★★ 2026/10/06【升级石板 · 拿在鼠标上指着转换机 ⇒「升级转换机」】✗✗✗
+    --   ★ **铁律 P1**：USEITEM + inventoryitem 这个槽位**只能注册一个** ✗
+    --     ⇒ 只能**并进这一条**里 ✓ 不能另开第二个 AddComponentAction ✗
+    --   ★ 为什么这里也要写一份（装备那条路在下面 LAZY_EQUIP_ACTIONS_LMB 里 ✓）：
+    --     ① 石板**装备在手上**左键点机器 ⇒ 走那条 ✓
+    --     ② 石板**拿在鼠标上**（物品栏里点起来）指着机器 ⇒ 走这条 ✓
+    --     两条都通 ⇒ 用户怎么拿都能升 ✓（连接器当年就是这么双保险的 ✓）
+    --   ★ 已经升级过的机器 ⇒ **不给提示** ✗（点了也白点 ⇒ 不如不给 ✓）
+    --     判断读的是 `_mc_upgraded` 这个 net_bool ✓ 客机上也有 ✓
+    --   ★ 这里的字符串/动作名都**写死**（不能用下面那些 local ✗
+    --     本文件铁律③：local 定义在后面 ⇒ 前面的代码看不到 ✗）
+    --     `ACTIONS.LAZY_MC_UPGRADE` 是**调用时**才取值的 ✓ 那时候早就注册好了 ✓
+    -- ==========================================================
+    if inst ~= nil and inst.prefab == "lazy_mcstone"
+        and target ~= nil and target:IsValid() and target.prefab == MCLINK_MC then
+        local up = false
+        pcall(function()
+            if target._mc_upgraded ~= nil then
+                up = target._mc_upgraded:value()
+            end
+        end)
+        if not up then
+            table.insert(actions, ACTIONS.LAZY_MC_UPGRADE)
+        end
+        return
+    end
+    -- ==========================================================
+    -- ★★★ 2026/10/06【大还丹 · 用食物"补充精华"就在这里一起给】✗✗✗
+    --   为什么放这里 ✗（用户实测 + 本模组的规矩 ✓）：
+    --     ① 我原来单独注册了 `USEITEM` + **`edible`** ✗ ⇒ 用户拿熟肉/冰淇淋/熟无花果
+    --        指着大还丹 **啥提示都没有** ✗ ⇒ 那个键**根本不会被采集到** ✗
+    --     ② 本条（`USEITEM` + **`inventoryitem`**）是**本模组早就在用、实机验证过的** ✓
+    --        （物质连接器就是靠它 ✓ 每件道具都有 inventoryitem ✓ 一定采得到 ✓）
+    --     ③ **铁律 P1**：一个模组在 (动作类型 + 组件) 这个槽位**只能注册一个** ✗
+    --        后注册的会**覆盖**先注册的 ✗ ⇒ 不能再开第二个 ✗
+    --        ⇒ 所以**并进这一条**里 ✓ 用 `inst:HasTag("edible")` 现判是不是食物 ✓
+    --   ★ 次数规则见上面 `DanFixAmount`（料理+10 / 普通食物+2 / 不认识的+6 ✓）
+    -- ==========================================================
+    -- ★★★ 2026/10/06【第三次修：**根本没有 `edible` 这个标签** ✗✗✗】
+    --   我原来写的是 `inst:HasTag("edible")` ✗ ⇒ 实测**永远 false** ✗ ⇒ 提示一次都不出现 ✓
+    --   实锤（回原版源码里查的 ✓）：
+    --     `grep 'AddTag("edible")'` ⇒ **0 处** ✗（edible 是**组件**，不是标签 ✗）
+    --     `AddTag("preparedfood")` ⇒ preparedfoods.lua:73 ✓（锅菜**确实**有标签 ✓）
+    --     ⇒ 食物能认的标签是这些：preparedfood ✓ 和 meat / veggie / fruit / fish …
+    --       这些**食材标签** ✓（熟肉=meat ✓ 冰淇淋=preparedfood+dairy ✓ 熟无花果=fruit ✓）
+    --   ⇒ 现在改成"**三选一**"认得出来的就是食物 ✓：
+    --     ① 有 preparedfood（锅菜 ✓）② 有任一食材标签（普通食物 ✓）
+    --     ③ 客机那边如果有 edible 的 replica ⇒ 也认 ✓（模组的怪食物兜底 ✓）
+    --   ★ 认不出的（既没标签也没 replica）⇒ **不出现提示** ✗
+    --     代价：极少数"啥标签都没打"的模组菜修不了 ✓（那种本来也少见 ✓）
+    --     好处：**拿石头/木头指着大还丹绝不会弹「补充精华」** ✓ 不会误吃你的东西 ✓
+    local isfood = false
+    if inst ~= nil then
+        if inst:HasTag("preparedfood") then
+            isfood = true
+        else
+            for _, t in ipairs(LAZY_DAN_FOOD_TAGS) do
+                if inst:HasTag(t) then
+                    isfood = true
+                end
+            end
+        end
+        if not isfood then
+            pcall(function()
+                if inst.replica ~= nil then
+                    -- ★ 客机上认食物用这三样（都是**客机真实存在**的 ✓）：
+                    --   edible replica ✓（模组菜就是靠它认出来的 ✓ 用户实测能修 ✓）
+                    --   perishable replica ✓（**会腐烂 = 一定是吃的** ✓ 无花果这类靠它 ✓）
+                    if inst.replica.edible ~= nil or inst.replica.perishable ~= nil then
+                        isfood = true
+                    end
+                end
+            end)
+        end
+    end
+    -- ★★★ 2026/10/06【第四次修：**客机上根本没有 `components.finiteuses`** ✗✗✗】
+    --   本模组自己的注释里就写着（`lazy_dan.lua` 那段 ✓）：
+    --     「itemtile.lua 服务端读 components.finiteuses / **客机读 DeserializeUsage**」✓
+    --   ⇒ 我上一版要求"目标必须有 finiteuses 组件" ✗
+    --     ⇒ **在客机上这个判断永远为假** ✗ ⇒ 提示永远不出现 ✓
+    --   ⇒ 现在改成：**能判出来就用它判（满了不给 ✓）
+    --                 判不出来就放行** ✓（宁可让玩家点，也不能不给点 ✓）
+    --     点了之后服务端那边会再校验一次 ✓ 无限吃那档会直接 return false ✓
+    --     代价：无限吃档下**可能看到提示但点了没反应** ✗（无害 ✓ 比点不了强 ✓）
+    local full = false
+    pcall(function()
+        local fu = target.components ~= nil and target.components.finiteuses or nil
+        if fu ~= nil then
+            local maxu = fu.total
+            if maxu == nil then
+                pcall(function() maxu = fu:GetMaxUses() end)
+            end
+            local cur = fu:GetUses()
+            if maxu ~= nil and cur >= maxu then
+                full = true
+            end
+        end
+    end)
+    if target ~= nil and target:IsValid() and target:HasTag("lazy_dan")
+        and isfood and not full then
+        -- ★ 不再读 components ✗（客机上没有 ⇒ 会直接报错 ✗ 上一版就留着这么一段 ✗）
+        table.insert(actions, ACTIONS.LAZY_DAN_FIX)
+    end
+end)
+
+-- ---- ⑦ 名字 / 描述 / 配方 ----
+STRINGS.NAMES.LAZY_MCLINK = "物质连接器"
+STRINGS.RECIPE_DESC.LAZY_MCLINK = "连上它，天涯若比邻。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.LAZY_MCLINK = "距离？那玩意儿跟这台机器没关系。"
+
+AddRecipe2("lazy_mclink",
+    {
+        Ingredient("goldnugget", 10),       -- 金块
+        Ingredient("gears", 6),             -- 齿轮
+        Ingredient("purplegem", 2),         -- 紫宝石
+        Ingredient("redgem", 4),            -- 红宝石
+    },
+    TECH.NONE,
+    {
+        atlas = "images/inventoryimages/lazy_mclink.xml",
+        image = "lazy_mclink.tex",
+    },
+    { "LAZY_TECH" })
+
+print("[饥荒懒人][MCL] 物质连接器已注册 ✓"
+    .. "（装备到手上左键点转换机=绑定 ✓ 物品栏右键=远程打开 ✓ 无限距离 ✓）")
+
+-- ==========================================================
+-- 【升级石板 · lazy_mcstone】★★★ 2026/10/06 用户点的功能
+--
+--   用户原话（这一轮的需求）：
+--     「就是用那个升级石板可以装备在手上，物品图标就是那个图片，掉落物也是同一个图片
+--       掉在地上的大小记得不要太小，然后鼠标指着物质转换机就可以提示升级转换机，
+--       左键点击一下人物走过去升级，升级完毕后，转换机变成"物质转换机升级常态"这个状态，
+--       大小是以前的大小位置，一样保留全部功能和之前机器的能量，
+--       就是机器头上多了一个能量收集器，同时靠近动画也变成升级后的靠近动画，
+--       然后物质转换机多了一个功能自动增长能量，每秒钟增长 0.5 的能量」
+--
+--   【配方】用户 2026/10/06 拍板：「这个要多个 boss 掉落物，加上灌装知识
+--           就是知识饮水机掉的，毕竟这个做出来就是无限能量」
+--     · 4 种 boss 掉落物 ✓（巨鹿 / 龙蝇 / 熊獾 / 蜂后 各一件 ✓）
+--     · 灌装知识 = 原版 `archive_lockbox` ✓
+--       （查证：strings.lua:3661 `ARCHIVE_LOCKBOX = "Distilled Knowledge"` ✓
+--         它就是远古档案馆那些"知识饮水机"吐出来的那个东西 ✓）
+--     · ★ 想调价格 ⇒ **只改下面 Ingredient 那几行** ✓ 别的地方都不用动 ✓
+--     · ★ 没用铥矿（用户："铥矿太好获得了，也不算后期" ✗）
+--
+--   【用完消耗 1 个】用户拍板 ✓（一叠就切 1 个 ✓ 单个就整个收走 ✓）
+-- ==========================================================
+local MCSTONE_BUILD = "lazy_mcstone"
+
+STRINGS.NAMES.LAZY_MCSTONE = "升级石板"
+STRINGS.RECIPE_DESC.LAZY_MCSTONE = "喂它一块，机器就自己长力气。"
+if STRINGS.CHARACTERS ~= nil and STRINGS.CHARACTERS.GENERIC ~= nil then
+    STRINGS.CHARACTERS.GENERIC.DESCRIBE.LAZY_MCSTONE = "板子上刻着字，可惜是古文。"
+end
+
+-- ==========================================================
+-- ★★★ 2026/10/07【加难度】用户：「感觉配方还是缺点难度」
+--   原来：4 种 boss 掉落各 1 + 灌装知识 4 ⇒ 太便宜（这是台**无限产能**的机器 ✗）
+--   现在（2026/10/07 用户第二次修正 ✓）：
+--     4 种 boss 掉落各 **2** ✓
+--     + **化石碎片 ×10**（`fossil_piece` ✓ 用户点名要的 ✓ 已核原版：fossil_piece.lua:107 ✓
+--         洞穴里的化石堆 / 石笋 挖出来的 ✓）
+
+```
+
