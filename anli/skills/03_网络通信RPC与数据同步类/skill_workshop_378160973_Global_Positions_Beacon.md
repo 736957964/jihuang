@@ -4333,3 +4333,174 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：吕布 (Mod 2918973258)
+- **变体场景与切面**：收录来自工坊 Mod 2918973258 (`吕布`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2918973258)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddBrainPostInit:frogbrain
+---給牛，獵犬和青蛙添加害怕的腦子
+AddBrainPostInit("frogbrain", ScareBrain)
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+
+AddBrainPostInit("beeguardbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+
+AddBrainPostInit("beargerbrain", ScareBrain)
+AddBrainPostInit("moosebrain", ScareBrain)
+AddBrainPostInit("deerclopsbrain", ScareBrain)
+AddBrainPostInit("dragonflybrain", ScareBrain)
+AddBrainPostInit("klausbrain", ScareBrain)
+AddBrainPostInit("beequeenbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("shadow_knightbrain", ScareBrain)
+
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("shadow_bishopbrain", ScareBrain)
+
+AddBrainPostInit("rookbrain", ScareBrain)
+AddBrainPostInit("shadow_rookbrain", ScareBrain)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:houndbrain
+AddBrainPostInit("frogbrain", ScareBrain)
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+
+AddBrainPostInit("beeguardbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+
+AddBrainPostInit("beargerbrain", ScareBrain)
+AddBrainPostInit("moosebrain", ScareBrain)
+AddBrainPostInit("deerclopsbrain", ScareBrain)
+AddBrainPostInit("dragonflybrain", ScareBrain)
+AddBrainPostInit("klausbrain", ScareBrain)
+AddBrainPostInit("beequeenbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("shadow_knightbrain", ScareBrain)
+
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("shadow_bishopbrain", ScareBrain)
+
+AddBrainPostInit("rookbrain", ScareBrain)
+AddBrainPostInit("shadow_rookbrain", ScareBrain)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:beefalobrain
+AddBrainPostInit("houndbrain", ScareBrain)
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+
+AddBrainPostInit("beeguardbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+
+AddBrainPostInit("beargerbrain", ScareBrain)
+AddBrainPostInit("moosebrain", ScareBrain)
+AddBrainPostInit("deerclopsbrain", ScareBrain)
+AddBrainPostInit("dragonflybrain", ScareBrain)
+AddBrainPostInit("klausbrain", ScareBrain)
+AddBrainPostInit("beequeenbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("shadow_knightbrain", ScareBrain)
+
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("shadow_bishopbrain", ScareBrain)
+
+AddBrainPostInit("rookbrain", ScareBrain)
+AddBrainPostInit("shadow_rookbrain", ScareBrain)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:beebrain
+AddBrainPostInit("beefalobrain", ScareBrain)
+AddBrainPostInit("beebrain", ScareBrain)
+
+AddBrainPostInit("beeguardbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+
+AddBrainPostInit("beargerbrain", ScareBrain)
+AddBrainPostInit("moosebrain", ScareBrain)
+AddBrainPostInit("deerclopsbrain", ScareBrain)
+AddBrainPostInit("dragonflybrain", ScareBrain)
+AddBrainPostInit("klausbrain", ScareBrain)
+AddBrainPostInit("beequeenbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("shadow_knightbrain", ScareBrain)
+
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("shadow_bishopbrain", ScareBrain)
+
+AddBrainPostInit("rookbrain", ScareBrain)
+AddBrainPostInit("shadow_rookbrain", ScareBrain)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:beeguardbrain
+
+AddBrainPostInit("beeguardbrain", ScareBrain)
+AddBrainPostInit("monkeybrain", ScareBrain)
+
+AddBrainPostInit("killerbeebrain", ScareBrain)
+AddBrainPostInit("krampusbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+AddBrainPostInit("walrusbrain", ScareBrain)
+AddBrainPostInit("catcoonbrain", ScareBrain)
+AddBrainPostInit("tallbirdbrain", ScareBrain)
+
+AddBrainPostInit("beargerbrain", ScareBrain)
+AddBrainPostInit("moosebrain", ScareBrain)
+AddBrainPostInit("deerclopsbrain", ScareBrain)
+AddBrainPostInit("dragonflybrain", ScareBrain)
+AddBrainPostInit("klausbrain", ScareBrain)
+AddBrainPostInit("beequeenbrain", ScareBrain)
+
+AddBrainPostInit("knightbrain", ScareBrain)
+AddBrainPostInit("shadow_knightbrain", ScareBrain)
+
+AddBrainPostInit("bishopbrain", ScareBrain)
+AddBrainPostInit("shadow_bishopbrain", ScareBrain)
+
+AddBrainPostInit("rookbrain", ScareBrain)
+AddBrainPostInit("shadow_rookbrain", ScareBrain)
+
+```
+

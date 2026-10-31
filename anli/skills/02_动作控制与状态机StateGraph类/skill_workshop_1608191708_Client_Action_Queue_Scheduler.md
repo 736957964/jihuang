@@ -10119,3 +10119,111 @@ AddPrefabPostInit("hiddenmoonlight_item", function(inst)
 
 ```
 
+
+
+### 变体演进：月裔王冠 (Mod 3823894945)
+- **变体场景与切面**：收录来自工坊 Mod 3823894945 (`月裔王冠`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823894945)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+-- 仅拦截佩戴有效紫宝石王冠时的击飞，不改伤害结算。
+AddStategraphPostInit("wilson", function(sg)
+    local event = sg.events ~= nil and sg.events.knockback or nil
+    if event == nil or event.fn == nil then return end
+    local original = event.fn
+    event.fn = function(inst, data, ...)
+        local inventory = inst.components.inventory
+        local crown = inventory ~= nil and inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HEAD) or nil
+        if crown ~= nil and crown.prefab == "descendant_crown"
+            and crown.components.armor ~= nil and crown.components.armor:GetPercent() > 0
+            and crown.components.container ~= nil then
+            for i = 1, 5 do
+                local gem = crown.components.container:GetItemInSlot(i)
+                if gem ~= nil and gem.prefab == "purplegem" then return end
+            end
+        end
+        return original(inst, data, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:gestalt
+local protection = require("dcprotection")
+AddPrefabPostInit("gestalt", protection.Install)
+AddPrefabPostInit("lunar_grazer", protection.Install)
+AddStategraphPostInit("gestalt", protection.InstallStategraph)
+
+STRINGS.RECIPE_DESC.DESCENDANT_CROWN = "将月之启迪锻为月裔的王冠。"
+AddRecipe2("descendant_crown", {
+    GLOBAL.Ingredient("alterguardianhat", 1),
+    GLOBAL.Ingredient("ruinshat", 1),
+    GLOBAL.Ingredient("security_pulse_cage_full", 1),
+}, GLOBAL.TECH.LOST, {
+    atlas = "images/inventoryimages/descendant_crown.xml",
+    image = "descendant_crown.tex",
+}, {"ARMOUR", "MAGIC"})
+
+-- Native blueprint.lua creates descendant_crown_blueprint from this recipe.
+AddPrefabPostInit("alterguardian_phase3", function(inst)
+    if not GLOBAL.TheWorld.ismastersim or inst.components.lootdropper == nil then return end
+    inst.components.lootdropper:AddChanceLoot("descendant_crown_blueprint", 1)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lunar_grazer
+AddPrefabPostInit("gestalt", protection.Install)
+AddPrefabPostInit("lunar_grazer", protection.Install)
+AddStategraphPostInit("gestalt", protection.InstallStategraph)
+
+STRINGS.RECIPE_DESC.DESCENDANT_CROWN = "将月之启迪锻为月裔的王冠。"
+AddRecipe2("descendant_crown", {
+    GLOBAL.Ingredient("alterguardianhat", 1),
+    GLOBAL.Ingredient("ruinshat", 1),
+    GLOBAL.Ingredient("security_pulse_cage_full", 1),
+}, GLOBAL.TECH.LOST, {
+    atlas = "images/inventoryimages/descendant_crown.xml",
+    image = "descendant_crown.tex",
+}, {"ARMOUR", "MAGIC"})
+
+-- Native blueprint.lua creates descendant_crown_blueprint from this recipe.
+AddPrefabPostInit("alterguardian_phase3", function(inst)
+    if not GLOBAL.TheWorld.ismastersim or inst.components.lootdropper == nil then return end
+    inst.components.lootdropper:AddChanceLoot("descendant_crown_blueprint", 1)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:gestalt
+AddPrefabPostInit("lunar_grazer", protection.Install)
+AddStategraphPostInit("gestalt", protection.InstallStategraph)
+
+STRINGS.RECIPE_DESC.DESCENDANT_CROWN = "将月之启迪锻为月裔的王冠。"
+AddRecipe2("descendant_crown", {
+    GLOBAL.Ingredient("alterguardianhat", 1),
+    GLOBAL.Ingredient("ruinshat", 1),
+    GLOBAL.Ingredient("security_pulse_cage_full", 1),
+}, GLOBAL.TECH.LOST, {
+    atlas = "images/inventoryimages/descendant_crown.xml",
+    image = "descendant_crown.tex",
+}, {"ARMOUR", "MAGIC"})
+
+-- Native blueprint.lua creates descendant_crown_blueprint from this recipe.
+AddPrefabPostInit("alterguardian_phase3", function(inst)
+    if not GLOBAL.TheWorld.ismastersim or inst.components.lootdropper == nil then return end
+    inst.components.lootdropper:AddChanceLoot("descendant_crown_blueprint", 1)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardian_phase3
+-- Native blueprint.lua creates descendant_crown_blueprint from this recipe.
+AddPrefabPostInit("alterguardian_phase3", function(inst)
+    if not GLOBAL.TheWorld.ismastersim or inst.components.lootdropper == nil then return end
+    inst.components.lootdropper:AddChanceLoot("descendant_crown_blueprint", 1)
+end)
+
+```
+

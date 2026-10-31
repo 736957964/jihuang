@@ -613,3 +613,57 @@ end)
 
 ```
 
+
+
+### 变体演进：Proximity Voice (Mumble Bridge) (Mod 3814261116)
+- **变体场景与切面**：收录来自工坊 Mod 3814261116 (`Proximity Voice (Mumble Bridge)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3814261116)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", StartTracking)
+AddPrefabPostInit("forest", StartTracking)
+AddPrefabPostInit("cave", StartTracking)
+
+AddPlayerPostInit(function(inst)
+    inst:DoTaskInTime(0.5, function()
+        if inst == GLOBAL.ThePlayer then
+            StartTracking(inst)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+AddPrefabPostInit("world", StartTracking)
+AddPrefabPostInit("forest", StartTracking)
+AddPrefabPostInit("cave", StartTracking)
+
+AddPlayerPostInit(function(inst)
+    inst:DoTaskInTime(0.5, function()
+        if inst == GLOBAL.ThePlayer then
+            StartTracking(inst)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+AddPrefabPostInit("forest", StartTracking)
+AddPrefabPostInit("cave", StartTracking)
+
+AddPlayerPostInit(function(inst)
+    inst:DoTaskInTime(0.5, function()
+        if inst == GLOBAL.ThePlayer then
+            StartTracking(inst)
+        end
+    end)
+end)
+
+```
+

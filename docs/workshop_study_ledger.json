@@ -4260,8 +4260,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 05:08:36",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2918973258",
+      "name": "吕布",
+      "author": "作者:卍 代码:乌拉 贴图:烦恼此去经年 动画:阿平 特效:早雾",
+      "version": "1.9",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:10:07",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3412197227",
+      "name": "ACE Anti-cheat Buckup",
+      "author": "Cunning fox",
+      "version": "4.2.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 05:10:07",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3814261116",
+      "name": "Proximity Voice (Mumble Bridge)",
+      "author": "Robin",
+      "version": "1.1.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 05:10:07",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3823894945",
+      "name": "月裔王冠",
+      "author": "木心",
+      "version": "1.0.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:10:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:08:36"
+  "lastUpdated": "2026-11-01 05:10:07"
 }
