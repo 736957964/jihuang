@@ -4675,3 +4675,226 @@ end
 
 ```
 
+
+
+### 变体演进：共同管理-历史玩家信息(GUI) (Mod 3170978132)
+- **变体场景与切面**：收录来自工坊 Mod 3170978132 (`共同管理-历史玩家信息(GUI)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3170978132)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:shard_network
+
+AddPrefabPostInit('shard_network', function(inst)
+    if not inst.components.shard_serverinforecord then
+        inst:AddComponent('shard_serverinforecord')
+
+            
+        if M.MOD_OUTOFDATE_HANDLER_ENABLED and TheShard:IsMaster() then
+            
+            local handler = shard_serverinforecord.mod_out_of_date_handler
+            
+            -- add callbacks
+            handler:Add(function(mod)
+                ExecuteCommandFromServer(M.COMMAND_ENUM.MODOUTOFDATE, true, nil) -- start a vote_state
+                M.MOD_OUTOFDATE_VOTE_PASSED_FLAG = false
+                if M.MOD_OUTOFDATE_VOTE_DEFAULT_ACTION then
+                    execute_in_time_nonstatic(35, function()
+                        -- do default action while vote is failed to pass
+                        if not M.MOD_OUTOFDATE_VOTE_PASSED_FLAG then
+                            -- vote failed to pass
+                            ExecuteCommandFromServer(M.COMMAND_ENUM.MODOUTOFDATE, false, M.MOD_OUTOFDATE_VOTE_DEFAULT_ACTION)
+                        end
+                        M.MOD_OUTOFDATE_VOTE_PASSED_FLAG = nil
+                    end)
+                end
+            end, true) -- trigger only once
+            
+        end
+        
+    end
+end)
+
+
+-- master only
+if TheShard:IsMaster() then
+
+-- listen for newplayerwall state change
+AddPrefabPostInit('world', function(inst)
+    inst:ListenForEvent('master_newplayerwallupdate', function(src, data)
+        -- redirect MINIMUM level to USER
+        local required_min_level = data.required_min_level == M.PERMISSION.MINIMUM and M.PERMISSION.USER or data.required_min_level
+        if data.old_state == data.new_state then return end
+        if data.new_state then
+            -- allow new players to join
+            M.announce(S.AUTO_NEW_PLAYER_WALL_STATE_ALLOW)
+        else
+            -- not allow new players to join
+            M.announce_fmt(
+                S.FMT_AUTO_NEW_PLAYER_WALL_STATE_NOT_ALLOW, 
+                S.LEVEL_PRETTY_NAME[M.LevelEnumToName(required_min_level)]
+            )
+        end
+    end)
+end)
+
+
+local OldFinishVote = UserCommands.FinishVote
+
+-- is this really works?
+UserCommands.FinishVote = function(commandname, params, voteresults)
+    local passed = OldFinishVote(commandname, params, voteresults)
+    dbg('on FinishVote: {commandname = }, {params = }, {voteresults = }, {passed = }')
+    if not passed then
+
+        -- vote not passed
+        local command = UserCommands.GetCommandFromName(commandname)
+        if command.votefailedserverfn then
+            command.votefailedserverfn(params, nil)
+        end
+    end
+end
+
+end
+
+
+-- Server codes end ------------------------------------------------------------
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- listen for newplayerwall state change
+AddPrefabPostInit('world', function(inst)
+    inst:ListenForEvent('master_newplayerwallupdate', function(src, data)
+        -- redirect MINIMUM level to USER
+        local required_min_level = data.required_min_level == M.PERMISSION.MINIMUM and M.PERMISSION.USER or data.required_min_level
+        if data.old_state == data.new_state then return end
+        if data.new_state then
+            -- allow new players to join
+            M.announce(S.AUTO_NEW_PLAYER_WALL_STATE_ALLOW)
+        else
+            -- not allow new players to join
+            M.announce_fmt(
+                S.FMT_AUTO_NEW_PLAYER_WALL_STATE_NOT_ALLOW, 
+                S.LEVEL_PRETTY_NAME[M.LevelEnumToName(required_min_level)]
+            )
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+-- this should be call on both server & client 
+AddPrefabPostInit('player_classified', function(inst)
+    inst.net_permission_level = net_byte(inst.GUID, 'manage_together.permission_level', 'permission_level_changed')
+    
+    -- to tell the truth, I don't think the commands will more than 64 in the future...
+    -- so we just make a happy hard code.
+    -- lua integer size have 64 bits, however netver does not supports 64 bits integer type,
+    -- so we should add 2 net_uint(32 bits) variables 
+    inst.net_permission_masks = {
+        net_uint(inst.GUID, 'manage_together.permission_masks[1]', 'permission_mask_changed'),
+        net_uint(inst.GUID, 'manage_together.permission_masks[2]', 'permission_mask_changed')
+    }
+    inst.net_vote_permission_masks = {
+        net_uint(inst.GUID, 'manage_together.vote_permission_masks[1]', 'vote_permission_mask_changed'),
+        net_uint(inst.GUID, 'manage_together.vote_permission_masks[2]', 'vote_permission_mask_changed')
+    }
+
+
+    inst.net_suppress_mod_outofdate_announcement = net_bool(inst.GUID, 'manage_together.suppress_mod_outofdate_annoucement', 'suppress_mod_outofdate_annoucement_state_changed')
+
+
+    inst.permission_level = M.PERMISSION.USER
+    inst.permission_mask = 0
+    inst.vote_permission_mask = 0
+    inst.allow_new_players_to_connect = false
+    inst.auto_new_player_wall_enabled = false
+    inst.last_query_player_record_timestamp = nil
+    inst.next_query_player_record_block_index = 1
+
+    inst.suppress_mod_outofdate_annoucement = false
+
+    inst:ListenForEvent('permission_level_changed', function()
+        inst.permission_level = inst.net_permission_level:value()
+        dbg('player_classified: permission_level_changed: ', inst.permission_level)
+    end)
+    
+    inst:ListenForEvent('permission_mask_changed', function()
+        inst.permission_mask = M.concatbit32to64(inst.net_permission_masks[1]:value(), inst.net_permission_masks[2]:value())
+        dbg('player_classified: permission_mask_changed: ', inst.permission_mask)
+    end)
+    
+    inst:ListenForEvent('vote_permission_mask_changed', function()
+        inst.vote_permission_mask = M.concatbit32to64(inst.net_vote_permission_masks[1]:value(), inst.net_vote_permission_masks[2]:value())
+        dbg('player_classified: vote_permission_mask_changed: ', inst.vote_permission_mask)
+    end)
+
+    inst:ListenForEvent('suppress_mod_outofdate_annoucement_state_changed', function()
+        inst.suppress_mod_outofdate_annoucement = inst.net_suppress_mod_outofdate_announcement:value()
+
+        if not TheWorld.ismastersim then
+            GLOBAL.Networking_ModOutOfDateAnnouncement = inst.suppress_mod_outofdate_annoucement and function()end or original_mod_out_of_date_callback
+        end
+    end)
+
+
+    if TheWorld then
+        inst:ListenForEvent('player_record_sync_completed', function(src, has_more)
+            if has_more then
+                local last = inst.next_query_player_record_block_index
+                inst.next_query_player_record_block_index = last and (last + 1) or 1
+            else
+                -- all of the existing records are received, 
+                -- we just need to receive the updated reocrds now
+                inst.next_query_player_record_block_index = nil
+            end
+        end, TheWorld)
+
+        if TheWorld.ismastersim then
+            --  server side of player_classified
+
+            local recorder = TheWorld.shard.components.shard_serverinforecord
+
+            if M.MOD_OUTOFDATE_HANDLER_ENABLED then
+                 
+                inst:ListenForEvent('ms_modoutofdate_announcement_state_changed', function()
+                    dbg('player_classified: listened ms_modoutofdate_announcement_state_changed')
+                    inst.net_suppress_mod_outofdate_announcement:set(recorder.mod_out_of_date_handler:GetSuppressAnnouncement())
+                end, TheWorld.shard)
+                
+            end
+        end
+    end
+
+    inst.HasPermission = has_permission
+    inst.HasVotePermission = has_vote_permission
+    inst.SetPermission = set_permission
+    inst.QueryHistoryPlayers = query_history_players
+    inst.QuerySnapshotInformations = query_snapshot_informations
+    inst.QueryServerData = query_server_data
+    inst.RequestToExecuteCommand = request_to_execute_command
+    inst.RequestToExecuteVoteCommand = request_to_execute_vote_command
+    inst.IsCommandApplicableForPlayer = is_command_applicable_for_player
+    
+    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest_network
+
+AddPrefabPostInit('forest_network', function(inst)
+    inst:AddComponent('serverinforecord')
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave_network
+
+AddPrefabPostInit('cave_network', function(inst)
+    inst:AddComponent('serverinforecord')
+end)
+
+```
+

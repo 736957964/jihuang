@@ -4449,8 +4449,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 05:23:30",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2847103806",
+      "name": "Nanachi 试图修复版",
+      "author": "Haori & 宵征",
+      "version": "1.4.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:24:55",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2881794081",
+      "name": "Kitcoon Thing",
+      "author": "ZoomZoomBang",
+      "version": "0.06",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 05:24:55",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2923790645",
+      "name": "Quick Pick",
+      "author": "[BSy]Jupiter",
+      "version": "1.0",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 05:24:55",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3170978132",
+      "name": "共同管理-历史玩家信息(GUI)",
+      "author": "Raiscies",
+      "version": "0.4.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:24:55",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:23:30"
+  "lastUpdated": "2026-11-01 05:24:55"
 }

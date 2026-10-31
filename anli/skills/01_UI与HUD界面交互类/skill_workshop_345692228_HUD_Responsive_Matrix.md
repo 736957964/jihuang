@@ -136,3 +136,120 @@ end)
 
 ```
 
+
+
+### 变体演进：Quick Pick (Mod 2923790645)
+- **变体场景与切面**：收录来自工坊 Mod 2923790645 (`Quick Pick`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2923790645)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:sapling
+
+AddPrefabPostInit("sapling", pick)
+AddPrefabPostInit("marsh_bush", pick)
+AddPrefabPostInit("reeds", pick)
+AddPrefabPostInit("grass", pick)
+AddPrefabPostInit("berrybush2", pick)
+AddPrefabPostInit("berrybush_snake", pick)
+AddPrefabPostInit("berrybush2_snake", pick)
+AddPrefabPostInit("berrybush", pick)
+AddPrefabPostInit("flower_cave", pick)
+AddPrefabPostInit("flower_cave_double", pick)
+AddPrefabPostInit("flower_cave_triple", pick)
+AddPrefabPostInit("red_mushroom", pick)
+AddPrefabPostInit("green_mushroom", pick)
+AddPrefabPostInit("blue_mushroom", pick)
+AddPrefabPostInit("cactus", pick)
+AddPrefabPostInit("lichen", pick)
+AddPrefabPostInit("seaweed_planted", pick)
+AddPrefabPostInit("limpetrock", pick)
+AddPrefabPostInit("grass_water", pick)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:marsh_bush
+AddPrefabPostInit("sapling", pick)
+AddPrefabPostInit("marsh_bush", pick)
+AddPrefabPostInit("reeds", pick)
+AddPrefabPostInit("grass", pick)
+AddPrefabPostInit("berrybush2", pick)
+AddPrefabPostInit("berrybush_snake", pick)
+AddPrefabPostInit("berrybush2_snake", pick)
+AddPrefabPostInit("berrybush", pick)
+AddPrefabPostInit("flower_cave", pick)
+AddPrefabPostInit("flower_cave_double", pick)
+AddPrefabPostInit("flower_cave_triple", pick)
+AddPrefabPostInit("red_mushroom", pick)
+AddPrefabPostInit("green_mushroom", pick)
+AddPrefabPostInit("blue_mushroom", pick)
+AddPrefabPostInit("cactus", pick)
+AddPrefabPostInit("lichen", pick)
+AddPrefabPostInit("seaweed_planted", pick)
+AddPrefabPostInit("limpetrock", pick)
+AddPrefabPostInit("grass_water", pick)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:reeds
+AddPrefabPostInit("marsh_bush", pick)
+AddPrefabPostInit("reeds", pick)
+AddPrefabPostInit("grass", pick)
+AddPrefabPostInit("berrybush2", pick)
+AddPrefabPostInit("berrybush_snake", pick)
+AddPrefabPostInit("berrybush2_snake", pick)
+AddPrefabPostInit("berrybush", pick)
+AddPrefabPostInit("flower_cave", pick)
+AddPrefabPostInit("flower_cave_double", pick)
+AddPrefabPostInit("flower_cave_triple", pick)
+AddPrefabPostInit("red_mushroom", pick)
+AddPrefabPostInit("green_mushroom", pick)
+AddPrefabPostInit("blue_mushroom", pick)
+AddPrefabPostInit("cactus", pick)
+AddPrefabPostInit("lichen", pick)
+AddPrefabPostInit("seaweed_planted", pick)
+AddPrefabPostInit("limpetrock", pick)
+AddPrefabPostInit("grass_water", pick)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:grass
+AddPrefabPostInit("reeds", pick)
+AddPrefabPostInit("grass", pick)
+AddPrefabPostInit("berrybush2", pick)
+AddPrefabPostInit("berrybush_snake", pick)
+AddPrefabPostInit("berrybush2_snake", pick)
+AddPrefabPostInit("berrybush", pick)
+AddPrefabPostInit("flower_cave", pick)
+AddPrefabPostInit("flower_cave_double", pick)
+AddPrefabPostInit("flower_cave_triple", pick)
+AddPrefabPostInit("red_mushroom", pick)
+AddPrefabPostInit("green_mushroom", pick)
+AddPrefabPostInit("blue_mushroom", pick)
+AddPrefabPostInit("cactus", pick)
+AddPrefabPostInit("lichen", pick)
+AddPrefabPostInit("seaweed_planted", pick)
+AddPrefabPostInit("limpetrock", pick)
+AddPrefabPostInit("grass_water", pick)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:berrybush2
+AddPrefabPostInit("grass", pick)
+AddPrefabPostInit("berrybush2", pick)
+AddPrefabPostInit("berrybush_snake", pick)
+AddPrefabPostInit("berrybush2_snake", pick)
+AddPrefabPostInit("berrybush", pick)
+AddPrefabPostInit("flower_cave", pick)
+AddPrefabPostInit("flower_cave_double", pick)
+AddPrefabPostInit("flower_cave_triple", pick)
+AddPrefabPostInit("red_mushroom", pick)
+AddPrefabPostInit("green_mushroom", pick)
+AddPrefabPostInit("blue_mushroom", pick)
+AddPrefabPostInit("cactus", pick)
+AddPrefabPostInit("lichen", pick)
+AddPrefabPostInit("seaweed_planted", pick)
+AddPrefabPostInit("limpetrock", pick)
+AddPrefabPostInit("grass_water", pick)
+
+```
+

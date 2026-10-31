@@ -10801,3 +10801,68 @@ end)
 
 ```
 
+
+
+### 变体演进：Nanachi 试图修复版 (Mod 2847103806)
+- **变体场景与切面**：收录来自工坊 Mod 2847103806 (`Nanachi 试图修复版`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2847103806)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+
+AddPrefabPostInit("beefalo", function(inst)
+    if inst.components and inst.components.eater then
+    	local OldOnEat = inst.components.eater.oneatfn
+        inst.components.eater:SetOnEatFn(function(inst,food)
+        	if food:HasTag("nanachisoup") then
+        		inst.components.domesticatable:DeltaDomestication(0.05)
+        	end
+        	OldOnEat(inst,food)
+         end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:hutch_fishbowl
+
+AddPrefabPostInit("hutch_fishbowl",function(inst)
+	inst.OnNewSpawn = SpawnMitty(inst)
+end)]]
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:toadstool
+
+AddPrefabPostInit("toadstool", function(inst)
+	AddBossToIndicatorTable(inst)
+
+	if Toadstool_Cap then
+		RemoveBossFromIndicatorTable(Toadstool_Cap)
+	end
+	
+	inst:ListenForEvent("onremove", function(inst)
+		RemoveBossFromIndicatorTable(inst)
+		
+		if Toadstool_Cap then
+			AddBossToIndicatorTable(Toadstool_Cap)
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:toadstool_cap
+
+AddPrefabPostInit("toadstool_cap", function(inst)
+	inst:DoTaskInTime(0.1, function(inst)
+		if inst._state:value() > 0 then
+			AddBossToIndicatorTable(inst)
+			Toadstool_Cap = inst
+		end
+	end)
+end)
+
+```
+
