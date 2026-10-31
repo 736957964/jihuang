@@ -17880,3 +17880,104 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：更强的重生护符 stronger redamulet (Mod 3469175286)
+- **变体场景与切面**：收录来自工坊 Mod 3469175286 (`更强的重生护符 stronger redamulet`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3469175286)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：Title (Mod 3718982563)
+- **变体场景与切面**：收录来自工坊 Mod 3718982563 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3718982563)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+--取消受击硬直
+AddStategraphPostInit("wilson", function(sg)
+	local raW_otk = sg.events["attacked"].fn
+	sg.events["attacked"] = EventHandler("attacked", function(inst, data, ...)
+		if (inst:HasTag("asa_shielded") and not inst:HasTag("asa_unshield"))
+		or (inst:HasTag("asakiri") and (inst._maxType:value() == 2
+		or inst.components.asa_power:CheckModify("dread"))
+		or inst:HasTag("asa_sheather"))
+		then
+			return
+		end
+		return raW_otk(inst, data,...)
+	end)
+	Asa_SGpacks(sg)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(sg)
+	Asa_SGpacks(sg)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:healer
+--无法治疗
+AddComponentPostInit("healer", function(self)
+	local raW_h = self.Heal
+	self.Heal = function(self, target, ...)
+		if target:HasTag("asakiri") and not target:HasTag("isdead") then
+			if target.components.talker then
+				target:DoTaskInTime(.76, function()
+					target.components.talker:Say(STRINGS.CHARACTERS.ASA_UNHEAL)
+				end)
+			end
+			return false
+		end
+		return raW_h(self, target, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:maxhealer
+
+AddComponentPostInit("maxhealer", function(self)
+	local raW_h = self.Heal
+	self.Heal = function(self, target)
+		if target:HasTag("asakiri") and not target:HasTag("isdead") then
+			if target.components.talker then
+				target:DoTaskInTime(.7, function()
+					target.components.talker:Say(STRINGS.CHARACTERS.ASA_UNHEAL)
+				end)
+			end
+			return false
+		end
+		return raW_h(self, target)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:temperature
+---不会过冷，屏蔽SG的判断
+AddComponentPostInit("temperature", function(self)
+	local raW_fz = self.IsFreezing
+	self.IsFreezing = function(self)
+		if self.inst:HasTag("asakiri") and not forest then
+			return false
+		else
+			return raW_fz(self)
+		end
+	end
+end)
+
+```
+

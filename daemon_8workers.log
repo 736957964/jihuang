@@ -4893,3 +4893,30 @@
 [2026-11-01 06:24:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 06:24:29] Reducer: 成功将 Mod 3813222728 (Better Lag Compensation) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 06:24:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 06:24:33] Git 自动提交并推送成功！
+[2026-11-01 06:24:33] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 06:24:33] 【批次结算】：本批归约出 5 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 06:25:03] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3718982563', '3575429214', '3498044447', '3469175286', '3347815582', '2873257326']
+[2026-11-01 06:25:03] SteamCMD 下载 3718982563 ...
+[2026-11-01 06:25:03] SteamCMD 下载 3575429214 ...
+[2026-11-01 06:25:03] SteamCMD 下载 3498044447 ...
+[2026-11-01 06:25:03] SteamCMD 下载 3469175286 ...
+[2026-11-01 06:25:03] SteamCMD 下载 3347815582 ...
+[2026-11-01 06:25:03] SteamCMD 下载 2873257326 ...
+[2026-11-01 06:25:14] Worker [3718982563] 成功解析入库暂存区 -> Title (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 06:25:28] Worker [3575429214] 成功解析入库暂存区 -> Ranked DST (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 06:25:37] Worker [3498044447] 过滤拦截: Combined Compass Over Mini Map HUD (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 06:25:46] Worker [3469175286] 成功解析入库暂存区 -> 更强的重生护符 stronger redamulet (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 06:25:53] Worker [3347815582] 成功解析入库暂存区 -> Storage Robot Upgrade (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 06:26:02] Worker [2873257326] 成功解析入库暂存区 -> Lightning Rod for Moonstorm (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 06:26:02] Reducer Worker 7: 发现 5 份待存草稿，执行母本仲裁归约...
+[2026-11-01 06:26:02] Reducer: 成功将 Mod 2873257326 (Lightning Rod for Moonstorm) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 06:26:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 06:26:02] Reducer: 成功将 Mod 3347815582 (Storage Robot Upgrade) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 06:26:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 06:26:02] Reducer: 成功将 Mod 3469175286 (更强的重生护符 stronger redamulet) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 06:26:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 06:26:02] Reducer: 成功将 Mod 3575429214 (Ranked DST) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 06:26:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 06:26:02] Reducer: 成功将 Mod 3718982563 (Title) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 06:26:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md

@@ -5017,3 +5017,69 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Storage Robot Upgrade (Mod 3347815582)
+- **变体场景与切面**：收录来自工坊 Mod 3347815582 (`Storage Robot Upgrade`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3347815582)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：Ranked DST (Mod 3575429214)
+- **变体场景与切面**：收录来自工坊 Mod 3575429214 (`Ranked DST`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3575429214)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+  inst:DoTaskInTime(0, function(inst)
+    inst:PushEvent("ms_setautosaveenabled", false)
+  end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:miniflare
+if DEBUG_MODE then
+    AddRecipePostInit("miniflare", function(recipe)
+        recipe.ingredients = {}
+        recipe.numtogive = 10
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:yellowstaff
+    local TECH = GLOBAL.TECH
+    AddRecipePostInit("yellowstaff", function(recipe)
+        recipe.ingredients = {}
+        recipe.numtogive = 1
+        recipe.level = TECH.NONE
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:archive_resonator_item
+
+AddRecipePostInit("archive_resonator_item", function(recipe)
+    recipe.level = GLOBAL.TECH.SCIENCE_ONE
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:winch
+
+AddRecipePostInit("winch", function(recipe)
+    recipe.level = GLOBAL.TECH.SCIENCE_ONE
+end)
+
+```
+

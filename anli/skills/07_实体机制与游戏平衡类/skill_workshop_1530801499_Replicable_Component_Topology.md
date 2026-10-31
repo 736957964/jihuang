@@ -4584,3 +4584,62 @@ end)
 
 ```
 
+
+
+### 变体演进：Lightning Rod for Moonstorm (Mod 2873257326)
+- **变体场景与切面**：收录来自工坊 Mod 2873257326 (`Lightning Rod for Moonstorm`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2873257326)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:moonstormmanager
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+AddComponentPostInit("moonstormmanager", function(self)
+    local _activeplayers = UpvalueHacker.GetUpvalue(self.DoTestForLightning, "_activeplayers")
+    local customcheckfn = UpvalueHacker.GetUpvalue(self.DoTestForLightning, "customcheckfn")
+    local getlightningtime = UpvalueHacker.GetUpvalue(self.DoTestForLightning, "getlightningtime")
+
+    function self.DoTestForLightning()
+        local candidates = {}
+        for i, v in ipairs(_activeplayers) do
+            local pt = _G.Vector3(v.Transform:GetWorldPosition())
+            if _G.TheWorld.net.components.moonstorms and _G.TheWorld.net.components.moonstorms:IsPointInMoonstorm(pt) then
+                table.insert(candidates,v)
+            end
+        end
+
+        if #candidates > 0 then
+        	local candidate = candidates[math.random(1,#candidates)]
+            local pt = _G.Vector3(candidate.Transform:GetWorldPosition())
+            local pos = _G.FindWalkableOffset(pt, math.random()*2*_G.PI, 5 + math.random()* 10, 16, nil, nil, customcheckfn, nil, nil)
+
+            local closest_rod = nil
+            local ents = TheSim:FindEntities(pt.x, pt.y, pt.z, 40, {"lightningrod", "structure"}, { "playerghost", "INLIMBO" })
+            for _, v in pairs(ents) do
+                if closest_rod == nil and v.prefab == "lightning_rod" then
+                    closest_rod = v
+                end
+            end
+
+            if closest_rod ~= nil then
+                pt = closest_rod:GetPosition()
+                pos = _G.Vector3(0, 0, 0)
+                closest_rod:PushEvent("lightningstrike")
+            end
+
+            if pos then
+                local spark = _G.SpawnPrefab("moonstorm_lightning")
+                spark.Transform:SetPosition(pt.x + pos.x,0,pt.z + pos.z)
+            end
+        end
+        self.moonstorm_lightning_task = self.inst:DoTaskInTime(getlightningtime(), function() self:DoTestForLightning() end)
+    end
+
+    UpvalueHacker.SetUpvalue(self.DoTestForLightning, self.DoTestForLightning, "self.DoTestForLightning")
+end)
+
+```
+
