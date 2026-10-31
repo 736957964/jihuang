@@ -22226,3 +22226,353 @@ end)
 
 ```
 
+
+
+### 变体演进：哈比斯 (Mod 3244375467)
+- **变体场景与切面**：收录来自工坊 Mod 3244375467 (`哈比斯`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3244375467)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit(
+    'wilson',
+    function(sg)
+        by_run(sg)
+        by_mime(sg)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+)
+AddStategraphPostInit(
+    'wilson_client',
+    function(sg)
+        by_run(sg)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ghost
+--local xxx6_ghostbrain = require 'brains/xxx6_ghostbrain'
+AddPrefabPostInit(
+    'ghost',
+    function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+        --[[inst:DoTaskInTime(
+            0.1,
+            function()
+                inst:StopBrain()
+                inst:SetBrain(xxx6_ghostbrain)
+                inst:RestartBrain()
+            end
+        )]]
+        inst.components.combat:AddNoAggroTag('xxx6')
+        inst.components.combat:AddNoAggroTag("xxx6_reaper")
+
+        inst.components.health.save_maxhealth = true
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:ghostbrain
+require "behaviours/runaway"
+AddBrainPostInit("ghostbrain", function(self)
+    if self.OnStart then
+        local TARGET_CANT_TAGS = HY_UpvalueHacker.GetUpvalue(self.OnStart, "GetFollowTarget", "TARGET_CANT_TAGS")
+        if TARGET_CANT_TAGS then
+            table.insert(TARGET_CANT_TAGS, "xxx6")
+            table.insert(TARGET_CANT_TAGS, "xxx6_reaper")
+        end
+    end
+    local index = nil
+    for i,node in ipairs(self.bt.root.children) do
+        if node.name == "Parallel" and node.children[1].name == "FollowTarget" then
+            index = i
+            break
+        end
+    end
+    if index ~= nil then
+        table.insert(self.bt.root.children, index, RunAway(self.inst, {oneoftags={"xxx6", "xxx6_reaper"}, notags={"playerghost"}}, 
+            SEE_PLAYER_DIST, STOP_RUN_DIST, nil, nil, true))
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+--------------------------------------------------------------------------------
+AddComponentPostInit("health", function(self, inst)
+    --设置血量上限
+    if self.inst ~= nil and self.inst:HasTag("xxx6") then
+        local _ = rawget(self, "_")
+        local maxhealth_old = _["maxhealth"][2]
+        _["maxhealth"][2] = function(self, new, old)
+            maxhealth_old(self, math.min(new, 44444), old)
+        end
+        local currenthealth_old = _["currenthealth"][2]
+        _["currenthealth"][2] = function(self, new, old)
+            currenthealth_old(self, math.min(new, 44444), old)
+        end
+    end
+    --变身后正常受到时间伤害
+    local DoDelta_old = self.DoDelta
+    self.DoDelta = function(self, amount, overtime, cause, ignore_invincible, ...)
+        if self.inst.components.xxx6_reaper and self.inst.components.xxx6_reaper.reaper and cause == "oldager_component" then
+            return DoDelta_old(self, amount, overtime, cause, true, ...)
+        end
+        return DoDelta_old(self, amount, overtime, cause, ignore_invincible, ...)
+    end
+    --变身后斩杀效果
+    local SetVal_old = self.SetVal
+    self.SetVal = function(self, val, cause, afflicter, ...)
+        if not self.inst:HasTag("ghost") and afflicter and afflicter:HasTag("xxx6_reaper") and val < self.maxhealth*.05 
+                and (not self.minhealth or self.minhealth <= 0) and self.inst.fx_zstx == nil then
+            self.minhealth = 1
+            self.inst:AddTag("notarget")
+            HBS_TimeStop(self.inst)
+            self.inst.fx_zstx = SpawnPrefab('xxx6_zstx')
+            if self.inst.fx_zstx ~= nil then
+                self.inst.fx_zstx.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
+            end
+            self.inst:DoTaskInTime(0.5, function()
+                HBS_TimeStart(self.inst)
+                if self.inst.SoundEmitter then
+                    self.inst.SoundEmitter:PlaySound('xxx6_sounds/xxx6_sounds/zstx', 'zstx', 10)
+                end
+                self.minhealth = 0
+                self.inst:DoTaskInTime(1, function() self.inst:RemoveTag("notarget") end)
+                if afflicter:IsValid() then
+                    afflicter:PushEvent('killed', {victim = self.inst, attacker = afflicter})
+                end
+                self:Kill()
+            end)
+        end
+        return SetVal_old(self, val, cause, afflicter, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：神秘复苏-人物 (Mod 3781692953)
+- **变体场景与切面**：收录来自工坊 Mod 3781692953 (`神秘复苏-人物`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3781692953)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:smfs_yz
+
+AddPrefabPostInit("smfs_yz", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+
+    local old_DoDelta = inst.components.health.DoDelta
+    inst.components.health.DoDelta = function(self, amount, overtime, cause, ...)
+        if amount < 0 then
+            local damage = -amount
+            local pool = TheWorld._smfs_figurine_pool_max or 0
+
+            if pool > 0 then
+                if pool >= damage then
+                    TheWorld._smfs_figurine_pool_max = pool - damage
+                    TheWorld._smfs_figurine_pool_pending = (TheWorld._smfs_figurine_pool_pending or 0) + damage
+                    return 0
+                else
+                    local overflow = damage - pool
+                    TheWorld._smfs_figurine_pool_pending = (TheWorld._smfs_figurine_pool_pending or 0) + pool
+                    TheWorld._smfs_figurine_pool_max = 0
+                    return old_DoDelta(self, -overflow, overtime, cause, ...)
+                end
+            end
+        end
+        return old_DoDelta(self, amount, overtime, cause, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:smfs_yj
+-- ========== 杨间护甲削弱被动（常驻） ==========
+AddPrefabPostInit("smfs_yj", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+
+    inst:ListenForEvent("equip", function(inst, data)
+        if data and data.item and data.item.components.armor then
+            local armor = data.item.components.armor
+            if not armor._smfs_yj_old_GetAbsorption then
+                armor._smfs_yj_old_GetAbsorption = armor.GetAbsorption
+                armor.GetAbsorption = function(self, damage, ...)
+                    local abs = armor._smfs_yj_old_GetAbsorption(self, damage, ...)
+                    return abs * 0.2
+                end
+            end
+        end
+    end)
+
+    inst:ListenForEvent("unequip", function(inst, data)
+        if data and data.item and data.item.components.armor then
+            local armor = data.item.components.armor
+            if armor._smfs_yj_old_GetAbsorption then
+                armor.GetAbsorption = armor._smfs_yj_old_GetAbsorption
+                armor._smfs_yj_old_GetAbsorption = nil
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+-- ========== 方世明鬼风快速采集 ==========
+AddStategraphPostInit("wilson", function(sg)
+    local old_pick_deststate = sg.actionhandlers[ACTIONS.PICK].deststate
+    sg.actionhandlers[ACTIONS.PICK].deststate = function(inst, action, ...)
+        -- 方世明鬼风开启时快速采集
+        if inst:HasTag("smfs_fsm") and inst.smfs_fsm_ghostwind then
+            return "doshortaction"
+        end
+        return old_pick_deststate(inst, action, ...)
+    end
+    
+    local old_harvest_deststate = sg.actionhandlers[ACTIONS.HARVEST].deststate
+    sg.actionhandlers[ACTIONS.HARVEST].deststate = function(inst, action, ...)
+        if inst:HasTag("smfs_fsm") and inst.smfs_fsm_ghostwind then
+            return "doshortaction"
+        end
+        return old_harvest_deststate(inst, action, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(sg)
+    local old_pick_deststate = sg.actionhandlers[ACTIONS.PICK].deststate
+    sg.actionhandlers[ACTIONS.PICK].deststate = function(inst, action, ...)
+        if inst:HasTag("smfs_fsm") and inst.smfs_fsm_ghostwind then
+            return "doshortaction"
+        end
+        return old_pick_deststate(inst, action, ...)
+    end
+    
+    local old_harvest_deststate = sg.actionhandlers[ACTIONS.HARVEST].deststate
+    sg.actionhandlers[ACTIONS.HARVEST].deststate = function(inst, action, ...)
+        if inst:HasTag("smfs_fsm") and inst.smfs_fsm_ghostwind then
+            return "doshortaction"
+        end
+        return old_harvest_deststate(inst, action, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:smfs_fsm
+-- ========== 方世明技能 ==========
+AddPrefabPostInit("smfs_fsm", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+
+    -- 每秒tick复苏值
+    inst:DoPeriodicTask(1, function(inst)
+        if inst.components.smfs_fsm_su then
+            inst.components.smfs_fsm_su:OnTick()
+        end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：神·卡尼猫 Carney (Mod 3793295954)
+- **变体场景与切面**：收录来自工坊 Mod 3793295954 (`神·卡尼猫 Carney`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3793295954)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:lunarhailbuildup
+
+    AddComponentPostInit("lunarhailbuildup", function(self)
+        local builtin_doworktoremovebuildup = self.DoWorkToRemoveBuildup
+        function self:DoWorkToRemoveBuildup(workcount, doer)
+            builtin_doworktoremovebuildup(self, workcount, doer)
+            -- 如果玩家未持有锁
+            if self.workleft == 0 and doer and doer:HasTag("player") and CCtrl:CanUse() then
+                doer:PushEvent("ch_cleandone", { source = self.inst })
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:pickable
+
+    AddComponentPostInit("pickable", function(self)
+        local builtin_fertilize = self.Fertilize
+        function self:Fertilize(fertilizer, doer)
+            local res = builtin_fertilize(self, fertilizer, doer)
+            -- 如果玩家未持有互斥锁
+            if doer and doer:HasTag("player") and CCtrl:CanUse() then
+                doer:PushEvent("ch_fertdone", { source = self.inst, fertilizer = fertilizer })
+            end
+            return res
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:shelf
+
+    AddComponentPostInit("shelf", function(self)
+        local builtin_takeitem = self.TakeItem
+        function self:TakeItem(taker)
+            local cantake = self.cantakeitem and self.itemonshelf
+            local failed = self.takeitemtstfn and not self.takeitemtstfn(self.inst, taker, self.itemonshelf)
+            builtin_takeitem(self, taker)
+            -- 如果玩家未持有互斥锁
+            if taker and taker:HasTag("player") and CCtrl:CanUse() then
+                taker:PushEvent("ch_takedone", { source = self.inst })
+            end
+            return cantake and not failed
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:rock_avocado_fruit
+
+    AddPrefabPostInit("rock_avocado_fruit", function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+        inst:ListenForEvent("worked", do_chain_rockfruit)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:carney_sjzy
+-- 喂东西给圣洁之约后立刻刷新面板状态（否则要重新穿脱一次才会从「未激活」变成「开启/关闭」）
+AddPrefabPostInit("carney_sjzy", function(inst)
+    inst:DoTaskInTime(0, function()
+        local trader = inst.components ~= nil and inst.components.trader or nil
+        if trader == nil or trader.onaccept == nil then
+            return
+        end
+        local old = trader.onaccept
+        trader.onaccept = function(hat, giver, item, ...)
+            old(hat, giver, item, ...)
+            local owner = giver
+            if hat.components ~= nil and hat.components.inventoryitem ~= nil then
+                owner = hat.components.inventoryitem:GetGrandOwner() or giver
+            end
+            if owner ~= nil then
+                PackFxState(owner)
+            end
+        end
+    end)
+end)
+
+```
+

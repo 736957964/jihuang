@@ -6682,3 +6682,50 @@ if cfg_ghost_player then
 
 ```
 
+
+
+### 变体演进：󰀄 Ember Favor 󰀄 (Mod 2938233879)
+- **变体场景与切面**：收录来自工坊 Mod 2938233879 (`󰀄 Ember Favor 󰀄`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2938233879)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+	if not inst.ismastersim then
+		return inst
+	end
+	
+	inst:AddComponent("embereventmanager")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+
+AddPrefabPostInit("cave", function(inst)
+	if not inst.ismastersim then
+		return inst
+	end
+	
+	inst:AddComponent("embereventmanager")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablecookpot
+
+AddPrefabPostInit("portablecookpot", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	
+	if inst.components.stewer then
+		inst.components.stewer.emberfavorsymbol = "wood"
+	end
+end)
+
+```
+

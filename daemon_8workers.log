@@ -5335,3 +5335,28 @@
 [2026-11-01 07:49:20] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 07:49:21] Reducer: 成功将 Mod 3775474571 (MODE_SETTINGS) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 07:49:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:49:27] Git 自动提交并推送成功！
+[2026-11-01 07:49:28] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 07:49:28] 【批次结算】：本批归约出 6 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 07:49:58] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3793295954', '3244375467', '3781692953', '3585248553', '3554135715', '2938233879']
+[2026-11-01 07:49:58] SteamCMD 下载 3793295954 ...
+[2026-11-01 07:49:58] SteamCMD 下载 3244375467 ...
+[2026-11-01 07:49:58] SteamCMD 下载 3781692953 ...
+[2026-11-01 07:49:58] SteamCMD 下载 3585248553 ...
+[2026-11-01 07:49:58] SteamCMD 下载 3554135715 ...
+[2026-11-01 07:49:58] SteamCMD 下载 2938233879 ...
+[2026-11-01 07:50:10] Worker [3793295954] 成功解析入库暂存区 -> 神·卡尼猫 Carney (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 07:50:19] Worker [3244375467] 成功解析入库暂存区 -> 哈比斯 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 07:50:36] Worker [3781692953] 成功解析入库暂存区 -> 神秘复苏-人物 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 07:50:52] Worker [3585248553] 过滤拦截: Sweet House(菱白自用) (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 07:52:33] Worker [3554135715] 过滤拦截: Brusha the art fighter (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 07:53:45] Worker [2938233879] 成功解析入库暂存区 -> 󰀄 Ember Favor 󰀄 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 07:53:45] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 07:53:45] Reducer: 成功将 Mod 2938233879 (󰀄 Ember Favor 󰀄) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 07:53:45] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 07:53:45] Reducer: 成功将 Mod 3244375467 (哈比斯) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:53:45] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:53:45] Reducer: 成功将 Mod 3781692953 (神秘复苏-人物) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:53:45] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:53:45] Reducer: 成功将 Mod 3793295954 (神·卡尼猫 Carney) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:53:45] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md

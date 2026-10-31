@@ -5565,8 +5565,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 07:49:21",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2938233879",
+      "name": "󰀄 Ember Favor 󰀄",
+      "author": "The Cherry Team 󰀃",
+      "version": "1.1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:53:45",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3244375467",
+      "name": "哈比斯",
+      "author": "丧芝，HPMY，花菜，LUOXIA11，雨荧QAQ，C",
+      "version": "0.1.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:53:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3781692953",
+      "name": "神秘复苏-人物",
+      "author": "江雨落",
+      "version": "1.2.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:53:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3793295954",
+      "name": "神·卡尼猫 Carney",
+      "author": "柴柴、浅蓝色的羽翼、玖渚ちや",
+      "version": "2.5.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:53:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:49:21"
+  "lastUpdated": "2026-11-01 07:53:45"
 }
