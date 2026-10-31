@@ -2872,3 +2872,102 @@ end)
 
 ```
 
+
+
+### 变体演进：Habis+ (Mod 3829792009)
+- **变体场景与切面**：收录来自工坊 Mod 3829792009 (`Habis+`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3829792009)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(world)
+    if GLOBAL.TheNet:IsDedicated() then return end
+    local function UpdateWheelRecipeHint()
+        local player = GLOBAL.ThePlayer
+        local builder = player ~= nil and player.replica ~= nil and player.replica.builder or nil
+        local known = builder ~= nil and builder.KnowsRecipe ~= nil
+            and builder:KnowsRecipe("xxx6_mahoraga_wheel", true)
+        STRINGS.RECIPE_DESC.XXX6_MAHORAGA_WHEEL = known
+            and XXX6_WHEEL_UNLOCKED_DESCRIPTION or HABIS_TRANSLATE("I have not tamed Mahoraga yet", "Я ещё не подчинил махорагу")
+    end
+    world:DoPeriodicTask(.5, UpdateWheelRecipeHint, .2)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:friendly_soul
+
+AddPrefabPostInit("friendly_soul", function(inst)
+    if inst.displayname == nil or inst.displayname == "Missing Name"
+        or inst.displayname == "" then
+        inst.displayname = HABIS_TRANSLATE("Prison Realm", "Тюремное царство")
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(combat)
+    local old_can = combat.CanTarget
+    combat.CanTarget = function(self, target, ...)
+        if target ~= nil and target.prefab == "ghost" then return false end
+        return old_can(self, target, ...)
+    end
+    local old_attack = combat.DoAttack
+    combat.DoAttack = function(self, target, ...)
+        local victim = target or self.target
+        if self.inst.prefab == "ghost" or (victim ~= nil and victim.prefab == "ghost") then
+            return false
+        end
+        return old_attack(self, target, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ghost
+
+AddPrefabPostInit("ghost", function(inst)
+    if GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim then
+        inst:DoTaskInTime(0,function(g)
+            local d = GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld._xxx6_sukuna_recent_death or nil
+            if d ~= nil and GLOBAL.GetTime() <= d[3] and g:IsValid() then
+                local x,_,z=g.Transform:GetWorldPosition()
+                if (x-d[1])^2+(z-d[2])^2 <= 9 then g:Remove() end
+            end
+        end)
+    end
+    inst:AddTag("notarget")
+    inst:AddTag("noattack")
+    if not GLOBAL.TheWorld.ismastersim then return end
+    inst:DoTaskInTime(0, function(g)
+        if not g:IsValid() then return end
+        if g.components.combat ~= nil then
+            local combat = g.components.combat
+            combat:SetTarget(nil)
+            combat.CanTarget = function() return false end
+            combat.SetTarget = function() end
+            combat.DoAttack = function() return false end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:lootdropper
+
+AddComponentPostInit("lootdropper", function(self, inst)
+    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then return end
+    local _DropLoot = self.DropLoot
+    if _DropLoot == nil then return end
+    self.DropLoot = function(s, ...)
+        if inst ~= nil and inst._xxx6_captured_on_death == true then return end
+        if inst ~= nil and GetoKitTryAbsorbOnDeath(inst) then return end
+        return _DropLoot(s, ...)
+    end
+end)
+
+```
+

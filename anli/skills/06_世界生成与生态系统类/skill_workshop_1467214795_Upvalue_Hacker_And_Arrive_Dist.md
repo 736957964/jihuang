@@ -385,3 +385,50 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：超级保镖小Q (Mod 3829871506)
+- **变体场景与切面**：收录来自工坊 Mod 3829871506 (`超级保镖小Q`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3829871506)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:xiaoq_body
+
+AddPrefabPostInit("xiaoq_body", function(inst)
+    manager:OnBodyPostInit(inst)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:xiaoq_controller
+
+AddPrefabPostInit("xiaoq_controller", function(inst)
+    manager:OnControllerPostInit(inst)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:chester
+-- 一次性转换成独立 prefab；新存档不再使用原版切斯特。
+AddPrefabPostInit("chester", function(inst)
+    manager:OnLegacyChesterPostInit(inst)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:trinket_1
+
+AddPrefabPostInit("trinket_1", function(inst)
+    manager:OnRingPostInit(inst)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:teleportato_ring
+
+AddPrefabPostInit("teleportato_ring", function(inst)
+    manager:OnRingPostInit(inst)
+end)
+
+```
+

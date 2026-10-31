@@ -3657,8 +3657,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 03:43:15",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3829792009",
+      "name": "Habis+",
+      "author": "Ferox，Dog，丧芝，HPMY，花菜，LUOXIA11，雨荧QAQ，C",
+      "version": "0.2.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:44:44",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3829871506",
+      "name": "超级保镖小Q",
+      "author": "Baibai",
+      "version": "0.5.11-shard-health",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 03:44:44",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:43:15"
+  "lastUpdated": "2026-11-01 03:44:44"
 }
