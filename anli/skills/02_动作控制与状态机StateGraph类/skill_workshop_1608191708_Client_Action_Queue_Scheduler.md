@@ -18702,3 +18702,156 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：真正的双子魔眼 (Mod 3145586196)
+- **变体场景与切面**：收录来自工坊 Mod 3145586196 (`真正的双子魔眼`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3145586196)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    sg.actionhandlers[ACTIONS.CASTAOE].deststate=function(inst,action)
+        return action.invobject ~= nil
+                and (    (action.invobject:HasTag("aoeweapon_charge") and "playercharge") or
+                        (action.invobject:HasTag("aoeweapon_lunge") and "combat_lunge_start") or
+                        (action.invobject:HasTag("aoeweapon_leap") and (action.invobject:HasTag("superjump") and "combat_superjump_start" or "combat_leap_start")) or
+                        (action.invobject:HasTag("blowdart") and "blowdart_special") or
+                        (action.invobject:HasTag("throw_line") and "throw_line") or
+						(action.invobject:HasTag("book") and (inst:HasTag("canrepeatcast") and "book_repeatcast" or "book")) or
+                        (action.invobject:HasTag("parryweapon") and "parry_pre") or
+                        (action.invobject:HasTag("willow_ember") and "castspellmind")
+                    )
+                or "castspell"
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(sg)
+    sg.actionhandlers[ACTIONS.CASTAOE].deststate=function(inst,action)
+        return action.invobject ~= nil
+                and (   (action.invobject:HasTag("aoeweapon_charge") and "playercharge") or
+                        (action.invobject:HasTag("aoeweapon_lunge") and "combat_lunge_start") or
+                        (action.invobject:HasTag("aoeweapon_leap") and (action.invobject:HasTag("superjump") and "combat_superjump_start" or "combat_leap_start")) or
+                        (action.invobject:HasTag("blowdart") and "blowdart_special") or
+                        (action.invobject:HasTag("throw_line") and "throw_line") or
+						(action.invobject:HasTag("book") and (inst:HasTag("canrepeatcast") and "book_repeatcast" or "book")) or
+                        (action.invobject:HasTag("parryweapon") and "parry_pre") or
+                        (action.invobject:HasTag("willow_ember") and "castspellmind")
+                    )
+                or "castspell"
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shieldofterror
+
+AddPrefabPostInit("shieldofterror",function(inst)
+    inst:AddTag("aoeweapon_charge")
+    -- rechargeable (from rechargeable component) added to pristine state for optimization.
+    inst:AddTag("rechargeable")
+
+    inst:AddComponent("aoetargeting")
+    inst.components.aoetargeting:SetAllowRiding(false)
+    inst.components.aoetargeting.reticule.reticuleprefab = "reticuleline"
+    inst.components.aoetargeting.reticule.pingprefab = "reticulelineping"
+    inst.components.aoetargeting.allowwater=true
+    inst.components.aoetargeting.reticule.targetfn = Lightning_ReticuleTargetFn
+    inst.components.aoetargeting.reticule.mousetargetfn = Lightning_ReticuleMouseTargetFn
+    inst.components.aoetargeting.reticule.updatepositionfn = Lightning_ReticuleUpdatePositionFn
+    inst.components.aoetargeting.reticule.validcolour = { 1, .75, 0, 1 }
+    inst.components.aoetargeting.reticule.invalidcolour = { .5, 0, 0, 1 }
+    inst.components.aoetargeting.reticule.ease = true
+    inst.components.aoetargeting.reticule.mouseenabled = true
+
+    if not TheWorld.ismastersim then return end
+
+
+
+
+    inst._cooldown = 2
+
+    --inst.components.weapon:SetOnAttack(Lightning_OnAttack)
+
+
+    inst.components.aoetargeting:SetEnabled(true)
+
+
+    inst:AddComponent("aoespell")
+    inst.components.aoespell:SetSpellFn(SpellFn)
+
+    inst:AddComponent("rechargeable")
+    inst.components.rechargeable:SetOnDischargedFn(Lightning_OnDischarged)
+    inst.components.rechargeable:SetOnChargedFn(Lightning_OnCharged)
+
+    inst.components.equippable:SetOnEquip(onequip)
+    inst.components.equippable:SetOnUnequip(onunequip)
+
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:twinofterror1
+
+AddPrefabPostInit("twinofterror1",function(inst)
+    if not TheWorld.ismastersim then return end
+    inst.canlaser=true
+    inst.components.lootdropper:SetChanceLootTable("twin1hard")
+    inst.components.sleeper:SetResistance(16)
+    inst:AddComponent("twinattacker")
+    inst.components.twinattacker.team_type = "eyeofterror"
+    inst.components.combat:SetKeepTargetFunction(KeepTargetFn)
+    inst.components.combat:SetRetargetFunction(1, RetargetFn)
+    inst.components.locomotor.walkspeed=8
+
+    inst:SetStateGraph("SGtwinofterror")
+    inst:SetBrain(brain)
+    inst:ListenForEvent("attacked", OnAttacked)
+    --inst.OnSave = OnSave
+    --inst.OnLoad = OnLoad
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:twinofterror2
+
+AddPrefabPostInit("twinofterror2",function(inst)
+    if not TheWorld.ismastersim then return end
+    inst.canflame=true
+    inst.components.lootdropper:SetChanceLootTable("twin2hard")
+    inst.components.sleeper:SetResistance(16)
+    inst:AddComponent("twinattacker")
+    inst.components.twinattacker.team_type = "eyeofterror"
+    inst.components.combat:SetKeepTargetFunction(KeepTargetFn)
+    inst.components.combat:SetRetargetFunction(1, RetargetFn)
+    inst.components.locomotor.walkspeed=6
+
+    inst:SetStateGraph("SGtwinofterror")
+    inst:SetBrain(brain)
+    inst:ListenForEvent("attacked", OnAttacked)
+    --inst.OnSave = OnSave
+    --inst.OnLoad = OnLoad
+end)
+
+```
+
+
+
+### 变体演进：更强的火把 stronger torch (Mod 3481737098)
+- **变体场景与切面**：收录来自工坊 Mod 3481737098 (`更强的火把 stronger torch`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3481737098)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+

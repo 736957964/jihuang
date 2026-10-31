@@ -5300,3 +5300,24 @@ AddPrefabPostInit(
 
 ```
 
+
+
+### 变体演进：Berg Cub (Mod 1577400707)
+- **变体场景与切面**：收录来自工坊 Mod 1577400707 (`Berg Cub`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1577400707)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:bearger
+-- BEARGER LOOT
+AddPrefabPostInit("bearger", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		inst.components.lootdropper:AddChanceLoot("backcub", dropChance)
+	end
+end)
+
+```
+
