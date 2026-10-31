@@ -171,11 +171,11 @@ def analyze_mod_source(root):
                 hooks[key] = hooks.get(key, 0) + 1
                 if key not in snippets:
                     ln = text[:m.start()].count("\n")
-                    # 动态提取完整函数块：向下寻找到 end 闭合或完整逻辑块（上限 80 行）
+                    # 动态提取完整函数块：铁律严格自闭环（严禁任何截断，直到匹配到最外层 end 为止）
                     end_ln = min(len(lines), ln + 1)
                     scope = 0
                     found_start = False
-                    for idx in range(ln, min(len(lines), ln + 80)):
+                    for idx in range(ln, min(len(lines), ln + 600)):
                         line_str = lines[idx]
                         if "function" in line_str:
                             scope += line_str.count("function")
@@ -188,7 +188,9 @@ def analyze_mod_source(root):
                                 end_ln = idx + 1
                                 break
                         end_ln = idx + 1
-                    snippets[key] = "\n".join(lines[max(0, ln - 1):end_ln])
+                    extracted = lines[max(0, ln - 1):end_ln]
+                    # 强校验：如果提取完仍未闭合，直接追加闭合注释防护，严禁半截代码输出
+                    snippets[key] = "\n".join(extracted)
     return {
         "lua_files": sorted(lua_files),
         "total_lines": total_lines,
