@@ -5223,8 +5223,44 @@
       "category": "01_UI与HUD界面交互类",
       "studied_at": "2026-11-01 06:58:29",
       "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3759186161",
+      "name": "Durability & Repair",
+      "author": "k0za1ak",
+      "version": "1.3.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:00:13",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3799757584",
+      "name": "霞猫的藏珍",
+      "author": "霞猫",
+      "version": "1.3.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:00:13",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3813146646",
+      "name": "月影双修·全技能兼容版",
+      "author": "Tom",
+      "version": "0.4.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:00:13",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3815976284",
+      "name": "打击特效",
+      "author": "一点都不困",
+      "version": "1.4.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:00:13",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 06:58:29"
+  "lastUpdated": "2026-11-01 07:00:13"
 }

@@ -5321,3 +5321,46 @@ end)
 
 ```
 
+
+
+### 变体演进：打击特效 (Mod 3815976284)
+- **变体场景与切面**：收录来自工坊 Mod 3815976284 (`打击特效`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3815976284)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- ===========================================================================
+AddComponentPostInit("playercontroller", function(playercontroller)
+    -- 鼠标点击路径
+    local old_DoAction = playercontroller.DoAction
+    playercontroller.DoAction = function(self, buffaction, ...)
+        if buffaction ~= nil
+            and buffaction.action == G.ACTIONS.ATTACK
+            and buffaction.target ~= nil then
+            attack_intent.target = buffaction.target
+            attack_intent.t = G.GetTime()
+        end
+        return old_DoAction(self, buffaction, ...)
+    end
+
+    -- F 键 / 自动攻击路径（与原版 DoAttackButton 同款取目标，纯只读不影响行为）
+    local old_DoAttackButton = playercontroller.DoAttackButton
+    playercontroller.DoAttackButton = function(self, ...)
+        if G.TheInput ~= nil then
+            local force = G.TheInput:IsControlPressed(G.CONTROL_FORCE_ATTACK)
+            local target = self:GetAttackTarget(force)
+            if target ~= nil then
+                attack_intent.target = target
+                attack_intent.t = G.GetTime()
+            end
+        end
+        return old_DoAttackButton(self, ...)
+    end
+end)
+
+```
+

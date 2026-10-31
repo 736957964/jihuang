@@ -18855,3 +18855,123 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Durability & Repair (Mod 3759186161)
+- **变体场景与切面**：收录来自工坊 Mod 3759186161 (`Durability & Repair`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3759186161)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：霞猫的藏珍 (Mod 3799757584)
+- **变体场景与切面**：收录来自工坊 Mod 3799757584 (`霞猫的藏珍`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3799757584)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:locomotor
+local Crafting=G.require("xmcz/crafting")
+AddComponentPostInit("locomotor",Crafting.InstallLocomotor)
+AddComponentPostInit("builder",Crafting.InstallBuilder)
+Crafting.InstallBuildAction(G.ACTIONS.BUILD)
+AddModRPCHandler(Crafting.RPC_NAMESPACE,Crafting.RPC_NAME,Crafting.ServerCraft)
+AddClassPostConstruct("components/builder_replica",Crafting.InstallReplica)
+if not G.TheNet or not G.TheNet:IsDedicated() then
+    AddClassPostConstruct("widgets/redux/craftingmenu_skinselector",G.require("xmcz/selector"))
+    AddClassPostConstruct("widgets/containerwidget",G.require("xmcz/drag"))
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+AddComponentPostInit("locomotor",Crafting.InstallLocomotor)
+AddComponentPostInit("builder",Crafting.InstallBuilder)
+Crafting.InstallBuildAction(G.ACTIONS.BUILD)
+AddModRPCHandler(Crafting.RPC_NAMESPACE,Crafting.RPC_NAME,Crafting.ServerCraft)
+AddClassPostConstruct("components/builder_replica",Crafting.InstallReplica)
+if not G.TheNet or not G.TheNet:IsDedicated() then
+    AddClassPostConstruct("widgets/redux/craftingmenu_skinselector",G.require("xmcz/selector"))
+    AddClassPostConstruct("widgets/containerwidget",G.require("xmcz/drag"))
+end
+
+```
+
+
+
+### 变体演进：月影双修·全技能兼容版 (Mod 3813146646)
+- **变体场景与切面**：收录来自工坊 Mod 3813146646 (`月影双修·全技能兼容版`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3813146646)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:bernie_big
+    end
+    AddPrefabPostInit("bernie_big", function(inst)
+        if not TheWorld.ismastersim then return end
+        for _, name in ipairs({"onLeaderChanged", "CheckForAllegiances"}) do
+            Patch.After(inst, name, "bernie-affinity", M.RefreshBernie)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:debuffable
+    local enabled = not config or config.wendy_dual_elixirs ~= false
+    AddComponentPostInit("debuffable", function(holder)
+        if not holder.inst:HasTag("abigail") then return end
+        local load = holder.OnLoad
+        if type(load) ~= "function" then return end
+        holder.OnLoad = function(self, data) return load(self, M.MigrateData(data, enabled)) end
+    end)
+    AddComponentPostInit("pethealthbar", M.PatchPetBar)
+    AddPrefabPostInit("abigail", function(inst)
+        if TheWorld.ismastersim and not M.PatchGhost(inst, enabled) then print("[DualPath] Abigail potion API changed; potion merge skipped") end
+    end)
+    if enabled then
+        for _, prefab in ipairs({"ghostlyelixir_lunar", "ghostlyelixir_shadow"}) do
+            AddPrefabPostInit(prefab, function(inst)
+                if TheWorld.ismastersim and not M.PatchPotion(inst) then print("[DualPath] Super potion API changed; potion routing skipped") end
+            end)
+        end
+    end
+    if AddClassPostConstruct then AddClassPostConstruct("widgets/pethealthbadge", M.PatchBadge) end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:pethealthbar
+    end)
+    AddComponentPostInit("pethealthbar", M.PatchPetBar)
+    AddPrefabPostInit("abigail", function(inst)
+        if TheWorld.ismastersim and not M.PatchGhost(inst, enabled) then print("[DualPath] Abigail potion API changed; potion merge skipped") end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail
+    AddComponentPostInit("pethealthbar", M.PatchPetBar)
+    AddPrefabPostInit("abigail", function(inst)
+        if TheWorld.ismastersim and not M.PatchGhost(inst, enabled) then print("[DualPath] Abigail potion API changed; potion merge skipped") end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wobybig
+    if not Patch.Once(defs, "woby-dual-benefits") then return end
+    AddPrefabPostInit("wobybig", function(inst)
+        if TheWorld.ismastersim and not M.PatchWoby(inst) then
+            print("[DualPath] Woby dash callback changed; hunger merge skipped")
+        end
+    end)
+
+```
+
