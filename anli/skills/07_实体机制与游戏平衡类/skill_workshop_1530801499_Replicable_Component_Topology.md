@@ -1131,3 +1131,23 @@ if tubiao_xietianweng == 1 then AddPrefabPostInit("malbatross",xietianfn) elseif
 
 ```
 
+
+
+### 变体演进：mining_work (Mod 3821325695)
+- **变体场景与切面**：收录来自工坊 Mod 3821325695 (`mining_work`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3821325695)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:workmultiplier
+
+AddComponentPostInit("workmultiplier", Compatibility.WorkMultiplier)
+for _, prefab in G.ipairs({ "smallminer_certificate", "mediumminer_certificate" }) do
+    AddPrefabPostInit(prefab, Compatibility.MinerMedal)
+end
+
+```
+

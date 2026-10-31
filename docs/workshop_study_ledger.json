@@ -3360,8 +3360,26 @@
       "category": "05_战斗AI行为树与Boss机制类",
       "studied_at": "2026-11-01 03:26:22",
       "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "3821325695",
+      "name": "mining_work",
+      "author": "落叶长街",
+      "version": "0.1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:27:46",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3828146119",
+      "name": "fixed_aura_drain",
+      "author": "花花 火鸡 sgurrui Jackiiiii!",
+      "version": "1.0.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:27:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:26:22"
+  "lastUpdated": "2026-11-01 03:27:46"
 }

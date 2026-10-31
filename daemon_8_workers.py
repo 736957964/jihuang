@@ -457,7 +457,10 @@ def notify_owner_batch(new_skills):
         return
     try:
         conn = http.client.HTTPConnection("127.0.0.1", 3000, timeout=10)
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer 3Az8ZteKSuvWFXX5BGa-r1j_aX4JL3RKX1ZbKSUja7U"
+        }
         skill_lines = "\n".join(["- [%s] %s" % (s["category"].split("_")[1] if "_" in s["category"] else s["category"], s["name"]) for s in new_skills[:5]])
         total_count = len(completed_ids())
         msg = (

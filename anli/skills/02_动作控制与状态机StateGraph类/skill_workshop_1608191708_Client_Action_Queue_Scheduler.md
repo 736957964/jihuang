@@ -1303,3 +1303,349 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：fixed_aura_drain (Mod 3828146119)
+- **变体场景与切面**：收录来自工坊 Mod 3828146119 (`fixed_aura_drain`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3828146119)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+-- builds use GetAttacked directly; wrap the entry point actually provided by combat.
+AddComponentPostInit("combat", function(self)
+    local entrypoint = self.GetAttacked_Internal ~= nil and "GetAttacked_Internal" or "GetAttacked"
+    local OldGetAttacked = self[entrypoint]
+    self[entrypoint] = function(combat, attacker, damage, weapon, stimuli, spdamage, from_doattack)
+        local target = combat.inst
+        -- Area attacks and some mod projectiles enter here without calling CanTarget.
+        local madness = attacker ~= nil and attacker._dd_monk_madness or nil
+        if madness ~= nil and madness.aura:IsValid() and madness.aura:Contains(attacker)
+            and not madness.aura:IsMadnessTarget(attacker, target) then
+            return false
+        end
+        local mark = target._dd_monk_exposure
+        local chainaura
+        local hit = combat.redirected_from ~= nil and exposurehits[combat.redirected_from] or nil
+        local health = target.components.health
+        local oldhealth = health ~= nil and health.currenthealth or 0
+        if hit == nil and mark ~= nil and attacker ~= nil and damage ~= nil and damage > 0 and oldhealth > 0
+            and not health:IsInvincible() and stimuli ~= "dd_monk_chain" then
+            local aura = mark.aura:GetDominantAura(target)
+            if aura == nil then
+                Exposure.Clear(target)
+            else
+                mark.aura = aura
+                if mark.charged then
+                    mark.charged = false -- Reserve during damage resolution; keep the icon if dodged.
+                    damage = damage * (1 + .1 * aura.power)
+                    chainaura = aura
+                    hit = {}
+                end
+            end
+        end
+        -- Keep prefab/brain/SG callbacks, retaliation and herd sharing intact.
+        -- Only this tick's hit-reaction state transition is suppressed.
+        if stimuli == "dd_monk_electric" then
+            PatchElectricHitReaction(target)
+        end
+        local ok, result
+        if hit ~= nil and health ~= nil then
+            ok, result = pcall(ExposureAttack, combat, OldGetAttacked, attacker, damage, weapon, stimuli, spdamage, from_doattack, hit)
+        else
+            ok, result = pcall(OldGetAttacked, combat, attacker, damage, weapon, stimuli, spdamage, from_doattack)
+        end
+        if not ok then
+            error(result, 0)
+        end
+        if chainaura ~= nil then
+            if hit.landed then
+                Exposure.Consume(target, mark)
+                if chainaura:IsValid() and target:IsValid() then
+                    chainaura:ChainExplosion(target)
+                end
+            elseif target._dd_monk_exposure == mark then
+                Exposure.SetCharged(target, mark, true)
+            end
+        elseif mark ~= nil and target._dd_monk_exposure == mark and not mark.charged
+            and stimuli ~= "dd_monk_chain" and health ~= nil and health.currenthealth < oldhealth
+            and not health:IsDead() and mark.aura:IsValid() and mark.aura:Contains(target) then
+            -- A successful roll arms the NEXT hit; the triggering hit stays ordinary.
+            Exposure.SetCharged(target, mark, math.random() < math.min(1, .2 * mark.aura.power))
+        end
+        return result
+    end
+
+    local OldSetTarget = self.SetTarget
+    self.SetTarget = function(combat, target, ...)
+        local madness = combat.inst._dd_monk_madness
+        if madness ~= nil and madness.aura:IsValid() and madness.aura:Contains(combat.inst) then
+            if not madness.aura:IsMadnessTarget(combat.inst, target) then
+                target = madness.aura:PickMadnessTarget(combat.inst)
+            end
+        end
+        return OldSetTarget(combat, target, ...)
+    end
+
+    local OldCanTarget = self.CanTarget
+    self.CanTarget = function(combat, target, ...)
+        local madness = combat.inst._dd_monk_madness
+        if madness ~= nil and madness.aura:IsValid() and madness.aura:Contains(combat.inst)
+            and not madness.aura:IsMadnessTarget(combat.inst, target) then
+            return false
+        end
+        return OldCanTarget(combat, target, ...)
+    end
+
+    local OldDoAttack = self.DoAttack
+    self.DoAttack = function(combat, target, ...)
+        local madness = combat.inst._dd_monk_madness
+        if madness ~= nil and madness.aura:IsValid() and madness.aura:Contains(combat.inst)
+            and not madness.aura:IsMadnessTarget(combat.inst, target or combat.target) then
+            return
+        end
+        return OldDoAttack(combat, target, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer", function(self)
+    local oldstart = self.StartCooking
+    self.StartCooking = function(stewer, doer)
+        local starting = stewer.targettime == nil and stewer.inst.components.container ~= nil
+        InstallDoneCallback(stewer)
+        local result = oldstart(stewer, doer)
+        if starting then
+            stewer._dd_monk_extended = nil
+            stewer._dd_monk_prepared = IsMashedPotatoes(stewer.product) and doer ~= nil
+                and doer:HasTag("dd_monk") and util.HasSkill(doer, "dd_monk_food") or nil
+        end
+        return result
+    end
+
+    local oldharvest = self.Harvest
+    self.Harvest = function(stewer, harvester)
+        local previous = preparingfood
+        preparingfood = stewer._dd_monk_prepared and IsMashedPotatoes(stewer.product) or false
+        local result = oldharvest(stewer, harvester)
+        preparingfood = previous
+        if result then
+            stewer._dd_monk_prepared = nil
+            stewer._dd_monk_extended = nil
+        end
+        return result
+    end
+    local oldstop = self.StopCooking
+    self.StopCooking = function(stewer, reason)
+        local previous = preparingfood
+        preparingfood = stewer._dd_monk_prepared and IsMashedPotatoes(stewer.product) or false
+        local result = oldstop(stewer, reason)
+        preparingfood = previous
+        stewer._dd_monk_prepared = nil
+        stewer._dd_monk_extended = nil
+        return result
+    end
+
+    local oldsave = self.OnSave
+    self.OnSave = function(stewer)
+        local data, references = oldsave(stewer)
+        data = data or {}
+        data.dd_monk_prepared = stewer._dd_monk_prepared or nil
+        data.dd_monk_extended = stewer._dd_monk_extended or nil
+        return data, references
+    end
+    local oldload = self.OnLoad
+    self.OnLoad = function(stewer, data, newents)
+        stewer._dd_monk_prepared = data ~= nil and data.dd_monk_prepared or nil
+        stewer._dd_monk_extended = data ~= nil and data.dd_monk_extended or nil
+        InstallDoneCallback(stewer)
+        local result = oldload(stewer, data, newents)
+        ExtendPotSpoilage(stewer)
+        return result
+    end
+
+    local oldlongupdate = self.LongUpdate
+    self.LongUpdate = function(stewer, dt)
+        local cooktime = stewer:GetTimeToCook()
+        if stewer._dd_monk_prepared and stewer:IsCooking() and cooktime <= dt then
+            oldlongupdate(stewer, math.max(0, cooktime))
+            ExtendPotSpoilage(stewer)
+            if dt > cooktime then
+                oldlongupdate(stewer, dt - cooktime)
+            end
+        else
+            return oldlongupdate(stewer, dt)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- 只拦截已经选好武僧技能的落点点击，其余动作完整走原 playercontroller。
+AddComponentPostInit("playercontroller", function(self)
+    local function OnMounted()
+        local owner = self.inst
+        if owner == ThePlayer and owner.prefab == "dd_monk" and util.IsMounted(owner)
+            and (owner._dd_monk_castmode ~= nil or owner._dd_monk_pendingcast ~= nil) then
+            CancelMonkCast(owner)
+            owner:PushEvent("dd_monk_castmessage", STRINGS.DD_MONK.ERROR_MOUNTED)
+        end
+    end
+    self.inst:ListenForEvent("mounted", OnMounted)
+    self.inst:ListenForEvent("isridingdirty", OnMounted)
+    local oldcommand = self.DoCharacterCommandWheelButton
+    self.DoCharacterCommandWheelButton = function(controller, ...)
+        local owner = controller.inst
+        if owner ~= ThePlayer or owner.prefab ~= "dd_monk" then return oldcommand(controller, ...) end
+        if not IsHUDScreen(owner) or owner:HasTag("playerghost") then return end
+        local configured = controller._dd_monk_configkey
+            or IsNativeMenuBinding(TUNING.DD_MONK_MENU_KEY)
+        -- 改键/禁用只影响武僧自身菜单；原版背包技能书仍由原版键操作。
+        if not configured and not HasInventorySpellBook(owner) then return end
+        if owner._dd_monk_castmode ~= nil or owner._dd_monk_pendingcast ~= nil then
+            CancelMonkCast(owner)
+            return
+        end
+        return oldcommand(controller, ...)
+    end
+    local oldleft = self.OnLeftClick
+    self.OnLeftClick = function(controller, down, ...)
+        local inst = controller.inst
+        if inst._dd_monk_castmode ~= nil and inst == ThePlayer then
+            if not down then return end
+            if util.IsMounted(inst) then
+                CancelMonkCast(inst)
+                inst:PushEvent("dd_monk_castmessage", STRINGS.DD_MONK.ERROR_MOUNTED)
+                return
+            end
+            if not IsHUDScreen(inst) or TheNet:IsServerPaused() or not controller:IsEnabled()
+                or TheInput:GetHUDEntityUnderMouse() ~= nil then return end
+            local point = TheInput:GetWorldPosition()
+            if point ~= nil then
+                local kind = inst._dd_monk_castmode
+                if (kind == "repair" or kind == "recall") and inst:GetDistanceSqToPoint(point.x, 0, point.z) > 30 * 30 then
+                    inst:PushEvent("dd_monk_castmessage", STRINGS.DD_MONK.TOO_FAR)
+                    return
+                end
+                inst._dd_monk_castmode = nil
+                controller._dd_monk_swallow_leftup = true
+                controller:ClearActionHold()
+                if kind == "repair" or kind == "recall" then
+                    SendModRPCToServer(MOD_RPC.dd_monk.manage_aura, kind, point.x, point.z)
+                else
+                    local action = BufferedAction(inst, nil, ACTIONS.DD_MONK_CAST, nil, point)
+                    action.dd_monk_kind = kind
+                    inst._dd_monk_castsequence = (inst._dd_monk_castsequence or 0) + 1
+                    local pending = {id = inst._dd_monk_castsequence, action = action, sent = false}
+                    inst._dd_monk_pendingcast = pending
+                    local function FinishLocal()
+                        if inst._dd_monk_pendingcast == pending then inst._dd_monk_pendingcast = nil end
+                    end
+                    action:AddSuccessAction(FinishLocal)
+                    action:AddFailAction(function()
+                        -- A predicted action may be cleared when the server takes over.
+                        -- Once sent, wait for the authoritative success/failure reply.
+                        if controller.ismastersim or not pending.sent then FinishLocal() end
+                    end)
+                    controller:CancelAOETargeting()
+                    controller:CancelPlacement()
+                    controller:CancelDeployPlacement()
+                    inst.replica.inventory:ReturnActiveItem()
+                    if not controller.ismastersim then
+                        local function SendCast()
+                            if inst._dd_monk_pendingcast ~= pending or pending.sent then return end
+                            pending.sent = true
+                            SendModRPCToServer(MOD_RPC.dd_monk.cast, kind, point.x, point.z, pending.id)
+                        end
+                        action.preview_cb = SendCast
+                        action.non_preview_cb = SendCast
+                    end
+                    controller:DoAction(action)
+                    if not pending.sent and inst:GetBufferedAction() ~= action then FinishLocal() end
+                end
+            end
+            return
+        end
+        if not down and controller._dd_monk_swallow_leftup then
+            controller._dd_monk_swallow_leftup = nil
+            return
+        end
+        return oldleft(controller, down, ...)
+    end
+    local oldright = self.OnRightClick
+    self.OnRightClick = function(controller, down, ...)
+        if controller.inst == ThePlayer and (controller.inst._dd_monk_castmode ~= nil or controller.inst._dd_monk_pendingcast ~= nil) then
+            if down then CancelMonkCast(controller.inst) end
+            return
+        end
+        local hud = controller.inst == ThePlayer and controller.inst.HUD or nil
+        local book = controller.inst._dd_monk_spell ~= nil and controller.inst._dd_monk_spell:value() or nil
+        if book ~= nil and hud ~= nil and hud:IsSpellWheelOpen() and hud.controls.spellwheel.invobject == book then
+            if down then hud:CloseSpellWheel() end
+            return
+        end
+        return oldright(controller, down, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst.dd_monk_aura_count = net_byte(inst.GUID, "dd_monk_aura.count")
+    inst.dd_monk_aura_capacity = net_byte(inst.GUID, "dd_monk_aura.capacity")
+    inst.dd_monk_mana_max = net_ushortint(inst.GUID, "dd_monk_mana.max", "dd_monk_manadirty")
+    inst.dd_monk_mana_current = net_ushortint(inst.GUID, "dd_monk_mana.current", "dd_monk_manadirty")
+    inst.dd_monk_mana_pulseup = net_bool(inst.GUID, "dd_monk_mana.pulseup", "dd_monk_manadirty")
+    inst.dd_monk_mana_pulsedown = net_bool(inst.GUID, "dd_monk_mana.pulsedown", "dd_monk_manadirty")
+    if TheWorld.ismastersim then
+        inst:DoStaticTaskInTime(0, function()
+            inst._parent = inst.entity:GetParent()
+            if inst._parent ~= nil then
+                inst:ListenForEvent("dd_monk_manadelta", OnManaDelta, inst._parent)
+                if inst._parent.components.dd_monk_mana ~= nil then
+                    inst._parent.components.dd_monk_mana:DoDelta(0, true)
+                end
+                local owner = inst._parent.components.dd_monk_auraowner
+                if owner ~= nil then owner:SyncCount() end
+            end
+        end)
+    else
+        -- 与官方 classified 一样等首包反序列化、父实体 AttachClassified 后再发初值。
+        inst:DoStaticTaskInTime(0, function()
+            local maximum = inst.dd_monk_mana_max:value()
+            inst.old_dd_monk_manavalue = inst.dd_monk_mana_current:value()
+            inst.old_dd_monk_manapercent = maximum > 0 and inst.old_dd_monk_manavalue / maximum or 0
+            inst:ListenForEvent("dd_monk_manadirty", OnManaDirty)
+            OnManaDirty(inst)
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:skinner
+-- 人物皮肤的init_fn 和 clear_fn
+AddComponentPostInit("skinner", function(self)
+    local oldfn = self.SetSkinName
+    if oldfn then
+        function self.SetSkinName(s, skinname, ...)
+            local old = s.skin_name
+            local new = skinname
+            if characterskins[old] and characterskins[old].clear_fn then
+                characterskins[old].clear_fn(s.inst, old)
+            end
+            if characterskins[new] and characterskins[new].init_fn then
+                characterskins[new].init_fn(s.inst, new)
+            end
+            oldfn(s, skinname, ...)
+        end
+    end
+end)
+
+```
+
