@@ -1354,3 +1354,41 @@ if lunar_freeze then
 
 ```
 
+
+
+### 变体演进：假如我晕碳 (Mod 3805564211)
+- **变体场景与切面**：收录来自工坊 Mod 3805564211 (`假如我晕碳`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3805564211)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:eater
+
+AddComponentPostInit("eater", function(self)
+	self.inst:ListenForEvent("oneat", function(inst, data)
+		local food = data ~= nil and data.food or nil
+		if food == nil or food.components.edible == nil then
+			return
+		end
+
+		local hunger = food.components.edible:GetHunger(inst)
+		local grogginess = inst.components.grogginess
+		if hunger <= hunger_threshold or grogginess == nil then
+			return
+		end
+
+		local sleep_time = (hunger - hunger_threshold) / (5 * coma_mult)
+		inst:DoTaskInTime(0, function()
+			if inst:IsValid() and inst.components.grogginess ~= nil then
+				local resistance = inst.components.grogginess:GetResistance()
+				inst.components.grogginess:AddGrogginess(resistance, sleep_time)
+			end
+		end)
+	end)
+end)
+
+```
+

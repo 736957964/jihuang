@@ -1817,3 +1817,52 @@ end)
 
 ```
 
+
+
+### 变体演进：除草剂 (Mod 3792826233)
+- **变体场景与切面**：收录来自工坊 Mod 3792826233 (`除草剂`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3792826233)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：DST Haptics Compatibility / 手柄震动兼容 (Mod 3805091756)
+- **变体场景与切面**：收录来自工坊 Mod 3805091756 (`DST Haptics Compatibility / 手柄震动兼容`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3805091756)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+    AddStategraphPostInit("wilson_client", function(sg)
+        WrapState(sg, "chop_start", "chop", captures)
+        WrapState(sg, "mine_start", "mine", captures)
+        WrapState(sg, "hammer_start", "hammer", captures)
+        WrapState(sg, "dig_start", "dig", captures)
+        WrapState(sg, "attack", "attack", captures)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+    AddPrefabPostInit("world", function(world)
+        world:ListenForEvent("playeractivated", function(_, player)
+            AttachPlayer(player)
+        end)
+        world:DoTaskInTime(0, function()
+            AttachPlayer(G.ThePlayer)
+        end)
+    end)
+
+```
+

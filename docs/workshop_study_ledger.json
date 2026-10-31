@@ -3477,8 +3477,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 03:33:46",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3792826233",
+      "name": "除草剂",
+      "author": "天使爸比",
+      "version": "0.0.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:34:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3805091756",
+      "name": "DST Haptics Compatibility / 手柄震动兼容",
+      "author": "wuty",
+      "version": "1.5.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 03:34:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3805564211",
+      "name": "假如我晕碳",
+      "author": "最终能量（whaaaatfne）",
+      "version": "3.2.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:34:47",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:33:46"
+  "lastUpdated": "2026-11-01 03:34:47"
 }
