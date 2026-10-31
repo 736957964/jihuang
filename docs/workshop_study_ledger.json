@@ -3234,8 +3234,35 @@
       "category": "06_世界生成与生态系统类",
       "studied_at": "2026-10-31 19:37:08",
       "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_3661375684_nat.md"
+    },
+    {
+      "id": "3518921307",
+      "name": "改变玩家出生位置",
+      "author": "丫丫蔻蔻",
+      "version": "0.13",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:41:56",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3518921307_3518921307.md"
+    },
+    {
+      "id": "3552197369",
+      "name": "无人自动重置单层世界",
+      "author": "冰冰羊",
+      "version": "2025-08-20-C",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-10-31 19:41:56",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_3552197369_3552197369.md"
+    },
+    {
+      "id": "3586130971",
+      "name": "kramel的华语经典唱片",
+      "author": "xxx",
+      "version": "1.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:41:56",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3586130971_kramel.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:37:08"
+  "lastUpdated": "2026-10-31 19:41:56"
 }
