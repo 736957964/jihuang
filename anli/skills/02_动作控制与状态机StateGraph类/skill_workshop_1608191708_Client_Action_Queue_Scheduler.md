@@ -9999,3 +9999,123 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod 3810879235 (Mod 3810879235)
+- **变体场景与切面**：收录来自工坊 Mod 3810879235 (`Mod 3810879235`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3810879235)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:autoterraformer
+--希望大多数情况下保持原本的流程
+AddComponentPostInit("autoterraformer",function(self)
+    local old_StartTerraforming = self.StartTerraforming
+    function self:StartTerraforming(...)
+      if self.inst.components.inventoryitem ~= nil then
+        local owner = self.inst.components.inventoryitem:GetGrandOwner()
+        if owner ~= nil and owner.components.inventory ~= nil and owner.components.inventory:EquipHasTag("jx_backpack_3") then
+          return
+        end
+      end
+      old_StartTerraforming(self, ...)
+    end
+  end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:antlionhat
+
+AddPrefabPostInit("antlionhat", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    inst:AddComponent("jx_autoterraformer")
+    inst.components.jx_autoterraformer.onfinishterraformingfn = onfinishterraforming
+
+    if inst.components.equippable then
+      local old_onequipfn = inst.components.equippable.onequipfn
+      inst.components.equippable:SetOnEquip(function(inst, owner)
+          old_onequipfn(inst, owner)
+          if owner.components.inventory ~= nil and owner.components.inventory:EquipHasTag("jx_backpack_3") then
+            if inst.components.jx_autoterraformer ~= nil and owner.components.locomotor ~= nil then
+              inst.components.jx_autoterraformer:StartTerraforming()
+            end
+          end
+        end)
+
+      local old_onunequipfn = inst.components.equippable.onunequipfn
+      inst.components.equippable:SetOnUnequip(function(inst, owner)
+          old_onunequipfn(inst, owner)
+          if inst.components.jx_autoterraformer ~= nil and owner.components.locomotor ~= nil then
+            inst.components.jx_autoterraformer:StopTerraforming()
+          end
+        end)
+    end
+  end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bernie_inactive
+
+AddPrefabPostInit("bernie_inactive", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local old_onentitywake = inst.OnEntityWake
+    inst.OnEntityWake = function()
+      if inst.persists == false then
+        return
+      end
+      old_onentitywake(inst)
+    end
+    inst:DoTaskInTime(0, function()
+        if inst.persists == false and inst._activatetask ~= nil then
+          inst._activatetask:Cancel()
+          inst._activatetask = nil
+        end
+      end)
+  end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:fencerotator
+--栅栏击剑旋转地毯、洗手池
+AddComponentPostInit("fencerotator",function(self)
+    local old_Rotate = self.Rotate
+    function self:Rotate(target, delta, ...)
+      if target and target:HasTag("jx_rug") and target.rotatable_angle then
+        local angle = target.Transform:GetRotation()
+        target.Transform:SetRotation(angle + target.rotatable_angle)--不用delta参数
+        if target.NOCLICK_Tag_Task then
+          target.NOCLICK_Tag_Task:Cancel()
+          target.NOCLICK_Tag_Task = nil
+        end
+        target.NOCLICK_Tag_Task = target:DoTaskInTime(target.NOCLICK_Tag_Task_Time or 5,function() target:AddTag("NOCLICK") end)
+        self.inst:PushEvent("fencerotated")
+        G.SpawnPrefab("fence_rotator_fx").Transform:SetPosition(target.Transform:GetWorldPosition())
+      elseif target and target:HasTag("jx_frontdesk") then
+        local angle = target.Transform:GetRotation()
+        target.Transform:SetRotation(angle + 90)
+        self.inst:PushEvent("fencerotated")
+        G.SpawnPrefab("fence_rotator_fx").Transform:SetPosition(target.Transform:GetWorldPosition())
+      else
+        old_Rotate(self, target, delta, ...)
+      end
+      if target and target:HasTag("rotatableobject_matchphysics") and target.OnInit then
+        target:OnInit()
+      end
+    end
+  end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:hiddenmoonlight_item
+
+AddPrefabPostInit("hiddenmoonlight_item", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    if inst.components.upgradekit == nil then return end
+    local old_data = inst.components.upgradekit.data or {}
+    old_data["jx_icebox"] = { prefabresult = "hiddenmoonlight", onupgradefn = OnUpgrade_hidden }
+    old_data["jx_icebox_2"] = { prefabresult = "hiddenmoonlight", onupgradefn = OnUpgrade_hidden }
+    old_data["jx_icebox_3"] = { prefabresult = "hiddenmoonlight", onupgradefn = OnUpgrade_hidden }
+    inst.components.upgradekit:SetData(old_data)
+  end)
+
+```
+

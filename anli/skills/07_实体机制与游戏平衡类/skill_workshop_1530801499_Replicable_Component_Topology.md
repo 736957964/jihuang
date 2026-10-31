@@ -2666,3 +2666,241 @@ end)
 
 ```
 
+
+
+### 变体演进：批量交易 (Mod 3506640380)
+- **变体场景与切面**：收录来自工坊 Mod 3506640380 (`批量交易`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3506640380)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:antlion
+GLOBAL.setfenv(1,GLOBAL)
+AddPrefabPostInit("antlion", function(inst)
+    inst.components.trader.acceptstacks = true
+    
+    local oldonacceptfn = inst.components.trader.onaccept
+    inst.components.trader.onaccept = function(inst,giver,item,count)
+        oldonacceptfn(inst,giver,item,count)
+        if count>1 and inst.pendingrewarditem == "townportaltalisman" then
+            inst.pendingrewarditem = {}
+            for i = 1, count do
+                inst.pendingrewarditem[i] = "townportaltalisman"
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigking
+
+AddPrefabPostInit("pigking",function (inst)
+        
+
+    local function ontradeforgold(inst, item, giver)
+        local count = item.components.stackable~=nil and item.components.stackable:StackSize() or 1
+        AwardPlayerAchievement("pigking_trader", giver)
+
+        local x, y, z = inst.Transform:GetWorldPosition()
+        y = 4.5
+
+        local angle
+        if giver ~= nil and giver:IsValid() then
+            angle = 180 - giver:GetAngleToPoint(x, 0, z)
+        else
+            local down = TheCamera:GetDownVec()
+            angle = math.atan2(down.z, down.x) / DEGREES
+            giver = nil
+        end
+
+        local num_left = item.components.tradable.goldvalue*count
+
+        while num_left > 0 do
+            local nug = SpawnPrefab("goldnugget")
+            nug.Transform:SetPosition(x, y, z)
+            local num_to_give = math.min(num_left, TUNING.STACK_SIZE_MEDITEM)
+            nug.components.stackable:SetStackSize(num_to_give)
+            launchitem(nug, angle)
+            num_left = num_left - num_to_give
+        end
+
+        if item.components.tradable.tradefor ~= nil then
+            for _, v in pairs(item.components.tradable.tradefor) do
+                local item = SpawnPrefab(v)
+                if item ~= nil then
+                    item.Transform:SetPosition(x, y, z)
+                    launchitem(item, angle)
+                end
+            end
+        end
+
+        if IsSpecialEventActive(SPECIAL_EVENTS.HALLOWED_NIGHTS) then
+            -- pick out up to 3 types of candies to throw out
+            local candytypes = { math.random(NUM_HALLOWEENCANDY), math.random(NUM_HALLOWEENCANDY), math.random(NUM_HALLOWEENCANDY) }
+            local numcandies = (item.components.tradable.halloweencandyvalue or 1) + math.random(2) + 2
+
+            -- only people in costumes get a good amount of candy!
+            if giver ~= nil and giver.components.skinner ~= nil then
+                for _, item in pairs(giver.components.skinner:GetClothing()) do
+                    if DoesItemHaveTag(item, "COSTUME") or DoesItemHaveTag(item, "HALLOWED") then
+                        numcandies = numcandies + math.random(4) + 2
+                        break
+                    end
+                end
+            end
+
+            for k = 1, numcandies do
+                local candy = SpawnPrefab("halloweencandy_"..GetRandomItem(candytypes))
+                candy.Transform:SetPosition(x, y, z)
+                launchitem(candy, angle)
+            end
+
+            if math.random() <= TUNING.HALLOWEEN_PUMPKINCARVER_PIGKING_TRADE_CHANCE then
+                local pumpkincarver = SpawnPrefab("pumpkincarver"..math.random(NUM_HALLOWEEN_PUMPKINCARVERS))
+                pumpkincarver.Transform:SetPosition(x, y, z)
+                launchitem(pumpkincarver, angle)
+            end
+        end
+    end
+
+
+    inst.components.trader.acceptstacks = true
+
+    debug.setupvalue(inst.components.trader.onaccept,1 ,ontradeforgold)
+end)
+
+```
+
+
+
+### 变体演进：Stay Visible 2 (Mod 3791787028)
+- **变体场景与切面**：收录来自工坊 Mod 3791787028 (`Stay Visible 2`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3791787028)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:rope_bridge_fx
+-- Hide bridge ropes ---------------------------------------------------------------------------------------------
+AddPrefabPostInit("rope_bridge_fx", function(inst)
+	inst:DoTaskInTime(0, function(inst)
+		if inst.rope1 then
+			inst.rope1.AnimState:OverrideMultColour(0,0,0,bridge_rope_opacity)
+		end
+		if inst.rope2 then
+			inst.rope2.AnimState:OverrideMultColour(0,0,0,bridge_rope_opacity)
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:oceanvine_cocoon
+-- ??????????????? why are they colored in the first place?
+AddPrefabPostInit("oceanvine_cocoon", function(inst)
+	inst.AnimState:SetMultColour(1,1,1,1)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:distancefade
+-- This is required for the mod to work.
+AddComponentPostInit("distancefade", function(self)
+	--print("removing distancefade from:", self.inst)
+	self.inst:DoTaskInTime(0, function(inst)
+		inst:RemoveComponent("distancefade")
+	end)
+end)
+
+```
+
+
+
+### 变体演进：RoseN Server Fixes (Mod 3823476190)
+- **变体场景与切面**：收录来自工坊 Mod 3823476190 (`RoseN Server Fixes`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823476190)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+    EnsureInsulation(self)
+    local old_IsInsulated = self.IsInsulated
+    if old_IsInsulated ~= nil then
+        self.IsInsulated = function(inv, ...)
+            EnsureInsulation(inv)
+            return old_IsInsulated(inv, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beef_bell
+
+AddPrefabPostInit("beef_bell", BellPostInit)
+AddPrefabPostInit("shadow_beef_bell", BellPostInit)
+
+---------------------------------------------------------------------------
+-- Konsol yardimcisi: BeefDupes()
+-- Zile bagli OLMAYAN evcil beefalolari listeler (mevcut kopyalari bulmak icin).
+-- To delete one: Ents[GUID]:Remove()
+---------------------------------------------------------------------------
+G.BeefDupes = function()
+    local n = 0
+    for _, v in pairs(G.Ents) do
+        if v.prefab == "beefalo" and v:IsValid()
+            and v.components.domesticatable ~= nil and v.components.domesticatable:IsDomesticated()
+            and v.components.follower ~= nil and v.components.follower.leader == nil then
+            local x, _, z = v.Transform:GetWorldPosition()
+            local saddle = v.components.rideable ~= nil and v.components.rideable.saddle or nil
+            print(string.format("GUID=%d  name=%s  tendency=%s  saddle=%s  pos=(%.0f, %.0f)",
+                v.GUID,
+                tostring(v.components.named ~= nil and v.components.named.name or "none"),
+                tostring(v.tendency),
+                saddle ~= nil and saddle.prefab or "none",
+                x, z))
+            n = n + 1
+        end
+    end
+    print("[RoseN Fixes] domesticated beefalo without a bell: "..n)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadow_beef_bell
+AddPrefabPostInit("beef_bell", BellPostInit)
+AddPrefabPostInit("shadow_beef_bell", BellPostInit)
+
+---------------------------------------------------------------------------
+-- Konsol yardimcisi: BeefDupes()
+-- Zile bagli OLMAYAN evcil beefalolari listeler (mevcut kopyalari bulmak icin).
+-- To delete one: Ents[GUID]:Remove()
+---------------------------------------------------------------------------
+G.BeefDupes = function()
+    local n = 0
+    for _, v in pairs(G.Ents) do
+        if v.prefab == "beefalo" and v:IsValid()
+            and v.components.domesticatable ~= nil and v.components.domesticatable:IsDomesticated()
+            and v.components.follower ~= nil and v.components.follower.leader == nil then
+            local x, _, z = v.Transform:GetWorldPosition()
+            local saddle = v.components.rideable ~= nil and v.components.rideable.saddle or nil
+            print(string.format("GUID=%d  name=%s  tendency=%s  saddle=%s  pos=(%.0f, %.0f)",
+                v.GUID,
+                tostring(v.components.named ~= nil and v.components.named.name or "none"),
+                tostring(v.tendency),
+                saddle ~= nil and saddle.prefab or "none",
+                x, z))
+            n = n + 1
+        end
+    end
+    print("[RoseN Fixes] domesticated beefalo without a bell: "..n)
+end
+
+```
+
