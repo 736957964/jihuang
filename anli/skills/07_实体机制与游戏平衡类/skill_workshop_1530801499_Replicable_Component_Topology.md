@@ -1658,3 +1658,65 @@ end)
 
 ```
 
+
+
+### 变体演进：欧皇模拟器补丁 (Mod 3628068817)
+- **变体场景与切面**：收录来自工坊 Mod 3628068817 (`欧皇模拟器补丁`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3628068817)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:luckysimulator
+-- 无视过多垃圾
+AddPrefabPostInit("luckysimulator", function(inst)
+inst:DoTaskInTime(2, function(inst)
+inst:RemoveTag("luckysimulator")
+end)
+end)
+
+```
+
+
+
+### 变体演进：Silabell (Mod 3771867138)
+- **变体场景与切面**：收录来自工坊 Mod 3771867138 (`Silabell`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3771867138)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:farmplantable
+
+AddComponentPostInit("farmplantable", function(self)
+    local old_Plant = self.Plant
+    function self:Plant(target, planter)
+        local success = old_Plant(self, target, planter)
+        if success then
+            OnPlantCare(planter)
+        end
+        return success
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:deployable
+
+AddComponentPostInit("deployable", function(self)
+    local old_Deploy = self.Deploy
+    function self:Deploy(pt, deployer, rot)
+        local is_treeseed = self.inst:HasTag("treeseed")
+        local success = old_Deploy(self, pt, deployer, rot)
+        if success and is_treeseed then
+            OnTreePlanted(deployer)
+        end
+        return success
+    end
+end)
+
+```
+

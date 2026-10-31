@@ -3783,8 +3783,35 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 03:50:31",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3628068817",
+      "name": "欧皇模拟器补丁",
+      "author": "wx78",
+      "version": "2.1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:51:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3656655913",
+      "name": "欧皇模拟器 随机海钓 综合补丁",
+      "author": "我好慌",
+      "version": "1.19",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 03:51:29",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3771867138",
+      "name": "Silabell",
+      "author": "Silabell",
+      "version": "1.1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 03:51:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 03:50:31"
+  "lastUpdated": "2026-11-01 03:51:29"
 }
