@@ -2787,3 +2787,88 @@ end)
 
 ```
 
+
+
+### 变体演进：Smart Expandable Gem Chests (Mod 3829905877)
+- **变体场景与切面**：收录来自工坊 Mod 3829905877 (`Smart Expandable Gem Chests`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3829905877)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddRecipePostInit:treasurechest
+if GetModConfigData("disable_treasurechest") then
+    AddRecipePostInit("treasurechest", function(recipe)
+        recipe.builder_tag = "gemchest_no_treasurechest"
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stackable
+
+AddComponentPostInit("stackable", function(self)
+    local _SetIgnoreMaxSize = self.SetIgnoreMaxSize
+    function self:SetIgnoreMaxSize(ignore)
+        if not (ignore and stack_cap ~= nil) then
+            return _SetIgnoreMaxSize(self, ignore)
+        end
+        local _ = _G.rawget(self, "_")
+        local original = _.originalmaxsize[1]
+        if original == nil then
+            if _.maxsize[1] >= stack_cap then
+                return   -- already stacks at least this high
+            end
+            _.originalmaxsize[1] = _.maxsize[1]
+            self.inst.replica.stackable:SetIgnoreMaxSize(true)
+        end
+        _.maxsize[1] = math.max(stack_cap, self.stacksize)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:gemchest
+
+AddPrefabPostInit("gemchest", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+    local container = inst.components.container
+    if T.STACK_SIZE > 0 then
+        local _GiveItem = container.GiveItem
+        function container:GiveItem(...)
+            return WithStackCap(inst, _GiveItem, self, ...)
+        end
+        WithStackCap(inst, container.EnableInfiniteStackSize, container, true)
+    else
+        -- Big stacks saved while the option was on: split them back into
+        -- normal stacks (into free slots, or dropped next to the chest).
+        local _OnLoad = container.OnLoad
+        function container:OnLoad(...)
+            _OnLoad(self, ...)
+            for slot = 1, self.numslots do
+                local stackable = self.slots[slot] ~= nil and self.slots[slot].components.stackable or nil
+                while stackable ~= nil and stackable:StackSize() > stackable.maxsize do
+                    local extra = stackable:Get(math.min(stackable:StackSize() - stackable.maxsize, stackable.maxsize))
+                    self:GiveItem(extra, nil, nil, true)
+                end
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- the same way the crafting menu blocks zoom while it has focus.
+AddComponentPostInit("playercontroller", function(self)
+    local _DoCameraControl = self.DoCameraControl
+    function self:DoCameraControl(...)
+        if GemChestUI.HasFocus() then
+            self.lastzoomtime = _G.GetStaticTime()
+        end
+        return _DoCameraControl(self, ...)
+    end
+end)
+
+```
+
