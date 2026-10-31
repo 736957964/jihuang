@@ -1225,3 +1225,74 @@ end)
 
 ```
 
+
+
+### 变体演进：Wardrobe Storage and Repair (Mod 3823804651)
+- **变体场景与切面**：收录来自工坊 Mod 3823804651 (`Wardrobe Storage and Repair`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823804651)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wardrobe
+
+AddPrefabPostInit("wardrobe", function(inst)
+    inst:AddTag("wardrobe_restorer")
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    -- Drop the built-in wardrobe scene collector so CHANGEIN is only offered
+    -- by our container collector above.
+    inst:UnregisterComponentActions("wardrobe")
+
+    inst:AddComponent("container")
+    inst.components.container:WidgetSetup("wardrobe_restorer")
+
+    local rate = GetModConfigData("recovery_rate") or 5
+    inst.components.container:SetNumSlots(layout.num_slots)
+
+    -- One repair step per day segment (16 per day) rather than every second.
+    local segment = GLOBAL.TUNING.SEG_TIME or mathmod.SEGMENT_LENGTH_SECONDS
+    inst:DoPeriodicTask(segment, function()
+        recover_items_in(inst, rate, segment)
+    end)
+
+    inst.OnLongUpdate = function(inst_, dt)
+        recover_items_in(inst_, rate, dt)
+    end
+
+    -- Same open/close feedback the wardrobe uses while changing skins.
+    inst.components.container.onopenfn = function(inst_)
+        if not inst_:HasTag("burnt") then
+            inst_.AnimState:PlayAnimation("open")
+            inst_.SoundEmitter:PlaySound("dontstarve/common/wardrobe_open")
+        end
+    end
+    inst.components.container.onclosefn = function(inst_)
+        if not inst_:HasTag("burnt") and inst_.AnimState:IsCurrentAnimation("open") then
+            inst_.AnimState:PlayAnimation("cancel")
+            inst_.SoundEmitter:PlaySound("dontstarve/common/wardrobe_close")
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：装备栏64格上限修复 (Mod 3823808577)
+- **变体场景与切面**：收录来自工坊 Mod 3823808577 (`装备栏64格上限修复`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823808577)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
