@@ -22,6 +22,7 @@
     * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
+    * [[PTP]Shop OnLine](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2958856329_ptp_shop_online.md)
     * [全球定位RR](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3163922068_rr.md)
     * [小合集SS](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3120638435_ss.md)
     * [Mod 3689239824](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3689239824_mod_3689239824.md)

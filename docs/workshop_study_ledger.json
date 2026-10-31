@@ -3297,8 +3297,17 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-10-31 19:45:18",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3379258656_3379258656.md"
+    },
+    {
+      "id": "2958856329",
+      "name": "[PTP]Shop OnLine",
+      "author": "蓝星人",
+      "version": "1.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:47:49",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2958856329_ptp_shop_online.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:45:18"
+  "lastUpdated": "2026-10-31 19:47:49"
 }
