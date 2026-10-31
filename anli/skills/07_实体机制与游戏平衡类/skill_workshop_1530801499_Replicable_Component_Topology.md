@@ -6188,3 +6188,174 @@ if chungusC then
 
 ```
 
+
+
+### 变体演进：全角色技能点MAX (Mod 3718595178)
+- **变体场景与切面**：收录来自工坊 Mod 3718595178 (`全角色技能点MAX`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3718595178)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skilltreeupdater
+-- 锁定最大技能点为30（修复nil崩溃版）
+AddComponentPostInit("skilltreeupdater", function(self) 	
+    local old_AddSkillXP = self.AddSkillXP
+    function self:AddSkillXP(...) 		
+        -- 先判断组件是否存在，避免nil崩溃
+        if self.inst and self.inst.components.skillpoints then
+            -- 获取当前可用技能点
+            local available = self.inst.components.skillpoints:GetAvailableSkillPoints()
+            -- 超过30点直接拦截，不执行加经验逻辑
+            if available >= 30 then
+                return
+            end
+        end
+        return old_AddSkillXP(self, ...) 	
+    end 	
+end) 
+
+```
+
+
+
+### 变体演进：小恶魔整合增强 (Mod 3747885715)
+- **变体场景与切面**：收录来自工坊 Mod 3747885715 (`小恶魔整合增强`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3747885715)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wortox_nabbag
+
+AddPrefabPostInit("wortox_nabbag", function(inst)
+    if inst.components.equippable ~= nil then
+        inst.components.equippable.walkspeedmult = 1 + SPEED_BONUS
+    end
+end)
+
+```
+
+
+
+### 变体演进：Easy F Attack (Mod 3781730683)
+- **变体场景与切面**：收录来自工坊 Mod 3781730683 (`Easy F Attack`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3781730683)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    if not ENABLED then
+        return
+    end
+
+    local _GetAttackTarget = self.GetAttackTarget
+    self.GetAttackTarget = function(ctrl, force_attack, force_target, isretarget, use_remote_predict)
+        local use_force = force_attack or INCLUDE_PASSIVE
+
+        -- Never auto-attack walls / fences even if vanilla (or a retarget) suggests them.
+        if force_target ~= nil and IsExcludedObject(force_target) then
+            force_target = nil
+            isretarget = false
+        end
+
+        -- Keep an explicitly provided target when still valid inside our search radius.
+        if force_target ~= nil then
+            local combat = ctrl.inst.replica.combat
+            if combat ~= nil
+                and CanSelectTarget(ctrl.inst, combat, force_target, use_force)
+                and ctrl.inst:IsNear(force_target, SEARCH_RADIUS)
+            then
+                if isretarget and not IsEntityDead(force_target) and CanEntitySeeTarget(ctrl.inst, force_target) then
+                    return force_target
+                end
+                return force_target
+            end
+            -- Do not fall back to vanilla here: it will happily force-attack walls.
+            local nearest_retry = FindNearestMob(ctrl.inst, use_force)
+            if nearest_retry ~= nil then
+                return nearest_retry
+            end
+            return nil
+        end
+
+        local nearest = FindNearestMob(ctrl.inst, use_force)
+        if nearest ~= nil then
+            return nearest
+        end
+
+        -- Vanilla fallback, but strip walls/fences (force-attack path loves them).
+        local vanilla = _GetAttackTarget(ctrl, force_attack, force_target, isretarget, use_remote_predict)
+        if vanilla ~= nil and IsExcludedObject(vanilla) then
+            return nil
+        end
+        return vanilla
+    end
+
+    local _DoAttackButton = self.DoAttackButton
+    self.DoAttackButton = function(ctrl, retarget, isleftmouse)
+        -- Left mouse stays vanilla; only F / attack-button path is expanded.
+        if isleftmouse then
+            return _DoAttackButton(ctrl, retarget, isleftmouse)
+        end
+
+        if not ctrl:IsEnabled() then
+            return _DoAttackButton(ctrl, retarget, isleftmouse)
+        end
+
+        if ctrl:IsOverrideAttack() then
+            return _DoAttackButton(ctrl, retarget, isleftmouse)
+        end
+
+        local inventory = ctrl.inst.replica.inventory
+        if inventory ~= nil and (inventory:IsHeavyLifting() or inventory:IsFloaterHeld()) then
+            return _DoAttackButton(ctrl, retarget, isleftmouse)
+        end
+
+        local force_attack = TheInput:IsControlPressed(CONTROL_FORCE_ATTACK) or INCLUDE_PASSIVE
+        local target = ctrl:GetAttackTarget(force_attack, retarget, retarget ~= nil and retarget ~= ctrl:GetCombatTarget())
+
+        if target ~= nil and IsExcludedObject(target) then
+            target = nil
+        end
+
+        if target == nil then
+            return _DoAttackButton(ctrl, retarget, isleftmouse)
+        end
+
+        local control = CONTROL_ATTACK
+
+        if ctrl.ismastersim then
+            ctrl.locomotor:PushAction(BufferedAction(ctrl.inst, target, ACTIONS.ATTACK), true)
+        elseif ctrl.locomotor == nil then
+            if ACTIONS.ATTACK.pre_action_cb ~= nil then
+                ACTIONS.ATTACK.pre_action_cb(BufferedAction(ctrl.inst, target, ACTIONS.ATTACK))
+            end
+            ctrl:RemoteAttackButton(target, force_attack, false)
+        else
+            if ctrl.remote_controls[control] == nil then
+                ctrl:RemoteAttackButton(nil, nil, false)
+            end
+            if ctrl:CanLocomote() then
+                local buffaction = BufferedAction(ctrl.inst, target, ACTIONS.ATTACK)
+                buffaction.preview_cb = function()
+                    local isreleased = not TheInput:IsControlPressed(control)
+                    ctrl:RemoteAttackButton(target, force_attack, false, isreleased)
+                end
+                ctrl.locomotor:PreviewAction(buffaction, true)
+            end
+        end
+    end
+end)
+
+```
+

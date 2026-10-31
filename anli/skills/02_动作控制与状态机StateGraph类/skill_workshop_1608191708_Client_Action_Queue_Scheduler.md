@@ -21877,3 +21877,114 @@ function dst_lan:_hookSGClient()
 
 ```
 
+
+
+### 变体演进：暗影秘典：麦斯威尔篇 (Codex Umbra:Maxwell) (Mod 3812383433)
+- **变体场景与切面**：收录来自工坊 Mod 3812383433 (`暗影秘典：麦斯威尔篇 (Codex Umbra:Maxwell)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3812383433)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventoryitem
+--------------------------------------------------------------------
+AddComponentPostInit("inventoryitem", function(self)
+    local OldOnPutInInventory = self.OnPutInInventory
+    self.OnPutInInventory = function(self, owner)
+        OldOnPutInInventory(self, owner)
+        ApplyShadowSlot(self.inst, owner)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+--------------------------------------------------------------------
+AddComponentPostInit("inventory", function(self)
+    local OldEquip = self.Equip
+    self.Equip = function(self, item, ...)
+        if item ~= nil and item.components.equippable ~= nil then
+            local refusekey = SHADOW_SLOT_EXCLUSIVE[item.prefab]
+            if refusekey ~= nil and not self.inst:HasTag("shadow_slot_user") then
+                -- 麦斯威尔专属装备：其他角色不能佩戴，先说专属拒绝台词
+                -- （台词键见 SHADOW_SLOT_EXCLUSIVE，字符串本体在各自
+                -- 功能部分定义，运行时才读取）
+                local refuse = GLOBAL.STRINGS[refusekey]
+                if self.inst.components.talker ~= nil and refuse ~= nil then
+                    self.inst.components.talker:Say(refuse)
+                end
+                if item.components.inventoryitem ~= nil and item.components.inventoryitem.owner ~= self.inst then
+                    self:GiveItem(item)
+                end
+                return false
+            end
+            ApplyShadowSlot(item, self.inst)
+        end
+        return OldEquip(self, item, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+--------------------------------------------------------------------
+AddStategraphPostInit("wilson", function(sg)
+    local state = sg.states ~= nil and sg.states["amulet_rebirth"] or nil
+    if state == nil or state.onenter == nil then
+        return
+    end
+
+    local OldOnEnter = state.onenter
+    state.onenter = function(inst, ...)
+        OldOnEnter(inst, ...)
+
+        if inst.sg.statemem.usedamulet then
+            return -- 官方已从身体槽消耗，不再重复处理
+        end
+
+        local inventory = inst.components ~= nil and inst.components.inventory or nil
+        local item = inventory ~= nil and inventory:GetEquippedItem(SHADOW_SLOT) or nil
+        if item ~= nil and item.prefab == "amulet" then
+            item = inventory:RemoveItem(item)
+            if item ~= nil then
+                item:Remove()
+                inst.sg.statemem.usedamulet = true
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:waxwell
+--------------------------------------------------------------------
+AddPrefabPostInit("waxwell", function(inst)
+    inst:AddTag("shadow_slot_user")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:leader
+--------------------------------------------------------------------
+AddComponentPostInit("leader", function(self)
+    local function UpdateShadowTag(self)
+        if self:CountFollowers("shadowminion") > 0 then
+            self.inst:AddTag("hasshadowminions")
+        else
+            self.inst:RemoveTag("hasshadowminions")
+        end
+    end
+
+    local OldAddFollower = self.AddFollower
+    self.AddFollower = function(self, follower, ...)
+        OldAddFollower(self, follower, ...)
+        UpdateShadowTag(self)
+    end
+
+    local OldRemoveFollower = self.RemoveFollower
+    self.RemoveFollower = function(self, follower, ...)
+        OldRemoveFollower(self, follower, ...)
+        UpdateShadowTag(self)
+    end
+end)
+
+```
+

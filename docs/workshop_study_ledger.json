@@ -5475,8 +5475,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 07:41:15",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3718595178",
+      "name": "全角色技能点MAX",
+      "author": "喝口雨姐醇香型的脚汗摘几片脚底带泥的角质吃",
+      "version": "1.5.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:44:12",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3747885715",
+      "name": "小恶魔整合增强",
+      "author": "ECHO",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:44:12",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3781730683",
+      "name": "Easy F Attack",
+      "author": "Ymathashe",
+      "version": "1.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 07:44:12",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3812383433",
+      "name": "暗影秘典：麦斯威尔篇 (Codex Umbra:Maxwell)",
+      "author": "Koyojro",
+      "version": "1.50.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 07:44:12",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:41:15"
+  "lastUpdated": "2026-11-01 07:44:12"
 }
