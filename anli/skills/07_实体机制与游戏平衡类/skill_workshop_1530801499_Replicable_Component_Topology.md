@@ -1988,3 +1988,37 @@ end)
 
 ```
 
+
+
+### 变体演进：三理Mit3uri· 薇格弗德外观替换（客户端） (Mod 3824111341)
+- **变体场景与切面**：收录来自工坊 Mod 3824111341 (`三理Mit3uri· 薇格弗德外观替换（客户端）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3824111341)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wathgrithrhat
+-- It works before ThePlayer exists and without a server inventoryitem component.
+AddPrefabPostInit("wathgrithrhat", function(inst)
+    inst:SetClientSideInventoryImageOverride(
+        ICON_FLAG,
+        "wathgrithrhat.tex",
+        "violet_beret.tex",
+        G.resolvefilepath(ICON_ATLAS)
+    )
+    inst:SetClientSideInventoryImageOverrideFlag(ICON_FLAG, true)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wathgrithr
+AddMinimapAtlas(UI .. "minimap.xml")
+AddPrefabPostInit("wathgrithr", function(inst)
+    if inst.MiniMapEntity ~= nil then
+        inst.MiniMapEntity:SetIcon("mit3uri_wathgrithr.png")
+    end
+end)
+
+```
+

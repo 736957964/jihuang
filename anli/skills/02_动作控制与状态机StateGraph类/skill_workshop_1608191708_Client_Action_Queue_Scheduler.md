@@ -7152,3 +7152,155 @@ AddStategraphPostInit("wilson", SGslingshotPostInit)
 
 ```
 
+
+
+### 变体演进：Iva (Mod 3824012810)
+- **变体场景与切面**：收录来自工坊 Mod 3824012810 (`Iva`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3824012810)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:iva
+-- 이스터에그 거부모션
+AddPrefabPostInit("iva", function(inst)
+    if not GLOBAL.TheWorld.ismastersim or inst.components.eater == nil then
+        return
+    end
+    local eater = inst.components.eater
+    local _PrefersToEat = eater.PrefersToEat
+    eater.PrefersToEat = function(self, food, ...)
+        if food ~= nil and food.prefab == "iva_mysteryegg" then
+            return false
+        end
+        return _PrefersToEat(self, food, ...)
+    end
+    local _Eat = eater.Eat
+    eater.Eat = function(self, food, ...)
+        if food ~= nil and food.prefab == "iva_mysteryegg" then
+            return false
+        end
+        return _Eat(self, food, ...)
+    end
+    inst:ListenForEvent("wonteatfood", function(inst, data)
+        if data ~= nil and data.food ~= nil and data.food.prefab == "iva_mysteryegg" and inst.components.talker ~= nil then
+            inst.components.talker:Say(GLOBAL.GetString(inst, "ANNOUNCE_IVA_MYSTERYEGG"))
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tallbirdnest
+
+AddPrefabPostInit("tallbirdnest", function(inst)
+    if not GLOBAL.TheWorld.ismastersim or inst.components.pickable == nil then
+        return
+    end
+    local pickable = inst.components.pickable
+    local _Pick = pickable.Pick
+    pickable.Pick = function(self, picker, ...)
+        local results = { _Pick(self, picker, ...) }
+        if results[1] and picker ~= nil and picker.prefab == "iva" and math.random() < IVA_WETEGG_CHANCE then
+            local x, y, z = picker.Transform:GetWorldPosition()
+            SpawnWetEgg(x, z)
+        end
+        return GLOBAL.unpack(results)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:birdcage
+
+AddPrefabPostInit("birdcage", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    if inst.components.trader ~= nil and inst.components.trader.onaccept ~= nil then
+        local _onaccept = inst.components.trader.onaccept
+        inst.components.trader.onaccept = function(cage, giver, item, ...)
+            local edible = item ~= nil and item.components.edible or nil
+            cage.iva_feeder = giver
+            cage.iva_feed_meat = edible ~= nil and edible.foodtype == GLOBAL.FOODTYPE.MEAT
+            cage.iva_feed_time = GLOBAL.GetTime()
+            return _onaccept(cage, giver, item, ...)
+        end
+    end    local dropper = inst.components.lootdropper
+    if dropper ~= nil then
+        local _SpawnLootPrefab = dropper.SpawnLootPrefab
+        dropper.SpawnLootPrefab = function(self, lootprefab, ...)
+            local loot = _SpawnLootPrefab(self, lootprefab, ...)
+            local feeder = inst.iva_feeder
+            if loot ~= nil and lootprefab == "bird_egg" and inst.iva_feed_meat and feeder ~= nil and feeder:IsValid() and feeder.prefab == "iva"
+                and GLOBAL.GetTime() - (inst.iva_feed_time or -100) < 3 and math.random() < IVA_WETEGG_CHANCE then
+                inst.iva_feed_meat = false
+                local x, y, z = loot.Transform:GetWorldPosition()
+                SpawnWetEgg(x, z)
+            end
+            return loot
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", function(self)
+    local _HasCharacterIngredient = self.HasCharacterIngredient
+    function self:HasCharacterIngredient(ingredient)
+        if ingredient.type == CHARACTER_INGREDIENT.IVA_MANA then
+            local mana = self.inst.components.iva_mana
+            local current = mana ~= nil and math.floor(mana.current) or 0
+            return current >= ingredient.amount, current
+        end
+        return _HasCharacterIngredient(self, ingredient)
+    end
+
+    local _RemoveIngredients = self.RemoveIngredients
+    function self:RemoveIngredients(ingredients, recname, discounted)
+        local recipe = GLOBAL.AllRecipes[recname]
+        local mana = self.inst.components.iva_mana
+        if not self.freebuildmode and recipe ~= nil and mana ~= nil then
+            for _, v in ipairs(recipe.character_ingredients) do
+                if v.type == CHARACTER_INGREDIENT.IVA_MANA then
+                    mana:DoDelta(-v.amount)
+                end
+            end
+        end
+        return _RemoveIngredients(self, ingredients, recname, discounted)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+end
+AddComponentPostInit("stewer", function(self)
+    local _StartCooking = self.StartCooking
+    self.StartCooking = function(self, doer, ...)
+        iva_cooking_doer = doer
+        local ok, a, b, c = GLOBAL.pcall(_StartCooking, self, doer, ...)
+        iva_cooking_doer = nil
+        if not ok then
+            GLOBAL.error(a, 0)
+        end
+        return a, b, c
+    end
+end)
+
+```
+
+
+
+### 变体演进：Нинель — Цветущая душа (Mod 3824556895)
+- **变体场景与切面**：收录来自工坊 Mod 3824556895 (`Нинель — Цветущая душа`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3824556895)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
