@@ -8,6 +8,7 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
+    * [真-神之火腿](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3684078343_3684078343.md)
     * [小型拖拉机](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3748361628_3748361628.md)
     * [宁恩](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3814062294_3814062294.md)
     * [Cook](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3829489944_cook.md)
@@ -19,6 +20,7 @@
     * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
+    * [Phonograph Tweaked](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2988233681_phonograph_tweaked.md)
     * [快捷物品栏 Quick Bar](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3787501714_quick_bar.md)
     * [No More Cave Bug](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3828908041_no_more_cave_bug.md)
     * [Fan Skins Collection](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3827608591_fan_skins_collection.md)
@@ -37,6 +39,7 @@
     * [共享位置](anli/skills/06_世界生成与生态系统类/skill_workshop_3789721701_3789721701.md)
   * 07 实体机制与游戏平衡类
     * [聊天指令拦截与生命周期重置 (母本)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_player_lifecycle_and_command_restart.md)
+    * [HOWLS唱片](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3716634921_howls.md)
     * [大霜鲨更多交易次数](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3771598087_3771598087.md)
     * [Mod 3808236333](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3808236333_mod_3808236333.md)
     * [Geometric Drop (fixe](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3813858106_geometric_drop_fixed.md)

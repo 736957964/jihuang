@@ -3153,8 +3153,35 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-10-31 19:31:00",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3787501714_quick_bar.md"
+    },
+    {
+      "id": "2988233681",
+      "name": "Phonograph Tweaked",
+      "author": "Cutlass",
+      "version": "3.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:33:35",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2988233681_phonograph_tweaked.md"
+    },
+    {
+      "id": "3684078343",
+      "name": "真-神之火腿",
+      "author": "LIU巴斯、古明地球",
+      "version": "0.1.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:33:35",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3684078343_3684078343.md"
+    },
+    {
+      "id": "3716634921",
+      "name": "HOWLS唱片",
+      "author": "刻扬业火",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:33:35",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3716634921_howls.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:31:00"
+  "lastUpdated": "2026-10-31 19:33:35"
 }
