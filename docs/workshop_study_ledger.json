@@ -1,315 +1,1776 @@
 {
-    "completedMods": [
-        {
-            "id": "351325790",
-            "name": "Geometric Placement",
-            "author": "rezecib",
-            "version": "3.2.0",
-            "studyDoc": "docs/workshop_studies/study_351325790_geometric_placement.md",
-            "skillDoc": "anli/skills/skill_workshop_351325790_Geometric_Placement_Core.md",
-            "completedAt": "2026-10-30 04:38:00",
-            "keyTags": [
-                "Client-Only",
-                "Affine-Projection",
-                "Placer-Hook",
-                "Entity-Pool",
-                "Time-Budget"
-            ]
-        },
-        {
-            "id": "345692228",
-            "name": "Minimap HUD",
-            "author": "sqrly",
-            "version": "1.4.3",
-            "studyDoc": "docs/workshop_studies/study_345692228_minimap_hud.md",
-            "skillDoc": "anli/skills/skill_workshop_345692228_HUD_Responsive_Matrix.md",
-            "completedAt": "2026-10-30 11:25:00",
-            "keyTags": [
-                "Client-Only",
-                "MiniMap-Native-Texture",
-                "Matrix-Unscale",
-                "Resize-Listener",
-                "Camera-Focus-Lock"
-            ]
-        },
-        {
-            "id": "376333686",
-            "name": "Combined Status",
-            "author": "rezecib, Kiopho, Soilworker, hotmatrixx, penguin0616",
-            "version": "1.9.8",
-            "studyDoc": "docs/workshop_studies/study_376333686_combined_status.md",
-            "skillDoc": "anli/skills/skill_workshop_376333686_Combined_Status_Architecture.md",
-            "completedAt": "2026-10-30 11:32:00",
-            "keyTags": [
-                "Cross-Platform-DLC",
-                "Badge-Decorator",
-                "Event-Driven-Delta",
-                "Client-Safe-Getter",
-                "Insight-Contract"
-            ]
-        },
-        {
-            "id": "378160973",
-            "name": "Global Positions",
-            "author": "rezecib",
-            "version": "2.2.0",
-            "studyDoc": "docs/workshop_studies/study_378160973_global_positions.md",
-            "skillDoc": "anli/skills/skill_workshop_378160973_Global_Positions_Beacon.md",
-            "completedAt": "2026-10-30 11:40:00",
-            "keyTags": [
-                "Classified-Proxy",
-                "CanSleep-False",
-                "WorldMapExplorer",
-                "Tactical-Ping",
-                "TargetIndicator-Hook"
-            ]
-        },
-        {
-            "id": "666155465",
-            "name": "Show Me",
-            "author": "Star, +Serp",
-            "version": "0.58",
-            "studyDoc": "docs/workshop_studies/study_666155465_show_me.md",
-            "skillDoc": "anli/skills/skill_workshop_666155465_Show_Me_Protocol.md",
-            "completedAt": "2026-10-30 12:15:00",
-            "keyTags": [
-                "Compact-ASCII-Protocol",
-                "Hoverer-Interception",
-                "Mod-Conflict-Sniffing",
-                "CrockPot-Diagnosis",
-                "Rate-Limiting"
-            ]
-        },
-        {
-            "id": "1467214795",
-            "name": "Island Adventures - Shipwrecked",
-            "author": "The Island Adventures Team",
-            "version": "1.0.63",
-            "studyDoc": "docs/workshop_studies/study_1467214795_island_adventures.md",
-            "skillDoc": "anli/skills/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md",
-            "completedAt": "2026-10-30 12:31:00",
-            "keyTags": [
-                "DLC-Porting",
-                "Upvalue-Hacker",
-                "Shore-Ocean-ArriveDist",
-                "Tile-Remapping",
-                "HotReload-Defense"
-            ]
-        },
-        {
-            "id": "374550642",
-            "name": "Increased Stack size",
-            "author": "ChaosMind42",
-            "version": "2.3",
-            "studyDoc": "docs/workshop_studies/study_374550642_increased_stack_size.md",
-            "skillDoc": "anli/skills/skill_workshop_374550642_Stack_Tuning_Approximation.md",
-            "completedAt": "2026-10-30 12:43:00",
-            "keyTags": [
-                "TUNING-Tier-Overwrite",
-                "AddPrefabPostInitAny",
-                "Discrete-Approximation",
-                "Performance-Shortcircuit"
-            ]
-        },
-        {
-            "id": "362175979",
-            "name": "Wormhole Marks",
-            "author": "_Q_",
-            "version": "1.4.5",
-            "studyDoc": "docs/workshop_studies/study_362175979_wormhole_marks.md",
-            "skillDoc": "anli/skills/skill_workshop_362175979_Dual_Topology_Wormhole_Mark.md",
-            "completedAt": "2026-10-30 12:55:00",
-            "keyTags": [
-                "Dual-Topology",
-                "MiniMap-Dynamic-Icon",
-                "Draw-Over-Fog",
-                "Singleton-Counter"
-            ]
-        },
-        {
-            "id": "382177939",
-            "name": "DST Storm Cellar",
-            "author": "Afro1967",
-            "version": "1.9",
-            "studyDoc": "docs/workshop_studies/study_382177939_storm_cellar.md",
-            "skillDoc": "anli/skills/skill_workshop_382177939_Large_Container_Grid_Matrix.md",
-            "completedAt": "2026-10-30 13:05:00",
-            "keyTags": [
-                "MAXITEMSLOTS-Expansion",
-                "WidgetSetup-Proxy",
-                "Slotpos-Grid-Algorithm",
-                "Fridge-Tag"
-            ]
-        },
-        {
-            "id": "1608191708",
-            "name": "ActionQueue Reborn",
-            "author": "eXiGe / simplex",
-            "version": "1.050",
-            "studyDoc": "docs/workshop_studies/study_1608191708_action_queue_reborn.md",
-            "skillDoc": "anli/skills/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md",
-            "completedAt": "2026-10-30 13:16:00",
-            "keyTags": [
-                "Client-Only",
-                "Coroutine-ActionThread",
-                "SelectionBox-Geometry",
-                "Manual-Walk-Interrupt",
-                "Deploy-Spacing"
-            ]
-        },
-        {
-            "id": "836583293",
-            "name": "Item Info",
-            "author": "Ryuu",
-            "version": "0.54",
-            "studyDoc": "docs/workshop_studies/study_836583293_item_info.md",
-            "skillDoc": "anli/skills/skill_workshop_836583293_Item_Metadata_Snapshot.md",
-            "completedAt": "2026-10-30 13:28:00",
-            "keyTags": [
-                "Client-Only",
-                "Metadata-Snapshot-Cache",
-                "Action-Silent-Guard",
-                "Planar-Damage-Defense",
-                "HUD-Embedding"
-            ]
-        },
-        {
-            "id": "375850593",
-            "name": "Extra Equip Slots",
-            "author": "xVars",
-            "version": "1.8.0",
-            "studyDoc": "docs/workshop_studies/study_375850593_extra_equip_slots.md",
-            "skillDoc": "anli/skills/skill_workshop_375850593_Extra_Equip_Slots_Architecture.md",
-            "completedAt": "2026-10-30 13:42:00",
-            "keyTags": [
-                "EQUIPSLOTS-Extension",
-                "inventory_classified-Hook",
-                "Setoverflow-Event",
-                "Resurrectable-Redirect"
-            ]
-        },
-        {
-            "id": "462434129",
-            "name": "Restart",
-            "author": "Skull & Orange",
-            "version": "0.3.2",
-            "studyDoc": "docs/workshop_studies/study_462434129_restart.md",
-            "skillDoc": "anli/skills/skill_workshop_462434129_Chat_Command_And_Despawn.md",
-            "completedAt": "2026-10-30 13:50:00",
-            "keyTags": [
-                "Networking_Say-Hook",
-                "ms_playerdespawnanddelete",
-                "MapExplorer-Inheritance",
-                "Ghost-Resurrect"
-            ]
-        },
-        {
-            "id": "1418746242",
-            "name": "Chinese++",
-            "author": "EvenMr",
-            "version": "1.2.1",
-            "studyDoc": "docs/workshop_studies/study_1418746242_chinese_plus_plus.md",
-            "skillDoc": "anli/skills/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md",
-            "completedAt": "2026-10-30 14:02:00",
-            "keyTags": [
-                "Font-Pipeline-HotSwap",
-                "Path-Based-Upvalue",
-                "Mergeinfo-Engine",
-                "Pattern-Match-Chinese-Patch"
-            ]
-        },
-        {
-            "id": "1530801499",
-            "name": "Fast Travel (GUI)",
-            "author": "SoraYuki",
-            "version": "1.10",
-            "studyDoc": "docs/workshop_studies/study_1530801499_fast_travel_gui.md",
-            "skillDoc": "anli/skills/skill_workshop_1530801499_Replicable_Component_Topology.md",
-            "completedAt": "2026-10-30 14:15:00",
-            "keyTags": [
-                "Replicable-Component",
-                "Global-Topology-Registry",
-                "OpenScreenUnderPause",
-                "Danger-Escape-Guard",
-                "Distance-Cost-Model"
-            ]
-        },
-        {
-            "id": "458940297",
-            "name": "Food Values - Item Tooltips",
-            "author": "gregdwilson",
-            "version": "2.5",
-            "studyDoc": "docs/workshop_studies/study_458940297_food_values_item_tooltips.md",
-            "skillDoc": "anli/skills/skill_workshop_458940297_ItemTile_Tooltip_OnDemand.md",
-            "completedAt": "2026-10-30 14:26:00",
-            "keyTags": [
-                "On-Demand-RPC",
-                "ItemTile-Tooltip-Hook",
-                "No-Leak-Listener-Guard",
-                "Wet-Color-Palette"
-            ]
-        },
-        {
-            "id": "1595631294",
-            "name": "Epic Healthbar",
-            "category": "UI与HUD类",
-            "studyDoc": "docs/workshop_studies/study_1595631294_epic_healthbar.md",
-            "skillDoc": "anli/skills/skill_workshop_1595631294_Epic_Healthbar.md",
-            "completedAt": "2026-10-30 14:32:13",
-            "keyTags": [
-                "UI与HUD类",
-                "Epic_Healthbar"
-            ]
-        },
-        {
-            "id": "758532836",
-            "name": "Insight (Show Me+)",
-            "category": "网络与RPC类",
-            "studyDoc": "docs/workshop_studies/study_758532836_insight_protocol.md",
-            "skillDoc": "anli/skills/skill_workshop_758532836_Insight_Protocol.md",
-            "completedAt": "2026-10-30 14:32:13",
-            "keyTags": [
-                "网络与RPC类",
-                "Insight_Protocol"
-            ]
-        },
-        {
-            "id": "1185229307",
-            "name": "Display Food Values",
-            "category": "组件持久化类",
-            "studyDoc": "docs/workshop_studies/study_1185229307_food_values_display.md",
-            "skillDoc": "anli/skills/skill_workshop_1185229307_Food_Values_Display.md",
-            "completedAt": "2026-10-30 14:32:13",
-            "keyTags": [
-                "组件持久化类",
-                "Food_Values_Display"
-            ]
-        },
-        {
-            "id": "1991746508",
-            "name": "Myth Words",
-            "category": "大型DLC类",
-            "studyDoc": "docs/workshop_studies/study_1991746508_myth_words_architecture.md",
-            "skillDoc": "anli/skills/skill_workshop_1991746508_Myth_Words_Architecture.md",
-            "completedAt": "2026-10-30 14:32:13",
-            "keyTags": [
-                "大型DLC类",
-                "Myth_Words_Architecture"
-            ]
-        },
-        {
-            "id": "1207269292",
-            "name": "Simple Health Bar Server",
-            "category": "实体机制类",
-            "studyDoc": "docs/workshop_studies/study_1207269292_simple_health_bar_server.md",
-            "skillDoc": "anli/skills/skill_workshop_1207269292_Simple_Health_Bar_Server.md",
-            "completedAt": "2026-10-30 14:32:13",
-            "keyTags": [
-                "实体机制类",
-                "Simple_Health_Bar_Server"
-            ]
-        }
-    ],
-    "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-    "lastUpdated": "2026-10-30 14:32:13"
+  "completedMods": [
+    {
+      "id": "351325790",
+      "name": "Geometric Placement",
+      "author": "rezecib",
+      "version": "3.2.0",
+      "studyDoc": "docs/workshop_studies/study_351325790_geometric_placement.md",
+      "skillDoc": "anli/skills/skill_workshop_351325790_Geometric_Placement_Core.md",
+      "completedAt": "2026-10-30 04:38:00",
+      "keyTags": [
+        "Client-Only",
+        "Affine-Projection",
+        "Placer-Hook",
+        "Entity-Pool",
+        "Time-Budget"
+      ]
+    },
+    {
+      "id": "345692228",
+      "name": "Minimap HUD",
+      "author": "sqrly",
+      "version": "1.4.3",
+      "studyDoc": "docs/workshop_studies/study_345692228_minimap_hud.md",
+      "skillDoc": "anli/skills/skill_workshop_345692228_HUD_Responsive_Matrix.md",
+      "completedAt": "2026-10-30 11:25:00",
+      "keyTags": [
+        "Client-Only",
+        "MiniMap-Native-Texture",
+        "Matrix-Unscale",
+        "Resize-Listener",
+        "Camera-Focus-Lock"
+      ]
+    },
+    {
+      "id": "376333686",
+      "name": "Combined Status",
+      "author": "rezecib, Kiopho, Soilworker, hotmatrixx, penguin0616",
+      "version": "1.9.8",
+      "studyDoc": "docs/workshop_studies/study_376333686_combined_status.md",
+      "skillDoc": "anli/skills/skill_workshop_376333686_Combined_Status_Architecture.md",
+      "completedAt": "2026-10-30 11:32:00",
+      "keyTags": [
+        "Cross-Platform-DLC",
+        "Badge-Decorator",
+        "Event-Driven-Delta",
+        "Client-Safe-Getter",
+        "Insight-Contract"
+      ]
+    },
+    {
+      "id": "378160973",
+      "name": "Global Positions",
+      "author": "rezecib",
+      "version": "2.2.0",
+      "studyDoc": "docs/workshop_studies/study_378160973_global_positions.md",
+      "skillDoc": "anli/skills/skill_workshop_378160973_Global_Positions_Beacon.md",
+      "completedAt": "2026-10-30 11:40:00",
+      "keyTags": [
+        "Classified-Proxy",
+        "CanSleep-False",
+        "WorldMapExplorer",
+        "Tactical-Ping",
+        "TargetIndicator-Hook"
+      ]
+    },
+    {
+      "id": "666155465",
+      "name": "Show Me",
+      "author": "Star, +Serp",
+      "version": "0.58",
+      "studyDoc": "docs/workshop_studies/study_666155465_show_me.md",
+      "skillDoc": "anli/skills/skill_workshop_666155465_Show_Me_Protocol.md",
+      "completedAt": "2026-10-30 12:15:00",
+      "keyTags": [
+        "Compact-ASCII-Protocol",
+        "Hoverer-Interception",
+        "Mod-Conflict-Sniffing",
+        "CrockPot-Diagnosis",
+        "Rate-Limiting"
+      ]
+    },
+    {
+      "id": "1467214795",
+      "name": "Island Adventures - Shipwrecked",
+      "author": "The Island Adventures Team",
+      "version": "1.0.63",
+      "studyDoc": "docs/workshop_studies/study_1467214795_island_adventures.md",
+      "skillDoc": "anli/skills/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md",
+      "completedAt": "2026-10-30 12:31:00",
+      "keyTags": [
+        "DLC-Porting",
+        "Upvalue-Hacker",
+        "Shore-Ocean-ArriveDist",
+        "Tile-Remapping",
+        "HotReload-Defense"
+      ]
+    },
+    {
+      "id": "374550642",
+      "name": "Increased Stack size",
+      "author": "ChaosMind42",
+      "version": "2.3",
+      "studyDoc": "docs/workshop_studies/study_374550642_increased_stack_size.md",
+      "skillDoc": "anli/skills/skill_workshop_374550642_Stack_Tuning_Approximation.md",
+      "completedAt": "2026-10-30 12:43:00",
+      "keyTags": [
+        "TUNING-Tier-Overwrite",
+        "AddPrefabPostInitAny",
+        "Discrete-Approximation",
+        "Performance-Shortcircuit"
+      ]
+    },
+    {
+      "id": "362175979",
+      "name": "Wormhole Marks",
+      "author": "_Q_",
+      "version": "1.4.5",
+      "studyDoc": "docs/workshop_studies/study_362175979_wormhole_marks.md",
+      "skillDoc": "anli/skills/skill_workshop_362175979_Dual_Topology_Wormhole_Mark.md",
+      "completedAt": "2026-10-30 12:55:00",
+      "keyTags": [
+        "Dual-Topology",
+        "MiniMap-Dynamic-Icon",
+        "Draw-Over-Fog",
+        "Singleton-Counter"
+      ]
+    },
+    {
+      "id": "382177939",
+      "name": "DST Storm Cellar",
+      "author": "Afro1967",
+      "version": "1.9",
+      "studyDoc": "docs/workshop_studies/study_382177939_storm_cellar.md",
+      "skillDoc": "anli/skills/skill_workshop_382177939_Large_Container_Grid_Matrix.md",
+      "completedAt": "2026-10-30 13:05:00",
+      "keyTags": [
+        "MAXITEMSLOTS-Expansion",
+        "WidgetSetup-Proxy",
+        "Slotpos-Grid-Algorithm",
+        "Fridge-Tag"
+      ]
+    },
+    {
+      "id": "1608191708",
+      "name": "ActionQueue Reborn",
+      "author": "eXiGe / simplex",
+      "version": "1.050",
+      "studyDoc": "docs/workshop_studies/study_1608191708_action_queue_reborn.md",
+      "skillDoc": "anli/skills/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md",
+      "completedAt": "2026-10-30 13:16:00",
+      "keyTags": [
+        "Client-Only",
+        "Coroutine-ActionThread",
+        "SelectionBox-Geometry",
+        "Manual-Walk-Interrupt",
+        "Deploy-Spacing"
+      ]
+    },
+    {
+      "id": "836583293",
+      "name": "Item Info",
+      "author": "Ryuu",
+      "version": "0.54",
+      "studyDoc": "docs/workshop_studies/study_836583293_item_info.md",
+      "skillDoc": "anli/skills/skill_workshop_836583293_Item_Metadata_Snapshot.md",
+      "completedAt": "2026-10-30 13:28:00",
+      "keyTags": [
+        "Client-Only",
+        "Metadata-Snapshot-Cache",
+        "Action-Silent-Guard",
+        "Planar-Damage-Defense",
+        "HUD-Embedding"
+      ]
+    },
+    {
+      "id": "375850593",
+      "name": "Extra Equip Slots",
+      "author": "xVars",
+      "version": "1.8.0",
+      "studyDoc": "docs/workshop_studies/study_375850593_extra_equip_slots.md",
+      "skillDoc": "anli/skills/skill_workshop_375850593_Extra_Equip_Slots_Architecture.md",
+      "completedAt": "2026-10-30 13:42:00",
+      "keyTags": [
+        "EQUIPSLOTS-Extension",
+        "inventory_classified-Hook",
+        "Setoverflow-Event",
+        "Resurrectable-Redirect"
+      ]
+    },
+    {
+      "id": "462434129",
+      "name": "Restart",
+      "author": "Skull & Orange",
+      "version": "0.3.2",
+      "studyDoc": "docs/workshop_studies/study_462434129_restart.md",
+      "skillDoc": "anli/skills/skill_workshop_462434129_Chat_Command_And_Despawn.md",
+      "completedAt": "2026-10-30 13:50:00",
+      "keyTags": [
+        "Networking_Say-Hook",
+        "ms_playerdespawnanddelete",
+        "MapExplorer-Inheritance",
+        "Ghost-Resurrect"
+      ]
+    },
+    {
+      "id": "1418746242",
+      "name": "Chinese++",
+      "author": "EvenMr",
+      "version": "1.2.1",
+      "studyDoc": "docs/workshop_studies/study_1418746242_chinese_plus_plus.md",
+      "skillDoc": "anli/skills/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md",
+      "completedAt": "2026-10-30 14:02:00",
+      "keyTags": [
+        "Font-Pipeline-HotSwap",
+        "Path-Based-Upvalue",
+        "Mergeinfo-Engine",
+        "Pattern-Match-Chinese-Patch"
+      ]
+    },
+    {
+      "id": "1530801499",
+      "name": "Fast Travel (GUI)",
+      "author": "SoraYuki",
+      "version": "1.10",
+      "studyDoc": "docs/workshop_studies/study_1530801499_fast_travel_gui.md",
+      "skillDoc": "anli/skills/skill_workshop_1530801499_Replicable_Component_Topology.md",
+      "completedAt": "2026-10-30 14:15:00",
+      "keyTags": [
+        "Replicable-Component",
+        "Global-Topology-Registry",
+        "OpenScreenUnderPause",
+        "Danger-Escape-Guard",
+        "Distance-Cost-Model"
+      ]
+    },
+    {
+      "id": "458940297",
+      "name": "Food Values - Tooltips",
+      "author": "gregdwilson",
+      "version": "2.5",
+      "studyDoc": "docs/workshop_studies/study_458940297_food_values_item_tooltips.md",
+      "skillDoc": "anli/skills/skill_workshop_458940297_ItemTile_Tooltip_OnDemand.md",
+      "completedAt": "2026-10-30 14:26:00",
+      "keyTags": [
+        "On-Demand-RPC",
+        "ItemTile-Tooltip-Hook",
+        "No-Leak-Listener-Guard",
+        "Wet-Color-Palette"
+      ]
+    },
+    {
+      "id": "367546858",
+      "name": "中文语言包",
+      "author": "L.M.U汉化组",
+      "version": "3.7.6",
+      "studyDoc": "docs/workshop_studies/study_367546858_chinese_pack.md",
+      "skillDoc": "anli/skills/skill_workshop_367546858_PO_Pipeline_And_Graphics_Guard.md",
+      "completedAt": "2026-10-30 14:38:00",
+      "keyTags": [
+        "Native-LoadPOFile",
+        "TranslateStringTable",
+        "Steam-Language-Sync",
+        "Small-Textures-Guard",
+        "Priority-9999"
+      ]
+    },
+    {
+      "id": "361994110",
+      "name": "Bee Nice",
+      "author": "Ryuu",
+      "version": "0.7",
+      "studyDoc": "docs/workshop_studies/study_361994110_bee_nice.md",
+      "skillDoc": "anli/skills/skill_workshop_361994110_Combat_Retarget_And_Pacification.md",
+      "completedAt": "2026-10-30 14:50:00",
+      "keyTags": [
+        "Combat-Retarget",
+        "UpvalueHacker",
+        "Target-Nullification",
+        "Spring-State-Defense"
+      ]
+    },
+    {
+      "id": "375859599",
+      "name": "Health Info",
+      "author": "Nubs, star",
+      "version": "2.2.04",
+      "studyDoc": "docs/workshop_studies/study_375859599_health_info.md",
+      "skillDoc": "anli/skills/skill_workshop_375859599_Action_String_Injection.md",
+      "completedAt": "2026-10-30 14:58:00",
+      "keyTags": [
+        "BufferedAction-GetActionString",
+        "Transient-Context-Flag",
+        "Blacklist-Filter",
+        "Cut-Pattern-Regex"
+      ]
+    },
+    {
+      "id": "352373173",
+      "name": "Gesture Wheel",
+      "author": "rezecib",
+      "version": "1.8.2",
+      "studyDoc": "docs/workshop_studies/study_352373173_gesture_wheel.md",
+      "skillDoc": "anli/skills/skill_workshop_352373173_Radial_Menu_Polar_Math.md",
+      "completedAt": "2026-10-30 15:15:00",
+      "keyTags": [
+        "Polar-Distribution",
+        "Analog-Stick-Differential",
+        "Cursor-Preservation",
+        "Clickable-False"
+      ]
+    },
+    {
+      "id": "347079953",
+      "name": "Display food values",
+      "author": "alks, gregdwilson",
+      "version": "1.61",
+      "studyDoc": "docs/workshop_studies/study_347079953_display_food_values.md",
+      "skillDoc": "anli/skills/skill_workshop_347079953_Phantom_Simulation_Prediction.md",
+      "completedAt": "2026-10-30 15:28:00",
+      "keyTags": [
+        "Phantom-Simulation",
+        "RemoveFromScene",
+        "Cookable-Prediction",
+        "Eater-Specific-Evaluation"
+      ]
+    },
+    {
+      "id": "1595631294",
+      "name": "Smart Minisign",
+      "author": "小班花 mamjun1",
+      "version": "1.1.8",
+      "studyDoc": "docs/workshop_studies/study_1595631294_smart_minisign.md",
+      "skillDoc": "anli/skills/skill_workshop_1595631294_Composite_Entity_And_Atlas_Builder.md",
+      "completedAt": "2026-10-30 15:42:00",
+      "keyTags": [
+        "Composite-Entity-Attachment",
+        "Persists-False-Rule",
+        "Dynamic-Atlas-Build-Compiler",
+        "Bundle-Unwrap-Penetration"
+      ]
+    },
+    {
+      "id": "786556008",
+      "name": "45 Inventory Slots",
+      "author": "fmo080308",
+      "version": "1.4.1",
+      "studyDoc": "docs/workshop_studies/study_786556008_45_inventory_slots.md",
+      "skillDoc": "anli/skills/skill_workshop_786556008_Inventory_Netvars_Expansion.md",
+      "completedAt": "2026-10-30 16:03:00",
+      "keyTags": [
+        "inventory_classified-NetEntity-Expansion",
+        "makereadonly-Bypass",
+        "Dual-Row-Layout",
+        "Backpack-Event-Proxy"
+      ]
+    },
+    {
+      "id": "380423963",
+      "name": "Mineable Gems",
+      "author": "star",
+      "version": "2.20",
+      "studyDoc": "docs/workshop_studies/study_380423963_mineable_gems.md",
+      "skillDoc": "anli/skills/skill_workshop_380423963_Loot_Discrete_Slice_Injector.md",
+      "completedAt": "2026-10-30 16:15:00",
+      "keyTags": [
+        "LootTables-Discrete-Slicing",
+        "SetSharedLootTable-Proxy",
+        "Floating-Point-Guard",
+        "Recursive-Unpack"
+      ]
+    },
+    {
+      "id": "1185229307",
+      "name": "Epic Healthbar",
+      "author": "Tykvesh",
+      "version": "103",
+      "studyDoc": "docs/workshop_studies/study_1185229307_epic_healthbar.md",
+      "skillDoc": "anli/skills/skill_workshop_1185229307_Epic_Healthbar.md",
+      "completedAt": "2026-10-30 19:10:00",
+      "keyTags": [
+        "epichealth_proxy",
+        "Server-Proxy-Sync",
+        "Interpolated-Healthbar-Widget",
+        "Epic-Tag-Filtering"
+      ]
+    },
+    {
+      "id": "501385076",
+      "name": "Quick Pick",
+      "author": "辣椒小皇纸",
+      "version": "1.4.0",
+      "studyDoc": "docs/workshop_studies/study_501385076_quick_pick.md",
+      "skillDoc": "anli/skills/skill_workshop_501385076_Quick_Pick_And_Stategraph.md",
+      "completedAt": "2026-10-30 19:55:00",
+      "keyTags": [
+        "pickable-quickpick-Flag",
+        "AddStategraphPostInit",
+        "doshortaction-Redirect",
+        "KnownModIndex-Probe"
+      ]
+    },
+    {
+      "id": "588560555",
+      "name": "Auto Hound Reset",
+      "author": "Cetex",
+      "version": "1.1",
+      "studyDoc": "docs/workshop_studies/study_588560555_auto_tooth_trap_reset.md",
+      "skillDoc": "anli/skills/skill_workshop_588560555_Auto_Reset_Mine_Aspect.md",
+      "completedAt": "2026-10-30 20:05:00",
+      "keyTags": [
+        "mine-Component-Explode",
+        "Auto-Reset-Aspect",
+        "issprung-Guard",
+        "PeriodicTask-To-DoTaskInTime"
+      ]
+    },
+    {
+      "id": "2841310635",
+      "name": "Proper Switching & Auto Re-Equip Client Mod",
+      "author": "Growth Mindset",
+      "version": "1.5a",
+      "studyDoc": "docs/workshop_studies/study_2841310635_proper_switching.md",
+      "skillDoc": "anli/skills/skill_workshop_2841310635_Proper_Switching_And_Auto_Equip.md",
+      "completedAt": "2026-10-30 20:45:00",
+      "keyTags": [
+        "Client-Side-Event-Interception",
+        "Virtual-Slot-Mapping",
+        "Slingshot-Auto-Reload",
+        "Weapon-Auto-Re-Equip"
+      ]
+    },
+    {
+      "id": "2189004162",
+      "name": "Insight (Show Me+)",
+      "author": "penguin0616",
+      "version": "2.xx",
+      "studyDoc": "docs/workshop_studies/study_2189004162_insight.md",
+      "skillDoc": "anli/skills/skill_workshop_2189004162_Insight_Descriptor_Architecture.md",
+      "completedAt": "2026-10-30 21:25:00",
+      "keyTags": [
+        "Component-Descriptors-Reflection",
+        "insight_classified-Sync",
+        "Range-Indicator-Renderer",
+        "RichText-Tooltip-Aggregation"
+      ]
+    },
+    {
+      "id": "343753877",
+      "name": "Status Announcements",
+      "author": "rezecib",
+      "version": "3.x",
+      "studyDoc": "docs/workshop_studies/study_343753877_status_announcements.md",
+      "skillDoc": "anli/skills/skill_workshop_343753877_Status_Announcements_HUD.md",
+      "completedAt": "2026-10-30 22:55:00",
+      "keyTags": [
+        "HUD-Control-Interception",
+        "Modifier-Key-Handling",
+        "ChatHistory-Filter",
+        "Localization-Deep-Merge"
+      ]
+    },
+    {
+      "id": "1991746508",
+      "name": "Language",
+      "author": "羽中, 幼儿园小班花, lw老王, 杨柳, ti_Tout, 逸尘, 八戒Godfrey, 小明",
+      "version": "9.10.27.4",
+      "studyDoc": "docs/workshop_studies/study_1991746508_language.md",
+      "skillDoc": "anli/skills/skill_workshop_1991746508_language.md",
+      "completedAt": "2026-10-30 23:24:15",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3828142639",
+      "name": "扫把飞行替换走路动作",
+      "author": "舒晴伊子",
+      "version": "1.0.8",
+      "studyDoc": "docs/workshop_studies/study_3828142639_3828142639.md",
+      "skillDoc": "anli/skills/skill_workshop_3828142639_3828142639.md",
+      "completedAt": "2026-10-30 23:37:45",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client"
+      ]
+    },
+    {
+      "id": "3821655636",
+      "name": "Charlie Puke Rainbow",
+      "author": "lulu",
+      "version": "10",
+      "studyDoc": "docs/workshop_studies/study_3821655636_charlie_puke_rainbow.md",
+      "skillDoc": "anli/skills/skill_workshop_3821655636_charlie_puke_rainbow.md",
+      "completedAt": "2026-10-30 23:38:41",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3829366302",
+      "name": "쓸모있는 펫",
+      "author": "정들래",
+      "version": "1.2.1",
+      "studyDoc": "docs/workshop_studies/study_3829366302_3829366302.md",
+      "skillDoc": "anli/skills/skill_workshop_3829366302_3829366302.md",
+      "completedAt": "2026-10-30 23:39:36",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3826703014",
+      "name": "That",
+      "author": "DevLicious",
+      "version": "1.1.0",
+      "studyDoc": "docs/workshop_studies/study_3826703014_that.md",
+      "skillDoc": "anli/skills/skill_workshop_3826703014_that.md",
+      "completedAt": "2026-10-30 23:39:53",
+      "keyTags": [
+        "AddStategraphPostInit:SGstalker",
+        "AddComponentPostInit:grue"
+      ]
+    },
+    {
+      "id": "3826753623",
+      "name": "한영 변환기",
+      "author": "Cutlass",
+      "version": "1.0",
+      "studyDoc": "docs/workshop_studies/study_3826753623_3826753623.md",
+      "skillDoc": "anli/skills/skill_workshop_3826753623_3826753623.md",
+      "completedAt": "2026-10-30 23:40:07",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3828144951",
+      "name": "Workshop MOD 3828144951",
+      "author": "Wendigail",
+      "version": "1.1",
+      "studyDoc": "docs/workshop_studies/study_3828144951_workshop_mod_3828144951.md",
+      "skillDoc": "anli/skills/skill_workshop_3828144951_workshop_mod_3828144951.md",
+      "completedAt": "2026-10-30 23:40:21",
+      "keyTags": [
+        "AddPrefabPostInit:witchbroom",
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client"
+      ]
+    },
+    {
+      "id": "3825722696",
+      "name": "基地防护 | Base Protection",
+      "author": "rebecca graem",
+      "version": "1.0.0",
+      "studyDoc": "docs/workshop_studies/study_3825722696_base_protection.md",
+      "skillDoc": "anli/skills/skill_workshop_3825722696_base_protection.md",
+      "completedAt": "2026-10-30 23:40:33",
+      "keyTags": [
+        "AddComponentPostInit:workable",
+        "AddComponentPostInit:combat",
+        "AddComponentPostInit:health",
+        "AddComponentPostInit:burnable",
+        "AddBrainPostInit:deerclopsbrain"
+      ]
+    },
+    {
+      "id": "3829580550",
+      "name": "林间毛球 HUD",
+      "author": "努力成为NO.2",
+      "version": "0.3.15",
+      "studyDoc": "docs/workshop_studies/study_3829580550_hud.md",
+      "skillDoc": "anli/skills/skill_workshop_3829580550_hud.md",
+      "completedAt": "2026-10-30 23:41:05",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3822763111",
+      "name": "缇比 · 神树",
+      "author": "休丶比",
+      "version": "0.7.712",
+      "studyDoc": "docs/workshop_studies/study_3822763111_3822763111.md",
+      "skillDoc": "anli/skills/skill_workshop_3822763111_3822763111.md",
+      "completedAt": "2026-10-30 23:43:40",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddStategraphPostInit:wilson",
+        "AddPrefabPostInit:greenstaff",
+        "AddComponentPostInit:inventory",
+        "AddComponentPostInit:locomotor"
+      ]
+    },
+    {
+      "id": "3828900356",
+      "name": "鸣潮：爱弥斯扩展 (Wuthering Waves: Aemeath Expansion)",
+      "author": "LR",
+      "version": "0.9.1",
+      "studyDoc": "docs/workshop_studies/study_3828900356_wuthering_waves_aemeath_expansion.md",
+      "skillDoc": "anli/skills/skill_workshop_3828900356_wuthering_waves_aemeath_expansion.md",
+      "completedAt": "2026-10-30 23:45:55",
+      "keyTags": [
+        "AddComponentPostInit:combat",
+        "AddComponentPostInit:playercontroller",
+        "AddComponentPostInit:aemeath_skill",
+        "AddComponentPostInit:inventory",
+        "AddPrefabPostInit:sword_lunarplant"
+      ]
+    },
+    {
+      "id": "3807703087",
+      "name": "Alignment Plus",
+      "author": "Twdoor",
+      "version": "0.1.1",
+      "studyDoc": "docs/workshop_studies/study_3807703087_alignment_plus.md",
+      "skillDoc": "anli/skills/skill_workshop_3807703087_alignment_plus.md",
+      "completedAt": "2026-10-30 23:47:05",
+      "keyTags": [
+        "AddComponentPostInit:placer",
+        "AddPrefabPostInit:lightning_rod",
+        "AddPrefabPostInit:lightning_rod_placer",
+        "AddPrefabPostInit:mastupgrade_lightningrod",
+        "AddPrefabPostInit:storage_robot"
+      ]
+    },
+    {
+      "id": "3825256021",
+      "name": "氢瑶薄赋Hydrogemmy",
+      "author": "氢瑶薄赋",
+      "version": "1.0.3",
+      "studyDoc": "docs/workshop_studies/study_3825256021_hydrogemmy.md",
+      "skillDoc": "anli/skills/skill_workshop_3825256021_hydrogemmy.md",
+      "completedAt": "2026-10-30 23:47:53",
+      "keyTags": [
+        "AddComponentPostInit:birdspawner",
+        "AddComponentPostInit:spawner",
+        "AddPrefabPostInit:world"
+      ]
+    },
+    {
+      "id": "3827681772",
+      "name": "[Bulingbuling]不灵小姐似乎在绝赞遇难中",
+      "author": "Dladm",
+      "version": "4.4.9-dst-port",
+      "studyDoc": "docs/workshop_studies/study_3827681772_bulingbuling.md",
+      "skillDoc": "anli/skills/skill_workshop_3827681772_bulingbuling.md",
+      "completedAt": "2026-10-30 23:49:46",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddStategraphPostInit:wilson",
+        "AddPrefabPostInit:rain",
+        "AddPrefabPostInit:player_classified",
+        "AddPrefabPostInit:slurper"
+      ]
+    },
+    {
+      "id": "3825200629",
+      "name": "薇洛的余烬收纳袋 · Willow",
+      "author": "努力成为NO.2",
+      "version": "1.0.7",
+      "studyDoc": "docs/workshop_studies/study_3825200629_willow.md",
+      "skillDoc": "anli/skills/skill_workshop_3825200629_willow.md",
+      "completedAt": "2026-10-30 23:50:53",
+      "keyTags": [
+        "AddPrefabPostInit:lighter",
+        "AddComponentPostInit:builder",
+        "AddPrefabPostInit:reskin_tool",
+        "AddComponentPostInit:channelcastable",
+        "AddComponentPostInit:playercontroller"
+      ]
+    },
+    {
+      "id": "3824691743",
+      "name": "take_out_eternal",
+      "author": "正义珍妮",
+      "version": "1.2.1",
+      "studyDoc": "docs/workshop_studies/study_3824691743_take_out_eternal.md",
+      "skillDoc": "anli/skills/skill_workshop_3824691743_take_out_eternal.md",
+      "completedAt": "2026-10-30 23:51:04",
+      "keyTags": [
+        "AddPrefabPostInit:gelblob_storage"
+      ]
+    },
+    {
+      "id": "3824677445",
+      "name": "PUGALISK_HP_MULTIPLIER",
+      "author": "Kiyo",
+      "version": "0.3.65",
+      "studyDoc": "docs/workshop_studies/study_3824677445_pugalisk_hp_multiplier.md",
+      "skillDoc": "anli/skills/skill_workshop_3824677445_pugalisk_hp_multiplier.md",
+      "completedAt": "2026-10-30 23:51:38",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddPrefabPostInit:player_classified",
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:playerspawner"
+      ]
+    },
+    {
+      "id": "3828853206",
+      "name": "灵魂绘梦",
+      "author": "努力成为NO.2",
+      "version": "1.1.1",
+      "studyDoc": "docs/workshop_studies/study_3828853206_3828853206.md",
+      "skillDoc": "anli/skills/skill_workshop_3828853206_3828853206.md",
+      "completedAt": "2026-10-30 23:51:55",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3829443954",
+      "name": "Gekko Trap: Advanced",
+      "author": "DevLicious",
+      "version": "1.0.2",
+      "studyDoc": "docs/workshop_studies/study_3829443954_gekko_trap_advanced.md",
+      "skillDoc": "anli/skills/skill_workshop_3829443954_gekko_trap_advanced.md",
+      "completedAt": "2026-10-30 23:52:07",
+      "keyTags": [
+        "AddPrefabPostInit:trap",
+        "AddStategraphPostInit:grassgekko",
+        "AddPrefabPostInit:grassgekko"
+      ]
+    },
+    {
+      "id": "3827532311",
+      "name": "麦斯威尔技能树",
+      "author": "仲町あられ",
+      "version": "1.3",
+      "studyDoc": "docs/workshop_studies/study_3827532311_3827532311.md",
+      "skillDoc": "anli/skills/skill_workshop_3827532311_3827532311.md",
+      "completedAt": "2026-10-30 23:52:23",
+      "keyTags": [
+        "AddComponentPostInit:health",
+        "AddComponentPostInit:combat",
+        "AddPrefabPostInit:waxwell",
+        "AddComponentPostInit:book",
+        "AddComponentPostInit:sanity"
+      ]
+    },
+    {
+      "id": "3826855460",
+      "name": "三界同行 · 四模组独立补丁",
+      "author": "三界同行",
+      "version": "0.1.14",
+      "studyDoc": "docs/workshop_studies/study_3826855460_3826855460.md",
+      "skillDoc": "anli/skills/skill_workshop_3826855460_3826855460.md",
+      "completedAt": "2026-10-30 23:52:57",
+      "keyTags": [
+        "AddComponentPostInit:playeractionpicker",
+        "AddComponentPostInit:skinner",
+        "AddPrefabPostInit:player_classified",
+        "AddPrefabPostInit:porkland",
+        "AddPrefabPostInit:pigman_queen"
+      ]
+    },
+    {
+      "id": "3825146333",
+      "name": "maxstack",
+      "author": "DreamSimulator",
+      "version": "1.4.3",
+      "studyDoc": "docs/workshop_studies/study_3825146333_maxstack.md",
+      "skillDoc": "anli/skills/skill_workshop_3825146333_maxstack.md",
+      "completedAt": "2026-10-30 23:53:07",
+      "keyTags": [
+        "AddComponentPostInit:dryingrack",
+        "AddComponentPostInit:wobyrack"
+      ]
+    },
+    {
+      "id": "3824225798",
+      "name": "史莱姆 Slime",
+      "author": "奶糖味果酱",
+      "version": "0.4.0",
+      "studyDoc": "docs/workshop_studies/study_3824225798_slime.md",
+      "skillDoc": "anli/skills/skill_workshop_3824225798_slime.md",
+      "completedAt": "2026-10-30 23:53:44",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:combat",
+        "AddComponentPostInit:pickable",
+        "AddComponentPostInit:temperature"
+      ]
+    },
+    {
+      "id": "2968760008",
+      "name": "mudrock_health",
+      "author": "未知",
+      "version": "2.5",
+      "studyDoc": "docs/workshop_studies/study_2968760008_mudrock_health.md",
+      "skillDoc": "anli/skills/skill_workshop_2968760008_mudrock_health.md",
+      "completedAt": "2026-10-30 23:56:29",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:armor",
+        "AddComponentPostInit:healer",
+        "AddComponentPostInit:combat"
+      ]
+    },
+    {
+      "id": "3822288190",
+      "name": "Hwei - 异画师·慧",
+      "author": "这是一个临时昵称",
+      "version": "0.2.25",
+      "studyDoc": "docs/workshop_studies/study_3822288190_hwei.md",
+      "skillDoc": "anli/skills/skill_workshop_3822288190_hwei.md",
+      "completedAt": "2026-10-30 23:57:50",
+      "keyTags": [
+        "AddComponentPostInit:combat",
+        "AddStategraphPostInit:wilson",
+        "AddPrefabPostInit:hwei",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:playeractionpicker"
+      ]
+    },
+    {
+      "id": "3810943420",
+      "name": "Language",
+      "author": "Lilith",
+      "version": "1.0.3",
+      "studyDoc": "docs/workshop_studies/study_3810943420_language.md",
+      "skillDoc": "anli/skills/skill_workshop_3810943420_language.md",
+      "completedAt": "2026-10-30 23:58:52",
+      "keyTags": [
+        "AddPrefabPostInit:king_cane",
+        "AddPrefabPostInit:king_cane_fx",
+        "AddPrefabPostInit:vault_orb_refined"
+      ]
+    },
+    {
+      "id": "3827105000",
+      "name": "彦卿·御剑行霜",
+      "author": "Yanqing Fan Mod",
+      "version": "1.0.1",
+      "studyDoc": "docs/workshop_studies/study_3827105000_3827105000.md",
+      "skillDoc": "anli/skills/skill_workshop_3827105000_3827105000.md",
+      "completedAt": "2026-10-30 23:59:57",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client"
+      ]
+    },
+    {
+      "id": "3827725768",
+      "name": "TOGGLEKEY",
+      "author": "銘椿",
+      "version": "1.0.2",
+      "studyDoc": "docs/workshop_studies/study_3827725768_togglekey.md",
+      "skillDoc": "anli/skills/skill_workshop_3827725768_togglekey.md",
+      "completedAt": "2026-10-31 00:00:23",
+      "keyTags": [
+        "AddComponentPostInit:talker"
+      ]
+    },
+    {
+      "id": "3825332710",
+      "name": "DST Sophisticated Backpacks | 精妙背包 v0.5.6.5 终极升级链",
+      "author": "DST Sophisticated Backpacks Project",
+      "version": "0.5.6.5-test",
+      "studyDoc": "docs/workshop_studies/study_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md",
+      "skillDoc": "anli/skills/skill_workshop_3825332710_dst_sophisticated_backpacks_v0_5_6_5.md",
+      "completedAt": "2026-10-31 00:00:39",
+      "keyTags": [
+        "AddComponentPostInit:inventory",
+        "AddPrefabPostInit:inventory_classified"
+      ]
+    },
+    {
+      "id": "3827072959",
+      "name": "模组兼容修复 Compat Fixer",
+      "author": "萌萌的新",
+      "version": "0.1.12",
+      "studyDoc": "docs/workshop_studies/study_3827072959_compat_fixer.md",
+      "skillDoc": "anli/skills/skill_workshop_3827072959_compat_fixer.md",
+      "completedAt": "2026-10-31 00:01:04",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:combat",
+        "AddComponentPostInit:stackable",
+        "AddPrefabPostInit:skeleton",
+        "AddStategraphPostInit:wilson_client"
+      ]
+    },
+    {
+      "id": "3817210465",
+      "name": "Велина Русский",
+      "author": "2452S, DeepSeek",
+      "version": "1.0",
+      "studyDoc": "docs/workshop_studies/study_3817210465_3817210465.md",
+      "skillDoc": "anli/skills/skill_workshop_3817210465_3817210465.md",
+      "completedAt": "2026-10-31 00:02:02",
+      "keyTags": [
+        "AddPrefabPostInit:catcoon"
+      ]
+    },
+    {
+      "id": "3816314599",
+      "name": "圣娅",
+      "author": "喜欢一个人是藏不住的，喜欢两个可以藏得住",
+      "version": "0.1.111",
+      "studyDoc": "docs/workshop_studies/study_3816314599_3816314599.md",
+      "skillDoc": "anli/skills/skill_workshop_3816314599_3816314599.md",
+      "completedAt": "2026-10-31 00:02:47",
+      "keyTags": [
+        "AddComponentPostInit:builder",
+        "AddComponentPostInit:pickable",
+        "AddComponentPostInit:harvestable",
+        "AddComponentPostInit:farmplanttendable",
+        "AddPrefabPostInit:trinity_seia"
+      ]
+    },
+    {
+      "id": "3826531367",
+      "name": "Tradução PT-BR | Don",
+      "author": "Gabriel Nunes",
+      "version": "759671.2",
+      "studyDoc": "docs/workshop_studies/study_3826531367_tradu_o_pt_br_don.md",
+      "skillDoc": "anli/skills/skill_workshop_3826531367_tradu_o_pt_br_don.md",
+      "completedAt": "2026-10-31 00:03:41",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3749566829",
+      "name": "enable_condition_restriction",
+      "author": "Yolo",
+      "version": "1.0.2",
+      "studyDoc": "docs/workshop_studies/study_3749566829_enable_condition_restriction.md",
+      "skillDoc": "anli/skills/skill_workshop_3749566829_enable_condition_restriction.md",
+      "completedAt": "2026-10-31 00:04:40",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3807721041",
+      "name": "简易种植计算器",
+      "author": "哇唧唧哇",
+      "version": "0.0.1.1",
+      "studyDoc": "docs/workshop_studies/study_3807721041_3807721041.md",
+      "skillDoc": "anli/skills/skill_workshop_3807721041_3807721041.md",
+      "completedAt": "2026-10-31 00:05:53",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3830086941",
+      "name": "Workshop MOD 3830086941",
+      "author": "亚丹",
+      "version": "1.1.0",
+      "studyDoc": "docs/workshop_studies/study_3830086941_workshop_mod_3830086941.md",
+      "skillDoc": "anli/skills/skill_workshop_3830086941_workshop_mod_3830086941.md",
+      "completedAt": "2026-10-31 00:06:23",
+      "keyTags": [
+        "AddComponentPostInit:hounded",
+        "AddComponentPostInit:quaker",
+        "AddComponentPostInit:acidbatwavemanager",
+        "AddComponentPostInit:ambientlighting",
+        "AddComponentPostInit:ambientsound"
+      ]
+    },
+    {
+      "id": "3830062049",
+      "name": "容器卡顿优化 (Container Lag Fix)",
+      "author": "狗熊岭-熊二",
+      "version": "1.0.2",
+      "studyDoc": "docs/workshop_studies/study_3830062049_container_lag_fix.md",
+      "skillDoc": "anli/skills/skill_workshop_3830062049_container_lag_fix.md",
+      "completedAt": "2026-10-31 00:07:17",
+      "keyTags": [
+        "AddPrefabPostInit:inventory_classified"
+      ]
+    },
+    {
+      "id": "3829943273",
+      "name": "炼狱锻锤-地狱独眼巨猪",
+      "author": "Workshop Addon",
+      "version": "1.0.1",
+      "studyDoc": "docs/workshop_studies/study_3829943273_3829943273.md",
+      "skillDoc": "anli/skills/skill_workshop_3829943273_3829943273.md",
+      "completedAt": "2026-10-31 00:09:37",
+      "keyTags": [
+        "AddComponentPostInit:playercontroller",
+        "AddComponentPostInit:combat",
+        "AddComponentPostInit:locomotor",
+        "AddComponentPostInit:playeractionpicker",
+        "AddComponentPostInit:talker"
+      ]
+    },
+    {
+      "id": "3829345300",
+      "name": "自动战斗",
+      "author": "萌萌的新",
+      "version": "0.4.94",
+      "studyDoc": "docs/workshop_studies/study_3829345300_3829345300.md",
+      "skillDoc": "anli/skills/skill_workshop_3829345300_3829345300.md",
+      "completedAt": "2026-10-31 00:10:53",
+      "keyTags": [
+        "AddComponentPostInit:playercontroller"
+      ]
+    },
+    {
+      "id": "3827533681",
+      "name": "Warm Lantern",
+      "author": "PIPPO",
+      "version": "1.0.3",
+      "studyDoc": "docs/workshop_studies/study_3827533681_warm_lantern.md",
+      "skillDoc": "anli/skills/skill_workshop_3827533681_warm_lantern.md",
+      "completedAt": "2026-10-31 00:11:58",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3828925092",
+      "name": "gd_language",
+      "author": "Bishop",
+      "version": "1.2.27",
+      "studyDoc": "docs/workshop_studies/study_3828925092_gd_language.md",
+      "skillDoc": "anli/skills/skill_workshop_3828925092_gd_language.md",
+      "completedAt": "2026-10-31 00:12:41",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddPrefabPostInit:c_shrouden",
+        "AddComponentPostInit:playercontroller",
+        "AddPrefabPostInit:gestalt"
+      ]
+    },
+    {
+      "id": "3827498134",
+      "name": "Where you are?plus",
+      "author": "CrushWater",
+      "version": "1.2.5",
+      "studyDoc": "docs/workshop_studies/study_3827498134_where_you_are_plus.md",
+      "skillDoc": "anli/skills/skill_workshop_3827498134_where_you_are_plus.md",
+      "completedAt": "2026-10-31 00:13:36",
+      "keyTags": [
+        "AddPrefabPostInit:beefalo",
+        "AddPrefabPostInit:beefaloherd",
+        "AddPrefabPostInit:lightninggoatherd",
+        "AddPrefabPostInit:tumbleweedspawner"
+      ]
+    },
+    {
+      "id": "3827373438",
+      "name": "Beefalo Bell Storage",
+      "author": "zxa",
+      "version": "1.0.3",
+      "studyDoc": "docs/workshop_studies/study_3827373438_beefalo_bell_storage.md",
+      "skillDoc": "anli/skills/skill_workshop_3827373438_beefalo_bell_storage.md",
+      "completedAt": "2026-10-31 00:14:14",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3826859046",
+      "name": "神谕系列 / Oracle Series",
+      "author": "Roomcar",
+      "version": "1.0.3",
+      "studyDoc": "docs/workshop_studies/study_3826859046_oracle_series.md",
+      "skillDoc": "anli/skills/skill_workshop_3826859046_oracle_series.md",
+      "completedAt": "2026-10-31 00:14:38",
+      "keyTags": [
+        "AddComponentPostInit:container"
+      ]
+    },
+    {
+      "id": "3826208788",
+      "name": "Telebrella Map Select (Portasol com Mapa)",
+      "author": "Digi62 + IA",
+      "version": "0.3.3",
+      "studyDoc": "docs/workshop_studies/study_3826208788_telebrella_map_select_portasol_com_mapa.md",
+      "skillDoc": "anli/skills/skill_workshop_3826208788_telebrella_map_select_portasol_com_mapa.md",
+      "completedAt": "2026-10-31 00:15:11",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddComponentPostInit:remoteteleporter"
+      ]
+    },
+    {
+      "id": "3826759911",
+      "name": "自动探图 (Auto Explore)",
+      "author": "诱饵",
+      "version": "1.0.1",
+      "studyDoc": "docs/workshop_studies/study_3826759911_auto_explore.md",
+      "skillDoc": "anli/skills/skill_workshop_3826759911_auto_explore.md",
+      "completedAt": "2026-10-31 00:15:29",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3826562793",
+      "name": "mudrock_health",
+      "author": "未知",
+      "version": "2.5.1",
+      "studyDoc": "docs/workshop_studies/study_3826562793_mudrock_health.md",
+      "skillDoc": "anli/skills/skill_workshop_3826562793_mudrock_health.md",
+      "completedAt": "2026-10-31 00:15:41",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:armor",
+        "AddComponentPostInit:healer",
+        "AddComponentPostInit:combat"
+      ]
+    },
+    {
+      "id": "3828629465",
+      "name": "装备快捷栏 Equip Quick Slots",
+      "author": "lingzhi",
+      "version": "1.1.1",
+      "studyDoc": "docs/workshop_studies/study_3828629465_equip_quick_slots.md",
+      "skillDoc": "anli/skills/skill_workshop_3828629465_equip_quick_slots.md",
+      "completedAt": "2026-10-31 00:15:51",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3826081908",
+      "name": "Yuesart",
+      "author": "yuesart",
+      "version": "1.3.0",
+      "studyDoc": "docs/workshop_studies/study_3826081908_yuesart.md",
+      "skillDoc": "anli/skills/skill_workshop_3826081908_yuesart.md",
+      "completedAt": "2026-10-31 00:16:16",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3824436828",
+      "name": "Entity Indicators (Fixed)",
+      "author": "DreamSimulator",
+      "version": "1.1.1",
+      "studyDoc": "docs/workshop_studies/study_3824436828_entity_indicators_fixed.md",
+      "skillDoc": "anli/skills/skill_workshop_3824436828_entity_indicators_fixed.md",
+      "completedAt": "2026-10-31 00:16:29",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3785241953",
+      "name": "威尔逊：技能树重铸",
+      "author": "萌新小黄",
+      "version": "1.0.1",
+      "studyDoc": "docs/workshop_studies/study_3785241953_3785241953.md",
+      "skillDoc": "anli/skills/skill_workshop_3785241953_3785241953.md",
+      "completedAt": "2026-10-31 00:16:44",
+      "keyTags": [
+        "AddComponentPostInit:combat",
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:health",
+        "AddComponentPostInit:beard"
+      ]
+    },
+    {
+      "id": "3746961192",
+      "name": "Volt, the Bun-evolent.",
+      "author": "Random452",
+      "version": "1.2.1",
+      "studyDoc": "docs/workshop_studies/study_3746961192_volt_the_bun_evolent.md",
+      "skillDoc": "anli/skills/skill_workshop_3746961192_volt_the_bun_evolent.md",
+      "completedAt": "2026-10-31 00:17:38",
+      "keyTags": [
+        "AddPrefabPostInit:rabbitking_aggressive",
+        "AddPrefabPostInit:bunnyman",
+        "AddPrefabPostInit:moonglass",
+        "AddPrefabPostInit:moonglass_charged",
+        "AddPrefabPostInit:lunarplant_husk"
+      ]
+    },
+    {
+      "id": "3686629497",
+      "name": "炊烟袅袅",
+      "author": "炊烟袅袅制作组 更新于",
+      "version": "2026-10-18-1",
+      "studyDoc": "docs/workshop_studies/study_3686629497_3686629497.md",
+      "skillDoc": "anli/skills/skill_workshop_3686629497_3686629497.md",
+      "completedAt": "2026-10-31 00:20:25",
+      "keyTags": [
+        "AddPrefabPostInit:turf_",
+        "AddPrefabPostInit:world",
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:combat"
+      ]
+    },
+    {
+      "id": "3823823620",
+      "name": "RoseN Target Health Bar",
+      "author": "RoseN",
+      "version": "1.6.1",
+      "studyDoc": "docs/workshop_studies/study_3823823620_rosen_target_health_bar.md",
+      "skillDoc": "anli/skills/skill_workshop_3823823620_rosen_target_health_bar.md",
+      "completedAt": "2026-10-31 00:22:50",
+      "keyTags": [
+        "AddPrefabPostInit:player_classified"
+      ]
+    },
+    {
+      "id": "3342856488",
+      "name": "姐姐救救我(Sister, save me)",
+      "author": "Alice",
+      "version": "1.21",
+      "studyDoc": "docs/workshop_studies/study_3342856488_sister_save_me.md",
+      "skillDoc": "anli/skills/skill_workshop_3342856488_sister_save_me.md",
+      "completedAt": "2026-10-31 00:24:34",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddPrefabPostInit:abigail"
+      ]
+    },
+    {
+      "id": "727774324",
+      "name": "Craft Pot",
+      "author": "IvanX",
+      "version": "0.15.0",
+      "studyDoc": "docs/workshop_studies/study_727774324_craft_pot.md",
+      "skillDoc": "anli/skills/skill_workshop_727774324_craft_pot.md",
+      "completedAt": "2026-10-31 00:25:50",
+      "keyTags": [
+        "AddPrefabPostInit:world"
+      ]
+    },
+    {
+      "id": "1207269058",
+      "name": "Simple Health Bar DST",
+      "author": "DYC",
+      "version": "2.16",
+      "studyDoc": "docs/workshop_studies/study_1207269058_simple_health_bar_dst.md",
+      "skillDoc": "anli/skills/skill_workshop_1207269058_simple_health_bar_dst.md",
+      "completedAt": "2026-10-31 00:26:43",
+      "keyTags": [
+        "AddComponentPostInit:combat",
+        "AddComponentPostInit:health",
+        "AddPrefabPostInit:world"
+      ]
+    },
+    {
+      "id": "3350705530",
+      "name": "Limbus Company Characters 边狱巴士",
+      "author": "魔犬、 zzzzzzzs、 伊尹、 鬼针、 maotuki、 finn、马一甲",
+      "version": "20260103",
+      "studyDoc": "docs/workshop_studies/study_3350705530_limbus_company_characters.md",
+      "skillDoc": "anli/skills/skill_workshop_3350705530_limbus_company_characters.md",
+      "completedAt": "2026-10-31 03:47:48",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddPrefabPostInit:reskin_tool",
+        "AddComponentPostInit:walkableplatform",
+        "AddPrefabPostInit:farm_plant_randomseed"
+      ]
+    },
+    {
+      "id": "1271089343",
+      "name": "Your Skeleton Respawn",
+      "author": "BEKKITT",
+      "version": "1.2.6.7",
+      "studyDoc": "docs/workshop_studies/study_1271089343_your_skeleton_respawn.md",
+      "skillDoc": "anli/skills/skill_workshop_1271089343_your_skeleton_respawn.md",
+      "completedAt": "2026-10-31 03:49:18",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3383078008",
+      "name": "null",
+      "author": "WIGFRID",
+      "version": "26.02.11",
+      "studyDoc": "docs/workshop_studies/study_3383078008_null.md",
+      "skillDoc": "anli/skills/skill_workshop_3383078008_null.md",
+      "completedAt": "2026-10-31 03:50:28",
+      "keyTags": [
+        "AddComponentPostInit:playercontroller",
+        "AddComponentPostInit:builder",
+        "AddComponentPostInit:playeractionpicker",
+        "AddComponentPostInit:inventory",
+        "AddComponentPostInit:container"
+      ]
+    },
+    {
+      "id": "3353852416",
+      "name": "CH_LANG",
+      "author": "天涯，小花朵，Isosurface",
+      "version": "1.5.6",
+      "studyDoc": "docs/workshop_studies/study_3353852416_ch_lang.md",
+      "skillDoc": "anli/skills/skill_workshop_3353852416_ch_lang.md",
+      "completedAt": "2026-10-31 03:51:54",
+      "keyTags": [
+        "AddPrefabPostInit:reskin_tool",
+        "AddComponentPostInit:skinner"
+      ]
+    },
+    {
+      "id": "2287303119",
+      "name": "use_beta2",
+      "author": "冰冰羊, 傳說覺悟, Star, +Serp",
+      "version": "0.64.2",
+      "studyDoc": "docs/workshop_studies/study_2287303119_use_beta2.md",
+      "skillDoc": "anli/skills/skill_workshop_2287303119_use_beta2.md",
+      "completedAt": "2026-10-31 03:52:31",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:farming_manager",
+        "AddPrefabPostInit:player_classified",
+        "AddPrefabPostInit:shadow_battleaxe",
+        "AddPrefabPostInit:inventory_classified"
+      ]
+    },
+    {
+      "id": "2873533916",
+      "name": "ActionQueue RB3",
+      "author": "Cutlass / null / eXiGe / simplex(Original Author)",
+      "version": "4.4",
+      "studyDoc": "docs/workshop_studies/study_2873533916_actionqueue_rb3.md",
+      "skillDoc": "anli/skills/skill_workshop_2873533916_actionqueue_rb3.md",
+      "completedAt": "2026-10-31 03:52:51",
+      "keyTags": [
+        "AddComponentPostInit:playercontroller",
+        "AddComponentPostInit:highlight",
+        "AddComponentPostInit:placer"
+      ]
+    },
+    {
+      "id": "3007715893",
+      "name": "null",
+      "author": "天涯共此时、小花朵",
+      "version": "2.3.0",
+      "studyDoc": "docs/workshop_studies/study_3007715893_null.md",
+      "skillDoc": "anli/skills/skill_workshop_3007715893_null.md",
+      "completedAt": "2026-10-31 03:52:59",
+      "keyTags": [
+        "AddComponentPostInit:stackable",
+        "AddComponentPostInit:teacher",
+        "AddPrefabPostInit:blueprint",
+        "AddPrefabPostInit:tacklesketch",
+        "AddPrefabPostInit:sketch"
+      ]
+    },
+    {
+      "id": "2302837868",
+      "name": "Snapping tills",
+      "author": "surg",
+      "version": "1.1.9",
+      "studyDoc": "docs/workshop_studies/study_2302837868_snapping_tills.md",
+      "skillDoc": "anli/skills/skill_workshop_2302837868_snapping_tills.md",
+      "completedAt": "2026-10-31 03:53:07",
+      "keyTags": [
+        "AddComponentPostInit:placer",
+        "AddComponentPostInit:playercontroller"
+      ]
+    },
+    {
+      "id": "3371086303",
+      "name": "FX_SOUND",
+      "author": "Leonidas IV",
+      "version": "1.1.0",
+      "studyDoc": "docs/workshop_studies/study_3371086303_fx_sound.md",
+      "skillDoc": "anli/skills/skill_workshop_3371086303_fx_sound.md",
+      "completedAt": "2026-10-31 03:53:15",
+      "keyTags": [
+        "AddPrefabPostInit:blueprint"
+      ]
+    },
+    {
+      "id": "2753774601",
+      "name": "button_can_be_moved",
+      "author": "未知",
+      "version": "未声明",
+      "studyDoc": "docs/workshop_studies/study_2753774601_button_can_be_moved.md",
+      "skillDoc": "anli/skills/skill_workshop_2753774601_button_can_be_moved.md",
+      "completedAt": "2026-10-31 03:53:23",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3448135812",
+      "name": "不文明的猪人台词",
+      "author": "其实我是谁根本没有人关心",
+      "version": "2.2",
+      "studyDoc": "docs/workshop_studies/study_3448135812_3448135812.md",
+      "skillDoc": "anli/skills/skill_workshop_3448135812_3448135812.md",
+      "completedAt": "2026-10-31 03:53:42",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3638290455",
+      "name": "Too Many Items Rearranged",
+      "author": "未知",
+      "version": "1.7.4",
+      "studyDoc": "docs/workshop_studies/study_3638290455_too_many_items_rearranged.md",
+      "skillDoc": "anli/skills/skill_workshop_3638290455_too_many_items_rearranged.md",
+      "completedAt": "2026-10-31 03:53:55",
+      "keyTags": [
+        "AddPrefabPostInit:charlie_heckler",
+        "AddComponentPostInit:playerhearing"
+      ]
+    },
+    {
+      "id": "3583633595",
+      "name": "The Fun Gang (DELTARUNE)",
+      "author": "mizartz",
+      "version": "1.1.9",
+      "studyDoc": "docs/workshop_studies/study_3583633595_the_fun_gang_deltarune.md",
+      "skillDoc": "anli/skills/skill_workshop_3583633595_the_fun_gang_deltarune.md",
+      "completedAt": "2026-10-31 03:54:18",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddComponentPostInit:stageactingprop",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:edible",
+        "AddPrefabPostInit:horrorfuel"
+      ]
+    },
+    {
+      "id": "3359995816",
+      "name": "Workshop MOD 3359995816",
+      "author": "未知",
+      "version": "2.0.2",
+      "studyDoc": "docs/workshop_studies/study_3359995816_workshop_mod_3359995816.md",
+      "skillDoc": "anli/skills/skill_workshop_3359995816_workshop_mod_3359995816.md",
+      "completedAt": "2026-10-31 03:54:24",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3597024951",
+      "name": "Workshop MOD 3597024951",
+      "author": "B站画画的景熹|驯猫糕手",
+      "version": "26.10.28",
+      "studyDoc": "docs/workshop_studies/study_3597024951_workshop_mod_3597024951.md",
+      "skillDoc": "anli/skills/skill_workshop_3597024951_workshop_mod_3597024951.md",
+      "completedAt": "2026-10-31 03:55:34",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddPrefabPostInit:ice",
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:autoterraformer"
+      ]
+    },
+    {
+      "id": "3210660797",
+      "name": "Fabin",
+      "author": "Cliffford W.",
+      "version": "1.3.1",
+      "studyDoc": "docs/workshop_studies/study_3210660797_fabin.md",
+      "skillDoc": "anli/skills/skill_workshop_3210660797_fabin.md",
+      "completedAt": "2026-10-31 03:55:38",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3760349961",
+      "name": "Workshop MOD 3760349961",
+      "author": "FLD&Wendigail",
+      "version": "2.2",
+      "studyDoc": "docs/workshop_studies/study_3760349961_workshop_mod_3760349961.md",
+      "skillDoc": "anli/skills/skill_workshop_3760349961_workshop_mod_3760349961.md",
+      "completedAt": "2026-10-31 03:55:52",
+      "keyTags": [
+        "AddPrefabPostInit:abigail_flower",
+        "AddPrefabPostInit:abigail",
+        "AddStategraphPostInit:abigail",
+        "AddPrefabPostInit:wendy"
+      ]
+    },
+    {
+      "id": "3322803908",
+      "name": "云霄国度-Above the Clouds",
+      "author": "Jerry, Tony, ziwbi, 亚丹, 鲁鲁, 小巫, 每年睡8760小时, 老王",
+      "version": "1.0.50",
+      "studyDoc": "docs/workshop_studies/study_3322803908_above_the_clouds.md",
+      "skillDoc": "anli/skills/skill_workshop_3322803908_above_the_clouds.md",
+      "completedAt": "2026-10-31 03:57:20",
+      "keyTags": [
+        "AddPrefabRegisterPostInit:spoiled_food",
+        "AddComponentPostInit:health",
+        "AddPrefabPostInit:grass",
+        "AddComponentPostInit:actionqueuer",
+        "AddComponentPostInit:ambientlighting"
+      ]
+    },
+    {
+      "id": "2477889104",
+      "name": "Beefalo Status Bar",
+      "author": "MNK",
+      "version": "1.4.0",
+      "studyDoc": "docs/workshop_studies/study_2477889104_beefalo_status_bar.md",
+      "skillDoc": "anli/skills/skill_workshop_2477889104_beefalo_status_bar.md",
+      "completedAt": "2026-10-31 03:57:41",
+      "keyTags": [
+        "AddPrefabPostInit:player_classified"
+      ]
+    },
+    {
+      "id": "3828892015",
+      "name": "Mainline Guidebook — русский перевод",
+      "author": "enotic",
+      "version": "1.0.0",
+      "studyDoc": "docs/workshop_studies/study_3828892015_mainline_guidebook.md",
+      "skillDoc": "anli/skills/skill_workshop_3828892015_mainline_guidebook.md",
+      "completedAt": "2026-10-31 03:57:51",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "1240565842",
+      "name": "Russification Pack for DST",
+      "author": "Cunning fox, 何も, FruitShake, stew, F0xAn, MrM",
+      "version": "3.7.4",
+      "studyDoc": "docs/workshop_studies/study_1240565842_russification_pack_for_dst.md",
+      "skillDoc": "anli/skills/skill_workshop_1240565842_russification_pack_for_dst.md",
+      "completedAt": "2026-10-31 03:58:08",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddPrefabPostInit:skeleton_player",
+        "AddPrefabPostInit:blueprint",
+        "AddPrefabPostInit:lavaarena_boarlord"
+      ]
+    },
+    {
+      "id": "2795130977",
+      "name": "Abigail Pro Max T PlusCup",
+      "author": "xivna",
+      "version": "1.31",
+      "studyDoc": "docs/workshop_studies/study_2795130977_abigail_pro_max_t_pluscup.md",
+      "skillDoc": "anli/skills/skill_workshop_2795130977_abigail_pro_max_t_pluscup.md",
+      "completedAt": "2026-10-31 03:58:48",
+      "keyTags": [
+        "AddPrefabPostInit:abigail"
+      ]
+    },
+    {
+      "id": "3018652965",
+      "name": "ActionQueue RB3汉化版",
+      "author": "Cutlass / null / eXiGe / simplex(Original Author)",
+      "version": "3.2",
+      "studyDoc": "docs/workshop_studies/study_3018652965_actionqueue_rb3.md",
+      "skillDoc": "anli/skills/skill_workshop_3018652965_actionqueue_rb3.md",
+      "completedAt": "2026-10-31 03:58:59",
+      "keyTags": [
+        "AddComponentPostInit:playercontroller",
+        "AddComponentPostInit:highlight",
+        "AddComponentPostInit:placer"
+      ]
+    },
+    {
+      "id": "2438350724",
+      "name": "Combined Status",
+      "author": "rezecib, Kiopho, Soilworker, hotmatrixx, penguin0616【汉化者：zhonger】",
+      "version": "1.9.2C",
+      "studyDoc": "docs/workshop_studies/study_2438350724_combined_status.md",
+      "skillDoc": "anli/skills/skill_workshop_2438350724_combined_status.md",
+      "completedAt": "2026-10-31 03:59:08",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:kramped",
+        "AddComponentPostInit:clock"
+      ]
+    },
+    {
+      "id": "3320235585",
+      "name": "[星穹铁道] 流萤",
+      "author": "自闭的七节狐、Yyyytyi_Slime_Block",
+      "version": "1.01.c",
+      "studyDoc": "docs/workshop_studies/study_3320235585_3320235585.md",
+      "skillDoc": "anli/skills/skill_workshop_3320235585_3320235585.md",
+      "completedAt": "2026-10-31 03:59:56",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:health",
+        "AddComponentPostInit:stewer",
+        "AddComponentPostInit:combat"
+      ]
+    },
+    {
+      "id": "1365141672",
+      "name": "Too Many Items Plus",
+      "author": "CJB,GaRAnTuLA,Skull,TheMightyPikachu,Electroely,Tendy,乐十画",
+      "version": "1.1.3",
+      "studyDoc": "docs/workshop_studies/study_1365141672_too_many_items_plus.md",
+      "skillDoc": "anli/skills/skill_workshop_1365141672_too_many_items_plus.md",
+      "completedAt": "2026-10-31 04:00:08",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "3513671528",
+      "name": "植物大战饥荒 Plants vs. DST",
+      "author": "Loong",
+      "version": "未声明",
+      "studyDoc": "docs/workshop_studies/study_3513671528_plants_vs_dst.md",
+      "skillDoc": "anli/skills/skill_workshop_3513671528_plants_vs_dst.md",
+      "completedAt": "2026-10-31 04:00:54",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:playercontroller",
+        "AddComponentPostInit:combat",
+        "AddStategraphPostInit:wilson",
+        "AddComponentPostInit:playeractionpicker"
+      ]
+    },
+    {
+      "id": "3430329066",
+      "name": "主界面修改",
+      "author": "suisanki",
+      "version": "1.6",
+      "studyDoc": "docs/workshop_studies/study_3430329066_3430329066.md",
+      "skillDoc": "anli/skills/skill_workshop_3430329066_3430329066.md",
+      "completedAt": "2026-10-31 04:01:04",
+      "keyTags": [
+        "Static-Analysis"
+      ]
+    },
+    {
+      "id": "2657513551",
+      "name": "GLOBAL_POSITIONS_FIX",
+      "author": "老王天天写bug",
+      "version": "1.2.44",
+      "studyDoc": "docs/workshop_studies/study_2657513551_global_positions_fix.md",
+      "skillDoc": "anli/skills/skill_workshop_2657513551_global_positions_fix.md",
+      "completedAt": "2026-10-31 04:01:57",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:container",
+        "AddComponentPostInit:dsa_clocksync",
+        "AddComponentPostInit:clock",
+        "AddComponentPostInit:harvestable"
+      ]
+    },
+    {
+      "id": "3624411781",
+      "name": "Storage Bags",
+      "author": "ret",
+      "version": "1.3",
+      "studyDoc": "docs/workshop_studies/study_3624411781_storage_bags.md",
+      "skillDoc": "anli/skills/skill_workshop_3624411781_storage_bags.md",
+      "completedAt": "2026-10-31 04:02:06",
+      "keyTags": [
+        "AddPrefabPostInit:wortox_souljar"
+      ]
+    },
+    {
+      "id": "3050607025",
+      "name": "EmptyNull",
+      "author": "大大果汁、凉时白开、小瑾、天涯共此时、小花朵",
+      "version": "2.8.25",
+      "studyDoc": "docs/workshop_studies/study_3050607025_emptynull.md",
+      "skillDoc": "anli/skills/skill_workshop_3050607025_emptynull.md",
+      "completedAt": "2026-10-31 04:02:30",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:stackable",
+        "AddPrefabPostInit:mermking",
+        "AddPrefabPostInit:pigking",
+        "AddPrefabPostInit:birdcage"
+      ]
+    },
+    {
+      "id": "3138571948",
+      "name": "SHOWPLAYERSOPTIONS",
+      "author": "clearlove, rezecib, Sarcen",
+      "version": "2.4.6",
+      "studyDoc": "docs/workshop_studies/study_3138571948_showplayersoptions.md",
+      "skillDoc": "anli/skills/skill_workshop_3138571948_showplayersoptions.md",
+      "completedAt": "2026-10-31 04:02:39",
+      "keyTags": [
+        "AddPrefabPostInit:world",
+        "AddComponentPostInit:maprevealer",
+        "AddPrefabPostInit:beefalo",
+        "AddPrefabPostInit:shard_network",
+        "AddComponentPostInit:mapspotrevealer"
+      ]
+    },
+    {
+      "id": "569043634",
+      "name": "Campfire Respawn",
+      "author": "Onidotmoe",
+      "version": "1.6.10",
+      "studyDoc": "docs/workshop_studies/study_569043634_campfire_respawn.md",
+      "skillDoc": "anli/skills/skill_workshop_569043634_campfire_respawn.md",
+      "completedAt": "2026-10-31 04:02:59",
+      "keyTags": [
+        "AddPrefabPostInit:skeleton_player",
+        "AddPrefabPostInit:multiplayer_portal",
+        "AddPrefabPostInit:reviver",
+        "AddPrefabPostInit:skeleton",
+        "AddComponentPostInit:inventory"
+      ]
+    },
+    {
+      "id": "2849308125",
+      "name": "UI_DISPLAY",
+      "author": "川小胖 & Fengying(original author)",
+      "version": "3.8.2",
+      "studyDoc": "docs/workshop_studies/study_2849308125_ui_display.md",
+      "skillDoc": "anli/skills/skill_workshop_2849308125_ui_display.md",
+      "completedAt": "2026-10-31 04:03:09",
+      "keyTags": [
+        "AddComponentPostInit:playercontroller"
+      ]
+    },
+    {
+      "id": "3383047161",
+      "name": "The Winterlands",
+      "author": "ADM, Feything, Gearless, LukaS, Notka 󰀃",
+      "version": "1.4.10",
+      "studyDoc": "docs/workshop_studies/study_3383047161_the_winterlands.md",
+      "skillDoc": "anli/skills/skill_workshop_3383047161_the_winterlands.md",
+      "completedAt": "2026-10-31 04:04:18",
+      "keyTags": [
+        "AddComponentPostInit:ambientsound",
+        "AddComponentPostInit:dynamicmusic",
+        "AddComponentPostInit:hunter",
+        "AddComponentPostInit:moonstormmanager",
+        "AddComponentPostInit:playerspawner"
+      ]
+    },
+    {
+      "id": "2525856394",
+      "name": "Burning Timer",
+      "author": "Viktor",
+      "version": "1.1.5",
+      "studyDoc": "docs/workshop_studies/study_2525856394_burning_timer.md",
+      "skillDoc": "anli/skills/skill_workshop_2525856394_burning_timer.md",
+      "completedAt": "2026-10-31 04:04:25",
+      "keyTags": [
+        "AddPrefabPostInit:fire",
+        "AddPrefabPostInit:campfirefire",
+        "AddPrefabPostInit:coldfirefire",
+        "AddPrefabPostInit:nightlight_flame",
+        "AddPrefabPostInit:pigtorch_flame"
+      ]
+    },
+    {
+      "id": "3608400298",
+      "name": "圣羊主教/山羊主教",
+      "author": "疯子",
+      "version": "1.2.6",
+      "studyDoc": "docs/workshop_studies/study_3608400298_3608400298.md",
+      "skillDoc": "anli/skills/skill_workshop_3608400298_3608400298.md",
+      "completedAt": "2026-10-31 04:05:17",
+      "keyTags": [
+        "AddStategraphPostInit:wilson",
+        "AddStategraphPostInit:wilson_client",
+        "AddComponentPostInit:combat",
+        "AddComponentPostInit:playercontroller",
+        "AddComponentPostInit:finiteuses"
+      ]
+    }
+  ],
+  "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
+  "lastUpdated": "2026-10-31 04:05:17"
 }
