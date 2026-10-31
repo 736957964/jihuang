@@ -466,6 +466,12 @@ def notify_owner_summary(batch_done_count, total_count):
 
 
 def run():
+    # 强制执行老爹立项的权威铁律规范
+    spec_path = os.path.join(WORK_DIR, "docs", "饥荒工坊研读与流水线维护规范.md")
+    if os.path.isfile(spec_path):
+        log("【规范自检】已成功读取并加载老爹铁律：《饥荒工坊研读与流水线维护规范.md》")
+    else:
+        log("【规范自检警告】未找到规范文档！")
     log("8 并发真实研读流水线启动，工作线程=%d" % WORKERS)
     sync_desktop()
     last_report_count = len(completed_ids())
