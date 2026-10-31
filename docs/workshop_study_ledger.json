@@ -4980,8 +4980,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 06:22:55",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3766864892",
+      "name": "骑牛状态显示",
+      "author": "ThreeTree",
+      "version": "2.5.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 06:24:28",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3776472552",
+      "name": "Moon Cycle Calendar",
+      "author": "Shynaid Auhrer SAG",
+      "version": "1.1.1",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 06:24:28",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3781535039",
+      "name": "暖暖框架 (Nikki Framework)",
+      "author": "LongFei_gamer",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:24:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3786570101",
+      "name": "红魔馆 女仆长 十六夜咲夜",
+      "author": "犬塚霜冥（狗王）",
+      "version": "2.1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:24:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3813222728",
+      "name": "Better Lag Compensation",
+      "author": "DortyTheGreat",
+      "version": "0.10.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:24:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 06:22:55"
+  "lastUpdated": "2026-11-01 06:24:29"
 }

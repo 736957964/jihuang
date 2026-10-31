@@ -1021,3 +1021,34 @@ local EmptyFunction = function() end
 
 ```
 
+
+
+### 变体演进：Moon Cycle Calendar (Mod 3776472552)
+- **变体场景与切面**：收录来自工坊 Mod 3776472552 (`Moon Cycle Calendar`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3776472552)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(world)
+	local observer = EnsureObserver(world)
+	if observer ~= nil then
+		world:ListenForEvent("playeractivated", function(_, player)
+			if player == _G.ThePlayer then
+				world:DoStaticTaskInTime(0, function()
+					if world:IsValid() then
+						observer:Sync()
+						observer:CheckReminders()
+					end
+				end)
+			end
+		end)
+	end
+end)
+
+```
+

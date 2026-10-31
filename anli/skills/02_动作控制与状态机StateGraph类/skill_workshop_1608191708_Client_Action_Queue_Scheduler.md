@@ -17277,3 +17277,606 @@ function dst_lan:_hookSGClient()
 
 ```
 
+
+
+### 变体演进：暖暖框架 (Nikki Framework) (Mod 3781535039)
+- **变体场景与切面**：收录来自工坊 Mod 3781535039 (`暖暖框架 (Nikki Framework)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3781535039)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+-- 同时为主机（wilson）和客机预测端（wilson_client）注册 Hook[cite: 5, 6]
+AddStategraphPostInit("wilson", HookCastAOEHandler)
+AddStategraphPostInit("wilson_client", HookCastAOEHandler)
+
+AddComponentPostInit("aoetargeting", function(self)
+    function self:SetReticule(reticule)
+        self.reticule = reticule or {}
+        if self.inst.components.reticule ~= nil then
+            self.inst.components.reticule:SetConfig(self.reticule)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", HookCastAOEHandler)
+AddStategraphPostInit("wilson_client", HookCastAOEHandler)
+
+AddComponentPostInit("aoetargeting", function(self)
+    function self:SetReticule(reticule)
+        self.reticule = reticule or {}
+        if self.inst.components.reticule ~= nil then
+            self.inst.components.reticule:SetConfig(self.reticule)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:aoetargeting
+
+AddComponentPostInit("aoetargeting", function(self)
+    function self:SetReticule(reticule)
+        self.reticule = reticule or {}
+        if self.inst.components.reticule ~= nil then
+            self.inst.components.reticule:SetConfig(self.reticule)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:reticule
+end)
+AddComponentPostInit("reticule", function(self)
+    function self:_ApplyParamsToEntity(inst)
+        if inst ~= nil then
+            inst.AnimState:ClearBloomEffectHandle()
+            if inst.SetShape ~= nil then
+                inst:SetShape(self.shape or "CIRCLE", self.radius, self.shape_param)
+            elseif inst.SetRadius ~= nil and self.radius ~= nil then
+                inst:SetRadius(self.radius)
+            end
+            if inst.SetSearchFn ~= nil then
+                inst:SetSearchFn(self.search_fn)
+            end
+        end
+    end
+
+    function self:SetConfig(config)
+        self.targetfn = nil
+        self.mousetargetfn = nil
+        self.updatepositionfn = nil
+        self.shape = nil
+        self.shape_param = nil
+        self.radius = nil
+        self.search_fn = nil
+
+        config = config or {}
+        for k, v in pairs(config) do
+            self[k] = v
+        end
+
+        self:_ApplyParamsToEntity(self.reticule)
+        if self.reticule ~= nil and self.UpdateColour ~= nil then
+            self:UpdateColour()
+        end
+    end
+
+    local _CreateReticule = self.CreateReticule
+    function self:CreateReticule(...)
+        _CreateReticule(self, ...)
+        self:_ApplyParamsToEntity(self.reticule)
+    end
+
+    local _PingReticuleAt = self.PingReticuleAt
+    function self:PingReticuleAt(pos)
+        local old_SpawnPrefab = GLOBAL.SpawnPrefab
+        GLOBAL.SpawnPrefab = function(prefab, ...)
+            local inst = old_SpawnPrefab(prefab, ...)
+            self:_ApplyParamsToEntity(inst)
+            return inst
+        end
+        local ok, err = GLOBAL.pcall(_PingReticuleAt, self, pos)
+        GLOBAL.SpawnPrefab = old_SpawnPrefab
+        if not ok then
+            GLOBAL.error(err)
+        end
+    end
+
+    local _UpdatePosition = self.UpdatePosition
+    function self:UpdatePosition(dt)
+        _UpdatePosition(self, dt)
+        if self.reticule ~= nil and self.reticule.prefab == "nikki_reticule" then
+            self.reticule.AnimState:ClearBloomEffectHandle()
+        end
+    end
+end)
+
+if not GLOBAL.TheNet:IsDedicated() then
+    GLOBAL.TheInput:AddKeyHandler(function(key, down)
+        if not down then return end
+        local player = GLOBAL.ThePlayer
+        if not player or not player:IsValid() then return end
+        if GLOBAL.TheFrontEnd:GetActiveScreen() ~= player.HUD then return end
+        if player.replica.nikki_skill_trigger then
+            player.replica.nikki_skill_trigger:CastKey(key)
+        end
+    end)
+
+    AddClassPostConstruct("widgets/statusdisplays", function(self)
+        if not self.owner:HasTag("nikki_framework") then return end
+
+        local DEFAULT_BADGE_SPACING = 62
+        local VERTICAL_MARGIN = 70
+
+        self._nikki_badges = {}
+        self._nikki_range_btn = nil
+
+        -- ============================================================
+        -- 辅助函数：生成切换回调（DRY）
+        -- ============================================================
+        local function make_toggle_callback()
+            return function()
+                local new_state = NikkiManager:ToggleSetting("show_range")
+                local owner = self.owner
+                if owner and owner:IsValid() then
+                    owner:PushEvent("skill_range_toggle_changed", { new_state = new_state })
+                end
+                return new_state
+            end
+        end
+
+        local function refresh_ui()
+            local initial_checked = NikkiManager:GetSetting("show_range")
+            local toggle_callback = make_toggle_callback()
+            self:_Nikki_RefreshBadges()
+            self:_Nikki_UpdateRangeButton(initial_checked, toggle_callback)
+        end
+
+        -- ============================================================
+        -- 初始化：延迟一秒执行
+        -- ============================================================
+        self.inst:DoTaskInTime(1, refresh_ui)
+
+        -- ============================================================
+        -- 事件监听
+        -- ============================================================
+        if self.owner and self.owner:IsValid() then
+            self.inst:ListenForEvent("nikki_state_dirty", function()
+                self:_Nikki_RefreshBadges()
+            end, self.owner)
+            self.inst:ListenForEvent("skill_max_range_dirty", refresh_ui, self.owner)
+        end
+
+        -- ============================================================
+        -- 私有方法
+        -- ============================================================
+        function self:_Nikki_CalcLayoutParams()
+            local core_badges = { "brain", "stomach", "heart" }
+            local groups = {}
+            for _, badge in ipairs(core_badges) do
+                local badge_widget = self[badge]
+                if badge_widget and badge_widget:IsVisible() then
+                    local x, y, _ = badge_widget:GetPositionXYZ()
+                    if not groups[y] then
+                        groups[y] = {}
+                    end
+                    table.insert(groups[y], x)
+                end
+            end
+
+            if GLOBAL.next(groups) == nil then
+                return DEFAULT_BADGE_SPACING, 0, 0
+            end
+
+            local main_y = 0
+            local max_count = 0
+            for y, xs in pairs(groups) do
+                if #xs > max_count then
+                    max_count = #xs
+                    main_y = y
+                end
+            end
+
+            local main_xs = groups[main_y]
+            table.sort(main_xs)
+            local leftmost_x = main_xs[1]
+
+            local spacing = (#main_xs >= 2) and math.abs(main_xs[2] - main_xs[1]) or DEFAULT_BADGE_SPACING
+            return spacing, leftmost_x - spacing, main_y
+        end
+
+        function self:_Nikki_UpdateRangeButton(initial_checked, toggle_callback)
+            local owner = self.owner
+            if not (owner and owner:IsValid()) then return end
+
+            local range = owner.replica.nikki_skill and owner.replica.nikki_skill:GetMaxRange() or 0
+            if range <= 0 then
+                if self._nikki_range_btn then
+                    self._nikki_range_btn:Hide()
+                end
+                return
+            end
+
+            -- 直接在这里创建按钮
+            if not self._nikki_range_btn then
+                local TEMPLATES = require("widgets/redux/templates")
+                self._nikki_range_btn = self:AddChild(TEMPLATES.StandardCheckbox(
+                    toggle_callback,
+                    64,
+                    initial_checked,
+                    "切换射程指示器"
+                ))
+            end
+
+            local _, start_x, y = self:_Nikki_CalcLayoutParams()
+            self._nikki_range_btn:SetPosition(start_x, y - VERTICAL_MARGIN, 0)
+            self._nikki_range_btn:Show()
+        end
+
+        function self:_Nikki_RefreshBadges()
+            local owner = self.owner
+            if not (owner and owner:IsValid() and owner.replica and owner.replica.nikki_state) then
+                return
+            end
+
+            local spacing, start_x, y = self:_Nikki_CalcLayoutParams()
+
+            local raw_ids = owner.replica.nikki_state:GetBadges()
+            local res_ids = {}
+            if type(raw_ids) == "table" then
+                res_ids = raw_ids
+            elseif type(raw_ids) == "string" and raw_ids ~= "" then
+                res_ids = { raw_ids }
+            end
+
+            local count = #res_ids
+            local NikkiBadge = require("widgets/nikki_badge")
+            for i = 1, count do
+                local badge = self._nikki_badges[i]
+                if not badge then
+                    badge = self:AddChild(NikkiBadge(owner))
+                    self._nikki_badges[i] = badge
+                end
+                badge:SetPosition(start_x - spacing * (i - 1), y, 0)
+                badge:SetRes(res_ids[i])
+            end
+            for i = count + 1, #self._nikki_badges do
+                if self._nikki_badges[i] then
+                    self._nikki_badges[i]:Close()
+                end
+            end
+        end
+    end)
+end
+
+local default_config = require("defs/default_config")
+NikkiManager:RegisterMod(default_config, env)
+
+
+if not is_debug_mode then
+    return
+end
+
+-- 实验性功能 未实装
+AddClassPostConstruct("screens/playerinfopopupscreen", function(self)
+    if self.owner and self.owner:HasTag("nikki_framework") then
+        local Widget = require("widgets/widget")
+        local ImageButton = require("widgets/imagebutton")
+
+        local function MakeTabBtn(tabs_widget, pos, text, clickfn, flip)
+            local btn = tabs_widget:AddChild(ImageButton("images/skilltree.xml",
+                "tab_skills_unselected.tex", "tab_skills_unselected.tex", "tab_skills_over.tex",
+                "tab_skills_unselected.tex", "tab_skills_over.tex"
+            ))
+            local size = { 142, 96 }
+            if flip then size[1] = size[1] * -1 end
+            btn:SetPosition(pos[1], pos[2])
+            btn:ForceImageSize(size[1], size[2])
+            btn:SetText(text)
+            btn:SetTextSize(20)
+            btn:SetFont(GLOBAL.HEADERFONT)
+            btn:SetDisabledFont(GLOBAL.HEADERFONT)
+            btn:SetTextColour(GLOBAL.UICOLOURS.GOLD)
+            btn.scale_on_focus = false
+            btn.clickoffset = GLOBAL.Vector3(0, 5, 0)
+            btn:SetTextFocusColour(GLOBAL.UICOLOURS.GOLD)
+            btn:SetTextSelectedColour(GLOBAL.UICOLOURS.GOLD)
+            btn:SetTextDisabledColour(GLOBAL.UICOLOURS.GOLD)
+            btn.text:SetPosition(flip and 2 or -2, -5)
+            btn:SetOnClick(clickfn)
+            return btn
+        end
+
+        -- 1. 自定义面板生成方法
+        self.MakeNikkiStatus = function(self)
+            if self.playeravatar then
+                self.playeravatar:Kill()
+                self.playeravatar = nil
+            end
+            if self.skilltree then
+                self.skilltree:Kill()
+                self.skilltree = nil
+            end
+
+            if not self.nikkistatus then
+                local NikkiStatus = require("widgets/nikki_status")
+
+                -- ===================================================
+                -- 【核心改变】由 Screen 负责调用 Manager 获取数据切片
+                -- ===================================================
+                local status_data = NikkiManager:GetPlayerStatusSnapshot(self.data.inst)
+                -- 将数据直接注入 Widget
+                self.nikkistatus = self.root:AddChild(NikkiStatus(status_data))
+                self.nikkistatus:SetPosition(0, -50)
+            end
+
+            if self.root.tabs then
+                if self.root.tabs.playerAvatarPopup then self.root.tabs.playerAvatarPopup:Enable() end
+                if self.root.tabs.skillTreePopup then self.root.tabs.skillTreePopup:Enable() end
+                if self.root.tabs.nikkiStatusPopup then self.root.tabs.nikkiStatusPopup:Disable() end
+            end
+        end
+
+        -- 2. 构建或重排 Tabs
+        if not self.root.tabs then
+            self.root.tabs = self.root:AddChild(Widget("tabs"))
+            self.root.tabs:SetPosition(0, 0)
+
+            local avatar_str = GLOBAL.STRINGS.SKILLTREE and GLOBAL.STRINGS.SKILLTREE.INFOPANEL or "玩家信息"
+            self.root.tabs.playerAvatarPopup = MakeTabBtn(self.root.tabs, { -165, 220 }, avatar_str,
+                function() self:MakePlayerAvatarPopup() end, true)
+            self.root.tabs.nikkiStatusPopup = MakeTabBtn(self.root.tabs, { 165, 220 }, "状态效果",
+                function() self:MakeNikkiStatus() end, false)
+
+            self.root.tabs.playerAvatarPopup:Disable()
+        else
+            if self.root.tabs.playerAvatarPopup then self.root.tabs.playerAvatarPopup:SetPosition(-200, 220) end
+            if self.root.tabs.skillTreePopup then self.root.tabs.skillTreePopup:SetPosition(0, 220) end
+            self.root.tabs.nikkiStatusPopup = MakeTabBtn(self.root.tabs, { 200, 220 }, "状态效果",
+                function() self:MakeNikkiStatus() end, false)
+
+            if self.MakeSkillTree then
+                local _MakeSkillTree = self.MakeSkillTree
+                self.MakeSkillTree = function(self)
+                    if self.nikkistatus then
+                        self.nikkistatus:Kill()
+                        self.nikkistatus = nil
+                    end
+                    _MakeSkillTree(self)
+                    if self.root.tabs and self.root.tabs.nikkiStatusPopup then
+                        self.root.tabs.nikkiStatusPopup:Enable()
+                    end
+                end
+            end
+        end
+
+        -- 3. 重新对齐图层渲染层级
+        if self.root.tabs then
+            self.root.tabs:MoveToBack()
+            if self.root.bg then
+                self.root.bg:MoveToBack()
+            end
+        end
+
+        -- 4. 拦截玩家头像面板刷新
+        local _MakePlayerAvatarPopup = self.MakePlayerAvatarPopup
+        self.MakePlayerAvatarPopup = function(self)
+            if self.nikkistatus then
+                self.nikkistatus:Kill()
+                self.nikkistatus = nil
+            end
+
+            local temp_tabs = self.root.tabs
+            self.root.tabs = nil
+            _MakePlayerAvatarPopup(self)
+            self.root.tabs = temp_tabs
+
+            if self.root.tabs then
+                if self.root.tabs.playerAvatarPopup then self.root.tabs.playerAvatarPopup:Disable() end
+                if self.root.tabs.skillTreePopup then self.root.tabs.skillTreePopup:Enable() end
+                if self.root.tabs.nikkiStatusPopup then self.root.tabs.nikkiStatusPopup:Enable() end
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+            init = function(env)
+                env.AddComponentPostInit("health", function(inst)
+                    if inst.components.health then
+                        inst.components.health.externalabsorbmodifiers = inst.components.health.externalabsorbmodifiers or {}
+                    end
+                end)
+
+```
+
+
+
+### 变体演进：红魔馆 女仆长 十六夜咲夜 (Mod 3786570101)
+- **变体场景与切面**：收录来自工坊 Mod 3786570101 (`红魔馆 女仆长 十六夜咲夜`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3786570101)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(self)
+    quick_plant(self, ACTIONS.INTERACT_WITH)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(self)
+    quick_plant(self, ACTIONS.INTERACT_WITH)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", CombatPost)
+AddClassPostConstruct("components/combat_replica", CombatPost)
+
+AddComponentPostInit('combat', function(self, inst)--修改强制攻击间隔
+	local oldBlankOutAttacks = self.BlankOutAttacks
+	function self:BlankOutAttacks(fortime)
+		if self.inst and self.inst:HasOneOfTags(canaccepttags) and self.inst.sakuya_attackspeed then
+			fortime = fortime * (1 - (self.inst.sakuya_attackspeed - 1))
+		end
+		return oldBlankOutAttacks(self, fortime)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer", function(self)
+    local OldStartCooking = self.StartCooking
+    function self:StartCooking(doer)
+        if doer and doer:HasTag("sakuya") then
+            if self.targettime == nil and self.inst.components.container ~= nil then
+                self.chef_id = (doer ~= nil and doer.player_classified ~= nil) and doer.userid
+                self.ingredient_prefabs = {}
+
+                self.done = nil
+                self.spoiltime = nil
+
+                if self.onstartcooking ~= nil then
+                    self.onstartcooking(self.inst)
+                end
+
+                for k, v in pairs (self.inst.components.container.slots) do
+                    table.insert(self.ingredient_prefabs, v.prefab)
+                end
+
+                local cooktime = 1
+                self.product, cooktime = cooking.CalculateRecipe(self.inst.prefab, self.ingredient_prefabs)
+                local recipe = cooking.GetRecipe(self.inst.prefab, self.product)
+                local productperishtime = recipe and recipe.perishtime or 0
+
+                if productperishtime > 0 then
+                    local spoilage_total = 0
+                    local spoilage_n = 0
+                    for k, v in pairs (self.inst.components.container.slots) do
+                        if v.components.perishable ~= nil then
+                            spoilage_n = spoilage_n + 1
+                            spoilage_total = spoilage_total + v.components.perishable:GetPercent()
+                        end
+                    end
+                    self.product_spoilage =
+                        (spoilage_n <= 0 and 1) or
+                        (self.keepspoilage and spoilage_total / spoilage_n) or
+                        1 - (1 - spoilage_total / spoilage_n) * .5
+                else
+                    self.product_spoilage = nil
+                end
+
+                cooktime = TUNING.BASE_COOK_TIME * cooktime * self.cooktimemult
+                cooktime = math.max(0, (cooktime * .5) - 8)
+                self.targettime = GetTime() + cooktime
+                if self.task ~= nil then
+                    self.task:Cancel()
+                end
+                self.task = self.inst:DoTaskInTime(cooktime, dostew, self)
+
+                self.inst.components.container:Close()
+                self.inst.components.container:DestroyContents()
+                self.inst.components.container.canbeopened = false
+            end
+        else
+            return OldStartCooking(self, doer)
+        end 
+    end
+    local OldHarvest = self.Harvest
+    function self:Harvest(harvester)
+        if harvester and harvester:HasTag("sakuya") and math.random() <= .25 then
+            if self.done then
+                if self.onharvest ~= nil then
+                    self.onharvest(self.inst)
+                end
+
+                if self.product ~= nil then
+                    local recipe = cooking.GetRecipe(self.inst.prefab, self.product)
+
+                    if harvester ~= nil and
+                        self.chef_id == harvester.userid and
+                        recipe ~= nil and
+                        recipe.cookbook_category ~= nil and
+                        cooking.cookbook_recipes[recipe.cookbook_category] ~= nil and
+                        cooking.cookbook_recipes[recipe.cookbook_category][self.product] ~= nil then
+                        harvester:PushEvent("learncookbookrecipe", {product = self.product, ingredients = self.ingredient_prefabs})
+                    end
+
+                    local stacksize = recipe and recipe.stacksize or 1
+                    GiveDoubledCookedProduct(self, harvester, self.product, stacksize * 2)
+                    self.product = nil
+                end
+
+                if self.task ~= nil then
+                    self.task:Cancel()
+                    self.task = nil
+                end
+                self.targettime = nil
+                self.done = nil
+                self.spoiltime = nil
+                self.product_spoilage = nil
+
+                if self.inst.components.container ~= nil then
+                    self.inst.components.container.canbeopened = true
+                end
+
+                return true
+            end
+        else
+            return OldHarvest(self, harvester)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pocketwatch_parts
+
+AddPrefabPostInit("pocketwatch_parts", function(inst)
+	if not TheWorld.ismastersim then
+		return inst
+	end
+	inst:AddComponent("sakuya_timeshard")
+end)
+
+```
+
+
+
+### 变体演进：Better Lag Compensation (Mod 3813222728)
+- **变体场景与切面**：收录来自工坊 Mod 3813222728 (`Better Lag Compensation`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3813222728)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+        Pipe.notify = Lab.Event
+        api.AddComponentPostInit("playercontroller", function(pc)
+            Util.SafeCall("fast chains controller", Pipe.PatchController, pc)
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+        end)
+        api.AddStategraphPostInit("wilson_client", function(sg)
+            Util.SafeCall("fast chains states", Pipe.PatchStategraph, sg)
+        end)
+
+```
+

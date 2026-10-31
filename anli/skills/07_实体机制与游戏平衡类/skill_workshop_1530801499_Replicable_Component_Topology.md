@@ -4550,3 +4550,37 @@ end)
 
 ```
 
+
+
+### 变体演进：骑牛状态显示 (Mod 3766864892)
+- **变体场景与切面**：收录来自工坊 Mod 3766864892 (`骑牛状态显示`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3766864892)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+-- 喂食重置计时器（延迟两帧检测动画，确保 AnimState 已更新，兼容地面/洞穴）
+AddPrefabPostInit("player_classified", function(pc)
+    pc:DoTaskInTime(_G.FRAMES * 2, function()
+        if pc._parent ~= _G.ThePlayer then return end
+
+        pc:ListenForEvent("isperformactionsuccessdirty", function()
+            if IsModOff() then return end
+            local player = _G.ThePlayer
+            if not (player and player.replica.rider and player.replica.rider:IsRiding()) then return end
+
+            -- 延迟一帧，确保 AnimState 已切换到喂食动画
+            player:DoTaskInTime(0, function()
+                if player.AnimState:IsCurrentAnimation("graze_loop") then
+                    player:PushEvent("BeefaloFeedReset")
+                end
+            end)
+        end)
+    end)
+end)
+
+```
+
