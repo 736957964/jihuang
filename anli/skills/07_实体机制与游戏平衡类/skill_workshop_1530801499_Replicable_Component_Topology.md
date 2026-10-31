@@ -2360,3 +2360,249 @@ end)
 
 ```
 
+
+
+### 变体演进：不再耕地 No More Retilling (Mod 3815817262)
+- **变体场景与切面**：收录来自工坊 Mod 3815817262 (`不再耕地 No More Retilling`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3815817262)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:pickable
+    --    把标志打开，就能精准圈住这一次破坏。
+    AddComponentPostInit("pickable", function(self)
+        local old_Pick = self.Pick
+        if type(old_Pick) ~= "function" then
+            return
+        end
+
+        self.Pick = function(_self, picker, ...)
+            if _self.inst == nil or not _self.inst:HasTag("farm_plant") then
+                return old_Pick(_self, picker, ...)
+            end
+
+            RunWithFlag("keep_soil", old_Pick, _self, picker, ...)
+        end
+    end)
+
+    -- 2) 铲除杂草：杂草走的是 workable 的 DIG，完成回调里同样会
+    --    「生成一块土 + breaksoil」。只包装带 weed 标签的对象。
+    AddComponentPostInit("workable", function(self)
+        local old_set = self.SetOnFinishCallback
+        if type(old_set) ~= "function" then
+            return
+        end
+
+        self.SetOnFinishCallback = function(_self, fn)
+            return old_set(_self, function(inst, worker, ...)
+                if inst == nil or not inst:HasTag("weed") then
+                    return fn(inst, worker, ...)
+                end
+
+                RunWithFlag("keep_soil", fn, inst, worker, ...)
+            end)
+        end
+    end)
+
+    -- 3) 土被塌陷后换一块新的。
+    --    监听是在 prefab 自己的 OnBreak 之后注册的，所以跑到这里时塌陷已经
+    --    发生了，我们只需把它换成一块干净的新土即可，不必去动原版的监听。
+    AddPrefabPostInit("farm_soil", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        inst:ListenForEvent("breaksoil", function(_inst)
+            if not flags.keep_soil then
+                return -- 不是收获造成的，按原版处理
+            end
+
+            -- 先同步记下位置，稍后一帧再换，避开原版塌陷动画的起始帧
+            local x, y, z = _inst.Transform:GetWorldPosition()
+
+            _inst:DoTaskInTime(0, function()
+                if not _inst:IsValid() then
+                    return
+                end
+
+                if GLOBAL.TheWorld.Map:GetTileAtPoint(x, y, z) ~= GLOBAL.WORLD_TILES.FARMING_SOIL then
+                    return -- 这里已经不是耕地了，别硬补
+                end
+
+                _inst:Remove()
+
+                local soil = GLOBAL.SpawnPrefab("farm_soil")
+                if soil ~= nil then
+                    soil.Transform:SetPosition(x, y, z)
+                    Log("收获后补回耕地 (" .. tostring(x) .. ", " .. tostring(z) .. ")")
+                end
+            end)
+        end)
+    end)
+end
+
+------------------------------------------------------------------------------
+-- 功能二：园艺规划器不再乱挖坑
+--
+-- 需求澄清：这里说的「坑」指的是 farm_soil —— 也就是地上那些**可以放种子
+-- 的耕地**。原版园艺规划器（farm_plow）挖地时会一边挖一边往外甩出好几块
+-- 这种耕地（dirt_anim），位置是随机偏移、随机延迟的，所以东一个西一个很不
+-- 整齐，还会甩到耕地外面去。
+--
+-- 判定方式（v1.2.0 起）：
+--   原版每甩出一块耕地，都会紧接着调用 soil:SetPlowing(plow) 把这块土和
+--   规划器绑起来。所以「SetPlowing 被调用了」就是最精准的特征：
+--     · 玩家自己用锄头耕出来的土从来不会被调 SetPlowing → 不受影响
+--     · 规划器完工后的耕地，_plow 早被清掉、存档里也不保存 → 不受影响
+--   只在这一个 farm_soil 实体上包一层自己的方法，不 hook 全局函数、
+--   不动 SpawnPrefab、不改 CollapseSoilAtPoint，兼容性最好。
+--
+-- 杂物（farm_soil_debris）由 OnTerraform 生成，本模组完全不碰 →
+-- 「翻出杂物要铲」的机制完整保留。
+------------------------------------------------------------------------------
+if NO_PLOW_HOLES then
+
+    AddPrefabPostInit("farm_soil", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        local old_SetPlowing = inst.SetPlowing
+        if type(old_SetPlowing) ~= "function" then
+            return
+        end
+
+        inst.SetPlowing = function(_inst, plow)
+            old_SetPlowing(_inst, plow)
+
+            if plow == nil then
+                return
+            end
+
+            UnbindPlow(_inst)
+
+            _inst:DoTaskInTime(0, function()
+                if _inst:IsValid() then
+                    Log("撤销规划器挖出的耕地")
+                    _inst:Remove()
+                end
+            end)
+        end
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:workable
+    --    「生成一块土 + breaksoil」。只包装带 weed 标签的对象。
+    AddComponentPostInit("workable", function(self)
+        local old_set = self.SetOnFinishCallback
+        if type(old_set) ~= "function" then
+            return
+        end
+
+        self.SetOnFinishCallback = function(_self, fn)
+            return old_set(_self, function(inst, worker, ...)
+                if inst == nil or not inst:HasTag("weed") then
+                    return fn(inst, worker, ...)
+                end
+
+                RunWithFlag("keep_soil", fn, inst, worker, ...)
+            end)
+        end
+    end)
+
+    -- 3) 土被塌陷后换一块新的。
+    --    监听是在 prefab 自己的 OnBreak 之后注册的，所以跑到这里时塌陷已经
+    --    发生了，我们只需把它换成一块干净的新土即可，不必去动原版的监听。
+    AddPrefabPostInit("farm_soil", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        inst:ListenForEvent("breaksoil", function(_inst)
+            if not flags.keep_soil then
+                return -- 不是收获造成的，按原版处理
+            end
+
+            -- 先同步记下位置，稍后一帧再换，避开原版塌陷动画的起始帧
+            local x, y, z = _inst.Transform:GetWorldPosition()
+
+            _inst:DoTaskInTime(0, function()
+                if not _inst:IsValid() then
+                    return
+                end
+
+                if GLOBAL.TheWorld.Map:GetTileAtPoint(x, y, z) ~= GLOBAL.WORLD_TILES.FARMING_SOIL then
+                    return -- 这里已经不是耕地了，别硬补
+                end
+
+                _inst:Remove()
+
+                local soil = GLOBAL.SpawnPrefab("farm_soil")
+                if soil ~= nil then
+                    soil.Transform:SetPosition(x, y, z)
+                    Log("收获后补回耕地 (" .. tostring(x) .. ", " .. tostring(z) .. ")")
+                end
+            end)
+        end)
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:farm_soil
+    --    发生了，我们只需把它换成一块干净的新土即可，不必去动原版的监听。
+    AddPrefabPostInit("farm_soil", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        inst:ListenForEvent("breaksoil", function(_inst)
+            if not flags.keep_soil then
+                return -- 不是收获造成的，按原版处理
+            end
+
+            -- 先同步记下位置，稍后一帧再换，避开原版塌陷动画的起始帧
+            local x, y, z = _inst.Transform:GetWorldPosition()
+
+            _inst:DoTaskInTime(0, function()
+                if not _inst:IsValid() then
+                    return
+                end
+
+                if GLOBAL.TheWorld.Map:GetTileAtPoint(x, y, z) ~= GLOBAL.WORLD_TILES.FARMING_SOIL then
+                    return -- 这里已经不是耕地了，别硬补
+                end
+
+                _inst:Remove()
+
+                local soil = GLOBAL.SpawnPrefab("farm_soil")
+                if soil ~= nil then
+                    soil.Transform:SetPosition(x, y, z)
+                    Log("收获后补回耕地 (" .. tostring(x) .. ", " .. tostring(z) .. ")")
+                end
+            end)
+        end)
+    end)
+
+```
+
+
+
+### 变体演进：D_J的女武神增强 (Mod 3830831588)
+- **变体场景与切面**：收录来自工坊 Mod 3830831588 (`D_J的女武神增强`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3830831588)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wathgrithr
+
+AddPrefabPostInit("wathgrithr", OnWathgrithr)
+
+```
+

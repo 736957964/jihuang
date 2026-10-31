@@ -4251,3 +4251,32 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Beefalo Scale Adjuster (Mod 3679089363)
+- **变体场景与切面**：收录来自工坊 Mod 3679089363 (`Beefalo Scale Adjuster`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3679089363)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+
+AddPrefabPostInit("beefalo", function(inst)
+    inst._beefalo_scale_net = _G.net_byte(inst.GUID, "beefalo_scaler._scale", "beefalo_scaler_scaledirty")
+
+    inst:ListenForEvent("beefalo_scaler_scaledirty", ApplyVisual)
+
+    inst:DoTaskInTime(0, ApplyVisual)
+
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+
+    inst:AddComponent("beefalo_scaler")
+end)
+
+```
+
