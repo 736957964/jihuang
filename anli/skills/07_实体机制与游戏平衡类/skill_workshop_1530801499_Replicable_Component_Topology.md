@@ -6137,3 +6137,54 @@ end)
 
 ```
 
+
+
+### 变体演进：Gumby (Mod 1811968982)
+- **变体场景与切面**：收录来自工坊 Mod 1811968982 (`Gumby`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1811968982)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minotaur
+	STRINGY.NAMES.MINOTAUR = "The Affront"
+	AddPrefabPostInit("minotaur", function(inst)
+		inst.AnimState:SetBuild("affront_build")
+		inst.AnimState:AddOverrideBuild("affront_build")
+		inst.AnimState:SetBank("affront")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beequeen
+if bqueenC then
+	AddPrefabPostInit("beequeen", function(inst) --adds this to the bee queen's file
+		inst.AnimState:SetBuild("hivebeequeen_build")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:catcoon
+if catgunC then
+	AddPrefabPostInit("catcoon", function(inst)
+		inst.AnimState:SetBuild("guncatcoon_build")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragonfly
+	RemapSoundEvent("dontstarve_DLC001/creatures/dragonfly/hurt", "dontstarve_DLC001/creatures/catcoon/hurt") --the game needs a full restart to undo the remap
+	AddPrefabPostInit("dragonfly", function(inst)
+		inst.AnimState:SetBuild("catcoonfly_build")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bunnyman
+if chungusC then
+	AddPrefabPostInit("bunnyman", function(inst)
+		inst.AnimState:SetBank("chungus") --Chungus uses custom animation files so the object was rename chungus in Spriter and this will use all of the chungus animations
+		inst.AnimState:SetBuild("chungus_build")
+		inst.AnimState:SetClientsideBuildOverride("insane", "chungus_build", "chungus_beard_build") --this is how insane players see beardlords instead of regular bunnymen
+	end)
+
+```
+
