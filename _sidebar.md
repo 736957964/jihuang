@@ -8,6 +8,8 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
+    * [真-神之火腿](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3705975335_3705975335.md)
+    * [海钓随机物品](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_2710978964_2710978964.md)
     * [真-神之火腿](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3684078343_3684078343.md)
     * [小型拖拉机](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3748361628_3748361628.md)
     * [宁恩](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3814062294_3814062294.md)
@@ -20,6 +22,7 @@
     * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
+    * [Mod 3689239824](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3689239824_mod_3689239824.md)
     * [Phonograph Tweaked](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2988233681_phonograph_tweaked.md)
     * [快捷物品栏 Quick Bar](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3787501714_quick_bar.md)
     * [No More Cave Bug](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3828908041_no_more_cave_bug.md)

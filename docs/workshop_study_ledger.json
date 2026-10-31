@@ -3180,8 +3180,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-10-31 19:33:35",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3716634921_howls.md"
+    },
+    {
+      "id": "2710978964",
+      "name": "海钓随机物品",
+      "author": "月",
+      "version": "1.5.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:35:39",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_2710978964_2710978964.md"
+    },
+    {
+      "id": "3689239824",
+      "name": "Mod 3689239824",
+      "author": "raccoon (modded by deobfuscation project)",
+      "version": "26-04-01-fix1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:35:39",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3689239824_mod_3689239824.md"
+    },
+    {
+      "id": "3705975335",
+      "name": "真-神之火腿",
+      "author": "LIU巴斯、古明地球",
+      "version": "0.1.7_V2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:35:39",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3705975335_3705975335.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:33:35"
+  "lastUpdated": "2026-10-31 19:35:39"
 }
