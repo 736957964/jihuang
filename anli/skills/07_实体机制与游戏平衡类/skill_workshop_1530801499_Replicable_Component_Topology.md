@@ -4089,3 +4089,124 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：移除黑屏 / No Black Screen (Mod 3610948444)
+- **变体场景与切面**：收录来自工坊 Mod 3610948444 (`移除黑屏 / No Black Screen`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3610948444)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+--https://steamcommunity.com/sharedfiles/filedetails/?id=2948704246
+AddPrefabPostInit("player_classified", function(inst)
+    inst:DoTaskInTime(1, function(inst)
+		if inst.event_listeners and inst.event_listeners.playerfadedirty and inst.event_listeners.playerfadedirty[inst] then
+			for i, _ in ipairs(inst.event_listeners.playerfadedirty[inst]) do
+				inst.event_listeners.playerfadedirty[inst][i] = function(...)
+					return
+				end
+			end
+		end
+		if inst.event_listening and inst.event_listening.playerfadedirty and inst.event_listening.playerfadedirty[inst] then
+			for i, _ in ipairs(inst.event_listening.playerfadedirty[inst]) do
+				inst.event_listening.playerfadedirty[inst][i] = function(...)
+					return
+				end
+			end
+		end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：Flaire自定义补丁 (Mod 3823885103)
+- **变体场景与切面**：收录来自工坊 Mod 3823885103 (`Flaire自定义补丁`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823885103)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:flaire
+
+AddPrefabPostInit("flaire", function(inst)
+    if G.TheWorld == nil or not G.TheWorld.ismastersim then return end
+    if inst._flaire_eat_patch_done then return end
+    if MODE ~= "dynamic" then
+        inst.OnWontEatFood = MakeRefuseFoodSay(inst, function() return THRESHOLD end)
+        inst._flaire_eat_patch_done = true
+        return
+    end
+    local attempts = 0
+    local function TryPatchDynamicEat()
+        if not inst:IsValid() then return end
+
+        local eater = inst.components.eater
+        if eater == nil then
+            attempts = attempts + 1
+            if attempts > 20 then
+                T.Log("动态进食补丁失败：eater 组件未出现，回退到固定阈值")
+                G.TUNING.FLAIRE_REFUSE_FOOD_HUNGER =
+                    (inst.components.hunger ~= nil and inst.components.hunger.max) or HUNGER_MAX
+                return
+            end
+            inst:DoTaskInTime(0.1, TryPatchDynamicEat)
+            return
+        end
+
+        local oldPrefersToEat = eater.PrefersToEat
+        eater.PrefersToEat = function(self, food, ...)
+            local hunger = inst.components.hunger
+            local edible = food ~= nil and food.components ~= nil and food.components.edible or nil
+            if hunger == nil or edible == nil then
+                if oldPrefersToEat == nil then return true end
+                return oldPrefersToEat(self, food, ...)
+            end
+
+            local hungerValue = edible.hungervalue or 0
+            local refuseFood = (hungerValue < 0) or ((hunger.current + hungerValue) > hunger.max)
+            if refuseFood then
+                inst.flaire_refuseFoodData = { food = food }
+            else
+                inst.flaire_refuseFoodData = nil
+            end
+            local base = true
+            if oldPrefersToEat ~= nil then
+                local res = oldPrefersToEat(self, food, ...)
+                if res ~= nil then base = res end
+            end
+            return base and not refuseFood
+        end
+
+        inst.OnWontEatFood = MakeRefuseFoodSay(inst, function()
+            return (inst.components.hunger ~= nil and inst.components.hunger.max) or HUNGER_MAX
+        end)
+
+        inst._flaire_eat_patch_done = true
+        T.Log("动态进食补丁已应用（拒绝阈值跟随 hunger.max）")
+    end
+
+    TryPatchDynamicEat()
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:voidcloth_scythe
+-- 镰刀就没有 flaire_spellfocus → 变剑后缺 flaire_spellfocus_sword 标签 → 不能施法。
+AddPrefabPostInit("voidcloth_scythe", function(inst)
+    if G.TheWorld == nil or not G.TheWorld.ismastersim then return end
+    if inst.components.flaire_spellfocus == nil then
+        commonFns.InitComponent(inst, "flaire_spellfocus", function(spellFocus)
+            spellFocus:SetIsSword(inst.flaire_isSword == true)
+        end)
+    end
+end)
+
+```
+

@@ -4800,8 +4800,44 @@
       "category": "01_UI与HUD界面交互类",
       "studied_at": "2026-11-01 06:01:39",
       "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3610948444",
+      "name": "移除黑屏 / No Black Screen",
+      "author": "wiefean",
+      "version": "1.11",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 06:06:36",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3673080698",
+      "name": "花花世界-排位系统",
+      "author": "花花",
+      "version": "7.1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:06:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3809795697",
+      "name": "language",
+      "author": "花花 凡尔赛 凌子 老张 铃铛蔷薇 sgurrui",
+      "version": "1.0.8",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 06:06:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3823885103",
+      "name": "Flaire自定义补丁",
+      "author": "苍蒙",
+      "version": "1.0.11",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 06:06:36",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 06:01:39"
+  "lastUpdated": "2026-11-01 06:06:36"
 }
