@@ -31,8 +31,10 @@
     * [高性能波次生成器与 GC 防御](anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_high_perf_wave_spawner_and_gc.md)
   * 06 世界生成与生态系统类
     * [上值劫持与海洋距离判定 (1467214795)](anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md)
+    * [共享位置](anli/skills/06_世界生成与生态系统类/skill_workshop_3789721701_3789721701.md)
   * 07 实体机制与游戏平衡类
     * [聊天指令拦截与生命周期重置 (母本)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_player_lifecycle_and_command_restart.md)
+    * [Mod 3808236333](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3808236333_mod_3808236333.md)
     * [Geometric Drop (fixe](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3813858106_geometric_drop_fixed.md)
     * [智能矿工帽 Smart Miner Ha](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3813163216_smart_miner_hat.md)
     * [网络副本组件拓扑注入 (1530801499)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md)

@@ -3099,8 +3099,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-10-31 19:27:06",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3814062294_3814062294.md"
+    },
+    {
+      "id": "3789721701",
+      "name": "共享位置",
+      "author": "蓝蔷薇",
+      "version": "1.0.1",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-10-31 19:29:14",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_3789721701_3789721701.md"
+    },
+    {
+      "id": "3808236333",
+      "name": "Mod 3808236333",
+      "author": "Wendigail",
+      "version": "1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:29:14",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3808236333_mod_3808236333.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:27:06"
+  "lastUpdated": "2026-10-31 19:29:14"
 }
