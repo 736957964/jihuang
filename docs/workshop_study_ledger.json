@@ -2991,8 +2991,17 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-10-31 17:38:36",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3820674954",
+      "name": "饥荒RPG",
+      "author": "null",
+      "version": "1.2.0-full25-beta15",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:08:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 17:38:36"
+  "lastUpdated": "2026-10-31 19:08:31"
 }

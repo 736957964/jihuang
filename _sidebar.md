@@ -8,6 +8,7 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
+    * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
     * [Show Me 序列化与属性探针 (666155465)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_666155465_Show_Me_Protocol.md)
