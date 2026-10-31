@@ -3117,8 +3117,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-10-31 19:29:14",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3808236333_mod_3808236333.md"
+    },
+    {
+      "id": "3748361628",
+      "name": "小型拖拉机",
+      "author": "未知",
+      "version": "1.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:31:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3748361628_3748361628.md"
+    },
+    {
+      "id": "3771598087",
+      "name": "大霜鲨更多交易次数",
+      "author": "小小袁",
+      "version": "1.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-10-31 19:31:00",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_3771598087_3771598087.md"
+    },
+    {
+      "id": "3786215888",
+      "name": "Backrooms alpha-v-0.1",
+      "author": "Vilka113",
+      "version": "1.0.003",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-10-31 19:31:00",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_3786215888_backrooms_alpha_v_0_1.md"
+    },
+    {
+      "id": "3787501714",
+      "name": "快捷物品栏 Quick Bar",
+      "author": "dicarne",
+      "version": "1.0.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:31:00",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3787501714_quick_bar.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:29:14"
+  "lastUpdated": "2026-10-31 19:31:00"
 }

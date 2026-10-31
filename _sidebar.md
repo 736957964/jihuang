@@ -8,6 +8,7 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
+    * [小型拖拉机](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3748361628_3748361628.md)
     * [宁恩](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3814062294_3814062294.md)
     * [Cook](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3829489944_cook.md)
     * [Real Witch](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3828396407_real_witch.md)
@@ -18,6 +19,7 @@
     * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
+    * [快捷物品栏 Quick Bar](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3787501714_quick_bar.md)
     * [No More Cave Bug](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3828908041_no_more_cave_bug.md)
     * [Fan Skins Collection](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3827608591_fan_skins_collection.md)
     * [Show Me 序列化与属性探针 (666155465)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_666155465_Show_Me_Protocol.md)
@@ -31,9 +33,11 @@
     * [高性能波次生成器与 GC 防御](anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_high_perf_wave_spawner_and_gc.md)
   * 06 世界生成与生态系统类
     * [上值劫持与海洋距离判定 (1467214795)](anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md)
+    * [Backrooms alpha-v-0.](anli/skills/06_世界生成与生态系统类/skill_workshop_3786215888_backrooms_alpha_v_0_1.md)
     * [共享位置](anli/skills/06_世界生成与生态系统类/skill_workshop_3789721701_3789721701.md)
   * 07 实体机制与游戏平衡类
     * [聊天指令拦截与生命周期重置 (母本)](anli/skills/07_实体机制与游戏平衡类/skill_workshop_player_lifecycle_and_command_restart.md)
+    * [大霜鲨更多交易次数](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3771598087_3771598087.md)
     * [Mod 3808236333](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3808236333_mod_3808236333.md)
     * [Geometric Drop (fixe](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3813858106_geometric_drop_fixed.md)
     * [智能矿工帽 Smart Miner Ha](anli/skills/07_实体机制与游戏平衡类/skill_workshop_3813163216_smart_miner_hat.md)
