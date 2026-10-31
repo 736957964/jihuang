@@ -1457,3 +1457,12 @@
 [2026-10-31 19:08:24] Worker [3825818675] 过滤拦截: 主线引导手册 (无任何深度钩子，判定为资源或纯文本补丁)
 [2026-10-31 19:08:31] Reducer Worker 7: 发现 1 份待存草稿，执行母本仲裁归约...
 [2026-10-31 19:08:31] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md
+[2026-10-31 19:09:50] Worker [3811163578] 成功解析入库暂存区 -> 远野汉娜 漂浮魔法 (类别: 02_动作控制与状态机StateGraph类)
+[2026-10-31 19:10:00] Worker [3828908041] 成功解析入库暂存区 -> No More Cave Bug (类别: 03_网络通信RPC与数据同步类)
+[2026-10-31 19:10:28] Worker [3827608591] 成功解析入库暂存区 -> Fan Skins Collection (类别: 03_网络通信RPC与数据同步类)
+[2026-10-31 19:11:46] Worker [3825229017] 成功解析入库暂存区 -> 咒终对决拓展 (类别: 02_动作控制与状态机StateGraph类)
+[2026-10-31 19:11:46] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-10-31 19:11:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3811163578_3811163578.md
+[2026-10-31 19:11:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3825229017_3825229017.md
+[2026-10-31 19:11:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3827608591_fan_skins_collection.md
+[2026-10-31 19:11:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3828908041_no_more_cave_bug.md

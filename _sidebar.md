@@ -8,9 +8,13 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
+    * [咒终对决拓展](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3825229017_3825229017.md)
+    * [远野汉娜 漂浮魔法](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3811163578_3811163578.md)
     * [饥荒RPG](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md)
   * 03 网络通信 RPC 与数据同步类
     * [全球定位网络表与信标广播 (378160973)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md)
+    * [No More Cave Bug](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3828908041_no_more_cave_bug.md)
+    * [Fan Skins Collection](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3827608591_fan_skins_collection.md)
     * [Show Me 序列化与属性探针 (666155465)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_666155465_Show_Me_Protocol.md)
     * [高亮选物 RPC 寻径与高频广播 (2281925291)](anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md)
   * 04 物品容器与背包扩展类

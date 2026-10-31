@@ -3000,8 +3000,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-10-31 19:08:31",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3820674954_rpg.md"
+    },
+    {
+      "id": "3811163578",
+      "name": "远野汉娜 漂浮魔法",
+      "author": "木门小家",
+      "version": "1.1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:11:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3811163578_3811163578.md"
+    },
+    {
+      "id": "3825229017",
+      "name": "咒终对决拓展",
+      "author": "江雨落(Bubbyer)",
+      "version": "1.0.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-10-31 19:11:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3825229017_3825229017.md"
+    },
+    {
+      "id": "3827608591",
+      "name": "Fan Skins Collection",
+      "author": "Argon Pepper, Summerscorcher, Luna, Mewzuw, Lidemo, Gearless",
+      "version": "Public release",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:11:46",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3827608591_fan_skins_collection.md"
+    },
+    {
+      "id": "3828908041",
+      "name": "No More Cave Bug",
+      "author": "Cutlass",
+      "version": "1.5",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-10-31 19:11:46",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_3828908041_no_more_cave_bug.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-10-31 19:08:31"
+  "lastUpdated": "2026-10-31 19:11:46"
 }
