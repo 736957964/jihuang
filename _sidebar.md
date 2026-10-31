@@ -1,13 +1,9 @@
 - 🌟 创意工坊权威模组研读库
-  * [研读库总览与全景索引](docs/workshop_studies/README.md)
-  * [01_UI与HUD界面渲染体系](docs/workshop_studies/01_UI与HUD界面渲染体系/README.md)
-  * [02_StateGraph动作拦截与状态机机制](docs/workshop_studies/02_StateGraph动作拦截与状态机机制/README.md)
-  * [03_网络通信RPC与专有协议体系](docs/workshop_studies/03_网络通信RPC与专有协议体系/README.md)
-  * [04_物品容器与大容量网络拓扑](docs/workshop_studies/04_物品容器与大容量网络拓扑/README.md)
-  * [05_Boss战斗与复杂AI决策行为树](docs/workshop_studies/05_Boss战斗与复杂AI决策行为树/README.md)
-  * [06_世界生成与大型生态扩展](docs/workshop_studies/06_世界生成与大型生态扩展/README.md)
-  * [07_文本动态本地化与字体管线](docs/workshop_studies/07_文本动态本地化与字体管线/README.md)
-  * [08_特效渲染与环境机制调整](docs/workshop_studies/08_特效渲染与环境机制调整/README.md)
+  * [研读库总览与账本](/docs/workshop_studies/README)
+  * [UI 与 HUD 交互规范](/docs/workshop_studies/UI与HUD类/study_351325790_geometric_placement)
+  * [网络与 RPC 同步规范](/docs/workshop_studies/study_378160973_global_positions)
+  * [实体机制与容器持久化](/docs/workshop_studies/study_382177939_storm_cellar)
+  * [大型 DLC 级模组专卷案例](/docs/workshop_studies/study_1467214795_island_adventures)
 * [🌟 核心架构决策与源码哲学](01-core/architecture_philosophy.md)
 - 前言
   * [Mod相关信息](/README)
