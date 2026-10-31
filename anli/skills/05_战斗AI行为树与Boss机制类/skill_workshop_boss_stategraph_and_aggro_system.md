@@ -517,3 +517,133 @@ end)
 
 ```
 
+
+
+### 变体演进：Wurt And Merm AI Tweaks (Mod 2070498017)
+- **变体场景与切面**：收录来自工坊 Mod 2070498017 (`Wurt And Merm AI Tweaks`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2070498017)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:merm
+if smarter_merm then
+	AddPrefabPostInit("merm", SmarterMerm)
+	AddPrefabPostInit("mermguard", SmarterMerm)
+end
+
+require "behaviours/runaway"
+local RunAway = GLOBAL.RunAway
+
+local dodgechance = GetModConfigData('MERM_EPIC_DODGE_CHANCE')
+
+local function DumpBT(bnode, indent)
+	local s = ""
+	for i=1,indent do
+		s = s.."|   "
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mermguard
+	AddPrefabPostInit("merm", SmarterMerm)
+	AddPrefabPostInit("mermguard", SmarterMerm)
+end
+
+require "behaviours/runaway"
+local RunAway = GLOBAL.RunAway
+
+local dodgechance = GetModConfigData('MERM_EPIC_DODGE_CHANCE')
+
+local function DumpBT(bnode, indent)
+	local s = ""
+	for i=1,indent do
+		s = s.."|   "
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:mermbrain
+if smarter_merm then
+	AddBrainPostInit('mermbrain', BetterMermBrain)
+	AddBrainPostInit('mermguardbrain', BetterMermBrain)
+end
+
+local easing = require('easing')
+
+local function WurtSanityFn(inst)
+	-- Negate moisture sanity loss + a bit gain
+	local moisturedelta = -easing.inSine(
+		inst.components.moisture:GetMoisture(),
+		0,
+		TUNING.MOISTURE_SANITY_PENALTY_MAX,
+		inst.components.moisture:GetMaxMoisture()
+	) + easing.inSine(
+		inst.components.moisture:GetMoisture(),
+		0,
+		TUNING.SANITYAURA_SMALL_TINY,
+		inst.components.moisture:GetMaxMoisture()
+	)
+
+	local overheatdelta = 0
+	if inst.components.temperature:IsOverheating() then
+		overheatdelta = -TUNING.SANITYAURA_MED
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:mermguardbrain
+	AddBrainPostInit('mermbrain', BetterMermBrain)
+	AddBrainPostInit('mermguardbrain', BetterMermBrain)
+end
+
+local easing = require('easing')
+
+local function WurtSanityFn(inst)
+	-- Negate moisture sanity loss + a bit gain
+	local moisturedelta = -easing.inSine(
+		inst.components.moisture:GetMoisture(),
+		0,
+		TUNING.MOISTURE_SANITY_PENALTY_MAX,
+		inst.components.moisture:GetMaxMoisture()
+	) + easing.inSine(
+		inst.components.moisture:GetMoisture(),
+		0,
+		TUNING.SANITYAURA_SMALL_TINY,
+		inst.components.moisture:GetMaxMoisture()
+	)
+
+	local overheatdelta = 0
+	if inst.components.temperature:IsOverheating() then
+		overheatdelta = -TUNING.SANITYAURA_MED
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wurt
+if enable then
+	AddPrefabPostInit('wurt', WurtMod)
+end
+
+local Widget = require "widgets/widget"
+local Text = require "widgets/text"
+local Image = require "widgets/image"
+local NUMBERFONT = GLOBAL.NUMBERFONT
+local ANCHOR_MIDDLE = GLOBAL.ANCHOR_MIDDLE
+
+local MermKingStatus = Class(Widget, function(self, owner, name)
+	Widget._ctor(self, "MermKingStatus")
+    self.owner = owner
+	self.name = name
+
+	self:SetScale(1, 1, 1)
+
+	self.hunger_num = self:AddChild(Text(NUMBERFONT, 25))
+	self.hunger_num:SetHAlign(ANCHOR_MIDDLE)
+	self.hunger_num:SetPosition(3, 10, 0)
+
+	self.health_num = self:AddChild(Text(NUMBERFONT, 25))
+	self.health_num:SetHAlign(ANCHOR_MIDDLE)
+	self.health_num:SetPosition(3, -10, 0)
+end)
+
+```
+

@@ -5088,8 +5088,26 @@
       "category": "01_UI与HUD界面交互类",
       "studied_at": "2026-11-01 06:31:24",
       "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "2070498017",
+      "name": "Wurt And Merm AI Tweaks",
+      "author": "Zeta",
+      "version": "1.1.0",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 06:36:49",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "3764896380",
+      "name": "Sort-O-Matic",
+      "author": "SOON™",
+      "version": "1.1.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 06:36:49",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 06:31:24"
+  "lastUpdated": "2026-11-01 06:36:49"
 }
