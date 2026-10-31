@@ -4280,3 +4280,56 @@ end)
 
 ```
 
+
+
+### 变体演进：Crock Pot Guide (Mod 3814416924)
+- **变体场景与切面**：收录来自工坊 Mod 3814416924 (`Crock Pot Guide`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3814416924)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+    AddComponentPostInit("playercontroller", function(self)
+        -- Clicks on the panel are for the panel: never let one reach the world (fast clicking
+        -- on a slot sometimes did, and the character walked there). Only presses are held
+        -- back; releases still go through so nothing in progress gets stuck.
+        for _, name in ipairs({ "OnLeftClick", "OnRightClick" }) do
+            local old = self[name]
+            if old ~= nil then
+                self[name] = function(self, down, ...)
+                    if down and MouseOverPanel() then
+                        return
+                    end
+                    return old(self, down, ...)
+                end
+            end
+        end
+
+        local old_DoCameraControl = self.DoCameraControl
+        self.DoCameraControl = function(self, ...)
+            local hud = self.inst.HUD
+            local menu = hud ~= nil and hud.controls ~= nil and hud.controls.craftingmenu or nil
+            if menu ~= nil and not menu.focus then
+                local ok, over = GLOBAL.pcall(function()
+                    return GLOBAL.require("widgets/crockpotpanel").IsMouseOverAny()
+                end)
+                if ok and over then
+                    menu.focus = true
+                    local results = { GLOBAL.pcall(old_DoCameraControl, self, ...) }
+                    menu.focus = false -- always put it back, even if the camera code failed
+                    if not results[1] then
+                        GLOBAL.error(results[2], 0)
+                    end
+                    return GLOBAL.unpack(results, 2)
+                end
+            end
+            return old_DoCameraControl(self, ...)
+        end
+    end)
+
+```
+

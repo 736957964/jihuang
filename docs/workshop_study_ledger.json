@@ -4197,8 +4197,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 05:01:16",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3764493468",
+      "name": "Mod 3764493468",
+      "author": "Runar",
+      "version": "2.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 05:03:09",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3814416924",
+      "name": "Crock Pot Guide",
+      "author": "TomKaiRoiMak",
+      "version": "1.0.8",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:03:09",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3826728864",
+      "name": "电力科技",
+      "author": "J",
+      "version": "0.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:03:09",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:01:16"
+  "lastUpdated": "2026-11-01 05:03:09"
 }

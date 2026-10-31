@@ -2606,3 +2606,63 @@ AddPrefabPostInit("wathgrithr", OnWathgrithr)
 
 ```
 
+
+
+### 变体演进：Mod 3764493468 (Mod 3764493468)
+- **变体场景与切面**：收录来自工坊 Mod 3764493468 (`Mod 3764493468`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3764493468)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    local GetActionButtonAction = self.GetActionButtonAction
+    function self:GetActionButtonAction(...)
+        EXCLUDE_FLAG = true
+        local act = GetActionButtonAction(self, ...)
+        EXCLUDE_FLAG = false
+        return act
+    end
+
+    local OnLeftClick = self.OnLeftClick
+    function self:OnLeftClick(down)
+        if self.inst == ThePlayer and (RIGHT_ALT_MODE or self._pickup_filter_suppress_primary) then
+            if down then
+                self._pickup_filter_suppress_primary = true
+                if RIGHT_ALT_MODE then
+                    TogglePrefabUnderMouse()
+                end
+            else
+                self._pickup_filter_suppress_primary = nil
+            end
+            return
+        end
+        return OnLeftClick(self, down)
+    end
+
+    local OnUpdate = self.OnUpdate
+    function self:OnUpdate(...)
+        local previous_highlight = self.highlight_guy
+        local result = OnUpdate(self, ...)
+
+        if RIGHT_ALT_MODE and self.inst == ThePlayer then
+            if previous_highlight ~= nil
+                and previous_highlight ~= self.highlight_guy
+                and HIGHLIGHTED_ENTITIES[previous_highlight] then
+                HighlightEntityGreen(previous_highlight)
+            end
+            if self.highlight_guy ~= nil and HIGHLIGHTED_ENTITIES[self.highlight_guy] then
+                HighlightEntityGreen(self.highlight_guy)
+            end
+        end
+
+        return result
+    end
+end)
+
+```
+

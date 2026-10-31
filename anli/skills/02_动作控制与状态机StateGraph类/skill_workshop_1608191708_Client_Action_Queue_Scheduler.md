@@ -9929,3 +9929,73 @@ end
 
 ```
 
+
+
+### 变体演进：电力科技 (Mod 3826728864)
+- **变体场景与切面**：收录来自工坊 Mod 3826728864 (`电力科技`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3826728864)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:winterometer
+--注册传导器事件
+AddPrefabPostInit("winterometer", function(inst)
+    if not TheWorld.ismastersim then return inst end
+    inst:ListenForEvent("onLighting",gatherPower)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lightning_rod
+--注册传导器事件
+AddPrefabPostInit("lightning_rod", function(inst)
+    if not TheWorld.ismastersim then return inst end
+    inst:AddComponent("container")
+    inst.components.container:WidgetSetup("lightning_rod")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lightninggoat
+--注册电羊事件
+AddPrefabPostInit("lightninggoat", function(inst)
+    inst:AddTag("sgpowershowinfo")
+    if not TheWorld.ismastersim then return inst end
+    inst:ListenForEvent("onLighting",onLighting)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nightmare_timepiece
+
+AddPrefabPostInit("nightmare_timepiece", function(inst)
+    inst:AddTag("norepair")
+    if not TheWorld.ismastersim then
+       return inst
+    end
+    inst:AddComponent("equippable")
+    inst.components.equippable.equipslot = GLOBAL.EQUIPSLOTS.BODY
+    inst.components.equippable.dapperness = TUNING.DAPPERNESS_SMALL
+    inst.components.equippable.is_magic_dapperness = true
+    inst.components.equippable:SetOnEquip(onequip_repair)
+    inst.components.equippable:SetOnUnequip(onunequip_repair)
+    inst.components.equippable:SetOnEquipToModel(onequiptomodel_repair)
+
+    inst:AddComponent("finiteuses")
+    inst.components.finiteuses:SetOnFinished(inst.Remove)
+    inst.components.finiteuses:SetMaxUses(600)
+    inst.components.finiteuses:SetUses(600)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:trap_ice
+--------------------------------------------------------------------------
+AddPrefabPostInit("trap_ice", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+    --inst:AddComponent("stackable")
+end)
+
+```
+

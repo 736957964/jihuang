@@ -4284,3 +4284,26 @@
 [2026-11-01 05:01:16] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 05:01:16] Reducer: 成功将 Mod 3830831588 (D_J的女武神增强) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 05:01:16] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 05:01:22] Git 自动提交并推送成功！
+[2026-11-01 05:01:22] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 05:01:22] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 05:01:52] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3826728864', '3814416924', '3822279909', '3764493468', '2846537049', '2006535294']
+[2026-11-01 05:01:52] SteamCMD 下载 3826728864 ...
+[2026-11-01 05:01:52] SteamCMD 下载 3814416924 ...
+[2026-11-01 05:01:52] SteamCMD 下载 3764493468 ...
+[2026-11-01 05:01:52] SteamCMD 下载 3822279909 ...
+[2026-11-01 05:01:52] SteamCMD 下载 2846537049 ...
+[2026-11-01 05:01:52] SteamCMD 下载 2006535294 ...
+[2026-11-01 05:02:02] Worker [3826728864] 成功解析入库暂存区 -> 电力科技 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 05:02:10] Worker [3814416924] 成功解析入库暂存区 -> Crock Pot Guide (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 05:02:19] Worker [3764493468] 成功解析入库暂存区 ->  (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 05:02:49] Worker [3822279909] 过滤拦截: DstModPublisher (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 05:03:01] Worker [2846537049] 过滤拦截: Notkin (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 05:03:09] Worker [2006535294] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 05:03:09] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 05:03:09] Reducer: 成功将 Mod 3764493468 (Mod 3764493468) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 05:03:09] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 05:03:09] Reducer: 成功将 Mod 3814416924 (Crock Pot Guide) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 05:03:09] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 05:03:09] Reducer: 成功将 Mod 3826728864 (电力科技) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 05:03:09] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
