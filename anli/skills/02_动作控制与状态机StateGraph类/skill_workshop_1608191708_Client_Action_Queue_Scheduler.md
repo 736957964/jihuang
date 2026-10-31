@@ -4115,3 +4115,1406 @@ end)
 
 ```
 
+
+
+### 变体演进：熔炉武器汉化版 (Mod 3353028449)
+- **变体场景与切面**：收录来自工坊 Mod 3353028449 (`熔炉武器汉化版`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3353028449)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:blacksmith_edge
+
+AddPrefabPostInit("blacksmith_edge",function(inst)
+    local function get_edge_max_level()
+        local day = TheWorld.components.worldstate.data.cycles
+        local max_level = 10
+        if day > 500 then
+            max_level = max_level + math.floor((day - 500) / 100)
+        end
+        return math.min(max_level, 20)
+    end
+
+    local function Set_Name(inst)
+        if inst.mater and inst.components.named then
+            local name = ' Lv.'..inst.mater..' '..STRINGS.NAMES[string.upper(inst.prefab)]
+            inst.components.named:SetName(name)
+        end
+    end
+
+    local function onlevelup(inst, giver)
+        if inst.components.weapon then
+            inst.components.weapon:SetDamage(TUNING.THE_FORGE_ITEM_PACK.BLACKSMITH_EDGE.DAMAGE + inst.mater * 10)
+        end
+        if giver and giver.components.talker then
+            giver.components.talker:Say("等级:"..inst.mater.."/"..get_edge_max_level().."!")
+        end
+        inst.entity:AddSoundEmitter()
+        inst.SoundEmitter:PlaySound("dontstarve/characters/wx78/levelup")
+    end
+
+    local function OnGetItemFromPlayer(inst, giver, item, player)
+        if not inst.components.weapon then return end
+
+        if item then
+            if item.prefab == "moonstorm_static_item" then
+                -- 检查是否超过最大等级
+                local max_level = get_edge_max_level()
+                if inst.mater < max_level then
+                    inst.mater = inst.mater + 1
+                    onlevelup(inst, giver)
+                    Set_Name(inst)
+                else
+                    if giver and giver.components.talker then
+                        if inst.mater < 20 then
+                            local day = TheWorld.components.worldstate.data.cycles
+                            local next_day = (inst.mater - 9) * 100 + 500
+                            local to_day = next_day - day
+                            giver.components.talker:Say("已达当前天数最大等级"..max_level.."!\n距离下一级解锁还有"..to_day.."天")
+                        else
+                            giver.components.talker:Say("已达到最大等级"..max_level.."!")
+                        end
+                    end
+                    -- 返还物品
+                    local giveback = SpawnPrefab("moonstorm_static_item")
+                    if giver and giver.components.inventory then
+                        giver.components.inventory:GiveItem(giveback, nil, giver:GetPosition())
+                    end
+                end
+            elseif item.prefab == "greengem" then
+                if inst.mater > 0 then
+                    inst.mater = inst.mater - 1
+                    local giveback = SpawnPrefab("moonstorm_static_item")
+                    if giver and giver.components.inventory then
+                        giver.components.inventory:GiveItem(giveback, nil, giver:GetPosition())
+                        giver.components.talker:Say("降级后的等级为"..inst.mater..", 返还一个静电")
+                    end
+                    inst.components.weapon:SetDamage(TUNING.THE_FORGE_ITEM_PACK.BLACKSMITH_EDGE.DAMAGE + inst.mater * 10)
+                    Set_Name(inst)
+                elseif inst.mater == 0 then
+                    local giveback = SpawnPrefab("moonstorm_static_item")
+                    if giver and giver.components.inventory then
+                        giver.components.inventory:GiveItem(giveback, nil, giver:GetPosition())
+                        giver.components.talker:Say("当前大刀等级为0, 回收刀并返还一个静电")
+                    end
+                    inst:Remove()
+                end
+            end
+        end
+    end
+
+    local function onpreload(inst, data)
+        if data then
+            if data.mater then
+                inst.mater = data.mater
+                -- 直接设置伤害，不调用OnGetItemFromPlayer
+                if inst.components.weapon then
+                    inst.components.weapon:SetDamage(TUNING.THE_FORGE_ITEM_PACK.BLACKSMITH_EDGE.DAMAGE + inst.mater * 10)
+                end
+            end
+        end
+    end
+
+    local function onsave(inst, data)
+        data.mater = inst.mater
+    end
+
+    local function OnRefuseItem(inst, giver, item)
+        if item and giver and giver.components.talker then
+            giver.components.talker:Say("等级:"..inst.mater.."/"..get_edge_max_level().."!\n给予静电升级\n给予绿宝石降级并返还静电\n500天后每100天增加1上限,最高20级")
+        end
+    end
+
+    local function AcceptTest(inst, item)
+        if inst.mater then
+            if item.prefab == "moonstorm_static_item" or item.prefab == "greengem" then
+                return true
+            end
+        end
+        return false
+    end
+
+    -- 初始化等级
+    inst.mater = inst.mater or 0
+
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    -- 添加必要的组件
+    if not inst.components.named then
+        inst:AddComponent("named")
+    end
+
+    -- 设置初始名称和伤害
+    Set_Name(inst)
+    if inst.components.weapon then
+        inst.components.weapon:SetDamage(TUNING.THE_FORGE_ITEM_PACK.BLACKSMITH_EDGE.DAMAGE)
+    end
+
+    -- 添加交易者组件
+    inst:AddComponent("trader")
+    inst.components.trader:SetAcceptTest(AcceptTest)
+    inst.components.trader.onaccept = OnGetItemFromPlayer
+    inst.components.trader.onrefuse = OnRefuseItem
+
+    -- 保存和加载
+    inst.OnSave = onsave
+    inst.OnPreLoad = onpreload
+end)
+
+if GetModConfigData("NORMAL_GAME_BOOSTED", false) then
+    local u = {"fishingrod", "bugnet", "lucy", "shovel", "goldenshovel", "pitchfork", "hammer", "torch", "umbrella",
+               "cane", "lighter", "axe", "pickaxe", "goldenaxe", "goldenpickaxe", "boomerang", "hambat",
+               "multitool_axe_pickaxe", "spear", "batbat", "spear_wathgrithr", "nightstick", "slurtleslime",
+               "ruins_bat", "trap_teeth", "nightsword", "blowdart_pipe", "blowdart_fire", "gunpowder", "bell",
+               "tentaclespike", "brush", "blowdart_yellow", "glasscutter", "moonglassaxe", "oceanfishingrod", "trident"}
+    local v = {"firestaff", "icestaff", "staff_tornado", "pocketwatch_weapon", "pocketwatch_weapon_new"}
+    for i, j in ipairs(u) do
+        AddPrefabPostInit(j, function(b)
+            if b.components.weapon then
+                b.components.weapon:SetDamageType(1)
+            end
+        end)
+    end
+    for i, j in ipairs(v) do
+        AddPrefabPostInit(j, function(b)
+            if b.components.weapon then
+                b.components.weapon:SetDamageType(2)
+            end
+        end)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:inventoryitem_classified
+local k = _G.TheNet;
+AddPrefabPostInit("inventoryitem_classified", function(l)
+    l.isaltattacking = h(l.GUID, "weapon.isaltattacking")
+    l.altattackrange = i(l.GUID, "weapon.altattackrange")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+end)
+AddPrefabPostInit("player_classified", function(l)
+    l.net_buffs = j(l.GUID, "forge.net_buffs", "net_buffs_dirty")
+    if not k:IsDedicated() then
+        l:ListenForEvent("net_buffs_dirty", function(l)
+            if not l._parent or not l._parent.HUD or #l.net_buffs:value() < 1 then
+                return
+            end
+            l.net_buffs:set_local("")
+            l.net_buffs:set("")
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+end
+AddComponentPostInit("combat", function(self)
+    self.damage_override = nil;
+    self.damagetype = nil;
+    self.damagebuffs = {
+        dealt = {
+            dmgtype = {},
+            stimuli = {},
+            generic = {}
+        },
+        recieved = {
+            dmgtype = {},
+            stimuli = {},
+            generic = {}
+        }
+    }
+    function self:SetDamageType(q)
+        self.damagetype = q
+    end
+    function self:HasDamageBuff(r, s, t)
+        local u = self.damagebuffs[r and "recieved" or "dealt"][type(t) == "number" and "dmgtype" or
+                      (type(t) == "string" and "stimuli" or "generic")]
+        if not t then
+            if u[s] then
+                return true
+            end
+        else
+            if u[t] and u[t][s] then
+                return true
+            end
+        end
+    end
+    function self:AddDamageBuff(r, s, v)
+        if not self:HasDamageBuff(r, s) then
+            self.damagebuffs[r and "recieved" or "dealt"].generic[s] = v
+        end
+    end
+    function self:AddDamageTypeBuff(r, w, s, v)
+        if not self:HasDamageBuff(r, s, w) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"].dmgtype;
+            if not u[w] then
+                u[w] = {}
+            end
+            u[w][s] = v
+        end
+    end
+    function self:AddDamageStimuliBuff(r, x, s, v)
+        if not self:HasDamageBuff(r, s, x) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"].stimuli;
+            if not u[x] then
+                u[x] = {}
+            end
+            u[x][s] = v
+        end
+    end
+    function self:RemoveDamageBuff(r, s, t)
+        if self:HasDamageBuff(r, s, t) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"][type(t) == "number" and "dmgtype" or
+                          (type(t) == "string" and "stimuli" or "generic")]
+            if not t then
+                u[s] = nil
+            else
+                u[t][s] = nil;
+                if _G.GetTableSize(u[t]) < 1 then
+                    u[t] = nil
+                end
+            end
+        end
+    end
+    function self:CopyBuffsTo(y)
+        if y and y.components.combat then
+            y.components.combat.damagebuffs = self.damagebuffs
+        end
+    end
+    function self:HasDamageBuff(r, s, t)
+        local u = self.damagebuffs[r and "recieved" or "dealt"][type(t) == "number" and "dmgtype" or
+                      (type(t) == "string" and "stimuli" or "generic")]
+        if not t then
+            return u[s] ~= nil
+        else
+            return u[t] ~= nil and u[t][s] ~= nil
+        end
+    end
+    _oldGetAttackRange = self.GetAttackRange;
+    function self:GetAttackRange()
+        local z = self:GetWeapon()
+        if z and z.components.weapon:CanAltAttack() then
+            return z.components.weapon.altattackrange
+        else
+            return _oldGetAttackRange(self)
+        end
+    end
+    _oldGetHitRange = self.GetHitRange;
+    function self:GetHitRange()
+        local z = self:GetWeapon()
+        if z and z.components.weapon:CanAltAttack() then
+            return self.attackrange + z.components.weapon.althitrange
+        else
+            return _oldGetHitRange(self)
+        end
+    end
+    _oldCalcDamage = self.CalcDamage;
+    function self:CalcDamage(A, z, B)
+        if A:HasTag("alwaysblock") then
+            return 0
+        end
+        local C = _oldCalcDamage(self, A, z, B)
+        local D = z ~= nil and z.components.weapon.damage or self.defaultdamage;
+        if z ~= nil and z.components.planardamage == nil or (z == nil and self.inst.components.planardamage == nil) then -- 修改的地方对有位面伤害的做出区别
+            if z and z.components.weapon:CanAltAttack() or not z and self.damage_override then
+                local E = 0;
+                if z then
+                    E =
+                        z.components.weapon.altdamagecalc ~= nil and z.components.weapon.altdamagecalc(z, self.inst, A) or
+                            (z.components.weapon.altdamage or D)
+                else
+                    E = type(self.damage_override) == "function" and self.damage_override(self.inst, A) or
+                            self.damage_override
+                end
+                C = (C - (self.damagebonus or 0)) / D;
+                C = C * E + (self.damagebonus or 0)
+            end
+            return C
+        else
+            return _oldCalcDamage(self, A, z, B) -- 修改
+        end
+    end
+    local function F(r, G, H, z, x)
+        local I = 1;
+        local J = 1;
+        local K = {
+            common = {
+                additive = {},
+                multiplicative = {}
+            },
+            overrides = {
+                additive = {},
+                multiplicative = {}
+            }
+        }
+        for t, p in pairs(self.damagebuffs[r and "recieved" or "dealt"]) do
+            for o, v in pairs(p) do
+                local z = z or self:GetWeapon()
+                local L = z ~= nil and z.components.weapon or self;
+                if t == "generic" or t == "stimuli" and x == o or t == "dmgtype" and L.damagetype and L.damagetype ==
+                    _G.DAMAGETYPES[_G.DAMAGETYPE_IDS[o]] then
+                    if t == "generic" then
+                        if type(v) == "function" then
+                            local M, N, O = v(G, H, z, x)
+                            K[O and "overrides" or "common"][N and "multiplicative" or "additive"][o] = M
+                        else
+                            K.common.additive[o] = v
+                        end
+                    else
+                        for P, Q in pairs(v) do
+                            if type(Q) == "function" then
+                                local M, N, O = Q(G, H, z, x)
+                                K[O and "overrides" or "common"][N and "multiplicative" or "additive"][P] = M
+                            else
+                                K.common.additive[P] = Q
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        local R = false;
+        if _G.GetTableSize(K.overrides.additive) > 0 or _G.GetTableSize(K.overrides.multiplicative) > 0 then
+            R = true
+        end
+        for S, v in pairs(K[R and "overrides" or "common"].multiplicative) do
+            if v then
+                J = J * v
+            end
+        end
+        for S, v in pairs(K[R and "overrides" or "common"].additive) do
+            if v then
+                I = I * (v + 1)
+            end
+        end
+        if I == 0 then
+            I = 1
+        end
+        if J == 0 then
+            J = 1
+        end
+        return I, J
+    end
+    function self:GetBuffMults(r, G, H, z, x)
+        return F(r, G, H, z, x)
+    end
+    _oldDoAttack = self.DoAttack;
+    function self:DoAttack(T, z, U, x, V, ...) -- 修改 官方有两个多的参数但是好像那两个参数没作用Combat:DoAttack(targ, weapon, projectile, stimuli, instancemult, instrangeoverride, instpos)
+        local I, J = F(false, self.inst, T or self.target, z, x)
+        local W = (V or 1) * J * I;
+        _oldDoAttack(self, T, z, U, x, W, ...) -- 修改 Combat:DoAttack(targ, weapon, projectile, stimuli, instancemult, instrangeoverride, instpos)DoAttack(T, self.inst, U, x, V)
+    end
+    _oldGetAttacked = self.GetAttacked;
+    function self:GetAttacked(G, X, z, x, ...) -- 修改Combat:GetAttacked(attacker, damage, weapon, stimuli, spdamage)spdamage为位面伤害没这个参数对象不会收到位面伤害
+        local I, J = F(true, G, self.inst, z, x)
+        X = X * J * I;
+        return _oldGetAttacked(self, G, X, z, x, ...) -- 修改
+    end
+    function self:DoAreaAttack(A, Y, z, Z, x, _)
+        local a0 = 0;
+        local a1, a2, a3 = A.Transform:GetWorldPosition()
+        local a4 = _G.TheSim:FindEntities(a1, a2, a3, Y, {"_combat"}, _)
+        for P, y in ipairs(a4) do
+            if y ~= A and y ~= self.inst and self:IsValidTarget(y) and (Z == nil or Z(y, self.inst)) then
+                self.inst:PushEvent("onareaattackother", {
+                    target = y,
+                    weapon = z,
+                    stimuli = x
+                })
+                local J = (self.areahitdamagepercent or 1) + F(false, self.inst, y, z, x)
+                y.components.combat:GetAttacked(self.inst, self:CalcDamage(y, z, J), z, x)
+                a0 = a0 + 1
+            end
+        end
+        return a0
+    end
+    function self:DoSpecialAttack(C, T, x, V, a5)
+        self.damage_override = C;
+        if a5 then
+            self:DoAreaAttack(a5.target, a5.range, nil, a5.validfn, x, a5.excludetags)
+        else
+            self:DoAttack(T, nil, nil, x, V)
+        end
+        self.damage_override = nil
+    end
+end)
+AddComponentPostInit("weapon", function(self)
+    self.hasaltattack = false;
+    self.isaltattacking = false;
+    self.altattackrange = nil;
+    self.althitrange = nil;
+    self.altdamage = nil;
+    self.altdamagecalc = nil;
+    self.altcondition = nil;
+    self.altprojectile = nil;
+    self._projectile = nil;
+    self.damagetype = nil;
+    self.altdamagetype = nil;
+    self._damagetype = nil;
+    function self:SetDamageType(q)
+        self.damagetype = q;
+        self._damagetype = q
+    end
+    function self:SetStimuli(x)
+        self.stimuli = x
+    end
+    function self:SetProjectile(U)
+        self.projectile = U;
+        self._projectile = U
+    end
+    function self:SetAltAttack(X, Y, a6, q, a7, a8)
+        self.hasaltattack = true;
+        self.altdamage = X ~= nil and X or self.damage;
+        if Y ~= nil then
+            self.altattackrange = type(Y) == "table" and Y[1] or Y or self.attackrange;
+            self.althitrange = type(Y) == "table" and Y[2] or self.altattackrange
+        else
+            self.altattackrange = 20;
+            self.althitrange = 20
+        end
+        self.altprojectile = a6;
+        self.altdamagetype = q ~= nil and q or self.damagetype;
+        self.altdamagecalc = a7;
+        self.altcondition = a8;
+        if self.altdamagecalc then
+            local a9 = self.altdamagecalc;
+            self.altdamagecalc = function(z, G, A)
+                local C = a9(z, G, A)
+                return C ~= nil and C or self.altdamage
+            end
+        end
+        if self.inst.replica.inventoryitem then
+            self.inst.replica.inventoryitem:SetAltAttackRange(self.altattackrange)
+        end
+    end
+    function self:SetIsAltAttacking(aa)
+        self.isaltattacking = aa;
+        if self.inst.replica.inventoryitem then
+            self.inst.replica.inventoryitem:SetIsAltAttacking(aa)
+        end
+        if aa then
+            self.projectile = self.altprojectile;
+            self.damagetype = self.altdamagetype
+        else
+            self.projectile = self._projectile;
+            self.damagetype = self._damagetype
+        end
+    end
+    function self:HasAltAttack()
+        return self.hasaltattack
+    end
+    function self:CanAltAttack()
+        if self:HasAltAttack() and self.isaltattacking then
+            return self.altcondition ~= nil and self.altcondition(self.inst) or true
+        end
+    end
+    _oldCanRangedAttack = self.CanRangedAttack;
+    function self:CanRangedAttack()
+        return self:CanAltAttack() and self.altprojectile or _oldCanRangedAttack(self)
+    end
+    function self:DoAltAttack(G, T, U, x, V)
+        self:SetIsAltAttacking(true)
+        if G and G.components.combat and self:CanAltAttack() then
+            if T and type(T) == "table" and not T.prefab then
+                for S, y in ipairs(T) do
+                    if y ~= G and y.entity:IsValid() and y.components.workable ~= nil and self.inst.IsWorkableAllowed ~=
+                        nil and type(self.inst.IsWorkableAllowed) == "function" and
+                        self.inst:IsWorkableAllowed(y.components.workable:GetWorkAction(), y) then
+                        local ab = self.inst.prefab:upper()
+                        if _G.TUNING.THE_FORGE_ITEM_PACK[ab] ~= nil and _G.TUNING.THE_FORGE_ITEM_PACK[ab].WORKABLE_DMG ~=
+                            nil then
+                            y.components.workable:WorkedBy(G, _G.TUNING.THE_FORGE_ITEM_PACK[ab].WORKABLE_DMG)
+                        end
+                    end
+                    if y ~= G and G.components.combat:IsValidTarget(y) and y.components.health and
+                        not y.components.health:IsDead() then
+                        G.components.combat:DoAttack(y, self.inst, U, x, V)
+                    end
+                end
+            else
+                if G.components.combat:IsValidTarget(T) then
+                    G.components.combat:DoAttack(T, self.inst, U, x, V)
+                end
+            end
+        end
+        G:PushEvent("alt_attack_complete", {
+            weapon = self.inst
+        })
+        self:SetIsAltAttacking(false)
+    end
+end)
+AddComponentPostInit("aoeweapon_lunge", function(self)    --修改为附加而不是覆盖  矛相关
+    self.width = 3;
+    self.damage = nil;
+    self.stimuli = nil;
+    self.onlunge = nil
+    function self:SetWidth(c)
+        self.width = c
+    end
+    function self:SetStimuli(d)
+        self.stimuli = d
+    end
+    function self:SetOnLungeFn(e)
+        self.onlunge = e
+    end
+    _oldDoLunge = self.DoLunge
+    function self:DoLunge(f, g, h)
+        if self.inst.prefab == "pithpike" then          --对尖刺矛走mod别的走原版
+            local i = {}
+            local j = {}
+        for k = 0, 10 do
+            f:DoTaskInTime(FRAMES * math.ceil(1 + k / 3.5), function()
+                local l = (h - g):GetNormalized() * k * 0.6;
+                SpawnPrefab("spear_gungnir_lungefx").Transform:SetPosition((g + l):Get())
+                local m, n, o = (g + l):Get()
+                local p = TheSim:FindEntities(m, n, o, self.width / 2, nil, {"player", "companion"})
+                for q, r in ipairs(p) do
+                    if not i[r] and r ~= f and f.components.combat:IsValidTarget(r) and
+                        (r.components.health or r.entity:IsValid() and r.components.workable and
+                            r.components.workable:CanBeWorked() and r.components.workable:GetWorkAction()) then
+                        i[r] = true;
+                        table.insert(j, r)
+                    end
+                end
+                if k == 10 then
+                    if self.inst.components.weapon and self.inst.components.weapon:HasAltAttack() then
+                        self.inst.components.weapon:DoAltAttack(f, j, nil, self.stimuli)
+                    end
+                end
+            end)
+        end
+        if self.onlunge ~= nil then
+            self.onlunge(self.inst, f, g, h)
+        end
+        return true 
+        else
+            return _oldDoLunge(self,f, g, h)
+        end
+    end
+end)
+AddComponentPostInit("health", function(self)
+    self.buffs = {}
+    function self:GetHealthBuff()
+        local ac = 0;
+        for s, v in pairs(self.buffs) do
+            ac = ac + v
+        end
+        return ac
+    end
+    function self:HasHealthBuff(s)
+        return self.buffs[s]
+    end
+    function self:AddHealthBuff(s, v)
+        if not self:HasHealthBuff(s) then
+            self.buffs[s] = v;
+            self.maxhealth = self.maxhealth + self:GetHealthBuff()
+            self.currenthealth = self.currenthealth + self:GetHealthBuff()
+        end
+    end
+    function self:RemoveHealthBuff(s)
+        if self:HasHealthBuff(s) then
+            self.currenthealth = math.max(self.minhealth, self.currenthealth - self.buffs[s])
+            self.maxhealth = math.max(self.minhealth, self.maxhealth - self.buffs[s])
+            self.buffs[s] = nil
+        end
+    end
+end)
+AddComponentPostInit("equippable", function(self)
+    self.uniquebuffs = {}
+    self.damagebuffs = {
+        dealt = {
+            dmgtype = {},
+            stimuli = {},
+            generic = {}
+        },
+        recieved = {
+            dmgtype = {},
+            stimuli = {},
+            generic = {}
+        }
+    }
+    self.healthbuffs = {}
+    function self:HasHealthBuff(s)
+        return self.healthbuffs[s] ~= nil
+    end
+    function self:AddHealthBuff(s, v)
+        if not self:HasHealthBuff(s) then
+            local ad = self.inst.components.inventoryitem.owner;
+            if ad.components.health then
+                ad.components.health:AddHealthBuff(s, v)
+            end
+        end
+    end
+    function self:RemoveHealthBuff(s)
+        if self:HasHealthBuff(s) then
+            self.healthbuffs[s] = nil;
+            local ad = self.inst.components.inventoryitem.owner;
+            if ad.components.health then
+                ad.components.health:RemoveHealthBuff(s)
+            end
+        end
+    end
+    function self:HasDamageBuff(r, s, t)
+        local u = self.damagebuffs[r and "recieved" or "dealt"][type(t) == "number" and "dmgtype" or
+                      (type(t) == "string" and "stimuli" or "generic")]
+        if not t then
+            if u[s] then
+                return true
+            end
+        else
+            if u[t] and u[t][s] then
+                return true
+            end
+        end
+    end
+    function self:AddDamageBuff(r, s, v)
+        if not self:HasDamageBuff(r, s) then
+            self.damagebuffs[r and "recieved" or "dealt"].generic[s] = v;
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:AddDamageBuff(r, s, v)
+                end
+            end
+        end
+    end
+    function self:AddDamageTypeBuff(r, w, s, v)
+        if not self:HasDamageBuff(r, s, w) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"].dmgtype;
+            if not u[w] then
+                u[w] = {}
+            end
+            u[w][s] = v;
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:AddDamageTypeBuff(r, w, s, v)
+                end
+            end
+        end
+    end
+    function self:AddDamageStimuliBuff(r, x, s, v)
+        if not self:HasDamageBuff(r, s, x) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"].stimuli;
+            if not u[x] then
+                u[x] = {}
+            end
+            u[x][s] = v;
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:AddDamageStimuliBuff(r, x, s, v)
+                end
+            end
+        end
+    end
+    function self:RemoveDamageBuff(r, s, t)
+        if self:HasDamageBuff(r, s, t) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"][type(t) == "number" and "dmgtype" or
+                          (type(t) == "string" and "stimuli" or "generic")]
+            if not t then
+                u[s] = nil
+            else
+                u[t][s] = nil;
+                if _G.GetTableSize(u[t]) < 1 then
+                    u[t] = nil
+                end
+            end
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:RemoveDamageBuff(r, s, t)
+                end
+            end
+        end
+    end
+    function self:AddBuffsTo(ad)
+        if ad and ad.components.buffable then
+            ad.components.buffable:AddBuff(self.inst.prefab, self.uniquebuffs)
+        end
+    end
+    function self:RemoveBuffsFrom(ad)
+        if ad and ad.components.buffable then
+            ad.components.buffable:RemoveBuff(self.inst.prefab)
+        end
+    end
+    function self:AddUniqueBuff(ae)
+        for t, v in pairs(ae) do
+            self.uniquebuffs[t] = v
+        end
+        if self:IsEquipped() then
+            local ad = self.inst.components.inventoryitem.owner;
+            self:AddBuffsTo(ad)
+        end
+    end
+    function self:RemoveUniqueBuff(t)
+        self.uniquebuffs[t] = nil;
+        if self:IsEquipped() then
+            local ad = self.inst.components.inventoryitem.owner;
+            self:AddBuffsTo(ad)
+        end
+    end
+    local af = self.Equip;
+    function self:Equip(ad)
+        if ad.components.combat then
+            for P, ae in pairs(self.damagebuffs) do
+                for o, K in pairs(ae) do
+                    for t, v in pairs(K) do
+                        if o == "generic" then
+                            ad.components.combat:AddDamageBuff(P == "recieved", t, v)
+                        else
+                            for ag, ah in pairs(v) do
+                                if o == "dmgtype" then
+                                    ad.components.combat:AddDamageTypeBuff(P == "recieved", t, ag, ah)
+                                else
+                                    ad.components.combat:AddDamageStimuliBuff(P == "recieved", t, ag, ah)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        self:AddBuffsTo(ad)
+        af(self, ad)
+    end
+    local ai = self.Unequip;
+    function self:Unequip(ad)
+        if ad.components.combat then
+            for P, ae in pairs(self.damagebuffs) do
+                for o, K in pairs(ae) do
+                    for t, v in pairs(K) do
+                        if o == "generic" then
+                            ad.components.combat:RemoveDamageBuff(P == "recieved", t)
+                        else
+                            for s, S in pairs(v) do
+                                ad.components.combat:RemoveDamageBuff(P == "recieved", s, t)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        self:RemoveBuffsFrom(ad)
+        ai(self, ad)
+    end
+end)
+AddComponentPostInit("rechargeable", function(self)
+    self.owner = nil;
+    self.onequip = function(l, ae)
+        if self.owner ~= nil and self.owner.components.buffable ~= nil then -- 修改对buffable组件判定 假人相关
+            self:SetChargeTimeMod(self.inst, l.prefab, self.owner.components.buffable:GetBuffData("cooldown_mult"))
+        end
+    end;
+    self.onunequip = function(l, ae)
+        self:RemoveChargeTimeMod(self.inst, l.prefab)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:weapon
+end)
+AddComponentPostInit("weapon", function(self)
+    self.hasaltattack = false;
+    self.isaltattacking = false;
+    self.altattackrange = nil;
+    self.althitrange = nil;
+    self.altdamage = nil;
+    self.altdamagecalc = nil;
+    self.altcondition = nil;
+    self.altprojectile = nil;
+    self._projectile = nil;
+    self.damagetype = nil;
+    self.altdamagetype = nil;
+    self._damagetype = nil;
+    function self:SetDamageType(q)
+        self.damagetype = q;
+        self._damagetype = q
+    end
+    function self:SetStimuli(x)
+        self.stimuli = x
+    end
+    function self:SetProjectile(U)
+        self.projectile = U;
+        self._projectile = U
+    end
+    function self:SetAltAttack(X, Y, a6, q, a7, a8)
+        self.hasaltattack = true;
+        self.altdamage = X ~= nil and X or self.damage;
+        if Y ~= nil then
+            self.altattackrange = type(Y) == "table" and Y[1] or Y or self.attackrange;
+            self.althitrange = type(Y) == "table" and Y[2] or self.altattackrange
+        else
+            self.altattackrange = 20;
+            self.althitrange = 20
+        end
+        self.altprojectile = a6;
+        self.altdamagetype = q ~= nil and q or self.damagetype;
+        self.altdamagecalc = a7;
+        self.altcondition = a8;
+        if self.altdamagecalc then
+            local a9 = self.altdamagecalc;
+            self.altdamagecalc = function(z, G, A)
+                local C = a9(z, G, A)
+                return C ~= nil and C or self.altdamage
+            end
+        end
+        if self.inst.replica.inventoryitem then
+            self.inst.replica.inventoryitem:SetAltAttackRange(self.altattackrange)
+        end
+    end
+    function self:SetIsAltAttacking(aa)
+        self.isaltattacking = aa;
+        if self.inst.replica.inventoryitem then
+            self.inst.replica.inventoryitem:SetIsAltAttacking(aa)
+        end
+        if aa then
+            self.projectile = self.altprojectile;
+            self.damagetype = self.altdamagetype
+        else
+            self.projectile = self._projectile;
+            self.damagetype = self._damagetype
+        end
+    end
+    function self:HasAltAttack()
+        return self.hasaltattack
+    end
+    function self:CanAltAttack()
+        if self:HasAltAttack() and self.isaltattacking then
+            return self.altcondition ~= nil and self.altcondition(self.inst) or true
+        end
+    end
+    _oldCanRangedAttack = self.CanRangedAttack;
+    function self:CanRangedAttack()
+        return self:CanAltAttack() and self.altprojectile or _oldCanRangedAttack(self)
+    end
+    function self:DoAltAttack(G, T, U, x, V)
+        self:SetIsAltAttacking(true)
+        if G and G.components.combat and self:CanAltAttack() then
+            if T and type(T) == "table" and not T.prefab then
+                for S, y in ipairs(T) do
+                    if y ~= G and y.entity:IsValid() and y.components.workable ~= nil and self.inst.IsWorkableAllowed ~=
+                        nil and type(self.inst.IsWorkableAllowed) == "function" and
+                        self.inst:IsWorkableAllowed(y.components.workable:GetWorkAction(), y) then
+                        local ab = self.inst.prefab:upper()
+                        if _G.TUNING.THE_FORGE_ITEM_PACK[ab] ~= nil and _G.TUNING.THE_FORGE_ITEM_PACK[ab].WORKABLE_DMG ~=
+                            nil then
+                            y.components.workable:WorkedBy(G, _G.TUNING.THE_FORGE_ITEM_PACK[ab].WORKABLE_DMG)
+                        end
+                    end
+                    if y ~= G and G.components.combat:IsValidTarget(y) and y.components.health and
+                        not y.components.health:IsDead() then
+                        G.components.combat:DoAttack(y, self.inst, U, x, V)
+                    end
+                end
+            else
+                if G.components.combat:IsValidTarget(T) then
+                    G.components.combat:DoAttack(T, self.inst, U, x, V)
+                end
+            end
+        end
+        G:PushEvent("alt_attack_complete", {
+            weapon = self.inst
+        })
+        self:SetIsAltAttacking(false)
+    end
+end)
+AddComponentPostInit("aoeweapon_lunge", function(self)    --修改为附加而不是覆盖  矛相关
+    self.width = 3;
+    self.damage = nil;
+    self.stimuli = nil;
+    self.onlunge = nil
+    function self:SetWidth(c)
+        self.width = c
+    end
+    function self:SetStimuli(d)
+        self.stimuli = d
+    end
+    function self:SetOnLungeFn(e)
+        self.onlunge = e
+    end
+    _oldDoLunge = self.DoLunge
+    function self:DoLunge(f, g, h)
+        if self.inst.prefab == "pithpike" then          --对尖刺矛走mod别的走原版
+            local i = {}
+            local j = {}
+        for k = 0, 10 do
+            f:DoTaskInTime(FRAMES * math.ceil(1 + k / 3.5), function()
+                local l = (h - g):GetNormalized() * k * 0.6;
+                SpawnPrefab("spear_gungnir_lungefx").Transform:SetPosition((g + l):Get())
+                local m, n, o = (g + l):Get()
+                local p = TheSim:FindEntities(m, n, o, self.width / 2, nil, {"player", "companion"})
+                for q, r in ipairs(p) do
+                    if not i[r] and r ~= f and f.components.combat:IsValidTarget(r) and
+                        (r.components.health or r.entity:IsValid() and r.components.workable and
+                            r.components.workable:CanBeWorked() and r.components.workable:GetWorkAction()) then
+                        i[r] = true;
+                        table.insert(j, r)
+                    end
+                end
+                if k == 10 then
+                    if self.inst.components.weapon and self.inst.components.weapon:HasAltAttack() then
+                        self.inst.components.weapon:DoAltAttack(f, j, nil, self.stimuli)
+                    end
+                end
+            end)
+        end
+        if self.onlunge ~= nil then
+            self.onlunge(self.inst, f, g, h)
+        end
+        return true 
+        else
+            return _oldDoLunge(self,f, g, h)
+        end
+    end
+end)
+AddComponentPostInit("health", function(self)
+    self.buffs = {}
+    function self:GetHealthBuff()
+        local ac = 0;
+        for s, v in pairs(self.buffs) do
+            ac = ac + v
+        end
+        return ac
+    end
+    function self:HasHealthBuff(s)
+        return self.buffs[s]
+    end
+    function self:AddHealthBuff(s, v)
+        if not self:HasHealthBuff(s) then
+            self.buffs[s] = v;
+            self.maxhealth = self.maxhealth + self:GetHealthBuff()
+            self.currenthealth = self.currenthealth + self:GetHealthBuff()
+        end
+    end
+    function self:RemoveHealthBuff(s)
+        if self:HasHealthBuff(s) then
+            self.currenthealth = math.max(self.minhealth, self.currenthealth - self.buffs[s])
+            self.maxhealth = math.max(self.minhealth, self.maxhealth - self.buffs[s])
+            self.buffs[s] = nil
+        end
+    end
+end)
+AddComponentPostInit("equippable", function(self)
+    self.uniquebuffs = {}
+    self.damagebuffs = {
+        dealt = {
+            dmgtype = {},
+            stimuli = {},
+            generic = {}
+        },
+        recieved = {
+            dmgtype = {},
+            stimuli = {},
+            generic = {}
+        }
+    }
+    self.healthbuffs = {}
+    function self:HasHealthBuff(s)
+        return self.healthbuffs[s] ~= nil
+    end
+    function self:AddHealthBuff(s, v)
+        if not self:HasHealthBuff(s) then
+            local ad = self.inst.components.inventoryitem.owner;
+            if ad.components.health then
+                ad.components.health:AddHealthBuff(s, v)
+            end
+        end
+    end
+    function self:RemoveHealthBuff(s)
+        if self:HasHealthBuff(s) then
+            self.healthbuffs[s] = nil;
+            local ad = self.inst.components.inventoryitem.owner;
+            if ad.components.health then
+                ad.components.health:RemoveHealthBuff(s)
+            end
+        end
+    end
+    function self:HasDamageBuff(r, s, t)
+        local u = self.damagebuffs[r and "recieved" or "dealt"][type(t) == "number" and "dmgtype" or
+                      (type(t) == "string" and "stimuli" or "generic")]
+        if not t then
+            if u[s] then
+                return true
+            end
+        else
+            if u[t] and u[t][s] then
+                return true
+            end
+        end
+    end
+    function self:AddDamageBuff(r, s, v)
+        if not self:HasDamageBuff(r, s) then
+            self.damagebuffs[r and "recieved" or "dealt"].generic[s] = v;
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:AddDamageBuff(r, s, v)
+                end
+            end
+        end
+    end
+    function self:AddDamageTypeBuff(r, w, s, v)
+        if not self:HasDamageBuff(r, s, w) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"].dmgtype;
+            if not u[w] then
+                u[w] = {}
+            end
+            u[w][s] = v;
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:AddDamageTypeBuff(r, w, s, v)
+                end
+            end
+        end
+    end
+    function self:AddDamageStimuliBuff(r, x, s, v)
+        if not self:HasDamageBuff(r, s, x) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"].stimuli;
+            if not u[x] then
+                u[x] = {}
+            end
+            u[x][s] = v;
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:AddDamageStimuliBuff(r, x, s, v)
+                end
+            end
+        end
+    end
+    function self:RemoveDamageBuff(r, s, t)
+        if self:HasDamageBuff(r, s, t) then
+            local u = self.damagebuffs[r and "recieved" or "dealt"][type(t) == "number" and "dmgtype" or
+                          (type(t) == "string" and "stimuli" or "generic")]
+            if not t then
+                u[s] = nil
+            else
+                u[t][s] = nil;
+                if _G.GetTableSize(u[t]) < 1 then
+                    u[t] = nil
+                end
+            end
+            if self:IsEquipped() then
+                local ad = self.inst.components.inventoryitem.owner;
+                if ad.components.combat then
+                    ad.components.combat:RemoveDamageBuff(r, s, t)
+                end
+            end
+        end
+    end
+    function self:AddBuffsTo(ad)
+        if ad and ad.components.buffable then
+            ad.components.buffable:AddBuff(self.inst.prefab, self.uniquebuffs)
+        end
+    end
+    function self:RemoveBuffsFrom(ad)
+        if ad and ad.components.buffable then
+            ad.components.buffable:RemoveBuff(self.inst.prefab)
+        end
+    end
+    function self:AddUniqueBuff(ae)
+        for t, v in pairs(ae) do
+            self.uniquebuffs[t] = v
+        end
+        if self:IsEquipped() then
+            local ad = self.inst.components.inventoryitem.owner;
+            self:AddBuffsTo(ad)
+        end
+    end
+    function self:RemoveUniqueBuff(t)
+        self.uniquebuffs[t] = nil;
+        if self:IsEquipped() then
+            local ad = self.inst.components.inventoryitem.owner;
+            self:AddBuffsTo(ad)
+        end
+    end
+    local af = self.Equip;
+    function self:Equip(ad)
+        if ad.components.combat then
+            for P, ae in pairs(self.damagebuffs) do
+                for o, K in pairs(ae) do
+                    for t, v in pairs(K) do
+                        if o == "generic" then
+                            ad.components.combat:AddDamageBuff(P == "recieved", t, v)
+                        else
+                            for ag, ah in pairs(v) do
+                                if o == "dmgtype" then
+                                    ad.components.combat:AddDamageTypeBuff(P == "recieved", t, ag, ah)
+                                else
+                                    ad.components.combat:AddDamageStimuliBuff(P == "recieved", t, ag, ah)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        self:AddBuffsTo(ad)
+        af(self, ad)
+    end
+    local ai = self.Unequip;
+    function self:Unequip(ad)
+        if ad.components.combat then
+            for P, ae in pairs(self.damagebuffs) do
+                for o, K in pairs(ae) do
+                    for t, v in pairs(K) do
+                        if o == "generic" then
+                            ad.components.combat:RemoveDamageBuff(P == "recieved", t)
+                        else
+                            for s, S in pairs(v) do
+                                ad.components.combat:RemoveDamageBuff(P == "recieved", s, t)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        self:RemoveBuffsFrom(ad)
+        ai(self, ad)
+    end
+end)
+AddComponentPostInit("rechargeable", function(self)
+    self.owner = nil;
+    self.onequip = function(l, ae)
+        if self.owner ~= nil and self.owner.components.buffable ~= nil then -- 修改对buffable组件判定 假人相关
+            self:SetChargeTimeMod(self.inst, l.prefab, self.owner.components.buffable:GetBuffData("cooldown_mult"))
+        end
+    end;
+    self.onunequip = function(l, ae)
+        self:RemoveChargeTimeMod(self.inst, l.prefab)
+    end;
+    self.inst:ListenForEvent("equipped", function(l, ae)
+        self.owner = ae.owner;
+        self.pickup = false;
+        if self.owner ~= nil and self.owner.components.buffable ~= nil then -- 修改对buffable组件判定 假人相关
+            self:SetChargeTimeMod(self.inst, l.prefab, self.owner.components.buffable:GetBuffData("cooldown_mult"))
+        end
+        if not self.updating then
+            self.updating = true;
+            self.inst:StartUpdatingComponent(self)
+        end
+        self.inst:ListenForEvent("equip", self.onequip, l)
+        self.inst:ListenForEvent("unequip", self.onunequip, l)
+    end)
+    self.inst:ListenForEvent("unequipped", function(l, ae)
+        self.inst:RemoveEventCallback("equip", self.onequip, l)
+        self.inst:RemoveEventCallback("unequip", self.onunequip, l)
+        if self.pickup and self.updating then
+            self.updating = false;
+            self.inst:StopUpdatingComponent(self)
+        end
+        self:RemoveChargeTimeMod(self.inst, l.prefab)
+        self.owner = nil
+    end)
+end)
+AddComponentPostInit("aoespell", function(self)
+    self.spell_type = nil;
+    function self:SetSpellType(aj)
+        self.spell_type = aj
+    end
+    local ak = self.CastSpell;
+    function self:CastSpell(al, am)
+        if self.inst.components.reticule_spawner ~= nil then
+            self.inst.components.reticule_spawner:Spawn(am)
+        end
+        local an, ao = ak(self, al, am)
+        self.inst:PushEvent("aoe_casted", {
+            caster = al,
+            pos = am
+        })
+        return an, ao
+    end
+    function self:OnSpellCast(ap, aq, ar)
+        ap:PushEvent("spell_complete", {
+            weapon = self.inst,
+            spell_type = self.spell_type,
+            targets = aq,
+            projectiles = ar
+        })
+    end
+end)
+AddClassPostConstruct("components/inventoryitem_replica", function(self)
+    self.can_altattack_fn = function()
+        return true
+    end;
+    function self:SetIsAltAttacking(aa)
+        if self.classified ~= nil then
+            self.classified.isaltattacking:set(aa)
+        end
+    end
+    function self:SetAltAttackRange(Y)
+        if self.classified ~= nil then
+            self.classified.altattackrange:set(Y or self:AttackRange())
+        end
+    end
+    function self:AltAttackRange()
+        if self.inst.components.weapon then
+            return self.inst.components.weapon.altattackrange
+        elseif self.classified ~= nil then
+            return math.max(0, self.classified.altattackrange:value())
+        else
+            return self:AttackRange()
+        end
+    end
+    function self:SetAltAttackCheck(as)
+        if as and type(as) == "function" then
+            self.can_altattack_fn = as
+        end
+    end
+    function self:CanAltAttack()
+        if self.classified ~= nil and self.classified.isaltattacking:value() then
+            return self.inst.components.weapon and self.components.weapon:CanAltAttack() or
+                       self.can_altattack_fn(self.inst)
+        end
+    end
+    _oldAttackRange = self.AttackRange;
+    function self:AttackRange()
+        return self:CanAltAttack() and self:AltAttackRange() or _oldAttackRange(self)
+    end
+end)
+AddClassPostConstruct("components/combat_replica", function(self)
+    local at = self.CanBeAttacked;
+    function self:CanBeAttacked(G)
+        if TUNING.PREVENT_COMPAGNION_ATTACK and (self.inst:HasTag("companion") and G and G:HasTag("player")) then
+            return false
+        end
+        return at(self, G)
+    end
+end)
+local function au(l, av)
+    local aw = {
+        livingstaff = "heal_staff",
+        infernalstaff = "fireball"
+    }
+    if aw[av.prefab] then
+        l.sg.statemem.projectilesound = "dontstarve/common/lava_arena/" .. aw[av.prefab]
+    end
+end
+AddStategraphPostInit("wilson", function(self)
+    local ax = self.states.attack.onenter;
+    self.states.attack.onenter = function(l)
+        local av = l.components.inventory:GetEquippedItem(c.HANDS)
+        if av then
+            au(l, av)
+        end
+        ax(l)
+    end;
+    local ay = self.actionhandlers[g.CASTAOE].deststate;
+    self.actionhandlers[g.CASTAOE].deststate = function(l, az)
+        if az.invobject:HasTag("parry1") then --和盾的反进行区别
+            return "parry_pre"
+        end
+        return ay(l, az)
+    end
+end)
+AddStategraphPostInit("wilson_client", function(self)
+    local ax = self.states.attack.onenter;
+    self.states.attack.onenter = function(l)
+        local av = l.replica.inventory:GetEquippedItem(c.HANDS)
+        if av then
+            au(l, av)
+        end
+        ax(l)
+    end;
+    local ay = self.actionhandlers[g.CASTAOE].deststate;
+    self.actionhandlers[g.CASTAOE].deststate = function(l, az)
+        if az.invobject:HasTag("parry1") then --和盾的反进行区别
+            return "parry_pre"
+        end
+        return ay(l, az)
+    end
+end)
+AddComponentPostInit("debuffable", function(self)
+    local aA = self.AddDebuff;
+    local aB = self.RemoveDebuff;
+    function self:AddDebuff(m, ...)
+        if self.debuffs[m] == nil and self.inst.player_classified then
+            self.inst.player_classified.net_buffs:set(a.encode({
+                name = m,
+                removed = false
+            }))
+        end
+        aA(self, m, ...)
+    end
+    function self:RemoveDebuff(m, ...)
+        if self.debuffs[m] ~= nil and self.inst.player_classified then
+            self.inst.player_classified.net_buffs:set(a.encode({
+                name = m,
+                removed = true
+            }))
+        end
+        aB(self, m, ...)
+    end
+end)
+local aC = {
+    book = 25 * b,
+    castspell = 53 * b
+}
+local ab = function(...)
+end;
+for aD, aE in pairs(aC) do
+    AddStategraphPostInit("wilson", function(self)
+        local aF, aG, aH = self.states[aD].onenter or ab, self.states[aD].onexit or ab, self.states[aD].onupdate or ab;
+        self.states[aD].onenter = function(l)
+            l.sg.statemem.tm = 0;
+            l.sg.statemem.trgt = aE;
+            l.sg.statemem.equip = l.components.inventory:GetEquippedItem(c.HANDS)
+            aF(l)
+        end;
+        self.states[aD].onexit = function(l)
+            if not l.sg.statemem.equip then
+                return
+            end
+            if l.sg.statemem.tm < l.sg.statemem.trgt and l.sg.statemem.equip.components.reticule_spawner then
+                l.sg.statemem.equip.components.reticule_spawner:Interrupt()
+            end
+            aG(l)
+        end;
+        self.states[aD].onupdate = function(l, aI)
+            l.sg.statemem.tm = l.sg.statemem.tm + aI;
+            aH(l)
+        end
+    end)
+end
+local aJ = {"spider", "spider_warrior", "tentacle", "hound", "firehound", "icehound", "krampus", "knight", "bishop",
+            "rook", "knight_nightmare", "bishop_nightmare", "rook_nightmare", "spider_hider", "spider_spitter",
+            "spider_dropper", "bat", "worm", "spat", "eyeplant", "walrus", "little_walrus", "monkey", "slurper",
+            "tallbird", "frog", "mosquito", "bee", "killerbee", "pigguard", "moonpig", "merm", "leif", "leif_sparse",
+            "spiderqueen", "deerclops", "minotaur", "warg", "birchnutdrake", "deciduoustree", "bearger", "moose",
+            "dragonfly", "lavae", "beeguard", "cookiecutter", "mutatedhound", "houndcorpse", "mutated_penguin",
+            "spider_moon", "beequeen", "klaus", "stalker", "stalker_forest", "stalker_atrium", "malbatross", "pigman",
+            "koalefant_summer", "koalefant_winter", "slurtle", "snurtle", "beefalo", "penguin", "bunnyman", "rocky",
+            "lightninggoat", "catcoon", "buzzard", "mossling", "antlion", "gestalt", "gnarwail", "gnarwail_attack_horn",
+            "fruitdragon", "squid", "player"}
+for S, aK in ipairs(aJ) do
+    AddPrefabPostInit(aK, function(l)
+        if l.components and l.components.combat then
+            l.components.combat:SetDamageType(1)
+        end
+    end)
+end
+
+```
+
+
+
+### 变体演进：九格装备栏Plus (Mod 3823818148)
+- **变体场景与切面**：收录来自工坊 Mod 3823818148 (`九格装备栏Plus`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3823818148)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
