@@ -1866,3 +1866,731 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：Title (Mod 3783095419)
+- **变体场景与切面**：收录来自工坊 Mod 3783095419 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3783095419)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:pighouse
+    -- 标记玩家建造的猪人房 + 摧毁还原 + 玩家靠近不熄灯
+    AddPrefabPostInit("pighouse", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+        inst:ListenForEvent("onbuilt", function()
+            inst.mvb_playerbuilt = true
+        end)
+        inst:ListenForEvent("burntup", MVB_RevertWorkerPigs)
+        if inst.components.workable ~= nil then
+            local oldfinish = inst.components.workable.onfinish
+            inst.components.workable.onfinish = function(house, worker)
+                MVB_RevertWorkerPigs(house)
+                if oldfinish ~= nil then
+                    oldfinish(house, worker)
+                end
+            end
+        end
+        if inst.components.playerprox ~= nil then
+            local oldonnear = inst.components.playerprox.onnear
+            inst.components.playerprox.onnear = function(...)
+                if not inst.mvb_playerbuilt and oldonnear ~= nil then
+                    oldonnear(...)
+                end
+            end
+        end
+        local old_save = inst.OnSave
+        inst.OnSave = function(house, data)
+            if old_save ~= nil then
+                old_save(house, data)
+            end
+            data.mvb_playerbuilt = house.mvb_playerbuilt
+            data.mvb_cluster_x = house.mvb_cluster_x
+            data.mvb_cluster_z = house.mvb_cluster_z
+            data.mvb_cluster_center_id = house.mvb_cluster_center_id
+        end
+        local old_load = inst.OnLoad
+        inst.OnLoad = function(house, data)
+            if old_load ~= nil then
+                old_load(house, data)
+            end
+            if data ~= nil then
+                house.mvb_playerbuilt = data.mvb_playerbuilt
+                house.mvb_cluster_x = data.mvb_cluster_x
+                house.mvb_cluster_z = data.mvb_cluster_z
+                house.mvb_cluster_center_id = data.mvb_cluster_center_id
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigman
+    -- 公共猪人初始化：忠诚刷新 + 帽子转职 + 不再跟随 + 存档
+    AddPrefabPostInit("pigman", function(inst)
+        if not GLOBAL.TheWorld.ismastersim or inst.components.trader == nil then
+            return
+        end
+        -- 转职猪人不仇恨"带 monster 标签的玩家角色"（韦伯/沃托克斯/沃特及任意mod同类角色），普通怪物照常打
+        if inst.components.combat ~= nil and inst.components.combat.mvb_no_special_hate == nil then
+            inst.components.combat.mvb_no_special_hate = true
+            local combat = inst.components.combat
+            local orig_settarget = combat.SetTarget
+            combat.SetTarget = function(self, target)
+                if IsConvertedPig(self.inst) and target ~= nil
+                    and target:HasTag("monster") and target:HasTag("player") then
+                    return
+                end
+                return orig_settarget(self, target)
+            end
+        end
+        inst:ListenForEvent("equip", function()
+            if inst.mvb_farmer then
+                MVB_StopHatDepletion(inst, "strawhat")
+            end
+            if inst.mvb_miner then
+                MVB_StopHatDepletion(inst, "minerhat")
+            end
+            if inst.mvb_beekeeper then
+                MVB_StopHatDepletion(inst, "beehat")
+            end
+            if inst.mvb_battle then
+                MVB_StopHatDepletion(inst, "footballhat")
+            end
+            if inst.mvb_guard then
+                MVB_StopHatDepletion(inst, GUARD_CROWNS[1])
+                MVB_StopHatDepletion(inst, GUARD_CROWNS[2])
+            end
+            if inst.mvb_tower then
+                MVB_StopHatDepletion(inst, "cookiecutterhat")
+            end
+            if inst.mvb_sweeper then
+                MVB_StopHatDepletion(inst, "winterhat")
+            end
+            if inst.mvb_lumberjack then
+                MVB_StopHatDepletion(inst, "bushhat")
+            end
+        end)
+        local old_onaccept = inst.components.trader.onaccept
+        inst.components.trader.onaccept = function(pig, giver, item)
+            local item_prefab = item ~= nil and item.prefab or nil
+            if old_onaccept ~= nil then
+                old_onaccept(pig, giver, item)
+            end
+                if item_prefab == "baconeggs" and IsPlayerBuiltHome(pig) then
+                pig.mvb_farmer_candidate = true
+                MVB_StartLoyaltyRefresh(pig)
+                print("[MyVanillaBoost] 猪人吃了培根煎蛋（自家猪屋），忠诚度永久化（每500秒刷新）")
+            elseif item_prefab == "baconeggs" then
+                print("[MyVanillaBoost] 猪人吃了培根煎蛋，但不是自家建造的猪屋，不转职")
+            end
+            -- 已满足条件且头上戴着对应帽子 → 转职（两种给予顺序都支持）
+            if pig.mvb_farmer_candidate and pig.components.inventory ~= nil then
+                local hat = MVB_GetPigHat(pig)
+                if hat == nil then
+                    -- 额外装备栏会把软帽改成 HAT 槽，猪没有该槽，帽子会留在背包：背包里找职业帽
+                    hat = pig.components.inventory:FindItem(function(v)
+                        return v ~= nil and MVB_PIG_HATS[v.prefab] == true
+                    end)
+                end
+                if hat == nil and item ~= nil and MVB_PIG_HATS[item.prefab] == true then
+                    hat = item
+                end
+                if hat ~= nil and hat.components.equippable ~= nil
+                    and hat.components.equippable.equipslot ~= GLOBAL.EQUIPSLOTS.HEAD then
+                    -- 戴回头盔槽（猪没有额外装备栏的 HAT 槽）
+                    hat.components.equippable.equipslot = GLOBAL.EQUIPSLOTS.HEAD
+                    pig.components.inventory:Equip(hat)
+                end
+                if hat ~= nil and hat.prefab == "strawhat" and GetModConfigData("pig_farmer_harvest") then
+                    MVB_ConvertFarmerPig(pig)
+                elseif hat ~= nil and hat.prefab == "minerhat" and GetModConfigData("pig_miner") then
+                    MVB_ConvertMinerPig(pig)
+                elseif hat ~= nil and hat.prefab == "beehat" and GetModConfigData("pig_beekeeper") then
+                    MVB_ConvertBeekeeperPig(pig)
+                elseif hat ~= nil and hat.prefab == "footballhat" and GetModConfigData("pig_battle") then
+                    MVB_ConvertBattlePig(pig)
+                elseif IsGuardCrown(hat) and GetModConfigData("pig_guard") then
+                    MVB_ConvertGuardPig(pig)
+                elseif hat ~= nil and hat.prefab == "cookiecutterhat" and GetModConfigData("pig_tower") then
+                    MVB_ConvertTowerPig(pig)
+                elseif hat ~= nil and hat.prefab == "winterhat" and GetModConfigData("pig_sweeper") then
+                    MVB_ConvertSweeperPig(pig)
+                elseif hat ~= nil and hat.prefab == "bushhat" and GetModConfigData("pig_lumberjack") then
+                    MVB_ConvertLumberjackPig(pig)
+                end
+            end
+            -- 农家猪/矿工猪再被喂肉也不会重新跟随
+            if HasPigWorker(pig) and pig.components.follower ~= nil
+                and pig.components.follower:GetLeader() ~= nil then
+                pig.components.follower:SetLeader(nil)
+            end
+        end
+        local old_save = inst.OnSave
+        inst.OnSave = function(pig, data)
+            if old_save ~= nil then
+                old_save(pig, data)
+            end
+            for _, marker in ipairs(MVB_PIG_CLASS_MARKERS) do
+                data[marker] = pig[marker]
+            end
+            data.mvb_battle_origmax = pig.mvb_battle_origmax
+            data.mvb_battle_origdamage = pig.mvb_battle_origdamage
+            data.mvb_battle_origperiod = pig.mvb_battle_origperiod
+
+            data.mvb_farmer_candidate = pig.mvb_farmer_candidate
+            data.mvb_logistics = pig.mvb_logistics or false
+            data.mvb_farm_x = pig.mvb_farm_x
+            data.mvb_farm_z = pig.mvb_farm_z
+            data.mvb_cluster_x = pig.mvb_cluster_x
+            data.mvb_cluster_z = pig.mvb_cluster_z
+        end
+        local old_load = inst.OnLoad
+        inst.OnLoad = function(pig, data)
+            if old_load ~= nil then
+                old_load(pig, data)
+            end
+            if data ~= nil then
+                for _, marker in ipairs(MVB_PIG_CLASS_MARKERS) do
+                    pig[marker] = data[marker]
+                end
+                pig.mvb_battle_origmax = data.mvb_battle_origmax
+                pig.mvb_battle_origdamage = data.mvb_battle_origdamage
+                pig.mvb_battle_origperiod = data.mvb_battle_origperiod
+
+                pig.mvb_farmer_candidate = data.mvb_farmer_candidate
+                pig.mvb_logistics = data.mvb_logistics or false
+                pig.mvb_farm_x = data.mvb_farm_x
+                pig.mvb_farm_z = data.mvb_farm_z
+                pig.mvb_cluster_x = data.mvb_cluster_x
+                pig.mvb_cluster_z = data.mvb_cluster_z
+                if pig.mvb_farmer_candidate or pig.mvb_battle or pig.mvb_guard then
+                    MVB_StartLoyaltyRefresh(pig)
+                end
+                if pig.mvb_battle or pig.mvb_guard then
+                    MVB_MakeLoyaltyPermanent(pig)
+                end
+                if pig.mvb_farmer then
+                    MVB_StopHatDepletion(pig, "strawhat")
+                end
+                if pig.mvb_miner then
+                    MVB_StopHatDepletion(pig, "minerhat")
+                    if pig.mvb_miner_task ~= nil then
+                        pig.mvb_miner_task:Cancel()
+                    end
+                    pig.mvb_miner_task = pig:DoPeriodicTask(120, function()
+                        MVB_SpawnMinerLoot(pig)
+                    end)
+                end
+                if pig.mvb_beekeeper then
+                    MVB_StopHatDepletion(pig, "beehat")
+                    MVB_SetupBeekeeperPig(pig)
+                end
+                if pig.mvb_battle then
+                    MVB_StopHatDepletion(pig, "footballhat")
+                    MVB_ApplyBattleStats(pig)
+                end
+                if pig.mvb_guard then
+                    MVB_StopHatDepletion(pig, GUARD_CROWNS[1])
+                    MVB_StopHatDepletion(pig, GUARD_CROWNS[2])
+                    MVB_ApplyGuardStats(pig)
+                end
+                if pig.mvb_tower then
+                    MVB_StopHatDepletion(pig, "cookiecutterhat")
+                    MVB_SetupTowerPig(pig)
+                end
+                if pig.mvb_sweeper then
+                    MVB_StopHatDepletion(pig, "winterhat")
+                    MVB_SetupSweeperPig(pig)
+                end
+                if pig.mvb_logistics and pig.components.named ~= nil then
+                    MVB_SetClassPrefix(pig, "[后勤]")
+                end
+                if pig.mvb_lumberjack then
+                    MVB_StopHatDepletion(pig, "bushhat")
+                    MVB_SetupLumberjackPig(pig)
+                end
+                if HasPigClass(pig) then
+                    MVB_DisableWerepig(pig)
+                end
+                if HasPigClass(pig) and pig.components.named ~= nil then
+                    local cur = pig.components.named.name or ""
+                    local has_prefix = false
+                    for _, prefix in ipairs(MVB_ALL_CLASS_PREFIXES) do
+                        if prefix ~= nil and string.sub(cur, 1, #prefix) == prefix then
+                            has_prefix = true
+                            break
+                        end
+                    end
+                    if not has_prefix then
+                        local want = "[后勤]"
+                        if not pig.mvb_logistics then
+                            want = nil
+                            for _, marker in ipairs(MVB_PIG_CLASS_MARKERS) do
+                                if pig[marker] then
+                                    want = MVB_PIG_CLASS_PREFIX[marker]
+                                    break
+                                end
+                            end
+                        end
+                        if want ~= nil then
+                            pig.components.named:SetName(want .. cur)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+
+    --------------------------------------------------
+    -- [砍伐]猪人自动伐木（开关：pig_lumberjack）
+    -- 优先级：砍树 → 铲树根 → 捡掉落物；以猪屋为中心 7 格范围
+    --------------------------------------------------
+    if GetModConfigData("pig_lumberjack") then
+        SafeCall("[砍伐]猪人自动伐木", function()
+            -- 玩家种植标记：种下的树苗长大时会调用 growfromseed，借此标记"玩家种植"（野生树不调用）
+            -- 砍伐判定配置：以后加/减树只改这里
+            local MVB_TREE_WHITELIST = {   -- 精确 prefab 白名单（补 tag 判定漏掉的树）
+                "evergreen_sparse",
+                "evergreen_sparse_short",
+                "evergreen_sparse_normal",
+                "evergreen_sparse_tall",
+            }
+            local MVB_TREE_BLACKLIST_PREFIX = {  -- prefab 前缀黑名单（整族排除）
+                "oceantree",
+            }
+
+            local PLANTABLE_TREES = {
+                "evergreen", "evergreen_short", "evergreen_normal", "evergreen_tall",
+                "evergreen_sparse", "evergreen_sparse_short", "evergreen_sparse_normal", "evergreen_sparse_tall",
+                "twiggytree", "twiggytree_short", "twiggytree_normal", "twiggytree_tall",
+                "deciduoustree", "deciduoustree_short", "deciduoustree_normal", "deciduoustree_tall",
+                "palmconetree", "palmconetree_short", "palmconetree_normal", "palmconetree_tall",
+            }
+            for _, treename in ipairs(PLANTABLE_TREES) do
+                AddPrefabPostInit(treename, function(inst)
+                    if GLOBAL.TheWorld == nil or not GLOBAL.TheWorld.ismastersim then
+                        return
+                    end
+                    local oldgrow = inst.growfromseed
+                    if oldgrow ~= nil then
+                        inst.growfromseed = function(...)
+                            local r = oldgrow(...)
+                            inst.mvb_planted = true
+                            return r
+                        end
+                    end
+                    -- 种植标记随存档保存（否则重进游戏后树被当野生，砍伐猪会砍玩家种的树）
+                    local oldsave = inst.OnSave
+                    inst.OnSave = function(i, data)
+                        if oldsave ~= nil then
+                            oldsave(i, data)
+                        end
+                        if i.mvb_planted then
+                            data.mvb_planted = true
+                        end
+                    end
+                    local oldload = inst.OnLoad
+                    inst.OnLoad = function(i, data)
+                        if oldload ~= nil then
+                            oldload(i, data)
+                        end
+                        i.mvb_planted = (data ~= nil and data.mvb_planted) or false
+                    end
+                end)
+            end
+
+            -- 树的最大阶段判定：常青树有 short/normal/tall/old 四阶段，tall（第3）即可砍；无 growable 视为成熟
+            local function IsMaxStageTree(guy)
+                local g = guy.components.growable
+                if g == nil then
+                    return true
+                end
+                local cur = g.stage ~= nil and g.stages ~= nil and g.stages[g.stage] or nil
+                return cur ~= nil and (cur.name == "tall" or cur.name == "old")
+            end
+
+            local function IsChoppableTree(guy)
+                if guy == nil or guy.components.workable == nil
+                    or guy:HasTag("stump") then
+                    return false
+                end
+                -- 黑名单：疙瘩树（oceantree 整族）不砍
+                for _, prefix in ipairs(MVB_TREE_BLACKLIST_PREFIX) do
+                    if string.sub(guy.prefab, 1, #prefix) == prefix then
+                        return false
+                    end
+                end
+                if guy.prefab == "marbleshrub" then
+                    -- 只挖第三阶段（刚种下的幼苗/中苗不挖）
+                    return guy.components.growable ~= nil and guy.components.growable.stage >= 3
+                end
+                -- 白名单：臃肿常青树（lumpy）明确可砍（各阶段 prefab 都认）
+                local in_whitelist = false
+                for _, treename in ipairs(MVB_TREE_WHITELIST) do
+                    if guy.prefab == treename then
+                        in_whitelist = true
+                        break
+                    end
+                end
+                if not guy:HasTag("tree") and not in_whitelist then
+                    return false
+                end
+                -- 棕榈松果树：不管野生/种植，只砍最大阶段
+                if string.sub(guy.prefab, 1, 12) == "palmconetree" then
+                    return IsMaxStageTree(guy)
+                end
+                -- 玩家种的树只砍最大阶段；野生树任意阶段都能砍
+                if not guy.mvb_planted then
+                    return true
+                end
+                return IsMaxStageTree(guy)
+            end
+
+            local function FindTree(inst)
+                return FindAround(inst, GetWorkerRadius(inst), IsChoppableTree)
+            end
+
+            local function ChopAction(inst)
+                if inst.sg ~= nil and inst.sg:HasStateTag("busy") then
+                    return
+                end
+                local tree = FindTree(inst)
+                if tree ~= nil then
+                    local action = tree.components.workable ~= nil and tree.components.workable.action or GLOBAL.ACTIONS.CHOP
+                    return GLOBAL.BufferedAction(inst, tree, action)
+                end
+            end
+
+            local function ShouldChop(inst)
+                return FindTree(inst) ~= nil
+            end
+
+            local function FindStump(inst)
+                return FindAround(inst, GetWorkerRadius(inst), function(guy)
+                    return guy:HasTag("stump") and not guy:HasTag("burnt")
+                        and guy.components.workable ~= nil
+                end)
+            end
+
+            local function DigAction(inst)
+                if inst.sg ~= nil and inst.sg:HasStateTag("busy") then
+                    return
+                end
+                local stump = FindStump(inst)
+                if stump ~= nil then
+                    return GLOBAL.BufferedAction(inst, stump, GLOBAL.ACTIONS.DIG)
+                end
+            end
+
+            local function ShouldDig(inst)
+                return FindStump(inst) ~= nil
+            end
+
+            AddBrainPostInit("pigbrain", function(brain)
+                local root = brain.bt ~= nil and brain.bt.root or nil
+                if root == nil or root.children == nil then
+                    return
+                end
+                local pig = brain.inst
+                local lumberjack = GLOBAL.WhileNode(function()
+                    return pig.mvb_lumberjack and not GLOBAL.TheWorld.state.isnight
+                end, "MVB Lumberjack",
+                    GLOBAL.PriorityNode{
+                        GLOBAL.WhileNode(function() return ShouldChop(pig) end, "MVB Chop",
+                            GLOBAL.DoAction(pig, ChopAction, "MVB Chop", true)),
+                        GLOBAL.WhileNode(function() return ShouldDig(pig) end, "MVB Dig",
+                            GLOBAL.DoAction(pig, DigAction, "MVB Dig", true)),
+                        GLOBAL.WhileNode(function() return ShouldSweep(pig) end, "MVB LumberSweep",
+                            GLOBAL.DoAction(pig, SweepAction, "MVB LumberSweep", true)),
+                        GLOBAL.WhileNode(function() return ShouldStore(pig) end, "MVB LumberStore",
+                            GLOBAL.DoAction(pig, StoreAction, "MVB LumberStore", true)),
+                        GLOBAL.Wander(pig, function() return GetAnchorPos(pig) end, function() return GetWorkerRadius(pig) end),
+                    }, 1)
+                for i, child in ipairs(root.children) do
+                    local cond = child.children ~= nil and child.children[1] or nil
+                    if cond ~= nil and cond.name == "IsDay" then
+                        table.insert(root.children, i, lumberjack)
+                        break
+                    end
+                end
+            end)
+        end)
+    end
+    --------------------------------------------------
+    -- 功能二十六：忠诚猪人自动采摘（开关：pig_farmer_harvest）
+    --------------------------------------------------
+    if GetModConfigData("pig_farmer_harvest") then
+        SafeCall("忠诚猪人自动采摘", function()
+            local function IsMatureCrop(guy)
+                if guy == nil or guy:HasTag("withered") or guy:HasTag("burnt") then
+                    return false
+                end
+                if guy.prefab == "mvb_pseudo_base" or guy.prefab == "yellowstaff" or guy.prefab == "opalstaff" then
+                    return false
+                end
+                -- 不采集玩家用蝴蝶种出的花（蜂箱启动工具，摘了影响产蜜）
+                if guy.prefab == "flower" and guy.planted then
+                    return false
+                end
+                if guy.prefab == "bullkelp_plant" then
+                    local kx, ky, kz = guy.Transform:GetWorldPosition()
+                    if GLOBAL.GetOceanDepthAtPosition(kx, ky, kz) ~= "SHALLOW" then
+                        return false
+                    end
+                    local pick = guy.components.pickable
+                    if pick == nil or not pick:CanBePicked() or pick.caninteractwith == false then
+                        return false
+                    end
+                    for kdx = -8, 8, 4 do
+                        for kdz = -8, 8, 4 do
+                            if GLOBAL.TheWorld.Map:IsVisualGroundAtPoint(kx + kdx, 0, kz + kdz) then
+                                return true
+                            end
+                        end
+                    end
+                    return false
+                end
+                local pickable = guy.components.pickable
+                if pickable ~= nil and pickable:CanBePicked() and pickable.caninteractwith ~= false then
+                    return true
+                end
+                local crop = guy.components.crop
+                return crop ~= nil and crop:IsReadyForHarvest()
+            end
+
+            local function FindMatureCrop(inst)
+                return FindAround(inst, GetWorkerRadius(inst), IsMatureCrop)
+            end
+
+            local function HarvestAction(inst)
+                if inst.sg ~= nil and inst.sg:HasStateTag("busy") then
+                    return
+                end
+                local crop = FindMatureCrop(inst)
+                if crop ~= nil then
+                    if crop.prefab == "bullkelp_plant" then
+                        local kx, ky, kz = crop.Transform:GetWorldPosition()
+                        local px, py, pz = inst.Transform:GetWorldPosition()
+                        local dx, dz = px - kx, pz - kz
+                        if dx * dx + dz * dz <= 13 * 13 then
+                            if crop.components.pickable ~= nil and crop.components.pickable:CanBePicked() then
+                                crop.components.pickable:Pick(inst)
+                            end
+                            return nil
+                        end
+                        local bestx, bestz, bestd = nil, nil, math.huge
+                        for kdx = -8, 8, 4 do
+                            for kdz = -8, 8, 4 do
+                                if GLOBAL.TheWorld.Map:IsVisualGroundAtPoint(kx + kdx, 0, kz + kdz) then
+                                    local dd = kdx * kdx + kdz * kdz
+                                    if dd < bestd then
+                                        bestd = dd
+                                        bestx, bestz = kx + kdx, kz + kdz
+                                    end
+                                end
+                            end
+                        end
+                        if bestx ~= nil then
+                            return GLOBAL.BufferedAction(inst, nil, GLOBAL.ACTIONS.WALKTO, nil, GLOBAL.Vector3(bestx, 0, bestz), nil, 1)
+                        end
+                    end
+                    if crop.components.crop ~= nil then
+                        return GLOBAL.BufferedAction(inst, crop, GLOBAL.ACTIONS.HARVEST)
+                    end
+                    return GLOBAL.BufferedAction(inst, crop, GLOBAL.ACTIONS.PICK)
+                end
+            end
+
+            local function ShouldHarvest(inst)
+                local inv = inst.components.inventory
+                return inv ~= nil and not inv:IsFull() and FindMatureCrop(inst) ~= nil
+            end
+
+            -- 农作掉落特化（多汁浆果/棱镜三花）：采摘产物掉地上；不管堆叠与否，范围内就尝试捡拾
+            local function IsFarmDrop(guy)
+                return guy ~= nil and (guy.prefab == "berries_juicy"
+                    or guy.prefab == "cutted_rosebush"
+                    or guy.prefab == "cutted_lilybush"
+                    or guy.prefab == "cutted_orchidbush")
+                    and guy.components.inventoryitem ~= nil
+                    and guy.components.inventoryitem.owner == nil
+                    and not guy:HasTag("INLIMBO") and not guy:HasTag("burnt")
+            end
+            local function ShouldPickupFarmDrop(inst)
+                local inv = inst.components.inventory
+                return inv ~= nil and not inv:IsFull()
+                    and FindAround(inst, GetWorkerRadius(inst), IsFarmDrop) ~= nil
+            end
+            local function PickupFarmDropAction(inst)
+                if inst.sg ~= nil and inst.sg:HasStateTag("busy") then return end
+                local loot = FindAround(inst, GetWorkerRadius(inst), IsFarmDrop)
+                if loot ~= nil then
+                    if loot.components.inventoryitem ~= nil then
+                        loot.components.inventoryitem.canbepickedup = true
+                    end
+                    return GLOBAL.BufferedAction(inst, loot, GLOBAL.ACTIONS.PICKUP)
+                end
+            end
+
+            -- 农家猪行为：白天/黄昏 采摘→存放→房周围游走；夜晚走原版回房睡觉
+            AddBrainPostInit("pigbrain", function(brain)
+                local root = brain.bt ~= nil and brain.bt.root or nil
+                if root == nil or root.children == nil then
+                    return
+                end
+                local pig = brain.inst
+                local farmer = GLOBAL.WhileNode(function()
+                    return pig.mvb_farmer and not GLOBAL.TheWorld.state.isnight
+                end, "MVB Farmer",
+                    GLOBAL.PriorityNode{
+                        GLOBAL.WhileNode(function() return ShouldHarvest(pig) end, "MVB Harvest",
+                            GLOBAL.DoAction(pig, HarvestAction, "MVB Harvest", true)),
+                        GLOBAL.WhileNode(function() return ShouldPickupFarmDrop(pig) end, "MVB FarmDropPickup",
+                            GLOBAL.DoAction(pig, PickupFarmDropAction, "MVB FarmDropPickup", true)),
+                        GLOBAL.WhileNode(function() return ShouldStore(pig) end, "MVB Store",
+                            GLOBAL.DoAction(pig, StoreAction, "MVB Store", true)),
+                        GLOBAL.Wander(pig, function() return GetAnchorPos(pig) end, function() return GetWorkerRadius(pig) end),
+                    }, 1)
+                for i, child in ipairs(root.children) do
+                    local cond = child.children ~= nil and child.children[1] or nil
+                    if cond ~= nil and cond.name == "IsDay" then
+                        table.insert(root.children, i, farmer)
+                        break
+                    end
+                end
+            end)
+
+            -- 功能二十六（续）：农家猪工作范围显示（开关：pig_farmer_range）
+            if GetModConfigData("pig_farmer_range") then
+                SafeCall("农家猪工作范围显示", function()
+                    AddPrefabPostInit("pighouse", function(inst)
+                        inst.mvb_farmer_flag = GLOBAL.net_int(inst.GUID, "mvb_farmer_flag")
+                        inst.mvb_farmer_radius = GLOBAL.net_int(inst.GUID, "mvb_farmer_radius")
+                        inst.mvb_cluster_center_net = GLOBAL.net_int(inst.GUID, "mvb_cluster_center_net")
+                        inst.mvb_cluster_x_net = GLOBAL.net_int(inst.GUID, "mvb_cluster_x_net")
+                        inst.mvb_cluster_z_net = GLOBAL.net_int(inst.GUID, "mvb_cluster_z_net")
+                        if not GLOBAL.TheWorld.ismastersim then
+                            return
+                        end
+                        inst:DoPeriodicTask(1, function()
+                            local has = false
+                            local r = 0
+                            local cid = 0
+                            local x, y, z = inst.Transform:GetWorldPosition()
+                            if inst.mvb_cluster_x ~= nil then
+                                -- 集群成员屋：统一显示集群中心 5 格范围
+                                has = true
+                                r = GLOBAL.math.floor(MVB_CLUSTER_RADIUS / 4)
+                                cid = inst.mvb_cluster_center_id or 0
+                            else
+                                local pigs = GLOBAL.TheSim:FindEntities(x, y, z, 48, nil, nil, nil)
+                                for _, p in ipairs(pigs) do
+                                    if p.prefab == "pigman" and inst.mvb_playerbuilt == true and GetFarmHome(p) == inst
+                                        and HasPigWorker(p) then
+                                        has = true
+                                        r = GLOBAL.math.floor(GetWorkerRadius(p) / 4)
+                                        break
+                                    end
+                                end
+                            end
+                            inst.mvb_farmer_flag:set(has and 1 or 0)
+                            inst.mvb_farmer_radius:set(r)
+                            inst.mvb_cluster_center_net:set(cid)
+                            inst.mvb_cluster_x_net:set(inst.mvb_cluster_x or 0)
+                            inst.mvb_cluster_z_net:set(inst.mvb_cluster_z or 0)
+                        end)
+                    end)
+                    AddSimPostInit(function()
+                        if GLOBAL.TheNet:IsDedicated() then
+                            return
+                        end
+                        if not InsightAvailable() then
+                            return
+                        end
+                        local ring = nil
+                        local attached = nil
+                        GLOBAL.TheWorld:DoPeriodicTask(0.05, function()
+                            local target = GLOBAL.TheInput:GetWorldEntityUnderMouse()
+                            local show = target ~= nil and target:IsValid()
+                                and target.prefab == "pighouse"
+                                and target.mvb_farmer_flag ~= nil
+                                and target.mvb_farmer_flag:value() == 1
+                            if show then
+                                if ring == nil or not ring:IsValid() then
+                                    ring = GLOBAL.SpawnPrefab("insight_range_indicator")
+                                    if ring ~= nil then
+                                        ring:SetColour(GLOBAL.unpack(MVB_DISPLAY_COLOUR))
+                                    end
+                                end
+                                if ring ~= nil then
+                                    local attach_target = target
+                                    local cid_net = 0
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:pigbrain
+
+            AddBrainPostInit("pigbrain", function(brain)
+                local root = brain.bt ~= nil and brain.bt.root or nil
+                if root == nil or root.children == nil then
+                    return
+                end
+                local pig = brain.inst
+                local lumberjack = GLOBAL.WhileNode(function()
+                    return pig.mvb_lumberjack and not GLOBAL.TheWorld.state.isnight
+                end, "MVB Lumberjack",
+                    GLOBAL.PriorityNode{
+                        GLOBAL.WhileNode(function() return ShouldChop(pig) end, "MVB Chop",
+                            GLOBAL.DoAction(pig, ChopAction, "MVB Chop", true)),
+                        GLOBAL.WhileNode(function() return ShouldDig(pig) end, "MVB Dig",
+                            GLOBAL.DoAction(pig, DigAction, "MVB Dig", true)),
+                        GLOBAL.WhileNode(function() return ShouldSweep(pig) end, "MVB LumberSweep",
+                            GLOBAL.DoAction(pig, SweepAction, "MVB LumberSweep", true)),
+                        GLOBAL.WhileNode(function() return ShouldStore(pig) end, "MVB LumberStore",
+                            GLOBAL.DoAction(pig, StoreAction, "MVB LumberStore", true)),
+                        GLOBAL.Wander(pig, function() return GetAnchorPos(pig) end, function() return GetWorkerRadius(pig) end),
+                    }, 1)
+                for i, child in ipairs(root.children) do
+                    local cond = child.children ~= nil and child.children[1] or nil
+                    if cond ~= nil and cond.name == "IsDay" then
+                        table.insert(root.children, i, lumberjack)
+                        break
+                    end
+                end
+            end)
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cookpot
+            -- 锅的集群绑定随存档保存
+            AddPrefabPostInit("cookpot", function(inst)
+                if not GLOBAL.TheWorld.ismastersim then
+                    return
+                end
+                local old_save = inst.OnSave
+                inst.OnSave = function(i, data)
+                    if old_save ~= nil then
+                        old_save(i, data)
+                    end
+                    data.mvb_cook_cluster_x = i.mvb_cook_cluster_x
+                    data.mvb_cook_cluster_z = i.mvb_cook_cluster_z
+                end
+                local old_load = inst.OnLoad
+                inst.OnLoad = function(i, data)
+                    if old_load ~= nil then
+                        old_load(i, data)
+                    end
+                    if data ~= nil then
+                        i.mvb_cook_cluster_x = data.mvb_cook_cluster_x
+                        i.mvb_cook_cluster_z = data.mvb_cook_cluster_z
+                    end
+                end
+            end)
+
+```
+
