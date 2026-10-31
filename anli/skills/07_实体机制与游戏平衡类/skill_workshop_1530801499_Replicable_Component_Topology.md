@@ -1296,3 +1296,34 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：金色的雨 (Mod 3814687245)
+- **变体场景与切面**：收录来自工坊 Mod 3814687245 (`金色的雨`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3814687245)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:moisture
+-- ========================================================
+AddComponentPostInit("moisture", function(self)
+    local old_GetMoistureRate = self.GetMoistureRate
+
+    self.GetMoistureRate = function(self, ...)
+        local rate = old_GetMoistureRate(self, ...)
+
+        -- 只在雨天、速率为正、且不是沃特时打折
+        if rate <= 0 or self.inst.prefab == "wurt" then
+            return rate
+        end
+
+        -- 到这里的 rate > 0，说明原版已经判断过防雨 < 1
+        return rate * 0.05
+    end
+end)
+
+```
+

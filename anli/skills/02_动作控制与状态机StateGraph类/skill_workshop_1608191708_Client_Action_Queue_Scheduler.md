@@ -1663,3 +1663,40 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Better Polar Bearger Bin / 更好的极地熊獾桶 (Mod 3820687628)
+- **变体场景与切面**：收录来自工坊 Mod 3820687628 (`Better Polar Bearger Bin / 更好的极地熊獾桶`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3820687628)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beargerfur_sack
+
+AddPrefabPostInit("beargerfur_sack", function(inst)
+    if not G.TheWorld.ismastersim then
+        return
+    end
+
+    local original_rate = inst.components.preserver.perish_rate_multiplier
+    inst:AddComponent("bpbb_energy")
+    inst.components.preserver:SetPerishRateMultiplier(function(sack, item)
+        local fallback = G.FunctionOrValue(original_rate, sack, item) or 1
+        return sack.components.bpbb_energy:GetPerishRate(item, fallback)
+    end)
+    local description = inst.components.inspectable.getspecialdescription
+    inst.components.inspectable.getspecialdescription = function(sack, viewer)
+        local original = description ~= nil and description(sack, viewer) or nil
+        return (original ~= nil and original .. "\n" or "") .. sack.components.bpbb_energy:GetDescription()
+    end
+
+    if GetModConfigData("companion_enabled") then
+        inst:AddComponent("bpbb_companion")
+    end
+end)
+
+```
+
