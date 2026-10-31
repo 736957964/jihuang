@@ -8601,3 +8601,311 @@ end
 
 ```
 
+
+
+### 变体演进：Latex Hive (Changed) [prototype] (Mod 3811267158)
+- **变体场景与切面**：收录来自工坊 Mod 3811267158 (`Latex Hive (Changed) [prototype]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3811267158)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:health
+----------------------------------------------------------------------
+AddComponentPostInit("health", function(self)
+    local inst = self.inst
+    local function Update()
+        if not inst:IsValid() then return end
+        local weak = not self:IsDead() and self:GetPercent() <= 0.25 and inst.components.combat ~= nil
+            and not inst:HasTag("player") and not inst:HasTag("epic")
+            and not inst:HasTag("structure") and not inst:HasTag("wall")
+        if weak and not inst:HasTag("lx_weak") then
+            inst:AddTag("lx_weak")
+        elseif not weak and inst:HasTag("lx_weak") then
+            inst:RemoveTag("lx_weak")
+        end
+    end
+    inst:ListenForEvent("healthdelta", Update)
+    inst:ListenForEvent("death", Update)
+end)
+
+-- hypnotised creatures cannot target their hypnotist or its hive
+AddComponentPostInit("combat", function(self)
+    local old = self.IsValidTarget
+    function self:IsValidTarget(target)
+        -- frozen by a queen (being absorbed / transfurred): no attacks at all
+        if (self.inst.lx_frozen_until or 0) > G.GetTime() then return false end
+        local h = self.inst.lx_hypnotist
+        if h ~= nil and target ~= nil then
+            if target == h or target:HasTag("lx_latex") then return false end
+        end
+        return old(self, target)
+    end
+end)
+
+----------------------------------------------------------------------
+-- RPCs (client -> server)
+----------------------------------------------------------------------
+AddModRPCHandler("latexhive", "form", function(player, dir)
+    local q = player.components.lx_queen
+    if q ~= nil and type(dir) == "number" then
+        q:CycleForm(dir < 0 and -1 or 1)
+    end
+end)
+
+AddModRPCHandler("latexhive", "ability", function(player, x, z, target)
+    local q = player.components.lx_queen
+    if q == nil then
+        -- a transfurred player uses their form's ability
+        local lp = player.components.lx_latexplayer
+        if lp ~= nil and lp:IsLatex() then q = lp else return end
+    end
+    if type(x) ~= "number" or type(z) ~= "number" then x, z = nil, nil end
+    if type(target) ~= "table" or target.IsValid == nil or not target:IsValid() then target = nil end
+    q:UseAbility(target, x, z)
+end)
+
+AddModRPCHandler("latexhive", "setform", function(player, id)
+    local q = player.components.lx_queen
+    if q ~= nil and type(id) == "string" then q:SetForm(id) end
+end)
+
+AddModRPCHandler("latexhive", "settf", function(player, id)
+    local q = player.components.lx_queen
+    if q ~= nil and type(id) == "string" then q:SetTransfurForm(id) end
+end)
+
+AddModRPCHandler("latexhive", "engulf", function(player, all, target)
+    local q = player.components.lx_queen
+    if q == nil then return end
+    if type(target) ~= "table" or target.IsValid == nil or not target:IsValid() then target = nil end
+    q:EngulfKey(target, all == 1)
+end)
+
+-- a carried player presses the engulf key to get out
+AddModRPCHandler("latexhive", "exit", function(player)
+    local carrier = player.lx_carrier
+    if carrier ~= nil and carrier:IsValid() and carrier.components.lx_queen ~= nil then
+        carrier.components.lx_queen:RequestExit(player)
+    end
+end)
+
+AddModRPCHandler("latexhive", "tfchoice", function(player, accept)
+    local lp = player.components.lx_latexplayer
+    if lp ~= nil and type(accept) == "number" then lp:Choose(accept == 1) end
+end)
+
+AddModRPCHandler("latexhive", "cmd", function(player, cmd, slot)
+    local q = player.components.lx_queen
+    if q ~= nil and type(cmd) == "string" and type(slot) == "number" then
+        q:Command(cmd, math.floor(slot))
+    end
+end)
+
+----------------------------------------------------------------------
+-- keys (client)
+----------------------------------------------------------------------
+local function Ready()
+    local p = G.ThePlayer
+    if p == nil or not p:HasTag("latexqueen") or p:HasTag("playerghost") then return false end
+    local screen = G.TheFrontEnd:GetActiveScreen()
+    return screen ~= nil and screen.name == "HUD"
+end
+
+if not G.TheNet:IsDedicated() then
+    G.TheInput:AddKeyDownHandler(G[KEY_FORM], function()
+        if not Ready() then return end
+        local hud = G.ThePlayer.HUD
+        if hud ~= nil and hud.controls ~= nil and hud.controls.lx_formpanel ~= nil then
+            hud.controls.lx_formpanel:Toggle()
+        end
+    end)
+
+    G.TheInput:AddKeyDownHandler(G[KEY_ENGULF], function()
+        local p = G.ThePlayer
+        if p == nil then return end
+        local screen = G.TheFrontEnd:GetActiveScreen()
+        if screen == nil or screen.name ~= "HUD" then return end
+        if p:HasTag("lx_engulfed") then
+            G.SendModRPCToServer(G.GetModRPC("latexhive", "exit"))
+        elseif Ready() then
+            local all = G.TheInput:IsKeyDown(G.KEY_SHIFT) and 1 or 0
+            G.SendModRPCToServer(G.GetModRPC("latexhive", "engulf"), all, G.TheInput:GetWorldEntityUnderMouse())
+        end
+    end)
+
+    G.TheInput:AddKeyDownHandler(G[KEY_ABILITY], function()
+        local p = G.ThePlayer
+        local latexplayer = p ~= nil and p.lx_net_tf ~= nil and p.lx_net_tf:value() ~= "" and not p:HasTag("playerghost")
+        if latexplayer then
+            local screen = G.TheFrontEnd:GetActiveScreen()
+            if screen == nil or screen.name ~= "HUD" then return end
+        elseif not Ready() then
+            return
+        end
+        local pos = G.TheInput:GetWorldPosition()
+        local target = G.TheInput:GetWorldEntityUnderMouse()
+        G.SendModRPCToServer(G.GetModRPC("latexhive", "ability"), pos ~= nil and pos.x or nil, pos ~= nil and pos.z or nil, target)
+    end)
+
+    G.TheInput:AddKeyDownHandler(G[KEY_PANEL], function()
+        if not Ready() then return end
+        local hud = G.ThePlayer.HUD
+        if hud ~= nil and hud.controls ~= nil and hud.controls.lx_panel ~= nil then
+            hud.controls.lx_panel:Toggle()
+        end
+    end)
+end
+
+----------------------------------------------------------------------
+-- HUD
+----------------------------------------------------------------------
+AddClassPostConstruct("widgets/controls", function(self)
+    if self.owner == nil then return end
+    local Widget = require("widgets/widget")
+    -- every player: the "stay human / accept" prompt after being transfurred
+    local LxTfPrompt = require("widgets/lx_tfprompt")
+    self.lx_promptroot = self:AddChild(Widget("lx_promptroot"))
+    self.lx_promptroot:SetHAnchor(G.ANCHOR_MIDDLE)
+    self.lx_promptroot:SetVAnchor(G.ANCHOR_TOP)
+    self.lx_promptroot:SetScaleMode(G.SCALEMODE_PROPORTIONAL)
+    self.lx_tfprompt = self.lx_promptroot:AddChild(LxTfPrompt(self.owner))
+    self.lx_tfprompt:SetPosition(0, -220)
+
+    -- full-screen effects live in the HUD's overlay layer (under the rest of the HUD)
+    local owner = self.owner
+    self.inst:DoTaskInTime(0, function()
+        local hud = owner.HUD
+        if hud ~= nil and hud.overlayroot ~= nil and (hud.lx_screenfx == nil or not hud.lx_screenfx.inst:IsValid()) then
+            local LxScreenFx = require("widgets/lx_screenfx")
+            hud.lx_screenfx = hud.overlayroot:AddChild(LxScreenFx(owner))
+        end
+    end)
+
+    if not self.owner:HasTag("latexqueen") then
+        -- a transfurred player: form, latex and ability
+        local LxTfStatus = require("widgets/lx_tfstatus")
+        self.lx_tfroot = self:AddChild(Widget("lx_tfroot"))
+        self.lx_tfroot:SetHAnchor(G.ANCHOR_LEFT)
+        self.lx_tfroot:SetVAnchor(G.ANCHOR_TOP)
+        self.lx_tfroot:SetScaleMode(G.SCALEMODE_PROPORTIONAL)
+        self.lx_tfstatus = self.lx_tfroot:AddChild(LxTfStatus(self.owner, string.sub(KEY_ABILITY, 5)))
+        self.lx_tfstatus:SetPosition(170, -50)
+        return
+    end
+    local LxFormPanel = require("widgets/lx_formpanel")
+    local LxStatus = require("widgets/lx_status")
+    local LxPanel = require("widgets/lx_panel")
+
+    self.lx_root = self:AddChild(Widget("lx_root"))
+    self.lx_root:SetHAnchor(G.ANCHOR_LEFT)
+    self.lx_root:SetVAnchor(G.ANCHOR_TOP)
+    self.lx_root:SetScaleMode(G.SCALEMODE_PROPORTIONAL)
+    self.lx_status = self.lx_root:AddChild(LxStatus(self.owner))
+    self.lx_status:SetPosition(160, -60)
+
+    self.lx_panelroot = self:AddChild(Widget("lx_panelroot"))
+    self.lx_panelroot:SetHAnchor(G.ANCHOR_MIDDLE)
+    self.lx_panelroot:SetVAnchor(G.ANCHOR_MIDDLE)
+    self.lx_panelroot:SetScaleMode(G.SCALEMODE_PROPORTIONAL)
+    self.lx_panel = self.lx_panelroot:AddChild(LxPanel(self.owner))
+    self.lx_formpanel = self.lx_panelroot:AddChild(LxFormPanel(self.owner))
+end)
+
+----------------------------------------------------------------------
+-- every player: can be transfurred into a latex
+----------------------------------------------------------------------
+AddPlayerPostInit(function(inst)
+    -- every player (the queen too): swimming state for client physics, infection level for screen effects
+    inst.lx_net_swim = G.net_bool(inst.GUID, "lx.swim", "lx_swimdirty")
+    inst.lx_net_infect = G.net_tinybyte(inst.GUID, "lx.infect", "lx_infectdirty")
+    if not G.TheWorld.ismastersim then
+        inst:ListenForEvent("lx_swimdirty", function(i)
+            if i:HasTag("playerghost") or i.Physics == nil then return end
+            i.Physics:SetCollisionMask(G.unpack(i.lx_net_swim:value() and G.LX_HIVE.SWIM_MASK or G.LX_HIVE.WALK_MASK))
+        end)
+    end
+
+    if inst:HasTag("latexqueen") then return end
+    inst.lx_net_tf = G.net_string(inst.GUID, "lx.tf", "lx_tfdirty")
+    inst.lx_net_tfpending = G.net_bool(inst.GUID, "lx.tfpending", "lx_tfdirty")
+    inst.lx_net_tflatex = G.net_byte(inst.GUID, "lx.tflatex", "lx_tfdirty")
+    inst.lx_net_tfcd = G.net_byte(inst.GUID, "lx.tfcd", "lx_tfdirty")
+    -- hide the vanilla model while transfurred (the sprite puppet draws them)
+    inst:DoPeriodicTask(0.5, function()
+        local latex = inst.lx_net_tf:value() ~= "" and not inst:HasTag("playerghost")
+        if latex ~= inst.lx_invisible then
+            inst.lx_invisible = latex
+            if latex then
+                inst.AnimState:SetMultColour(0, 0, 0, 0)
+            else
+                inst.AnimState:SetMultColour(1, 1, 1, 1)
+            end
+        elseif latex then
+            inst.AnimState:SetMultColour(0, 0, 0, 0)
+        end
+    end)
+    if G.TheWorld.ismastersim then
+        inst:AddComponent("lx_latexplayer")
+    end
+end)
+
+----------------------------------------------------------------------
+-- recipes
+----------------------------------------------------------------------
+local function Ing(name, n)
+    if name:sub(1, 3) == "lx_" then
+        return G.Ingredient(name, n, "images/inventoryimages/" .. name .. ".xml")
+    end
+    return G.Ingredient(name, n)
+end
+
+local function Recipe(name, ings, tech, cfg, filters)
+    cfg = cfg or {}
+    cfg.atlas = "images/inventoryimages/" .. name .. ".xml"
+    cfg.image = name .. ".tex"
+    AddRecipe2(name, ings, tech, cfg, filters)
+end
+
+-- queen only
+Recipe("lx_trap", { Ing("lx_glob", 4) }, G.TECH.NONE, { builder_tag = "latexqueen" }, { "CHARACTER" })
+Recipe("lx_spit", { Ing("lx_glob", 2) }, G.TECH.NONE, { builder_tag = "latexqueen", numtogive = 5 }, { "CHARACTER", "WEAPONS" })
+Recipe("lx_nametag", { Ing("papyrus", 1), Ing("rope", 1) }, G.TECH.NONE, { builder_tag = "latexqueen" }, { "CHARACTER" })
+Recipe("lx_beacon", { Ing("lx_glob", 6), Ing("rocks", 4), Ing("lx_crystal_green", 1) }, G.TECH.NONE,
+    { builder_tag = "latexqueen", placer = "lx_beacon_placer" }, { "CHARACTER", "STRUCTURES" })
+Recipe("lx_incubator", { Ing("lx_glob", 4), Ing("cutstone", 2), Ing("lx_crystal_green", 1) }, G.TECH.SCIENCE_ONE,
+    { builder_tag = "latexqueen", placer = "lx_incubator_placer" }, { "CHARACTER", "STRUCTURES" })
+Recipe("lx_feeder", { Ing("boards", 2), Ing("lx_glob", 2) }, G.TECH.NONE,
+    { builder_tag = "latexqueen", placer = "lx_feeder_placer" }, { "CHARACTER", "STRUCTURES" })
+
+-- everyone
+Recipe("lx_crystal_spear", { Ing("twigs", 2), Ing("lx_crystal_red", 2), Ing("rope", 1) }, G.TECH.SCIENCE_ONE, nil, { "WEAPONS" })
+Recipe("lx_lamp", { Ing("lx_crystal_green", 2), Ing("rocks", 2) }, G.TECH.SCIENCE_ONE, { placer = "lx_lamp_placer" }, { "LIGHT", "STRUCTURES" })
+Recipe("lx_serum", { Ing("blue_cap", 1), Ing("ice", 1), Ing("lx_glob", 1) }, G.TECH.SCIENCE_ONE, nil, { "RESTORATION" })
+Recipe("lx_serum_strong", { Ing("lx_serum", 1), Ing("lx_crystal_green", 1), Ing("bluegem", 1) }, G.TECH.SCIENCE_TWO, nil, { "RESTORATION" })
+
+----------------------------------------------------------------------
+-- dev commands (type them in the console, Remote mode)
+----------------------------------------------------------------------
+modimport("scripts/lx_devcommands.lua")
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+-- hypnotised creatures cannot target their hypnotist or its hive
+AddComponentPostInit("combat", function(self)
+    local old = self.IsValidTarget
+    function self:IsValidTarget(target)
+        -- frozen by a queen (being absorbed / transfurred): no attacks at all
+        if (self.inst.lx_frozen_until or 0) > G.GetTime() then return false end
+        local h = self.inst.lx_hypnotist
+        if h ~= nil and target ~= nil then
+            if target == h or target:HasTag("lx_latex") then return false end
+        end
+        return old(self, target)
+    end
+end)
+
+```
+
