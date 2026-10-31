@@ -4296,8 +4296,62 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 05:10:07",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2948102707",
+      "name": "海钓随机S",
+      "author": "月，呃无聊修改部分",
+      "version": "1.2.24.8.5",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 05:14:00",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3800012904",
+      "name": "Tanjiro — Water Breathing Prototype",
+      "author": "DST Character Studio contributors",
+      "version": "0.1.11",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:14:01",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3810038043",
+      "name": "蟠桃会·神话书说",
+      "author": "psy",
+      "version": "1.9.553",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:14:01",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3811869823",
+      "name": "STACK_INTERVAL",
+      "author": "Salt510",
+      "version": "2026.2.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 05:14:01",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3819645697",
+      "name": "True Range (Client)",
+      "author": "TomKaiRoiMak",
+      "version": "1.1.6",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 05:14:01",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3822900574",
+      "name": "LANGUAGE",
+      "author": "wdasd",
+      "version": "1.0.35",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 05:14:01",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 05:10:07"
+  "lastUpdated": "2026-11-01 05:14:01"
 }

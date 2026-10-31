@@ -667,3 +667,186 @@ end)
 
 ```
 
+
+
+### 变体演进：海钓随机S (Mod 2948102707)
+- **变体场景与切面**：收录来自工坊 Mod 2948102707 (`海钓随机S`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2948102707)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if TheWorld.ismastersim then --判断是不是主机
+    
+        inst:AddComponent("daywalkerspawner") -- 添加噩梦猪人boss刷新组件
+
+        if inst.components.worldstate and inst.components.worldstate.data and inst.components.worldstate.data.new_fishing == nil then --利用组件保存
+            inst.components.worldstate.data.new_fishing = {} -- 仅第一次进入游戏
+        end
+        inst:ListenForEvent("ms_playerspawn", function(inst, player)
+            local CurrentOnNewSpawn = player.OnNewSpawn or function() return true end -- 记录角色本身开局物品
+            player.OnNewSpawn = function(...)
+                if IsStart(player.userid) then
+                    player.components.inventory.ignoresound = true
+                    player.components.inventory:GiveItem(SpawnPrefab("boat_grass_item")) --船套装
+                    player.components.inventory:GiveItem(SpawnPrefab("oar")) --桨
+                    player.components.inventory:GiveItem(SpawnPrefab("wathgrithrhat")) --战斗头盔
+                    player.components.inventory:GiveItem(SpawnPrefab("featheredtunic")) --羽饰外衣
+                    player.components.inventory:GiveItem(SpawnPrefab("hambat"))--火腿棒
+                    player.components.inventory:GiveItem(SpawnPrefab("amulet"))--复活
+                end
+                -- 赌狗模式 额外赠送火把
+                if gambling_dog then
+                    player.components.inventory:GiveItem(SpawnPrefab("torch")) --火把
+                end
+                -- 特殊的海钓竿
+                local of = SpawnPrefab("oceanfishingrod")
+                if of.components.binding == nil then
+                    of:AddComponent("binding")
+                end
+                player.components.inventory:GiveItem(of) --海钓杆  
+
+                return CurrentOnNewSpawn(...)
+            end
+        end)
+        inst:DoTaskInTime(0,function()
+            -- 记录岛id
+            local lands = {}
+
+            for i, id in ipairs(TheWorld.topology.ids) do -- 旧档新添加岛屿, 不会改变顺序
+                local str = string.split(id,":")
+                if str[1] == "StaticLayoutIsland" then
+                    table.insert(lands,i)
+                end
+            end 
+            -- 原本想就默认boss岛中间生成
+            -- if string.find(TheWorld.topology.ids[i],"OceanBoss") then
+            --     local node = TheWorld.topology.nodes[i]
+            --     lunarrift_portal_point = {node.x, node.y}
+            -- end
+
+            TheWorld.topology.lands = lands
+            if TheWorld.components.messagebottlemanager then 
+                TheWorld.components.messagebottlemanager.lands = lands
+            end
+            
+            -- 记录可选裂缝坐标
+            if not TheWorld.lunarrift_portal_points then 
+                TheWorld.lunarrift_portal_points = SelectArea(lands)
+            end
+
+            RIFTPORTAL_FNS.CreateRiftPortalDefinition("lunarrift_portal", {
+                GetNextRiftSpawnLocation = function(_map, rift_def)
+                    local points = TheWorld.lunarrift_portal_points or {}
+                    shuffleArray(points) --洗牌打乱
+                    local function existlunarrift(x,y)  -- 在60范围内存在裂缝
+                        for i, v in ipairs(TheSim:FindEntities(x, 0, y, 60, {"lunarrift_portal"})) do
+                            return true
+                        end
+                    end
+
+                    for i, v in ipairs(points) do --可能存在非常差劲的情况, 毕竟岛小
+                        if not existlunarrift(v[1], v[2]) then
+                            return v[1], v[2]
+                        end
+                    end
+
+                    -- 可能一个也没有
+                end,
+                Affinity = RIFTPORTAL_CONST.AFFINITY.LUNAR,
+            })
+        end)       
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:messagebottlemanager
+-- messagebottlemanager -- 使得瓶子可以查看其他岛屿
+AddComponentPostInit("messagebottlemanager",function(self)
+    self.lands = nil
+    -- 希望有兼容效果
+    if self.player_lands == nil then
+        self.player_lands = {} -- 记录玩家查看过的岛屿
+        local old_UseMessageBottle = self.UseMessageBottle
+        self.UseMessageBottle = function(self, bottle, doer, is_not_from_hermit)
+            if self.player_lands[doer.userid] == nil then
+                self.player_lands[doer.userid] = {}
+            end
+            for k,i in pairs(self.lands) do
+                if table.reverselookup(self.player_lands[doer.userid],i) == nil then
+                    table.insert(self.player_lands[doer.userid],i)
+
+                    local node = TheWorld.topology.nodes[i]
+                    -- local x,z = TheWorld.Map:GetRandomPointsForSite(node.x, node.y, node.poly, 1) --本来想随机一点的 出bug 就不要啦
+                    -- return Vector3(x,0,z), "REVEAL_OTHER_ISLANDS"
+                    return Vector3(node.x, 0, node.y), "REVEAL_OTHER_ISLANDS"
+                end
+            end
+            return old_UseMessageBottle(self, bottle, doer, is_not_from_hermit)
+        end
+
+        local old_Save = self.OnSave
+        local old_Load = self.OnLoad
+
+        self.OnSave = function(self)
+            local data = old_Save(self) or {}
+
+            if next(self.player_lands) ~= nil then
+                data.player_lands = self.player_lands
+            end
+
+            return data        
+        end
+
+        self.OnLoad = function(self,data)
+            old_Load(self,data)
+            if data ~= nil then
+                if data.player_lands ~= nil and next(data.player_lands) ~= nil then
+                    for k, v in pairs(data.player_lands) do
+                        self.player_lands[k] = v
+                    end
+                end            
+            end 
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardian_phase3dead
+-- 清理当前世界上召唤天体英雄的组件，防止数量太多
+AddPrefabPostInit("alterguardian_phase3dead", function(inst)
+    inst:DoTaskInTime(0,function(inst)
+        TheWorld:PushEvent("onremove_alterguardian")
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardian_phase3trap
+-- 启迪陷阱 不要月亮碎片
+AddPrefabPostInit("alterguardian_phase3trap",function(inst)
+    if inst.components.lootdropper then
+        inst.components.lootdropper:SetLoot({})
+        -- inst.components.lootdropper.ifnotchanceloot = nil
+        inst.components.lootdropper.chanceloottable = nil
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:trap_teeth_maxwell
+-- 修改麦斯威尔的犬牙陷阱
+AddPrefabPostInit("trap_teeth_maxwell", function(inst)
+    if TheWorld.ismastersim then --判断是不是主机
+        if inst.components.mine then
+            inst.components.mine:SetRadius(1.5)
+            inst.components.mine:SetTestTimeFn(function()return 0.75 end)
+        end
+    end
+end)
+
+```
+

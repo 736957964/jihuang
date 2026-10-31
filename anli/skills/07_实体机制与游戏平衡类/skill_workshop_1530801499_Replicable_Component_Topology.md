@@ -2918,3 +2918,34 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：STACK_INTERVAL (Mod 3811869823)
+- **变体场景与切面**：收录来自工坊 Mod 3811869823 (`STACK_INTERVAL`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3811869823)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wortox_soul
+    if STACK_SOUL then
+        AddPrefabPostInit("wortox_soul", function(inst)
+            if inst.components.stackable then
+                inst.components.stackable.maxsize = MAX_STACK_SIZE
+            end
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beefalo
+if FIX_POOP_BUG then
+    AddPrefabPostInit("beefalo", FixBeefaloPoop)
+end
+
+-- 堆叠成功时在物品位置生成烟雾特效
+local function SpawnStackSmoke(inst)
+    if not SMOKE_PUFF_ON_STACKING then return end
+
+```
+

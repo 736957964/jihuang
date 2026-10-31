@@ -10227,3 +10227,299 @@ end)
 
 ```
 
+
+
+### 变体演进：Tanjiro — Water Breathing Prototype (Mod 3800012904)
+- **变体场景与切面**：收录来自工坊 Mod 3800012904 (`Tanjiro — Water Breathing Prototype`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3800012904)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:tanjiro
+
+AddPrefabPostInit("tanjiro", function(inst)
+    inst:AddTag("nichirin_user")
+    -- One entity transform scales ordinary poses, held items and baked skill FX.
+    local scale = profile.presentation.uniform_scale
+    inst.Transform:SetScale(scale, scale, scale)
+    inst._nichirin_breath = G.net_float(inst.GUID, "nichirin.breath", "nichirin_breath_dirty")
+    inst._nichirin_cast_serial = G.net_uint(inst.GUID,"nichirin.castserial","nichirin_cast_dirty")
+    inst._nichirin_cast_mode = G.net_tinybyte(inst.GUID,"nichirin.castmode","nichirin_cast_dirty")
+    inst._nichirin_cooldowns = {}
+    for _, skill in ipairs({ "water_surface", "water_wheel", "constant_flux" }) do
+        inst._nichirin_cooldowns[skill] = G.net_ushortint(inst.GUID, "nichirin.cooldown." .. skill, "nichirin_cooldown_dirty")
+    end
+    if not G.TheWorld.ismastersim then return end
+    inst:AddComponent("nichirincombat")
+    inst.components.nichirincombat:Sync()
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+local attack = G.require("nichirin/attackstate")
+AddStategraphPostInit("wilson", attack.install)
+AddStategraphPostInit("wilson_client", attack.install)
+AddStategraphPostInit("wilson", G.require("nichirin/presentation").install)
+AddStategraphPostInit("wilson_client", G.require("nichirin/presentation").install)
+
+AddModRPCHandler("tanjiro_breathing", "cast", function(player, index, x, z)
+    if type(index) ~= "number" or index ~= math.floor(index) then return end
+    local skill = model.forms[index]
+    local combat = player and player.components.nichirincombat
+    if not skill or not combat then return end
+    local ok,reason=combat:Request(skill,x,z)
+    if not ok then G.require("nichirin/dialogue").reject(player,reason) end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", attack.install)
+AddStategraphPostInit("wilson_client", attack.install)
+AddStategraphPostInit("wilson", G.require("nichirin/presentation").install)
+AddStategraphPostInit("wilson_client", G.require("nichirin/presentation").install)
+
+AddModRPCHandler("tanjiro_breathing", "cast", function(player, index, x, z)
+    if type(index) ~= "number" or index ~= math.floor(index) then return end
+    local skill = model.forms[index]
+    local combat = player and player.components.nichirincombat
+    if not skill or not combat then return end
+    local ok,reason=combat:Request(skill,x,z)
+    if not ok then G.require("nichirin/dialogue").reject(player,reason) end
+end)
+
+```
+
+
+
+### 变体演进：蟠桃会·神话书说 (Mod 3810038043)
+- **变体场景与切面**：收录来自工坊 Mod 3810038043 (`蟠桃会·神话书说`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3810038043)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+    -- patch_webdomain.lua 的周期任务往玩家身上写 _myth_webdef
+    AddComponentPostInit("inventory", function(self)
+        if not self.inst:HasTag("player") then return end
+        local old_ApplyDamage = self.ApplyDamage
+        self.ApplyDamage = function(self2, damage, attacker, weapon, spdamage)
+            local def = self2.inst._myth_webdef or 0
+            if def > 0 and spdamage ~= nil and spdamage.planar ~= nil and spdamage.planar > 0 then
+                local sp2 = {}
+                for k, v in pairs(spdamage) do sp2[k] = v end
+                sp2.planar = sp2.planar - def
+                if sp2.planar <= 0 then sp2.planar = nil end
+                local any = false
+                for k, v in pairs(sp2) do any = true break end
+                if not any then sp2 = nil end
+                return old_ApplyDamage(self2, damage, attacker, weapon, sp2)
+            end
+            return old_ApplyDamage(self2, damage, attacker, weapon, spdamage)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:madameweb_pitfall_cocoon
+
+AddPrefabPostInit("madameweb_pitfall_cocoon", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local ok, err = G.pcall(require("patch_cocoon").Wrap, inst)
+    if not ok then
+        Log("蛛网包茧改造出错: " .. tostring(err))
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:madameweb
+    -- 2) 蛛皇本体手术（飞跃落地震击监听）
+    AddPrefabPostInit("madameweb", function(inst)
+        if not G.TheWorld.ismastersim then return end
+        PatchWebDomain.SetupQueen(inst)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:madameweb_armor
+
+AddPrefabPostInit("madameweb_armor", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    local c = inst.components.container
+    if c == nil then return end
+    c.Open = function() end -- 实例字段遮蔽类方法：穿上不再弹格子
+    -- 旧档遗留：披肩格子里存过东西的，读档恢复后倒出来（防困死）
+    local old_OnLoad = c.OnLoad
+    c.OnLoad = function(self, data, newents)
+        if old_OnLoad ~= nil then old_OnLoad(self, data, newents) end
+        self:DropEverything()
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:yangjian
+
+    AddPrefabPostInit("yangjian", function(inst)
+        if not G.TheWorld.ismastersim then return end
+        -- 第二道锁（v1.9.259 玩家实测"区区邪物"台词破案）：人物包还实例级
+        -- 覆写了 sanity.SetInducedInsanity（空转+念台词）——梦魇护符的疯狂
+        -- 诱导全靠这个接口，摘掉实例字段即回落官方类方法，护符正常生效
+        if inst.components.sanity ~= nil then
+            inst.components.sanity.SetInducedInsanity = nil
+        end
+        inst:DoTaskInTime(0, YjSanitySurgery) -- 原版监听挂完再手术
+        inst:ListenForEvent("ms_respawnedfromghost", function(inst2)
+            inst2:DoTaskInTime(0, YjSanitySurgery) -- 复活重挂后再手术
+        end)
+    end)
+
+```
+
+
+
+### 变体演进：LANGUAGE (Mod 3822900574)
+- **变体场景与切面**：收录来自工坊 Mod 3822900574 (`LANGUAGE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3822900574)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skinner
+}
+AddComponentPostInit("skinner", function(self)
+    if not JV_LOCK[self.inst.prefab] then
+        return
+    end
+    local old = self.SetSkinMode
+    function self:SetSkinMode(skintype, default_build)
+        local ghost = (skintype or self.skintype) == "ghost_skin"
+        local fallback = ghost and JV_GHOST_BUILDS[self.inst.prefab] or self.inst.prefab
+        old(self, skintype, ghost and fallback or (default_build or fallback))
+        self.inst.AnimState:SetBuild(fallback)
+        for _, symbol in ipairs({ "ghost_eyes", "ghost_body", "ghost_tail", "ghost_FX" }) do
+            self.inst.AnimState:ClearOverrideSymbol(symbol)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:bloomer
+
+AddComponentPostInit("bloomer", function(self)
+    if not CHARACTERS[self.inst.prefab] then
+        return
+    end
+
+    local PushBloom = self.PushBloom
+    function self:PushBloom(source, fx, priority)
+        if source == "playerghostbloom" and fx == GHOST_BLOOM then
+            -- Remove only this source; preserve other effects and priorities.
+            self:PopBloom(source)
+            return
+        end
+        return PushBloom(self, source, fx, priority)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:jayce
+
+AddPrefabPostInit("jayce", PostInit)
+AddPrefabPostInit("viktor", PostInit)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:viktor
+AddPrefabPostInit("jayce", PostInit)
+AddPrefabPostInit("viktor", PostInit)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- Hook playercontroller to intercept Left-Click when aiming
+AddComponentPostInit("playercontroller", function(self)
+    local old_OnControl = self.OnControl
+    function self:OnControl(control, down, ...)
+        if self.inst == GLOBAL.ThePlayer and self.inst._jayce_laser_aiming then
+            if down then
+                if control == GLOBAL.CONTROL_PRIMARY then
+                    -- Left click: fire laser in aimed direction if not clicking on HUD
+                    if GLOBAL.TheInput ~= nil and GLOBAL.TheInput:GetHUDEntityUnderMouse() == nil then
+                        local mousepos = GLOBAL.TheInput:GetWorldPosition()
+                        if mousepos ~= nil then
+                            FireJayceLaser(self.inst, mousepos)
+                            return true
+                        end
+                    end
+                elseif control == GLOBAL.CONTROL_SECONDARY or control == GLOBAL.CONTROL_CANCEL then
+                    -- Right click or ESC cancels laser aiming
+                    StopJayceLaserAiming(self.inst)
+                    return true
+                end
+            elseif control == GLOBAL.CONTROL_PRIMARY or control == GLOBAL.CONTROL_SECONDARY then
+                -- Consume button release
+                return true
+            end
+        end
+        return old_OnControl(self, control, down, ...)
+    end
+end)
+
+-- Hotkey registration
+local function OnPressLaserHotkey()
+    local player = GLOBAL.ThePlayer
+    if player == nil or not player:IsValid() then
+        return
+    end
+
+    if player._jayce_laser_aiming then
+        StopJayceLaserAiming(player)
+        return
+    end
+
+    if not IsValidHUDState() then
+        return
+    end
+
+    if not LeapSkills.HasShockBlast(player) then
+        if GLOBAL.TheFocalPoint ~= nil and GLOBAL.TheFocalPoint.SoundEmitter ~= nil then
+            GLOBAL.TheFocalPoint.SoundEmitter:PlaySound("dontstarve/HUD/click_negative", nil, 0.4)
+        end
+        return
+    end
+
+    local inventory = player.replica.inventory
+    if inventory == nil then
+        return
+    end
+
+    local weapon = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if weapon == nil or not weapon:HasTag("jayce_laser_weapon") then
+        return
+    end
+
+    -- Check cooldown
+    if weapon._laser_ready ~= nil and not weapon._laser_ready:value() then
+        if GLOBAL.TheFocalPoint ~= nil and GLOBAL.TheFocalPoint.SoundEmitter ~= nil then
+            GLOBAL.TheFocalPoint.SoundEmitter:PlaySound("dontstarve/HUD/click_negative", nil, 0.4)
+        end
+        return
+    end
+
+    StartJayceLaserAiming(player, weapon)
+end
+
+if GLOBAL.TheInput ~= nil and not GLOBAL.TheNet:IsDedicated() then
+    local key_name = (GetModConfigData and GetModConfigData("JAYCE_LASER_KEY")) or "R"
+    local hotkey = GLOBAL["KEY_" .. string.upper(key_name)] or GLOBAL.KEY_R
+    GLOBAL.TheInput:AddKeyDownHandler(hotkey, OnPressLaserHotkey)
+end
+
+GLOBAL.package.loaded["jv_jayce_laser"] = M
+return M
+
+```
+
