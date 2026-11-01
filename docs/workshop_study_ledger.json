@@ -7878,8 +7878,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 13:34:23",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3011196821",
+      "name": "斯卡蒂",
+      "author": "Alvitr",
+      "version": "2.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:42:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3753606785",
+      "name": "take_amount",
+      "author": "NOUS",
+      "version": "0.22.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 13:42:08",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3798485532",
+      "name": "沃利全面重做/Warly Rework",
+      "author": "󰀏白令󰀏",
+      "version": "2.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:42:08",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:34:23"
+  "lastUpdated": "2026-11-01 13:42:08"
 }

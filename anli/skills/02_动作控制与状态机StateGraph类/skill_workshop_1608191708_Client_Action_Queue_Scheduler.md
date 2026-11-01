@@ -56752,3 +56752,1425 @@ end)
 
 ```
 
+
+
+### 变体演进：斯卡蒂 (Mod 3011196821)
+- **变体场景与切面**：收录来自工坊 Mod 3011196821 (`斯卡蒂`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3011196821)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:hounded
+
+AddComponentPostInit("hounded", function(self)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    HookHoundedSummon(self)
+    HookHoundedWarning(self)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:equippable
+
+AddComponentPostInit("equippable", function(self)
+    local _OldGetWalkSpeedMult = self.GetWalkSpeedMult
+    function self:GetWalkSpeedMult(...)
+        local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner or nil
+        if owner and owner:HasTag("skd") and self.walkspeedmult and self.walkspeedmult < 1 then
+            return 1
+        end 
+
+        return _OldGetWalkSpeedMult(self, ...)
+    end    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:mizukieventtrigger
+if TUNING.MIZUKI_CONFIG ~= nil then
+AddComponentPostInit("mizukieventtrigger", function(self)
+    local _OldDoEvent = self.DoEvent
+    function self:DoEvent(user, ...)
+        print(user.prefab)
+        if user and TheWorld.components.skd_blue_heart and TheWorld.components.skd_blue_heart.spawn == false then
+            TheWorld.components.skd_blue_heart:DoSpawn(user)
+        end
+
+        return _OldDoEvent(self, user, ...)
+    end    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    inst:AddComponent("skd_blue_heart")
+end)    
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:skd
+
+AddPrefabPostInit("skd", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    local _getHealth = inst.components.health.DoDelta
+    inst.components.health.DoDelta = function(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+        if (self.currenthealth + amount) <= 0 and inst.components.inventory:Has("skd_new_item1", 1) then 
+            local item = inst.components.inventory:FindItem(function(item) return item.prefab == "skd_new_item1" end) 
+            if item then
+                amount = 0
+                self.currenthealth = self.maxhealth * 0.4 
+
+                local fx = SpawnPrefab("skd_new_item1_fx") --护盾特效
+                fx.entity:SetParent(inst.entity)
+
+                item.components.container:DropEverything()
+                item:Remove()
+            end 
+        end     
+                                     
+        return _getHealth(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb) 
+    end
+
+    local _calcDamage = inst.components.combat.CalcDamage
+    inst.components.combat.CalcDamage = function(self, target, weapon, multiplier) 
+        local damage, spdamage = _calcDamage(self, target, weapon, multiplier)
+        if HasPacket() == true then
+            damage = damage * 1.24
+        else  
+            damage = damage * 1.16
+        end   
+
+        return damage, spdamage
+    end       
+end)   
+
+```
+
+
+
+### 变体演进：沃利全面重做/Warly Rework (Mod 3798485532)
+- **变体场景与切面**：收录来自工坊 Mod 3798485532 (`沃利全面重做/Warly Rework`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3798485532)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:portableblender
+
+AddPrefabPostInit("portableblender", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	inst:AddComponent("trader")
+    inst.components.trader:SetAcceptTest(ShouldAcceptItem)
+    inst.components.trader.onaccept = OnGetItem
+	inst.components.trader.acceptnontradable = true
+	inst.components.trader:SetAcceptStacks()
+    inst.components.trader:Enable()
+	
+	inst.components.portablestructure:SetOnDismantleFn(NewOnDismantle)
+
+	-- 处在海上时生成盘子底座
+	inst:DoTaskInTime(0, function() 
+		if inst:IsOnOcean(false) then
+		    MakeWaterObstaclePhysics(inst, 0.5, 1.25, 0.5)
+			local plate = SpawnPrefab("powcake_spice_salt")
+			plate.Transform:SetScale(1.1, 1.1, 1.1)
+			plate.entity:SetParent(inst.entity)
+			plate.AnimState:ClearOverrideSymbol("swap_garnish")
+			plate.AnimState:ClearOverrideSymbol("swap_food")
+			plate.AnimState:SetSortOrder(-2)
+			plate:AddTag("noclick")
+			plate.components.inventoryitem.canbepickedup = false
+			plate:RemoveComponent("edible")
+			local splash = SpawnPrefab("splash")
+			splash.Transform:SetScale(1.2, 1.2, 1.2)
+			splash.Transform:SetPosition(inst.Transform:GetWorldPosition())
+			SpawnPrefab("wurt_water_splash_2").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablecookpot
+
+AddPrefabPostInit("portablecookpot", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+	inst.components.portablestructure:SetOnDismantleFn(NewOnDismantle)
+	
+	-- 处在海上时生成盘子底座
+	inst:DoTaskInTime(0, function() 
+		if inst:IsOnOcean(false) then
+		    MakeWaterObstaclePhysics(inst, 0.5, 1.25, 0.5)
+			local plate = SpawnPrefab("powcake_spice_salt")
+			plate.Transform:SetScale(1.4, 1.4, 1.4)
+			plate.entity:SetParent(inst.entity)
+			plate.AnimState:ClearOverrideSymbol("swap_garnish")
+			plate.AnimState:ClearOverrideSymbol("swap_food")
+			plate.AnimState:SetSortOrder(-2)
+			plate:AddTag("noclick")
+			plate.components.inventoryitem.canbepickedup = false
+			plate:RemoveComponent("edible")
+			local splash = SpawnPrefab("splash")
+			splash.Transform:SetScale(1.2, 1.2, 1.2)
+			splash.Transform:SetPosition(inst.Transform:GetWorldPosition())
+			SpawnPrefab("wurt_water_splash_2").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablekettle
+
+AddPrefabPostInit("portablekettle", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+	inst.components.portablestructure:SetOnDismantleFn(NewOnDismantle)
+	
+	-- 处在海上时生成盘子底座
+	inst:DoTaskInTime(0, function() 
+		if inst:IsOnOcean(false) then
+		    MakeWaterObstaclePhysics(inst, 0.5, 1.25, 0.5)
+			local plate = SpawnPrefab("powcake_spice_salt")
+			plate.Transform:SetScale(1.6, 1.6, 1.6)
+			plate.entity:SetParent(inst.entity)
+			plate.AnimState:ClearOverrideSymbol("swap_garnish")
+			plate.AnimState:ClearOverrideSymbol("swap_food")
+			plate.AnimState:SetSortOrder(-2)
+			plate:AddTag("noclick")
+			plate.components.inventoryitem.canbepickedup = false
+			plate:RemoveComponent("edible")
+			local splash = SpawnPrefab("splash")
+			splash.Transform:SetScale(1.2, 1.2, 1.2)
+			splash.Transform:SetPosition(inst.Transform:GetWorldPosition())
+			SpawnPrefab("wurt_water_splash_2").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablecookpot_item
+
+AddPrefabPostInit("portablecookpot_item", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+	inst:DoPeriodicTask(0.5,function() 
+	    if inst:IsOnOcean(false) and not inst:HasTag("DEPLOYMODE_WATER") then
+	        inst:AddTag("DEPLOYMODE_WATER")
+			inst.components.deployable:SetDeployMode(DEPLOYMODE.WATER)
+		elseif not inst:IsOnOcean(false) and inst:HasTag("DEPLOYMODE_WATER") then
+		    inst:RemoveTag("DEPLOYMODE_WATER")
+		    inst.components.deployable:SetDeployMode(DEPLOYMODE.DEFAULT)
+		end
+	end)
+end)
+AddPrefabPostInit("portableblender_item", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+	inst:DoPeriodicTask(0.5,function() 
+	    if inst:IsOnOcean(false) and not inst:HasTag("DEPLOYMODE_WATER") then
+	        inst:AddTag("DEPLOYMODE_WATER")
+			inst.components.deployable:SetDeployMode(DEPLOYMODE.WATER)
+		elseif not inst:IsOnOcean(false) and inst:HasTag("DEPLOYMODE_WATER") then
+		    inst:RemoveTag("DEPLOYMODE_WATER")
+		    inst.components.deployable:SetDeployMode(DEPLOYMODE.DEFAULT)
+		end
+	end)
+end)
+AddPrefabPostInit("portablekettle_item", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+	inst:DoPeriodicTask(0.5,function() 
+	    if inst:IsOnOcean(false) and not inst:HasTag("DEPLOYMODE_WATER") then
+	        inst:AddTag("DEPLOYMODE_WATER")
+			inst.components.deployable:SetDeployMode(DEPLOYMODE.WATER)
+		elseif not inst:IsOnOcean(false) and inst:HasTag("DEPLOYMODE_WATER") then
+		    inst:RemoveTag("DEPLOYMODE_WATER")
+		    inst.components.deployable:SetDeployMode(DEPLOYMODE.DEFAULT)
+		end
+	end)
+end)
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+-- 
+----------------------------------------------------------------------------------------------------------------------
+
+
+local function GetBaseFoodName(prefab)
+    if prefab == nil then
+        return nil
+    end
+    local pos = string.find(prefab, "_spice_", 1, true)
+    if pos then
+        return string.sub(prefab, 1, pos - 1)
+    end
+    return prefab
+end
+
+local STAR_TAGS = { "fivestar", "fourstar", "threestar", "twostar", "onestar" }
+
+local function HasSpice(prefab, spice)
+    return prefab:find(spice, 1, true)
+end
+
+local function FoodScoreFn(inst)
+    if not inst:HasTag("preparedfood") then -- 必须是料理
+	    return
+	end
+    local edible = inst.components.edible
+    -- 武器不行
+    if inst.components.weapon or not edible
+       or not edible.hungervalue or not edible.sanityvalue or not edible.healthvalue then
+        return
+    end
+    local prefab  = inst.prefab
+    local thirst  = edible.thirstvalue
+
+    -- 基础三维评分
+    local hunger_score = edible.hungervalue * 0.25
+    local sanity_score = edible.sanityvalue * 0.75
+    -- 盐料理莫名不计算盐粉额外生命，这里补上
+    local health_score = HasSpice(prefab, "_spice_salt") and (edible.healthvalue * 1.5)/2 or edible.healthvalue/2
+    -- 有特殊进食后效果 +8 分
+    local buff_score = edible.oneaten and 8 or 0
+
+    local foodscore = math.floor(hunger_score + sanity_score + health_score + buff_score)
+
+    -- 通用加成分 
+    if HasSpice(prefab, "jellybean")           then foodscore = foodscore + 40 end -- 糖豆额外 +40
+    if HasSpice(prefab, "coffe")               then foodscore = foodscore + 20 end -- 咖啡类 +20
+    if HasSpice(prefab, "roast_scallionmeat")  then foodscore = foodscore + 1  end -- 葱烧炖肉补 1 分凑 5 星
+    if thirst                                  then foodscore = foodscore + math.floor(thirst * 0.2) end -- 水分值分数补充
+    if inst:HasTag("prepareddrink")            then foodscore = foodscore + 15 end -- 饮水思饥饮品修正
+	if inst:HasTag("alcohol") or inst.prefab == "lumpy_beer" then foodscore = foodscore + 15 end -- 饮水思饥酒类修正
+	if inst:HasTag("spirits")                  then foodscore = foodscore + 25 end -- 饮水思饥精馏修正
+	
+	-- 肉松调味：调味前为素菜则+20分
+	if edible.oldveggie and HasSpice(prefab, "_spice_rousong_super") then
+        foodscore = foodscore + 20 
+    end
+
+    -- 蜂蜜晶调味：理智高于生命或饥饿时加分
+    if HasSpice(prefab, "spice_sugar") then
+        local san, hea, hun = edible.sanityvalue, edible.healthvalue, edible.hungervalue
+        if san > hea or san > hun then
+            foodscore = foodscore + 10
+            if san > hun and san > hea then
+                foodscore = foodscore + 10
+            end
+        end
+    end
+
+    -- 潾粉调味：生命高于理智或饥饿时加分
+    if HasSpice(prefab, "spice_huafen_super") then
+        local san, hea, hun = edible.sanityvalue, edible.healthvalue, edible.hungervalue
+        if hea > san then
+            foodscore = foodscore + 5
+        end
+		if hea > hun then
+			foodscore = foodscore + 10
+		end
+    end
+	
+    -- 需要基础食物数据的分支
+    local need_base = HasSpice(prefab, "spice_powcake_super")
+                   or HasSpice(prefab, "spice_guojiang_super")
+                   or HasSpice(prefab, "spice_chili")
+                   or HasSpice(prefab, "spice_watermelon")
+
+    local oldfood = need_base and SpawnPrefab(GetBaseFoodName(prefab)) or nil
+    local old_edible = oldfood and oldfood.components.edible or nil
+
+    -- 蛋糕粉：按原保质期加分，上限85
+    if HasSpice(prefab, "spice_powcake_super") and inst.components.perishable and oldfood and oldfood.components.perishable then
+        local scoreex = (oldfood.components.perishable.perishtime / 480) * 1.5
+        foodscore = foodscore + math.min(scoreex, 85)
+    end
+
+    -- 糖霜：原料理有食用后特殊效果+20，冷热食再+10
+    if HasSpice(prefab, "spice_guojiang_super") and old_edible then
+	    if old_edible.oneaten then foodscore = foodscore + 20 end
+        if old_edible.temperaturedelta and old_edible.temperaturedelta ~= 0 then foodscore = foodscore + 10 end
+    end
+
+    -- 辣椒碎：原料理有升温效果+25
+    if HasSpice(prefab, "spice_chili") and old_edible then
+        local td = old_edible.temperaturedelta
+        if td and td > 0 then foodscore = foodscore + 25 end
+    end
+
+    -- 西瓜霜：原料理有降温或冰鲜效果+25
+    if HasSpice(prefab, "spice_watermelon") and old_edible then
+        local td = old_edible.temperaturedelta
+        if oldfood:HasTag("frozen") or (td and td < 0) then
+            foodscore = foodscore + 25
+        end
+    end
+
+    if oldfood then oldfood:Remove() end
+
+    -- 不需基础食物数据的
+
+    -- 土豆膏：饱食≥ 100时+10
+    if HasSpice(prefab, "spice_danbai_super") and edible.hungervalue >= 100 then
+        foodscore = foodscore + 10
+    end
+
+    -- 葱沫：每3点理智+1
+    if HasSpice(prefab, "spice_scallion") then
+        foodscore = foodscore + math.floor(edible.sanityvalue / 3)
+    end
+    
+	
+	-- 复制品评分继承原品
+	if inst.copy_foodscore then
+	    foodscore = inst.copy_foodscore
+	end
+		
+    -- 料理评分最低为0分
+    if foodscore < 0 then foodscore = 0 end
+	
+    inst.foodscore = foodscore
+	
+
+    -- 猪王评价金块 
+    if inst.components.tradable and edible.foodtype and edible.foodtype == FOODTYPE.MEAT then
+        local goldvalue = math.ceil(inst.foodscore / 10)
+        if prefab == "unagi" then goldvalue = goldvalue + 4 end
+        inst.components.tradable.goldvalue = goldvalue
+    end
+
+    -- 潾粉肥料 
+    if HasSpice(prefab, "_huafen_") and inst.components.fertilizer then
+        inst.components.fertilizer:SetNutrients({ inst.foodscore, inst.foodscore, inst.foodscore })
+    end
+
+    -- 星级标签
+    for _, tag in ipairs(STAR_TAGS) do
+        inst:RemoveTag(tag)
+    end
+
+    if inst.foodscore >= 100 then
+        inst:AddTag("fivestar")
+        inst:DoTaskInTime(0, function()
+            if inst._shinyfx == nil then
+                inst._shinyfx = SpawnPrefab("fivestar_fx")
+                inst._shinyfx.entity:SetParent(inst.entity)
+                inst.AnimState:SetAddColour(0.1, 0.1, 0.1, 0)
+                inst.AnimState:SetLightOverride(0.25)
+                inst.AnimState:SetBloomEffectHandle("shaders/anim.ksh")
+            end
+        end)
+    elseif inst.foodscore >= 60 then
+        inst:AddTag("fourstar")
+    elseif inst.foodscore >= 30 then
+        inst:AddTag("threestar")
+    elseif inst.foodscore >= 10 then
+        inst:AddTag("twostar")
+    else
+        inst:AddTag("onestar")
+    end
+end
+
+
+local function IsValidVictim(victim)
+	return victim ~= nil
+		and victim.components.health ~= nil
+		and victim.components.combat ~= nil
+		and not (	(victim:HasTag("prey") and not victim:HasTag("hostile")) or
+					victim:HasAnyTag(NON_LIFEFORM_TARGET_TAGS) or
+					victim:HasTag("companion")
+				)
+end
+
+local function AddFX(fxname, scale, owner, target, color)
+	local fx = SpawnPrefab(fxname)
+	local x, y, z = target.Transform:GetWorldPosition()
+	local radius = target:GetPhysicsRadius(.5)
+	local angle = (owner.Transform:GetRotation() - 90) * DEGREES
+	fx.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+	fx.Transform:SetScale(scale, scale, scale)
+	if fxname == "impact_color" and color then
+	    fx.AnimState:SetMultColour(color[1], color[2], color[3], color[4])
+	end
+	if fxname == "garlic_attack_fx" then
+	    if target.SoundEmitter then
+	        target.SoundEmitter:PlaySound("dontstarve/characters/walter/slingshot/poop")
+		elseif owner.SoundEmitter then
+		    owner.SoundEmitter:PlaySound("dontstarve/characters/walter/slingshot/poop")
+		end
+	end
+end
+
+local function GetSafeSkinName(inst)
+    if inst == nil then
+        return nil
+    end
+    if inst.GetSkinName ~= nil then
+        local ok, name = pcall(inst.GetSkinName, inst)
+        if ok and name ~= nil and name ~= "" then
+            return name
+        end
+    end
+    if inst.skinname ~= nil and inst.skinname ~= "" then
+        return inst.skinname
+    end
+    if inst.moddedskinname ~= nil and inst.moddedskinname ~= "" then
+        return inst.moddedskinname
+    end
+    return nil
+end
+
+local function NewweaponSpiceFn(weapon)
+	local plate = SpawnPrefab("spiceplate_fx")
+	local spicename = weapon.spicetex:gsub("_over%.tex", "")
+	if spicename == "spice_chili" or spicename == "spice_salt" or spicename == "spice_garlic" or spicename == "spice_sugar" then
+		plate.AnimState:OverrideSymbol("swap_garnish", "spices", spicename)
+	elseif spicename == "spice_scallion" or spicename == "spice_watermelon" then
+		plate.AnimState:OverrideSymbol("swap_garnish", "spices_bwb", spicename)
+	elseif spicename == "spice_tf_coffee_powder" then 
+		plate.AnimState:OverrideSymbol("swap_garnish", "nuts_spices", spicename)
+	elseif spicename == "spice_lotus" then 
+		plate.AnimState:OverrideSymbol("swap_garnish", "newspices", spicename)
+	elseif spicename == "spice_caffeinpepper" then 
+		plate.AnimState:OverrideSymbol("swap_garnish", "water_spice", spicename)
+	else
+		plate.AnimState:OverrideSymbol("swap_garnish", "spices_more", spicename)
+	end
+	plate.entity:SetParent(weapon.entity)
+	weapon.spiceplate = plate
+	
+	if weapon.components.weapon == nil then -- 理论是几乎不可能的情况，但还是预防一下
+	    return
+	end
+
+	-- 怕水~
+	if weapon.components.inventoryitemmoisture then
+		weapon:AddTag("canpourwateron")
+		weapon.components.inventoryitemmoisture:SetOnMoistureDeltaCallback(function(inst) 
+			if inst.components.inventoryitem and inst.components.inventoryitem:IsWet() then
+				local skin_name = GetSafeSkinName(inst)
+				local skin_id = inst.skin_id
+				
+				local newweapon
+				if skin_name then
+					newweapon = SpawnPrefab(inst.prefab, skin_name, skin_id)
+				else
+					newweapon = SpawnPrefab(inst.prefab)
+				end
+				newweapon:RemoveTag("show_broken_ui") --这个导致的UI会与新鲜度背景冲突，必须删掉 
+				newweapon.warly_blank = true
+				newweapon:AddTag("show_spoilage")
+				newweapon:AddTag("icebox_valid")
+				newweapon:AddTag("warly_blank")
+				newweapon:AddTag("hide_percentage") 
+
+				newweapon:AddComponent("perishable")
+				newweapon.components.perishable:SetPerishTime(1440)
+				newweapon.components.perishable:StartPerishing()
+				newweapon.components.perishable.onperishreplacement = "spoiled_food"
+				
+				if inst.components.perishable then
+					newweapon.components.perishable:SetPercent(inst.components.perishable:GetPercent())
+				end
+					
+				--newweapon.components.inventoryitem:AddMoisture(TUNING.OCEAN_WETNESS*2)
+				
+				-- if newweapon.components.inspectable then
+					-- newweapon.components.inspectable:SetDescription("肉做的仿品，撑不了多久。")
+				-- end
+				
+				if newweapon.components.eater then -- 诸如恐怖盾牌这类的移除进食能力
+					newweapon:RemoveComponent("eater")
+				end
+				
+				if newweapon.components.edible == nil then  -- 会被部分生物炫了
+					newweapon:AddComponent("edible")
+					newweapon.components.edible.foodtype = FOODTYPE.HORRIBLE
+				end
+				
+				if inst.prefab == "shadow_battleaxe" and inst.level then -- 暗影槌继承等级
+					newweapon:SetLevel(inst.level)
+				end
+				
+				-- 继承肉松修复次数
+				newweapon.rousong_fixcount = inst.rousong_fixcount or 0
+				if newweapon.rousong_fixcount > 5 then
+					newweapon.rousong_punish = true
+					newweapon:AddTag("rousong_punish")
+				end
+				
+				newweapon:AddComponent("cookable")
+				newweapon.components.cookable.product = "cookedmeat"
+				
+				if inst.components.inventoryitem.owner then
+				    if inst.components.inventoryitem.owner.components.inventory then
+					    inst.components.inventoryitem.owner.components.inventory:GiveItem(newweapon)
+					elseif inst.components.inventoryitem.owner.components.container then
+					    inst.components.inventoryitem.owner.components.container:GiveItem(newweapon)
+					end
+				else
+					newweapon.Transform:SetPosition(inst.Transform:GetWorldPosition())
+					SpawnPrefab("wurt_water_splash_1").Transform:SetPosition(inst.Transform:GetWorldPosition())
+				end
+				
+				inst:Remove()
+			end
+		end)
+	end
+	
+    if weapon.spicetex == "spice_chili_over.tex" then 
+	    weapon:AddTag("weapon_chili")
+		if type(weapon.components.weapon.damage) ~= "function" and not weapon:HasTag("PassiveImprovement") then -- 我们至今仍不清楚为什么神人klei要把某些武器的damage写成一个函数
+			if weapon.components.planardamage then -- 对于有位面伤害的武器，提高8.5点位面伤害而非物理伤害
+				weapon.components.planardamage.basedamage = weapon.components.planardamage.basedamage + 8.5
+			else
+				weapon.components.weapon.damage = weapon.components.weapon.damage + 8.5
+			end
+		else
+			local original_dmg = weapon.components.weapon.damage  
+			weapon.components.weapon.damage = function(...)        
+				return original_dmg(...) + 8.5
+			end
+		end
+		local oldfn = weapon.components.weapon.onattack
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			local x, y, z = target.Transform:GetWorldPosition()
+			local oldpepperfx = TheSim:FindEntities(x, 0, z, 1, {"pepperfx"})[1]
+			if oldpepperfx then
+				oldpepperfx.AnimState:PlayAnimation(oldpepperfx.trailname.."_pst")
+				oldpepperfx:DoTaskInTime(0.25,function() oldpepperfx:Remove() end)
+			end
+			local fx = SpawnPrefab("honey_trail")	
+			if fx then
+				fx.task:Cancel()
+				fx:AddTag("pepperfx")
+				fx.Transform:SetPosition(x, 0, z)
+				local rand = math.random(3)
+				local scale = GetRandomMinMax(1.5, 1.5)
+				fx.Transform:SetScale(scale, scale, scale)
+				fx.trailname = "trail"..tostring(rand)
+				fx.SoundEmitter:PlaySound("dontstarve/creatures/together/bee_queen/honey_drip")
+				fx.AnimState:PlayAnimation(fx.trailname.."_pre")
+				fx.AnimState:SetMultColour(200/255, 45/255, 45/255, 1)
+				fx:ListenForEvent("animover", function(fx)
+					if fx.AnimState:IsCurrentAnimation(fx.trailname.."_pre") then
+						fx.AnimState:PlayAnimation(fx.trailname)
+						fx:DoTaskInTime(30, function(fx)
+							fx.AnimState:PlayAnimation(fx.trailname.."_pst")
+							fx._isfading:set(true)
+							if fx.task then fx.task:Cancel() end
+						end)
+					elseif fx.AnimState:IsCurrentAnimation(fx.trailname.."_pst") then
+						fx:Remove()
+					end
+				end)
+				fx.task = fx:DoPeriodicTask(0.2, function()
+					for i, v in ipairs(TheSim:FindEntities(x, y, z, scale+1, {"_health", "_combat"}, {"wall", "abigail", "companion", "player", "notarget", "playerghost", "INLIMBO"})) do
+						if v.components.health and not v.components.health:IsDead() then
+							v.components.health:DoDelta(-0.75)
+							if not v.components.locomotor then
+					            v.components.health:DoDelta(-1.5)
+					        end							
+							if v.Chili_OnAttackFXCD == nil then
+								local fire = SpawnPrefab("deer_fire_burst")
+								fire.Transform:SetPosition(v.Transform:GetWorldPosition())
+								fire.Transform:SetScale(0.75, 0.75, 0.75)
+								if fire.AnimState then
+									fire.AnimState:SetMultColour(200/255, 45/255, 45/255, 1)
+								end
+								v.Chili_OnAttackFXCD = v:DoTaskInTime(0.2, function() 
+									if v then 
+										v.Chili_OnAttackFXCD = nil 
+									end
+								end)
+							end
+						end
+					end
+				end)
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end		
+		
+	elseif weapon.spicetex == "spice_sugar_over.tex" then
+        weapon:AddTag("weapon_sugar")
+		if weapon.components.tool then
+			for k, v in pairs(weapon.components.tool.actions) do
+				weapon.components.tool.actions[k] = v * 1.5
+			end
+		end
+		local oldfn = weapon.components.weapon and weapon.components.weapon.onattack or nil
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			local x, y, z = target.Transform:GetWorldPosition()
+			local oldhoneyfx = TheSim:FindEntities(x, 0, z, 1, {"honeyfx"})[1]
+			if oldhoneyfx then
+				oldhoneyfx.AnimState:PlayAnimation(oldhoneyfx.trailname.."_pst")
+				oldhoneyfx:DoTaskInTime(0.25,function() oldhoneyfx:Remove() end)
+			end
+			local fx = SpawnPrefab("honey_trail")	
+			if fx then
+				fx.task:Cancel()
+				fx:AddTag("honeyfx")
+				fx.Transform:SetPosition(x, 0, z)
+				local rand = math.random(3)
+				local scale = GetRandomMinMax(1, 1.5)
+				fx.Transform:SetScale(scale, scale, scale)
+				fx.trailname = "trail"..tostring(rand)
+				fx.SoundEmitter:PlaySound("dontstarve/creatures/together/bee_queen/honey_drip")
+				fx.AnimState:PlayAnimation(fx.trailname.."_pre")
+				fx:ListenForEvent("animover", function(fx)
+					if fx.AnimState:IsCurrentAnimation(fx.trailname.."_pre") then
+						fx.AnimState:PlayAnimation(fx.trailname)
+						fx:DoTaskInTime(6, function(fx)
+							fx.AnimState:PlayAnimation(fx.trailname.."_pst")
+							fx._isfading:set(true)
+							if fx.task then fx.task:Cancel() end
+						end)
+					elseif fx.AnimState:IsCurrentAnimation(fx.trailname.."_pst") then
+						fx:Remove()
+					end
+				end)
+				fx.task = fx:DoPeriodicTask(0, function()
+					for i, v in ipairs(TheSim:FindEntities(x, y, z, scale+1, {"locomotor"}, {"flying","player", "playerghost", "INLIMBO"})) do
+						if v.components.locomotor ~= nil then
+							v.components.locomotor:PushTempGroundSpeedMultiplier(0.15, WORLD_TILES.MUD)
+						end
+					end
+				end)
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end	
+		
+    elseif weapon.spicetex == "spice_garlic_over.tex" then	
+	    weapon:AddTag("weapon_garlic")
+		
+		local oldfn = weapon.components.weapon.onattack
+		if weapon.components.armor == nil then
+		    weapon:AddComponent("armor") 
+		    weapon.components.armor.absorb_percent = 0.25
+		    weapon.components.armor.indestructible = true
+		else -- 对于已有防御属性的手持装备，提高25%减伤能力（0.25+0.75X）由 1−(1−A)×(1−0.25) 化简而来
+            weapon.components.armor.absorb_percent = weapon.components.armor.absorb_percent and 0.25 + (0.75 * weapon.components.armor.absorb_percent) or 0.25
+		end
+		
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			if target.components.combat then
+				local isBat = target.prefab:find("bat") and target.prefab ~= "malbatross"
+				local isShadow = target:HasTag("ghost") or target:HasTag("shadow") or target:HasTag("shadowminion") or target:HasTag("shadowchesspiece") or target:HasTag("stalker") or target:HasTag("stalkerminion")
+				if isBat or isShadow then
+					if target.components.health and not target.components.health:IsDead() then
+						local damage = isBat and 275 or 17
+						target.components.combat:GetAttacked(owner, damage, nil)
+						if isShadow and target.Garlic_OnAttackHitCD == nil and target.prefab ~= "ancient_trepidation" and target.prefab ~= "creepingfear" and not target:HasTag("epic") and target.sg and target.sg:HasState("hit") then
+						   target.sg:GoToState("hit") --强制硬直
+						   target.Garlic_OnAttackHitCD = target:DoTaskInTime(1.5, function() target.Garlic_OnAttackHitCD = nil end)
+						end
+					end
+					AddFX("garlic_attack_fx", 1, owner, target)
+				end
+			end
+			if oldfn then
+				oldfn(inst, owner, target)
+			end
+		end
+		
+    elseif weapon.spicetex == "spice_salt_over.tex" then	
+	    weapon:AddTag("weapon_salt")
+		
+		local oldfn = weapon.components.weapon.onattack
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			if target.components.health and not target.components.health:IsDead() and target.components.combat and target.components.health:GetPercent() ~= 1 then
+				local dam = (1 - target.components.health:GetPercent()) * 17
+				target.components.combat:GetAttacked(owner, dam)
+				if target.components.explosive then
+					target.components.combat:GetAttacked(owner, 17)
+				end
+				local fxscale = (0.3 + (1 - target.components.health:GetPercent())) * 0.6
+				AddFX("impact", fxscale, owner, target)
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end
+		
+		if weapon.warly_blank_per then
+		    if weapon:HasTag("AllowSeasoning") then
+			    weapon.components.perishable:SetPerishTime(weapon.components.perishable.perishtime * 2)
+			else
+		        weapon.components.perishable:SetPerishTime(2880)
+			end
+			weapon.components.perishable:SetPercent(weapon.warly_blank_per)		
+		end
+		
+    elseif weapon.spicetex == "spice_rousong_super_over.tex" then	
+	    weapon:AddTag("weapon_rousong")
+		weapon:RemoveTag("no_spice_rousong")
+		
+	elseif weapon.spicetex == "spice_danbai_super_over.tex" then
+        weapon:AddTag("weapon_danbai")
+		if type(weapon.components.weapon.damage) ~= "function" then
+			if weapon.components.weapon.damage < 42.5 then
+				weapon.components.weapon.damage = 42.5
+			end
+		else
+			local original_dmg = weapon.components.weapon.damage  
+			weapon.components.weapon.damage = function(...)  
+				return original_dmg(...) < 42.5 and 42.5 or original_dmg(...)
+			end
+		end
+		
+		local oldfn = weapon.components.weapon and weapon.components.weapon.onattack or nil
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+		    if math.random() <= 0.2 and target.components.combat then
+				local damage = owner.components.hunger and math.floor(owner.components.hunger.current/20) or 17
+				target.components.combat:GetAttacked(owner,damage)
+				AddFX("fx_dock_pop", 0.5, owner, target)			    
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end
+    elseif weapon.spicetex == "spice_fanqie_super_over.tex" then	
+	    weapon:AddTag("weapon_fanqie")
+		
+		local oldfn = weapon.components.weapon and weapon.components.weapon.onattack or nil
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			if target.prefab ~= "tentacle_pillar" and target.prefab ~= "abigail" and target.prefab ~= "lureplant" and not target:HasTag("shadow") and not target:HasTag("wall") and not target:HasTag("epic") and target.components.health and target.components.health:IsDead() then
+                target:Hide() -- Bye！Bye！
+				target:DoTaskInTime(0, function() 
+					--AddFX("shadow_merm_smacked_poof_fx", 0.5, owner, target)
+					target.Transform:SetPosition(0,0,0)
+					local AddPerishable = 0.04
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portableblender_item
+end)
+AddPrefabPostInit("portableblender_item", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+	inst:DoPeriodicTask(0.5,function() 
+	    if inst:IsOnOcean(false) and not inst:HasTag("DEPLOYMODE_WATER") then
+	        inst:AddTag("DEPLOYMODE_WATER")
+			inst.components.deployable:SetDeployMode(DEPLOYMODE.WATER)
+		elseif not inst:IsOnOcean(false) and inst:HasTag("DEPLOYMODE_WATER") then
+		    inst:RemoveTag("DEPLOYMODE_WATER")
+		    inst.components.deployable:SetDeployMode(DEPLOYMODE.DEFAULT)
+		end
+	end)
+end)
+AddPrefabPostInit("portablekettle_item", function(inst)
+    if not TheWorld.ismastersim then
+       return inst
+    end
+	inst:DoPeriodicTask(0.5,function() 
+	    if inst:IsOnOcean(false) and not inst:HasTag("DEPLOYMODE_WATER") then
+	        inst:AddTag("DEPLOYMODE_WATER")
+			inst.components.deployable:SetDeployMode(DEPLOYMODE.WATER)
+		elseif not inst:IsOnOcean(false) and inst:HasTag("DEPLOYMODE_WATER") then
+		    inst:RemoveTag("DEPLOYMODE_WATER")
+		    inst.components.deployable:SetDeployMode(DEPLOYMODE.DEFAULT)
+		end
+	end)
+end)
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+-- 
+----------------------------------------------------------------------------------------------------------------------
+
+
+local function GetBaseFoodName(prefab)
+    if prefab == nil then
+        return nil
+    end
+    local pos = string.find(prefab, "_spice_", 1, true)
+    if pos then
+        return string.sub(prefab, 1, pos - 1)
+    end
+    return prefab
+end
+
+local STAR_TAGS = { "fivestar", "fourstar", "threestar", "twostar", "onestar" }
+
+local function HasSpice(prefab, spice)
+    return prefab:find(spice, 1, true)
+end
+
+local function FoodScoreFn(inst)
+    if not inst:HasTag("preparedfood") then -- 必须是料理
+	    return
+	end
+    local edible = inst.components.edible
+    -- 武器不行
+    if inst.components.weapon or not edible
+       or not edible.hungervalue or not edible.sanityvalue or not edible.healthvalue then
+        return
+    end
+    local prefab  = inst.prefab
+    local thirst  = edible.thirstvalue
+
+    -- 基础三维评分
+    local hunger_score = edible.hungervalue * 0.25
+    local sanity_score = edible.sanityvalue * 0.75
+    -- 盐料理莫名不计算盐粉额外生命，这里补上
+    local health_score = HasSpice(prefab, "_spice_salt") and (edible.healthvalue * 1.5)/2 or edible.healthvalue/2
+    -- 有特殊进食后效果 +8 分
+    local buff_score = edible.oneaten and 8 or 0
+
+    local foodscore = math.floor(hunger_score + sanity_score + health_score + buff_score)
+
+    -- 通用加成分 
+    if HasSpice(prefab, "jellybean")           then foodscore = foodscore + 40 end -- 糖豆额外 +40
+    if HasSpice(prefab, "coffe")               then foodscore = foodscore + 20 end -- 咖啡类 +20
+    if HasSpice(prefab, "roast_scallionmeat")  then foodscore = foodscore + 1  end -- 葱烧炖肉补 1 分凑 5 星
+    if thirst                                  then foodscore = foodscore + math.floor(thirst * 0.2) end -- 水分值分数补充
+    if inst:HasTag("prepareddrink")            then foodscore = foodscore + 15 end -- 饮水思饥饮品修正
+	if inst:HasTag("alcohol") or inst.prefab == "lumpy_beer" then foodscore = foodscore + 15 end -- 饮水思饥酒类修正
+	if inst:HasTag("spirits")                  then foodscore = foodscore + 25 end -- 饮水思饥精馏修正
+	
+	-- 肉松调味：调味前为素菜则+20分
+	if edible.oldveggie and HasSpice(prefab, "_spice_rousong_super") then
+        foodscore = foodscore + 20 
+    end
+
+    -- 蜂蜜晶调味：理智高于生命或饥饿时加分
+    if HasSpice(prefab, "spice_sugar") then
+        local san, hea, hun = edible.sanityvalue, edible.healthvalue, edible.hungervalue
+        if san > hea or san > hun then
+            foodscore = foodscore + 10
+            if san > hun and san > hea then
+                foodscore = foodscore + 10
+            end
+        end
+    end
+
+    -- 潾粉调味：生命高于理智或饥饿时加分
+    if HasSpice(prefab, "spice_huafen_super") then
+        local san, hea, hun = edible.sanityvalue, edible.healthvalue, edible.hungervalue
+        if hea > san then
+            foodscore = foodscore + 5
+        end
+		if hea > hun then
+			foodscore = foodscore + 10
+		end
+    end
+	
+    -- 需要基础食物数据的分支
+    local need_base = HasSpice(prefab, "spice_powcake_super")
+                   or HasSpice(prefab, "spice_guojiang_super")
+                   or HasSpice(prefab, "spice_chili")
+                   or HasSpice(prefab, "spice_watermelon")
+
+    local oldfood = need_base and SpawnPrefab(GetBaseFoodName(prefab)) or nil
+    local old_edible = oldfood and oldfood.components.edible or nil
+
+    -- 蛋糕粉：按原保质期加分，上限85
+    if HasSpice(prefab, "spice_powcake_super") and inst.components.perishable and oldfood and oldfood.components.perishable then
+        local scoreex = (oldfood.components.perishable.perishtime / 480) * 1.5
+        foodscore = foodscore + math.min(scoreex, 85)
+    end
+
+    -- 糖霜：原料理有食用后特殊效果+20，冷热食再+10
+    if HasSpice(prefab, "spice_guojiang_super") and old_edible then
+	    if old_edible.oneaten then foodscore = foodscore + 20 end
+        if old_edible.temperaturedelta and old_edible.temperaturedelta ~= 0 then foodscore = foodscore + 10 end
+    end
+
+    -- 辣椒碎：原料理有升温效果+25
+    if HasSpice(prefab, "spice_chili") and old_edible then
+        local td = old_edible.temperaturedelta
+        if td and td > 0 then foodscore = foodscore + 25 end
+    end
+
+    -- 西瓜霜：原料理有降温或冰鲜效果+25
+    if HasSpice(prefab, "spice_watermelon") and old_edible then
+        local td = old_edible.temperaturedelta
+        if oldfood:HasTag("frozen") or (td and td < 0) then
+            foodscore = foodscore + 25
+        end
+    end
+
+    if oldfood then oldfood:Remove() end
+
+    -- 不需基础食物数据的
+
+    -- 土豆膏：饱食≥ 100时+10
+    if HasSpice(prefab, "spice_danbai_super") and edible.hungervalue >= 100 then
+        foodscore = foodscore + 10
+    end
+
+    -- 葱沫：每3点理智+1
+    if HasSpice(prefab, "spice_scallion") then
+        foodscore = foodscore + math.floor(edible.sanityvalue / 3)
+    end
+    
+	
+	-- 复制品评分继承原品
+	if inst.copy_foodscore then
+	    foodscore = inst.copy_foodscore
+	end
+		
+    -- 料理评分最低为0分
+    if foodscore < 0 then foodscore = 0 end
+	
+    inst.foodscore = foodscore
+	
+
+    -- 猪王评价金块 
+    if inst.components.tradable and edible.foodtype and edible.foodtype == FOODTYPE.MEAT then
+        local goldvalue = math.ceil(inst.foodscore / 10)
+        if prefab == "unagi" then goldvalue = goldvalue + 4 end
+        inst.components.tradable.goldvalue = goldvalue
+    end
+
+    -- 潾粉肥料 
+    if HasSpice(prefab, "_huafen_") and inst.components.fertilizer then
+        inst.components.fertilizer:SetNutrients({ inst.foodscore, inst.foodscore, inst.foodscore })
+    end
+
+    -- 星级标签
+    for _, tag in ipairs(STAR_TAGS) do
+        inst:RemoveTag(tag)
+    end
+
+    if inst.foodscore >= 100 then
+        inst:AddTag("fivestar")
+        inst:DoTaskInTime(0, function()
+            if inst._shinyfx == nil then
+                inst._shinyfx = SpawnPrefab("fivestar_fx")
+                inst._shinyfx.entity:SetParent(inst.entity)
+                inst.AnimState:SetAddColour(0.1, 0.1, 0.1, 0)
+                inst.AnimState:SetLightOverride(0.25)
+                inst.AnimState:SetBloomEffectHandle("shaders/anim.ksh")
+            end
+        end)
+    elseif inst.foodscore >= 60 then
+        inst:AddTag("fourstar")
+    elseif inst.foodscore >= 30 then
+        inst:AddTag("threestar")
+    elseif inst.foodscore >= 10 then
+        inst:AddTag("twostar")
+    else
+        inst:AddTag("onestar")
+    end
+end
+
+
+local function IsValidVictim(victim)
+	return victim ~= nil
+		and victim.components.health ~= nil
+		and victim.components.combat ~= nil
+		and not (	(victim:HasTag("prey") and not victim:HasTag("hostile")) or
+					victim:HasAnyTag(NON_LIFEFORM_TARGET_TAGS) or
+					victim:HasTag("companion")
+				)
+end
+
+local function AddFX(fxname, scale, owner, target, color)
+	local fx = SpawnPrefab(fxname)
+	local x, y, z = target.Transform:GetWorldPosition()
+	local radius = target:GetPhysicsRadius(.5)
+	local angle = (owner.Transform:GetRotation() - 90) * DEGREES
+	fx.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+	fx.Transform:SetScale(scale, scale, scale)
+	if fxname == "impact_color" and color then
+	    fx.AnimState:SetMultColour(color[1], color[2], color[3], color[4])
+	end
+	if fxname == "garlic_attack_fx" then
+	    if target.SoundEmitter then
+	        target.SoundEmitter:PlaySound("dontstarve/characters/walter/slingshot/poop")
+		elseif owner.SoundEmitter then
+		    owner.SoundEmitter:PlaySound("dontstarve/characters/walter/slingshot/poop")
+		end
+	end
+end
+
+local function GetSafeSkinName(inst)
+    if inst == nil then
+        return nil
+    end
+    if inst.GetSkinName ~= nil then
+        local ok, name = pcall(inst.GetSkinName, inst)
+        if ok and name ~= nil and name ~= "" then
+            return name
+        end
+    end
+    if inst.skinname ~= nil and inst.skinname ~= "" then
+        return inst.skinname
+    end
+    if inst.moddedskinname ~= nil and inst.moddedskinname ~= "" then
+        return inst.moddedskinname
+    end
+    return nil
+end
+
+local function NewweaponSpiceFn(weapon)
+	local plate = SpawnPrefab("spiceplate_fx")
+	local spicename = weapon.spicetex:gsub("_over%.tex", "")
+	if spicename == "spice_chili" or spicename == "spice_salt" or spicename == "spice_garlic" or spicename == "spice_sugar" then
+		plate.AnimState:OverrideSymbol("swap_garnish", "spices", spicename)
+	elseif spicename == "spice_scallion" or spicename == "spice_watermelon" then
+		plate.AnimState:OverrideSymbol("swap_garnish", "spices_bwb", spicename)
+	elseif spicename == "spice_tf_coffee_powder" then 
+		plate.AnimState:OverrideSymbol("swap_garnish", "nuts_spices", spicename)
+	elseif spicename == "spice_lotus" then 
+		plate.AnimState:OverrideSymbol("swap_garnish", "newspices", spicename)
+	elseif spicename == "spice_caffeinpepper" then 
+		plate.AnimState:OverrideSymbol("swap_garnish", "water_spice", spicename)
+	else
+		plate.AnimState:OverrideSymbol("swap_garnish", "spices_more", spicename)
+	end
+	plate.entity:SetParent(weapon.entity)
+	weapon.spiceplate = plate
+	
+	if weapon.components.weapon == nil then -- 理论是几乎不可能的情况，但还是预防一下
+	    return
+	end
+
+	-- 怕水~
+	if weapon.components.inventoryitemmoisture then
+		weapon:AddTag("canpourwateron")
+		weapon.components.inventoryitemmoisture:SetOnMoistureDeltaCallback(function(inst) 
+			if inst.components.inventoryitem and inst.components.inventoryitem:IsWet() then
+				local skin_name = GetSafeSkinName(inst)
+				local skin_id = inst.skin_id
+				
+				local newweapon
+				if skin_name then
+					newweapon = SpawnPrefab(inst.prefab, skin_name, skin_id)
+				else
+					newweapon = SpawnPrefab(inst.prefab)
+				end
+				newweapon:RemoveTag("show_broken_ui") --这个导致的UI会与新鲜度背景冲突，必须删掉 
+				newweapon.warly_blank = true
+				newweapon:AddTag("show_spoilage")
+				newweapon:AddTag("icebox_valid")
+				newweapon:AddTag("warly_blank")
+				newweapon:AddTag("hide_percentage") 
+
+				newweapon:AddComponent("perishable")
+				newweapon.components.perishable:SetPerishTime(1440)
+				newweapon.components.perishable:StartPerishing()
+				newweapon.components.perishable.onperishreplacement = "spoiled_food"
+				
+				if inst.components.perishable then
+					newweapon.components.perishable:SetPercent(inst.components.perishable:GetPercent())
+				end
+					
+				--newweapon.components.inventoryitem:AddMoisture(TUNING.OCEAN_WETNESS*2)
+				
+				-- if newweapon.components.inspectable then
+					-- newweapon.components.inspectable:SetDescription("肉做的仿品，撑不了多久。")
+				-- end
+				
+				if newweapon.components.eater then -- 诸如恐怖盾牌这类的移除进食能力
+					newweapon:RemoveComponent("eater")
+				end
+				
+				if newweapon.components.edible == nil then  -- 会被部分生物炫了
+					newweapon:AddComponent("edible")
+					newweapon.components.edible.foodtype = FOODTYPE.HORRIBLE
+				end
+				
+				if inst.prefab == "shadow_battleaxe" and inst.level then -- 暗影槌继承等级
+					newweapon:SetLevel(inst.level)
+				end
+				
+				-- 继承肉松修复次数
+				newweapon.rousong_fixcount = inst.rousong_fixcount or 0
+				if newweapon.rousong_fixcount > 5 then
+					newweapon.rousong_punish = true
+					newweapon:AddTag("rousong_punish")
+				end
+				
+				newweapon:AddComponent("cookable")
+				newweapon.components.cookable.product = "cookedmeat"
+				
+				if inst.components.inventoryitem.owner then
+				    if inst.components.inventoryitem.owner.components.inventory then
+					    inst.components.inventoryitem.owner.components.inventory:GiveItem(newweapon)
+					elseif inst.components.inventoryitem.owner.components.container then
+					    inst.components.inventoryitem.owner.components.container:GiveItem(newweapon)
+					end
+				else
+					newweapon.Transform:SetPosition(inst.Transform:GetWorldPosition())
+					SpawnPrefab("wurt_water_splash_1").Transform:SetPosition(inst.Transform:GetWorldPosition())
+				end
+				
+				inst:Remove()
+			end
+		end)
+	end
+	
+    if weapon.spicetex == "spice_chili_over.tex" then 
+	    weapon:AddTag("weapon_chili")
+		if type(weapon.components.weapon.damage) ~= "function" and not weapon:HasTag("PassiveImprovement") then -- 我们至今仍不清楚为什么神人klei要把某些武器的damage写成一个函数
+			if weapon.components.planardamage then -- 对于有位面伤害的武器，提高8.5点位面伤害而非物理伤害
+				weapon.components.planardamage.basedamage = weapon.components.planardamage.basedamage + 8.5
+			else
+				weapon.components.weapon.damage = weapon.components.weapon.damage + 8.5
+			end
+		else
+			local original_dmg = weapon.components.weapon.damage  
+			weapon.components.weapon.damage = function(...)        
+				return original_dmg(...) + 8.5
+			end
+		end
+		local oldfn = weapon.components.weapon.onattack
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			local x, y, z = target.Transform:GetWorldPosition()
+			local oldpepperfx = TheSim:FindEntities(x, 0, z, 1, {"pepperfx"})[1]
+			if oldpepperfx then
+				oldpepperfx.AnimState:PlayAnimation(oldpepperfx.trailname.."_pst")
+				oldpepperfx:DoTaskInTime(0.25,function() oldpepperfx:Remove() end)
+			end
+			local fx = SpawnPrefab("honey_trail")	
+			if fx then
+				fx.task:Cancel()
+				fx:AddTag("pepperfx")
+				fx.Transform:SetPosition(x, 0, z)
+				local rand = math.random(3)
+				local scale = GetRandomMinMax(1.5, 1.5)
+				fx.Transform:SetScale(scale, scale, scale)
+				fx.trailname = "trail"..tostring(rand)
+				fx.SoundEmitter:PlaySound("dontstarve/creatures/together/bee_queen/honey_drip")
+				fx.AnimState:PlayAnimation(fx.trailname.."_pre")
+				fx.AnimState:SetMultColour(200/255, 45/255, 45/255, 1)
+				fx:ListenForEvent("animover", function(fx)
+					if fx.AnimState:IsCurrentAnimation(fx.trailname.."_pre") then
+						fx.AnimState:PlayAnimation(fx.trailname)
+						fx:DoTaskInTime(30, function(fx)
+							fx.AnimState:PlayAnimation(fx.trailname.."_pst")
+							fx._isfading:set(true)
+							if fx.task then fx.task:Cancel() end
+						end)
+					elseif fx.AnimState:IsCurrentAnimation(fx.trailname.."_pst") then
+						fx:Remove()
+					end
+				end)
+				fx.task = fx:DoPeriodicTask(0.2, function()
+					for i, v in ipairs(TheSim:FindEntities(x, y, z, scale+1, {"_health", "_combat"}, {"wall", "abigail", "companion", "player", "notarget", "playerghost", "INLIMBO"})) do
+						if v.components.health and not v.components.health:IsDead() then
+							v.components.health:DoDelta(-0.75)
+							if not v.components.locomotor then
+					            v.components.health:DoDelta(-1.5)
+					        end							
+							if v.Chili_OnAttackFXCD == nil then
+								local fire = SpawnPrefab("deer_fire_burst")
+								fire.Transform:SetPosition(v.Transform:GetWorldPosition())
+								fire.Transform:SetScale(0.75, 0.75, 0.75)
+								if fire.AnimState then
+									fire.AnimState:SetMultColour(200/255, 45/255, 45/255, 1)
+								end
+								v.Chili_OnAttackFXCD = v:DoTaskInTime(0.2, function() 
+									if v then 
+										v.Chili_OnAttackFXCD = nil 
+									end
+								end)
+							end
+						end
+					end
+				end)
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end		
+		
+	elseif weapon.spicetex == "spice_sugar_over.tex" then
+        weapon:AddTag("weapon_sugar")
+		if weapon.components.tool then
+			for k, v in pairs(weapon.components.tool.actions) do
+				weapon.components.tool.actions[k] = v * 1.5
+			end
+		end
+		local oldfn = weapon.components.weapon and weapon.components.weapon.onattack or nil
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			local x, y, z = target.Transform:GetWorldPosition()
+			local oldhoneyfx = TheSim:FindEntities(x, 0, z, 1, {"honeyfx"})[1]
+			if oldhoneyfx then
+				oldhoneyfx.AnimState:PlayAnimation(oldhoneyfx.trailname.."_pst")
+				oldhoneyfx:DoTaskInTime(0.25,function() oldhoneyfx:Remove() end)
+			end
+			local fx = SpawnPrefab("honey_trail")	
+			if fx then
+				fx.task:Cancel()
+				fx:AddTag("honeyfx")
+				fx.Transform:SetPosition(x, 0, z)
+				local rand = math.random(3)
+				local scale = GetRandomMinMax(1, 1.5)
+				fx.Transform:SetScale(scale, scale, scale)
+				fx.trailname = "trail"..tostring(rand)
+				fx.SoundEmitter:PlaySound("dontstarve/creatures/together/bee_queen/honey_drip")
+				fx.AnimState:PlayAnimation(fx.trailname.."_pre")
+				fx:ListenForEvent("animover", function(fx)
+					if fx.AnimState:IsCurrentAnimation(fx.trailname.."_pre") then
+						fx.AnimState:PlayAnimation(fx.trailname)
+						fx:DoTaskInTime(6, function(fx)
+							fx.AnimState:PlayAnimation(fx.trailname.."_pst")
+							fx._isfading:set(true)
+							if fx.task then fx.task:Cancel() end
+						end)
+					elseif fx.AnimState:IsCurrentAnimation(fx.trailname.."_pst") then
+						fx:Remove()
+					end
+				end)
+				fx.task = fx:DoPeriodicTask(0, function()
+					for i, v in ipairs(TheSim:FindEntities(x, y, z, scale+1, {"locomotor"}, {"flying","player", "playerghost", "INLIMBO"})) do
+						if v.components.locomotor ~= nil then
+							v.components.locomotor:PushTempGroundSpeedMultiplier(0.15, WORLD_TILES.MUD)
+						end
+					end
+				end)
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end	
+		
+    elseif weapon.spicetex == "spice_garlic_over.tex" then	
+	    weapon:AddTag("weapon_garlic")
+		
+		local oldfn = weapon.components.weapon.onattack
+		if weapon.components.armor == nil then
+		    weapon:AddComponent("armor") 
+		    weapon.components.armor.absorb_percent = 0.25
+		    weapon.components.armor.indestructible = true
+		else -- 对于已有防御属性的手持装备，提高25%减伤能力（0.25+0.75X）由 1−(1−A)×(1−0.25) 化简而来
+            weapon.components.armor.absorb_percent = weapon.components.armor.absorb_percent and 0.25 + (0.75 * weapon.components.armor.absorb_percent) or 0.25
+		end
+		
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			if target.components.combat then
+				local isBat = target.prefab:find("bat") and target.prefab ~= "malbatross"
+				local isShadow = target:HasTag("ghost") or target:HasTag("shadow") or target:HasTag("shadowminion") or target:HasTag("shadowchesspiece") or target:HasTag("stalker") or target:HasTag("stalkerminion")
+				if isBat or isShadow then
+					if target.components.health and not target.components.health:IsDead() then
+						local damage = isBat and 275 or 17
+						target.components.combat:GetAttacked(owner, damage, nil)
+						if isShadow and target.Garlic_OnAttackHitCD == nil and target.prefab ~= "ancient_trepidation" and target.prefab ~= "creepingfear" and not target:HasTag("epic") and target.sg and target.sg:HasState("hit") then
+						   target.sg:GoToState("hit") --强制硬直
+						   target.Garlic_OnAttackHitCD = target:DoTaskInTime(1.5, function() target.Garlic_OnAttackHitCD = nil end)
+						end
+					end
+					AddFX("garlic_attack_fx", 1, owner, target)
+				end
+			end
+			if oldfn then
+				oldfn(inst, owner, target)
+			end
+		end
+		
+    elseif weapon.spicetex == "spice_salt_over.tex" then	
+	    weapon:AddTag("weapon_salt")
+		
+		local oldfn = weapon.components.weapon.onattack
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			if target.components.health and not target.components.health:IsDead() and target.components.combat and target.components.health:GetPercent() ~= 1 then
+				local dam = (1 - target.components.health:GetPercent()) * 17
+				target.components.combat:GetAttacked(owner, dam)
+				if target.components.explosive then
+					target.components.combat:GetAttacked(owner, 17)
+				end
+				local fxscale = (0.3 + (1 - target.components.health:GetPercent())) * 0.6
+				AddFX("impact", fxscale, owner, target)
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end
+		
+		if weapon.warly_blank_per then
+		    if weapon:HasTag("AllowSeasoning") then
+			    weapon.components.perishable:SetPerishTime(weapon.components.perishable.perishtime * 2)
+			else
+		        weapon.components.perishable:SetPerishTime(2880)
+			end
+			weapon.components.perishable:SetPercent(weapon.warly_blank_per)		
+		end
+		
+    elseif weapon.spicetex == "spice_rousong_super_over.tex" then	
+	    weapon:AddTag("weapon_rousong")
+		weapon:RemoveTag("no_spice_rousong")
+		
+	elseif weapon.spicetex == "spice_danbai_super_over.tex" then
+        weapon:AddTag("weapon_danbai")
+		if type(weapon.components.weapon.damage) ~= "function" then
+			if weapon.components.weapon.damage < 42.5 then
+				weapon.components.weapon.damage = 42.5
+			end
+		else
+			local original_dmg = weapon.components.weapon.damage  
+			weapon.components.weapon.damage = function(...)  
+				return original_dmg(...) < 42.5 and 42.5 or original_dmg(...)
+			end
+		end
+		
+		local oldfn = weapon.components.weapon and weapon.components.weapon.onattack or nil
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+		    if math.random() <= 0.2 and target.components.combat then
+				local damage = owner.components.hunger and math.floor(owner.components.hunger.current/20) or 17
+				target.components.combat:GetAttacked(owner,damage)
+				AddFX("fx_dock_pop", 0.5, owner, target)			    
+			end
+			if oldfn then
+			    oldfn(inst, owner, target)
+			end
+		end
+    elseif weapon.spicetex == "spice_fanqie_super_over.tex" then	
+	    weapon:AddTag("weapon_fanqie")
+		
+		local oldfn = weapon.components.weapon and weapon.components.weapon.onattack or nil
+		weapon.components.weapon.onattack = function(inst, owner, target) 
+			if target.prefab ~= "tentacle_pillar" and target.prefab ~= "abigail" and target.prefab ~= "lureplant" and not target:HasTag("shadow") and not target:HasTag("wall") and not target:HasTag("epic") and target.components.health and target.components.health:IsDead() then
+                target:Hide() -- Bye！Bye！
+				target:DoTaskInTime(0, function() 
+					--AddFX("shadow_merm_smacked_poof_fx", 0.5, owner, target)
+					target.Transform:SetPosition(0,0,0)
+					local AddPerishable = 0.04
+					weapon.components.perishable:SetPercent(weapon.components.perishable:GetPercent() + AddPerishable)
+					owner.SoundEmitter:PlaySound("waterlogged1/common/use_figjam")
+					owner.components.hunger:DoDelta(target.components.health.maxhealth * 0.075)
+					owner.components.health:DoDelta(target.components.health.maxhealth * 0.05, nil, "healthregenbuff_vetcurse")
+			        owner.components.sanity:DoDelta(-target.components.health.maxhealth * 0.05)
+					owner.sg:GoToState("eat")
+					owner.SoundEmitter:PlaySound("dontstarve/wilson/eat", "eating")
+					owner:DoTaskInTime(0.1,function() 
+					    SpawnPrefab("blood_fx").Transform:SetPosition(owner.Transform:GetWorldPosition())					
+					end)
+					owner:DoTaskInTime(0.5,function() owner.SoundEmitter:KillSound("eating") end)
+			    end)
+			end
+			if oldfn then
+
+```
+

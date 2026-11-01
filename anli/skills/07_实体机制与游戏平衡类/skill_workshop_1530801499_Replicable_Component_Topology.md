@@ -11861,3 +11861,31 @@ end)
 
 ```
 
+
+
+### 变体演进：take_amount (Mod 3753606785)
+- **变体场景与切面**：收录来自工坊 Mod 3753606785 (`take_amount`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3753606785)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+--====================================================================
+AddComponentPostInit("playercontroller", function(self)
+    local old_DoCameraControl = self.DoCameraControl
+    function self:DoCameraControl()
+        -- 只在「将要触发拿取」时才屏蔽:鼠标在格子上(hover_slot)+ 滚轮 + 总闸满足(批量也要总闸放行)
+        if not ((TheInput:IsControlPressed(CONTROL_ZOOM_IN) or TheInput:IsControlPressed(CONTROL_ZOOM_OUT))
+                and hover_slot ~= nil and ModifierHeld()) then
+            if old_DoCameraControl ~= nil then
+                old_DoCameraControl(self)
+            end
+        end
+    end
+end)
+
+```
+

@@ -7106,3 +7106,26 @@
 [2026-11-01 13:34:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
 [2026-11-01 13:34:23] Reducer: 成功将 Mod 3747189878 (Mod 3747189878) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 13:34:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:34:31] Git 自动提交并推送成功！
+[2026-11-01 13:34:31] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 13:34:31] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 13:35:01] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3045668614', '3798485532', '3011196821', '375488964', '3753606785', '796637258']
+[2026-11-01 13:35:02] SteamCMD 下载 3045668614 ...
+[2026-11-01 13:35:02] SteamCMD 下载 3798485532 ...
+[2026-11-01 13:35:02] SteamCMD 下载 3011196821 ...
+[2026-11-01 13:35:02] SteamCMD 下载 375488964 ...
+[2026-11-01 13:35:02] SteamCMD 下载 3753606785 ...
+[2026-11-01 13:35:02] SteamCMD 下载 796637258 ...
+[2026-11-01 13:35:54] Worker [3045668614] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 13:37:03] Worker [3798485532] 成功解析入库暂存区 -> 沃利全面重做/Warly Rework (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 13:38:34] Worker [3011196821] 成功解析入库暂存区 -> 斯卡蒂 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 13:39:37] Worker [375488964] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 13:40:55] Worker [3753606785] 成功解析入库暂存区 -> take_amount (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 13:42:07] Worker [796637258] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 13:42:07] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 13:42:07] Reducer: 成功将 Mod 3011196821 (斯卡蒂) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:42:08] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:42:08] Reducer: 成功将 Mod 3753606785 (take_amount) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 13:42:08] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 13:42:08] Reducer: 成功将 Mod 3798485532 (沃利全面重做/Warly Rework) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:42:08] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
