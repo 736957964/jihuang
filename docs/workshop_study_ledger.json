@@ -6375,8 +6375,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 10:00:11",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2911745605",
+      "name": "󰀱 从试金石处无限复活 󰀱",
+      "author": "lofling0",
+      "version": "1.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 10:01:47",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3530041324",
+      "name": "鱼人猎影",
+      "author": "aimaker",
+      "version": "1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 10:01:47",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3756859423",
+      "name": "显示攻击范围 [Display Attack Range]",
+      "author": "水尧云",
+      "version": "26.7.4.5",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 10:01:47",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "3762797019",
+      "name": "Extra Equip Slots (Fixed)",
+      "author": "xVars (fix por local)",
+      "version": "1.8.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:01:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 10:00:11"
+  "lastUpdated": "2026-11-01 10:01:47"
 }

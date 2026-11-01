@@ -723,3 +723,43 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：显示攻击范围 [Display Attack Range] (Mod 3756859423)
+- **变体场景与切面**：收录来自工坊 Mod 3756859423 (`显示攻击范围 [Display Attack Range]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3756859423)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+-- Register postinits
+AddComponentPostInit("combat", function(self, inst)
+    if GLOBAL.TheSim:GetGameID() == "DST" then
+        if GLOBAL.TheWorld.ismastersim then
+            DidCombat(self)
+        end
+    else
+        -- DS single-player
+        DidCombat(self)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:projectile
+
+AddComponentPostInit("projectile", function(self, inst)
+    if not GetModConfigData("Projectile") then return end
+    if GLOBAL.TheSim:GetGameID() == "DST" then
+        if GLOBAL.TheWorld.ismastersim then
+            DidProjectile(self)
+        end
+    else
+        DidProjectile(self)
+    end
+end)
+
+```
+

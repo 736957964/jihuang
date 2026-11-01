@@ -7776,3 +7776,46 @@ AddPrefabPostInit("ruins_statue_mage_nogem", addGemComp)
 
 ```
 
+
+
+### 变体演进：鱼人猎影 (Mod 3530041324)
+- **变体场景与切面**：收录来自工坊 Mod 3530041324 (`鱼人猎影`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3530041324)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:mermking
+-- 单独处理鱼人国王
+AddPrefabPostInit("mermking", function(inst)
+    ConfigureMerm(inst)
+    
+    -- 鱼人国王特殊光环（如果光环功能启用）
+    if MERMKING_AURA_STRENGTH > 0 and inst.components.sanityaura then
+        inst.components.sanityaura.aurafn = function(inst, observer)
+            local base_value = TUNING.SANITYAURA_TINY
+            
+            -- 根据配置设置光环强度
+            if MERMKING_AURA_STRENGTH == 1 then
+                base_value = TUNING.SANITYAURA_SMALL
+            elseif MERMKING_AURA_STRENGTH == 2 then
+                base_value = TUNING.SANITYAURA_MED
+            elseif MERMKING_AURA_STRENGTH == 3 then
+                base_value = TUNING.SANITYAURA_LARGE
+            elseif MERMKING_AURA_STRENGTH == 4 then
+                base_value = TUNING.SANITYAURA_HUGE
+            end
+            
+            -- 鱼人公主专属加成
+            if observer and observer.prefab == "wurt" then
+                return base_value * 2
+            end
+            return base_value
+        end
+    end
+end)
+
+```
+
