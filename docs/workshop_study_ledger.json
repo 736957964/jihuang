@@ -7932,8 +7932,26 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 13:49:56",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2797939615",
+      "name": "常用mod集合",
+      "author": "橙之刃",
+      "version": "2.1.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:51:40",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3753595508",
+      "name": "沃姆伍德 物品栏HUD",
+      "author": "见yi一",
+      "version": "1.0.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:51:40",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:49:56"
+  "lastUpdated": "2026-11-01 13:51:40"
 }

@@ -58375,3 +58375,102 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：常用mod集合 (Mod 2797939615)
+- **变体场景与切面**：收录来自工坊 Mod 2797939615 (`常用mod集合`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2797939615)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:sinkholespawner
+if GetModConfigData("no_antlion_attack") then
+    AddComponentPostInit("sinkholespawner", function(self)
+        OldDoTargetAttack = self.DoTargetAttack
+        function self:DoTargetAttack(targetinfo)
+            targetinfo.pos = nil
+            return OldDoTargetAttack(self, targetinfo)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigking
+if GetModConfigData("pig_no_sleep") then
+    AddPrefabPostInit("pigking", function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+        -- 移除原有的夜晚监听器
+        inst:StopWatchingWorldState("isnight")
+        -- 确保猪王是清醒状态
+        if inst.sg ~= nil then
+            inst.sg.mem.sleeping = false
+            if inst.sg:HasStateTag("sleeping") then
+                inst.sg:GoToState("wake")
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:heatrock
+    GLOBAL.TUNING.HEATROCK_NUMUSES = 99999
+    AddPrefabPostInit("heatrock", function(inst)
+        if inst.components.temperature and myheatstone ~= 0 then
+            inst.components.temperature.inherentinsulation = GLOBAL.TUNING.INSULATION_MED * myheatstone
+            inst.components.temperature.inherentsummerinsulation = GLOBAL.TUNING.INSULATION_MED * myheatstone
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:log
+if safeImport("log_to_charcoal","","原木燃烧变木炭","842821674") then
+    AddPrefabPostInit("log", function(inst)
+        -- 确保实体有 burnable 组件
+        if not inst.components.burnable then
+            inst:AddComponent("burnable")
+        end
+        
+        inst.components.burnable:SetOnBurntFn(function(inst)
+            local charcoal = GLOBAL.SpawnPrefab("charcoal")
+            if inst.components.stackable and charcoal.components.stackable then
+                charcoal.components.stackable:SetStackSize(inst.components.stackable:StackSize())
+            end
+            charcoal.Transform:SetPosition(inst.Transform:GetWorldPosition())
+            inst:Remove()
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+	end	
+	AddPrefabPostInit("world", function(inst)
+		if GLOBAL.TheWorld:HasTag("forest") then
+			noticeTask = GLOBAL.TheWorld:DoPeriodicTask(cleancycle_ultimate - 0.5 * TUNING.TOTAL_DAY_TIME, NoticeTask)
+		end
+		GLOBAL.TheWorld:DoPeriodicTask(cleancycle_ultimate , CleanDelay)
+	end)
+
+```
+
+
+
+### 变体演进：沃姆伍德 物品栏HUD (Mod 3753595508)
+- **变体场景与切面**：收录来自工坊 Mod 3753595508 (`沃姆伍德 物品栏HUD`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3753595508)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+      else
+        AddPrefabPostInit("world", function(inst)
+          inst:ListenForEvent("ms_playerspawn", utils._playeroninit)
+        end)
+
+```
+
