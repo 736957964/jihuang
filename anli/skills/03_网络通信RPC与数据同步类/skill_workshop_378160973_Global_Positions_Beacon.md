@@ -7722,3 +7722,47 @@ end)
 
 ```
 
+
+
+### 变体演进：快速传送与原地复活 | Fast Teleport & Instant Revive (Mod 3727304698)
+- **变体场景与切面**：收录来自工坊 Mod 3727304698 (`快速传送与原地复活 | Fast Teleport & Instant Revive`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3727304698)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    print("[DST Shared Teleport] server_init registered by world prefab")
+    if inst ~= nil and inst.ismastersim and inst.DoTaskInTime ~= nil then
+        inst:DoTaskInTime(0, function(world)
+            try_server_init("world prefab task", world)
+        end)
+    else
+        try_server_init("world prefab", inst)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:skeleton
+-- 1. 让死亡掉落的骨架在黑夜中发出清晰的微光（指引尸体位置并绝对防查理）
+AddPrefabPostInit("skeleton", function(inst)
+    -- 🚨 注意：这里绝对不能加 ismastersim 限制！
+    -- C++ 底层光源必须在服务器（管逻辑防查理）和客户端（管画面渲染）同时初始化，玩家才能看到光圈
+    if inst.Light == nil then
+        inst.entity:AddLight()
+    end
+    
+    inst.Light:Enable(true)
+    inst.Light:SetRadius(4.5)     -- 辐射半径 4.5 码，范围非常清晰
+    inst.Light:SetIntensity(0.8)  -- 中心亮度 0.8
+    inst.Light:SetFalloff(0.45)   -- 完美的平滑衰减，让光线优雅地铺开
+    
+    inst.Light:SetColour(245/255, 165/255, 95/255) -- 温暖明亮的火光色
+end)
+
+```
+

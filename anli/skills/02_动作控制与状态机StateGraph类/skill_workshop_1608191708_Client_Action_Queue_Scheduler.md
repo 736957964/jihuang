@@ -43596,3 +43596,146 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：语言/Language (Mod 3796700387)
+- **变体场景与切面**：收录来自工坊 Mod 3796700387 (`语言/Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3796700387)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+	if not inst.ismastersim then
+		return
+	end
+	inst:AddComponent("retrofitforestmap_ce")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shipwrecked
+
+AddPrefabPostInit("shipwrecked", function(inst)
+	if not inst.ismastersim then
+		return
+	end
+	inst:AddComponent("retrofitforestmap_ce")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+	local old_Equip = self.Equip
+	function self:Equip(item, ...)
+		local prevslot = self:GetItemSlot(item)
+		if IsIronlord(self.inst) and not item:HasTag("heavy") then  -- Can't EQUIP when using Artifact
+			if not prevslot then self:GiveItem(item) end
+			return
+		end
+		return old_Equip(self, item, ...)
+	end
+
+	local old_DropItem = self.DropItem
+	function self:DropItem(item, ...)
+		if not (item and item.components.inventoryitem) then return end
+
+		local owner = item.components.inventoryitem:GetGrandOwner()
+		if IsIronlord(owner) and item.prefab == "ce_living_artifact" and  -- Can't DROP activated Artifact
+			item.components.ironmachine and item.components.ironmachine:IsOn() then
+			return
+		end
+		return old_DropItem(self, item, ...)
+	end
+
+	function self:DropEquipped(keepBackpack)
+		for k, v in pairs(self.equipslots) do
+			local is_genesis_pocket = v ~= nil and v:HasTag("ce_genesis_pocket")
+			if not (keepBackpack and v:HasTag("backpack"))
+				and k ~= EQUIPSLOTS.BEARD -- Wilson's beard_sack
+				and k ~= EQUIPSLOTS.CE_GENESIS_POCKET
+				and not is_genesis_pocket
+			then
+				self:DropItem(v, true, true)
+			end
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+
+AddComponentPostInit("locomotor", function(self)
+	local old_GetSpeedMultiplier = self.GetSpeedMultiplier
+
+	local function ServerGetSpeedMultiplier(self)
+		local mult = old_GetSpeedMultiplier(self)
+		if IsIronlord(self.inst) then
+			local is_mighty = self.inst:HasTag("mightiness_mighty")  -- Prevent double speedup for Wolfgang(mighty)
+			local item = self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
+			if item and item:HasTag("heavy") and not is_mighty then
+				local item_speed_mult = item.components.equippable:GetWalkSpeedMult()
+				mult = mult / item_speed_mult
+			end
+		end
+		return mult
+	end
+
+	local function ClientGetSpeedMultiplier(self)
+		local mult = old_GetSpeedMultiplier(self)
+		if IsIronlord(self.inst) then
+			local is_mighty = self.inst:HasTag("mightiness_mighty")  -- Prevent double speedup for Wolfgang(mighty)
+			local item = self.inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
+			if item and item:HasTag("heavy") and not is_mighty then
+				local item_speed_mult = item.replica.inventoryitem:GetWalkSpeedMult()
+				mult = mult / item_speed_mult
+			end
+		end
+		return mult
+	end
+
+	if GLOBAL.TheWorld.ismastersim then
+		self.GetSpeedMultiplier = ServerGetSpeedMultiplier
+	else
+		self.GetSpeedMultiplier = ClientGetSpeedMultiplier
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:cursable
+
+AddComponentPostInit("cursable", function(self)
+	function self:RemoveMonkeyCurse(dropitems)
+		local curse = "MONKEY"
+		local tag = "monkey_token"
+
+		while true do
+			local item = self.inst.components.inventory:FindItem(function(v) return v:HasTag(tag) end)
+			if not item then break end
+
+			self.inst.components.inventory:ConsumeByName(item.prefab, 1)
+			if dropitems then
+				local newcurse = SpawnPrefab(item.prefab)
+				newcurse.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
+				newcurse.components.inventoryitem:OnDropped(true)
+			end
+		end
+
+		self.curses[curse] = nil
+
+		self.inst.monkeyfeet = nil
+		self.inst.monkeyhands = nil
+		self.inst.monkeytail = nil
+		self.inst.components.skinner:ClearMonkeyCurse()
+		self.inst:RemoveTag("MONKEY_CURSE_1")
+		self.inst:RemoveTag("MONKEY_CURSE_2")
+		self.inst:RemoveTag("MONKEY_CURSE_3")
+	end
+end)
+
+```
+

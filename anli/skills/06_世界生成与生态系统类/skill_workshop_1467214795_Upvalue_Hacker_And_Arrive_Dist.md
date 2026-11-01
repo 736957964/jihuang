@@ -4109,3 +4109,31 @@ end)
 
 ```
 
+
+
+### 变体演进：光影绘卷 / Light & Shadow Scroll (Mod 3772006931)
+- **变体场景与切面**：收录来自工坊 Mod 3772006931 (`光影绘卷 / Light & Shadow Scroll`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3772006931)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+-- 注册world PostInit，监听playeractivated事件获取玩家实体
+AddPrefabPostInit("world", function(inst)
+    if inst.ismastersim then return end
+
+    -- 监听playeractivated事件，事件参数是玩家实体
+    inst:ListenForEvent("playeractivated", function(world, player)
+        if manager_started then return end
+        if player ~= nil and player:IsValid() then
+            manager_started = true
+            StartEffectManager(player)
+        end
+    end)
+end)
+
+```
+

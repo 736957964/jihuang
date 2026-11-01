@@ -7104,8 +7104,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 11:31:04",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3727304698",
+      "name": "快速传送与原地复活 | Fast Teleport & Instant Revive",
+      "author": "Grs",
+      "version": "0.1.31",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 11:35:43",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3772006931",
+      "name": "光影绘卷 / Light & Shadow Scroll",
+      "author": "未知",
+      "version": "2.6",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 11:35:43",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3796700387",
+      "name": "语言/Language",
+      "author": "W",
+      "version": "1.0.1.17",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:35:43",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 11:31:04"
+  "lastUpdated": "2026-11-01 11:35:43"
 }
