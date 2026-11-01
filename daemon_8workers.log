@@ -6403,3 +6403,28 @@
 [2026-11-01 11:11:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 11:11:22] Reducer: 成功将 Mod 3794860312 (xichun_lang) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 11:11:22] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:11:29] Git 自动提交并推送成功！
+[2026-11-01 11:11:29] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 11:11:29] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 11:11:59] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['1488960043', '3022902813', '2633870801', '3785529995', '3112231607', '621384489']
+[2026-11-01 11:11:59] SteamCMD 下载 1488960043 ...
+[2026-11-01 11:11:59] SteamCMD 下载 3022902813 ...
+[2026-11-01 11:11:59] SteamCMD 下载 2633870801 ...
+[2026-11-01 11:11:59] SteamCMD 下载 3785529995 ...
+[2026-11-01 11:11:59] SteamCMD 下载 3112231607 ...
+[2026-11-01 11:11:59] SteamCMD 下载 621384489 ...
+[2026-11-01 11:12:09] Worker [1488960043] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 11:12:33] Worker [3022902813] 成功解析入库暂存区 -> 侏儒的统治（汉化） (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 11:14:08] Worker [2633870801] 成功解析入库暂存区 -> Hallowed Forge (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 11:15:40] Worker [3785529995] 成功解析入库暂存区 -> Kiki (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 11:16:57] Worker [3112231607] 成功解析入库暂存区 -> \233\163\142\230\187\154\232\141\137\230\183\152\230\177\176\232\181\155 (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 11:18:40] Worker [621384489] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 11:18:40] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 11:18:40] Reducer: 成功将 Mod 2633870801 (Hallowed Forge) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:18:40] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:18:40] Reducer: 成功将 Mod 3022902813 (侏儒的统治（汉化）) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:18:40] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:18:40] Reducer: 成功将 Mod 3112231607 (\233\163\142\230\187\154\232\141\137\230\183\152\230\177\176\232\181\155) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 11:18:40] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 11:18:40] Reducer: 成功将 Mod 3785529995 (Kiki) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:18:40] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md

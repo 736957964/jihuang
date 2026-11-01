@@ -41817,3 +41817,205 @@ end)
 
 ```
 
+
+
+### 变体演进：Hallowed Forge (Mod 2633870801)
+- **变体场景与切面**：收录来自工坊 Mod 2633870801 (`Hallowed Forge`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2633870801)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:lavaarena
+
+AddPrefabPostInit("lavaarena",function(inst)
+	if inst.components.lavaarenaevent ~= nil then
+		inst.components.lavaarenaevent:Disable()
+		inst.components.lavaarenaevent.loadrounddata = "forge_rounds/hf_default"
+		inst.components.lavaarenaevent:Enable()
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lavaarena_crowdstand
+
+AddPrefabPostInit("lavaarena_crowdstand",function(inst)
+	inst.teambanner = G.SpawnPrefab("crowdstand_light")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:fueled
+
+AddComponentPostInit("fueled", function(self)
+    function self:AddFuel(doer, amount)
+		local oldsection = self:GetCurrentSection()
+
+        --local wetmult = item:GetIsWet() and TUNING.WET_FUEL_PENALTY or 1 --TODO come up with a way to incorporate wetness
+        local masterymult = doer ~= nil and doer.fueler_mult or 1
+        self:DoDelta(amount * self.bonusmult * masterymult, doer)
+		
+		if self.ontakefuelfn ~= nil then
+            self.ontakefuelfn(self.inst, amount)
+        end
+        self.inst:PushEvent("takefuel", { fuelvalue = amount })		
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+	_CanLightTarget = self.CanLightTarget
+	function self:CanLightTarget(target, weapon)
+		return weapon ~= nil
+			and weapon:HasTag("rangedlighter")
+			and target.components.burnable ~= nil
+			and ((not target.components.burnable:IsBurning()
+			and not target:HasTag("burnt")) or target:HasTag("alwayslightable")) and target.components.fueled
+	end
+end)
+
+```
+
+
+
+### 变体演进：侏儒的统治（汉化） (Mod 3022902813)
+- **变体场景与切面**：收录来自工坊 Mod 3022902813 (`侏儒的统治（汉化）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3022902813)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wearger
+
+AddPrefabPostInit("wearger", function(inst)
+    anim_to_inst[inst.AnimState] = inst
+
+    inst:ListenForEvent("onremove", function()
+        anim_to_inst[inst.AnimState] = nil
+
+        if inst.wearger_lunar_flame then --fx
+            inst.wearger_lunar_flame:Remove()
+            inst.wearger_lunar_flame = nil
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:weerclops
+	AddPrefabPostInit("wearger", MonsterPostInit)
+	AddPrefabPostInit("weerclops", MonsterPostInit)
+	AddPrefabPostInit("wragonfly", MonsterPostInit)
+end
+
+AddMinimapAtlas("images/minimap_runts.xml")
+
+modimport("scripts/strings.lua")
+
+modimport("modmain_actions.lua")
+
+modimport("modmain_stategraphs.lua")
+
+modimport("modmain_jokers.lua")
+--------------------------------------------------------------------------
+	-------------------------- DEERCLOPS --------------------------
+--------------------------------------------------------------------------
+-- Tuning --------------------------------------------------------
+TUNING.WEERCLOPS_SANITYSTART = GetModConfigData("weer_sanitydrainstart")
+TUNING.WEERCLOPS_FREEZING_KILL_TIME = GetModConfigData("weer_freezekill")
+TUNING.WEERCLOPS_OVERHEAT_KILL_TIME = GetModConfigData("weer_hotkill")
+TUNING.WEERCLOPS_STRUCTURE_SANITY = GetModConfigData("weer_sanitybonus")
+TUNING.WEERCLOPS_ICE_RANGE = GetModConfigData("weerclops_ice_range")
+TUNING.WEERCLOPS_OVERHEAT_TEMP = GetModConfigData("weerclops_oheattemp")
+TUNING.WEERCLOPS_FREEZE_POWER = GetModConfigData("weer_freezepower")
+------------------------------------------------------------------
+if GetModConfigData("weerclops_attackstyle") == 1 then
+	AddPrefabPostInit("weerclops", function(inst)
+		inst:AddTag("frozenclaw")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wragonfly
+	AddPrefabPostInit("weerclops", MonsterPostInit)
+	AddPrefabPostInit("wragonfly", MonsterPostInit)
+end
+
+AddMinimapAtlas("images/minimap_runts.xml")
+
+modimport("scripts/strings.lua")
+
+modimport("modmain_actions.lua")
+
+modimport("modmain_stategraphs.lua")
+
+modimport("modmain_jokers.lua")
+--------------------------------------------------------------------------
+	-------------------------- DEERCLOPS --------------------------
+--------------------------------------------------------------------------
+-- Tuning --------------------------------------------------------
+TUNING.WEERCLOPS_SANITYSTART = GetModConfigData("weer_sanitydrainstart")
+TUNING.WEERCLOPS_FREEZING_KILL_TIME = GetModConfigData("weer_freezekill")
+TUNING.WEERCLOPS_OVERHEAT_KILL_TIME = GetModConfigData("weer_hotkill")
+TUNING.WEERCLOPS_STRUCTURE_SANITY = GetModConfigData("weer_sanitybonus")
+TUNING.WEERCLOPS_ICE_RANGE = GetModConfigData("weerclops_ice_range")
+TUNING.WEERCLOPS_OVERHEAT_TEMP = GetModConfigData("weerclops_oheattemp")
+TUNING.WEERCLOPS_FREEZE_POWER = GetModConfigData("weer_freezepower")
+------------------------------------------------------------------
+if GetModConfigData("weerclops_attackstyle") == 1 then
+	AddPrefabPostInit("weerclops", function(inst)
+		inst:AddTag("frozenclaw")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:succulent_potted
+
+AddPrefabPostInit("succulent_potted", WeerSanityPostInit)
+AddPrefabPostInit("pottedfern", WeerSanityPostInit)
+AddPrefabPostInit("wall_hay", WeerSanityPostInit)
+AddPrefabPostInit("fish_box", WeerSanityPostInit)
+AddPrefabPostInit("steeringwheel", WeerSanityPostInit)
+AddPrefabPostInit("wood_chair", WeerSanityPostInit)
+AddPrefabPostInit("wood_stool", WeerSanityPostInit)
+
+function WeerBiggerSanityPostInit(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		inst:AddTag("larger_smashable")
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pottedfern
+AddPrefabPostInit("succulent_potted", WeerSanityPostInit)
+AddPrefabPostInit("pottedfern", WeerSanityPostInit)
+AddPrefabPostInit("wall_hay", WeerSanityPostInit)
+AddPrefabPostInit("fish_box", WeerSanityPostInit)
+AddPrefabPostInit("steeringwheel", WeerSanityPostInit)
+AddPrefabPostInit("wood_chair", WeerSanityPostInit)
+AddPrefabPostInit("wood_stool", WeerSanityPostInit)
+
+function WeerBiggerSanityPostInit(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		inst:AddTag("larger_smashable")
+	end
+end
+
+```
+
+
+
+### 变体演进：Kiki (Mod 3785529995)
+- **变体场景与切面**：收录来自工坊 Mod 3785529995 (`Kiki`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3785529995)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+

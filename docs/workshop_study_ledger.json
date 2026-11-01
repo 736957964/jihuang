@@ -6933,8 +6933,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 11:11:22",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2633870801",
+      "name": "Hallowed Forge",
+      "author": "Leonardo Coxington & GlassArrow",
+      "version": "1.0.95",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:18:40",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3022902813",
+      "name": "侏儒的统治（汉化）",
+      "author": "Goat Slice  汉化：佩奇",
+      "version": "8.31",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:18:40",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3112231607",
+      "name": "\\233\\163\\142\\230\\187\\154\\232\\141\\137\\230\\183\\152\\230\\177\\176\\232\\181\\155",
+      "author": "未知",
+      "version": "2026-9-29",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 11:18:40",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3785529995",
+      "name": "Kiki",
+      "author": "Inserte",
+      "version": "1.0.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:18:40",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 11:11:22"
+  "lastUpdated": "2026-11-01 11:18:40"
 }
