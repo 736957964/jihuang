@@ -7738,3 +7738,41 @@ end)
 
 ```
 
+
+
+### 变体演进：Ancient Statue Gem Names (Mod 2865851895)
+- **变体场景与切面**：收录来自工坊 Mod 2865851895 (`Ancient Statue Gem Names`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2865851895)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:ruins_statue_head
+
+AddPrefabPostInit("ruins_statue_head",       addGemComp)
+AddPrefabPostInit("ruins_statue_head_nogem", addGemComp)
+AddPrefabPostInit("ruins_statue_mage",       addGemComp)
+AddPrefabPostInit("ruins_statue_mage_nogem", addGemComp) 
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruins_statue_head_nogem
+AddPrefabPostInit("ruins_statue_head",       addGemComp)
+AddPrefabPostInit("ruins_statue_head_nogem", addGemComp)
+AddPrefabPostInit("ruins_statue_mage",       addGemComp)
+AddPrefabPostInit("ruins_statue_mage_nogem", addGemComp) 
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruins_statue_mage
+AddPrefabPostInit("ruins_statue_head_nogem", addGemComp)
+AddPrefabPostInit("ruins_statue_mage",       addGemComp)
+AddPrefabPostInit("ruins_statue_mage_nogem", addGemComp) 
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruins_statue_mage_nogem
+AddPrefabPostInit("ruins_statue_mage",       addGemComp)
+AddPrefabPostInit("ruins_statue_mage_nogem", addGemComp) 
+
+```
+

@@ -6366,8 +6366,17 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 09:50:36",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2865851895",
+      "name": "Ancient Statue Gem Names",
+      "author": "ZoomZoomBang",
+      "version": "0.012",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 10:00:11",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 09:50:36"
+  "lastUpdated": "2026-11-01 10:00:11"
 }
