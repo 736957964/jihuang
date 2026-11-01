@@ -63120,3 +63120,803 @@ end)
 
 ```
 
+
+
+### 变体演进：归溟幽灵鲨 (Mod 2981762440)
+- **变体场景与切面**：收录来自工坊 Mod 2981762440 (`归溟幽灵鲨`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2981762440)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:stu
+
+AddPrefabPostInit("stu", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    inst:AddComponent("stu_swim")
+
+    if inst.components.drownable then
+        local _shouldDrown = inst.components.drownable.ShouldDrown
+        inst.components.drownable.ShouldDrown = function(self)
+            if inst.components.stu_swim and inst.components.stu_swim.can_swim == true then
+                return false
+            end
+            return _shouldDrown(self)
+        end
+    end
+
+    local _calcDamage = inst.components.combat.CalcDamage
+    inst.components.combat.CalcDamage = function(self, target, weapon, multiplier)
+        local damage, spdamage = _calcDamage(self, target, weapon, multiplier)
+        if target and target:HasTag("epic") then
+            damage = damage * 1.2
+
+            if inst.sketch_learn_num > 0 and inst:HasTag("stu_skill4_1") then
+                local mult = 1 + (inst.sketch_learn_num * 0.02)
+                damage = damage * mult
+            end
+        end
+
+        if TUNING.SKD_HEALTH then
+            if HasPacket() then
+                damage = damage * 1.24
+            else
+                damage = damage * 1.16
+            end
+        end
+
+        return damage, spdamage
+    end
+
+    local _getAttacked = inst.components.combat.GetAttacked
+    inst.components.combat.GetAttacked = function(self, attacker, damage, weapon, stimuli, spdamage)
+        if damage > 0 then
+            if inst.sp_level == 0 then
+                damage = damage * 1.2
+            elseif inst.sp_level == 1 then
+                damage = damage * 1.1
+            end
+
+            if inst:HasTag("stu_skill7_2") and TheWorld.state.moonphase
+                and (TheWorld.state.isnight or TheWorld.state.iscavenight) then
+                damage = damage * lightstates[TheWorld.state.moonphase].armor
+            end
+
+            if inst:HasTag("stu_skill3_1") then
+                damage = damage - 2
+
+                if damage < 0 then
+                    damage = 0
+                end
+            end
+        end
+
+        return _getAttacked(self, attacker, damage, weapon, stimuli, spdamage)
+    end
+
+    local _getHealth = inst.components.health.DoDelta
+    inst.components.health.DoDelta = function(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+        if amount < 0 then
+            local mult = (inst.components.inventory:EquipHasTag("stu_amulet1_3") and 0.25)
+                or (inst.components.inventory:EquipHasTag("stu_amulet1_2") and 0.33)
+                or (inst.components.inventory:EquipHasTag("stu_amulet1_1") and 0.4)
+                or 0.5
+            if inst.components.sanity.current >= -(amount * (1 - mult)) then
+                --print(mult)
+                --print("扣除的精神 = "..amount * (1 - mult))
+                inst.components.sanity:DoDelta(amount * (1 - mult))
+                amount = amount * mult
+                --print("受到的伤害为"..amount)
+                --print(amount)
+            end
+        end
+
+        if (self.currenthealth + amount) <= 0 then
+            --print("即将死亡")
+            local Skill2_Buff = inst.components.timer ~= nil and (inst.components.timer:GetTimeLeft("Stu_Skill2") or 0) or
+                nil
+            if (Skill2_Buff ~= nil and Skill2_Buff > 0) or inst.skill2_wd_task then
+                --print("触发不死")
+                amount = 0
+                self.currenthealth = 1
+            end
+        end
+
+        return _getHealth(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+    end
+
+    local _getSanity = inst.components.sanity.DoDelta
+    inst.components.sanity.DoDelta = function(self, delta, overtime)
+        if (self.current + delta) <= self.max * 0.3 then
+            local Skill2_Buff = inst.components.timer ~= nil and (inst.components.timer:GetTimeLeft("Stu_Skill2") or 0) or
+                nil
+            if Skill2_Buff ~= nil and Skill2_Buff > 0 then
+                delta = 0
+                self.current = self.max * 0.3
+            end
+        end
+
+        return _getSanity(self, delta, overtime)
+    end
+
+    local _OldEat = inst.components.eater.Eat
+    inst.components.eater.Eat = function(self, food, feeder)
+        if food and not food:HasTag("preparedfood") and food.components.edible and food.components.edible.sanityvalue > 0 then
+            self.sanityabsorption = 0
+
+            inst.deltask = inst:DoTaskInTime(0, function()
+                self.sanityabsorption = 1
+                if inst.deltask then
+                    inst.deltask:Cancel()
+                    inst.deltask = nil
+                end
+            end)
+        end
+
+        return _OldEat(self, food, feeder)
+    end
+
+    inst.components.cursable.ApplyCurse = function(s, it, cur, ...)
+        if it and it:AddTag("applied_curse") then
+            it:RemoveTag("applied_curse")
+        end
+
+        if it.components.curseditem then
+            it.components.curseditem.target = nil
+        end
+
+        if it.findplayertask then
+            it.findplayertask:Cancel()
+            it.findplayertask = nil
+        end
+    end
+
+    inst.components.cursable.ForceOntoOwner = function(self, item, ...)
+        if item then
+            item.target = nil
+
+            if item.components.curseditem then
+                item.components.curseditem.target = nil
+                item:StartUpdatingComponent(item.components.curseditem)
+            end
+
+            if item.findplayertask then
+                item.findplayertask:Cancel()
+                item.findplayertask = nil
+            end
+        end
+    end
+end)
+
+local function OnDoAtk(inst, weapon, target)
+    if target and target:IsVlaid() and target.components.freezable
+        and weapon and weawpon.prefab == "spear" then
+        target.components.freezable:DoFree(true, 5)
+    end
+end
+
+local Trade_List = { "deerclops_eyeball", "armorwood", "armor_sanity", "armorruins" }
+
+for k, v in pairs(Trade_List) do
+    AddPrefabPostInit(v, function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+
+        if inst.components.tradable == nil then
+            inst:AddComponent("tradable")
+        end
+    end)
+end
+
+local function nohitsg(sg)
+    local old_knockback = sg.events['knockback'].fn
+    sg.events['knockback'] = EventHandler('knockback', function(inst, data, ...)
+        if inst.prefab == "stu" and inst:HasTag("is_ghosted") and not (data and data.knocker and (data.knocker:HasTag("shadowthrall") or data.knocker.prefab == "worm_boss" or data.knocker.prefab == "gelblob")) then
+            return
+        end
+
+        old_knockback(inst, data, ...)
+    end)
+
+    local old_onattacked = sg.events['attacked'].fn
+    sg.events['attacked'] = EventHandler('attacked', function(inst, data, ...)
+        if inst.prefab == "stu" and inst:HasTag("is_ghosted") and not (data and data.knocker and (data.knocker:HasTag("shadowthrall") or data.knocker.prefab == "worm_boss" or data.knocker.prefab == "gelblob")) then
+            return
+        end
+
+        old_onattacked(inst, data, ...)
+    end)
+end
+
+AddStategraphPostInit("wilson", nohitsg)
+
+
+AddComponentPostInit("moisture", function(self)
+    local OldOnUpdate = self.OnUpdate
+    function self:OnUpdate(dt, ...)
+        if self.inst:HasTag("stu") and self.inst.components.drownable and self.inst.components.drownable:IsOverWater()
+            and self.inst.components.stu_swim and self.inst.components.stu_swim.can_swim == true then
+            self.ratescale = RATE_SCALE.INCREASE_HIGH
+            return
+        end
+        return OldOnUpdate(self, dt, ...)
+    end
+end)
+
+AddComponentPostInit("curseditem", function(self)
+    local oldOnUpdate = self.OnUpdate
+    function self:OnUpdate(dt, ...)
+        if self.target and self.target.prefab == "stu" then
+            return
+        end
+        return oldOnUpdate(self, dt, ...)
+    end
+end)
+
+AddComponentPostInit("locomotor", function(self)
+    local oldGetRunSpeed = self.GetRunSpeed
+    function self:GetRunSpeed(...)
+        if self.inst:HasTag("is_ghosted") and self.inst.replica.inventory then
+            local speed = (self.inst.replica.inventory:EquipHasTag("stu_amulet1_3") and 6)
+                or (self.inst.replica.inventory:EquipHasTag("stu_amulet1_2") and 5)
+                or (self.inst.replica.inventory:EquipHasTag("stu_amulet1_1") and 4)
+                or 3
+            return speed
+        end
+        return oldGetRunSpeed(self, ...)
+    end
+
+    local _OldSetExternalSpeedMultiplier = self.SetExternalSpeedMultiplier
+    function self:SetExternalSpeedMultiplier(source, key, m, ...)
+        if self.inst:HasTag("stu") and self.inst:HasTag("stu_skill2_1")
+            and m and m < 1 then
+            m = 1
+        end
+        return _OldSetExternalSpeedMultiplier(self, source, key, m, ...)
+    end
+
+    local _OldPushAction = self.PushAction
+    function self:PushAction(bufferedaction, run, try_instant, ...)
+        if self.inst:HasTag("stu") and self.inst:HasTag("is_ghosted")
+            and bufferedaction and bufferedaction.action and bufferedaction.action ~= ACTIONS.WALKTO then
+            return
+        end
+        return _OldPushAction(self, bufferedaction, run, try_instant, ...)
+    end
+
+    local _OldPreviewAction = self.PreviewAction
+    function self:PreviewAction(bufferedaction, run, try_instant, ...)
+        if self.inst:HasTag("stu") and self.inst:HasTag("is_ghosted")
+            and bufferedaction and bufferedaction.action and bufferedaction.action ~= ACTIONS.WALKTO then
+            return
+        end
+        return _OldPreviewAction(self, bufferedaction, run, try_instant, ...)
+    end
+end)
+
+local function HookComponent(name, fn)
+    fn(require("components/" .. name))
+end
+
+HookComponent("inventoryitem_replica", function(InventoryItem)
+    local Old_GetWalkSpeedMult = InventoryItem.GetWalkSpeedMult
+    InventoryItem.GetWalkSpeedMult = function(self, ...)
+        local Speed_Mult = Old_GetWalkSpeedMult(self, ...)
+        if ThePlayer and ThePlayer:HasTag("stu_skill2_1") and Speed_Mult < 1 then
+            return 1
+        end
+        return Old_GetWalkSpeedMult(self, ...)
+    end
+end)
+
+AddComponentPostInit("equippable", function(self)
+    local _OldGetWalkSpeedMult = self.GetWalkSpeedMult
+    function self:GetWalkSpeedMult(...)
+        local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner or nil
+        if owner and owner:HasTag("stu_skill2_1") and self.walkspeedmult and self.walkspeedmult < 1 then
+            return 1
+        end
+
+        return _OldGetWalkSpeedMult(self, ...)
+    end
+end)
+
+---略略略
+local canequippedhats = {
+    purpleamulet = true,
+    skeletonhat = true,
+}
+
+AddComponentPostInit("equippable", function(self)
+    local old = self.IsRestricted
+    function self:IsRestricted(target)
+        if target and target.prefab == "stu" and not target:HasTag("stu_skill7_3") and canequippedhats[self.inst.prefab] == true then
+            return true
+        end
+        return old(self, target)
+    end
+end)
+
+AddClassPostConstruct("components/equippable_replica", function(self, inst)
+    local old_IsRestricted = self.IsRestricted
+    function self:IsRestricted(target)
+        if target and target.prefab == "stu" and not target:HasTag("stu_skill7_3") and canequippedhats[self.inst.prefab] == true then
+            return true
+        end
+        return old_IsRestricted(self, target)
+    end
+end)
+
+local function noknockbacksg(sg)
+    local old_onknockback = sg.events['knockback'].fn
+    sg.events['knockback'] = EventHandler('knockback', function(inst, data, ...)
+        if inst:HasTag("stu_skill2_3") then
+            return
+        end
+        old_onknockback(inst, data, ...)
+    end)
+end
+
+AddStategraphPostInit("wilson", noknockbacksg)
+
+local function Makeitem(sg)
+    local old_handler = sg.actionhandlers[ACTIONS.PICK].deststate
+    sg.actionhandlers[ACTIONS.PICK].deststate = function(inst, action)
+        local target = action ~= nil and action.target or nil
+        if target ~= nil and target:HasTag("noquickpick") then
+            return old_handler(inst, action)
+        end
+        if inst:HasTag("stu_skill3_2") then
+            return "doshortaction"
+        else
+            return old_handler(inst, action)
+        end
+    end
+
+    local oldbuild_handler = sg.actionhandlers[ACTIONS.BUILD].deststate
+    sg.actionhandlers[ACTIONS.BUILD].deststate = function(inst, action)
+        if inst:HasTag("stu_skill3_3") then
+            return "doshortaction"
+        else
+            return oldbuild_handler(inst, action)
+        end
+    end
+end
+
+AddStategraphPostInit("wilson", Makeitem)
+AddStategraphPostInit("wilson_client", Makeitem)
+
+AddComponentAction("INVENTORY", "erasablepaper", function(inst, doer, actions)
+    if inst.prefab == "sketch" and doer and doer.prefab == "stu" and doer:HasTag("stu_skill4_1") then
+        table.insert(actions, ACTIONS.TEACH)
+    end
+end)
+
+AddComponentAction("USEITEM", "inspectable", function(inst, doer, target, actions, right)
+    if inst and inst.prefab == "flint" and target and target.prefab == "stu_hat" then
+        table.insert(actions, ACTIONS.GIVE)
+    end
+end)
+
+local Old_TeachFn = ACTIONS.TEACH.fn
+ACTIONS.TEACH.fn = function(act)
+    if act.invobject and act.invobject.prefab == "sketch" and act.invobject.components.named.name and act.doer and act.doer.prefab == "stu" then
+        if act.doer.sketch_learn[act.invobject.components.named.name] == nil then
+            act.doer.sketch_learn[act.invobject.components.named.name] = true
+            act.doer:PushEvent("learnrecipe", { teacher = act.invobject, recipe = nil })
+
+            act.doer.sketch_learn_num = act.doer.sketch_learn_num + 1
+            act.invobject:Remove()
+            return true
+        else
+            act.doer.components.talker:Say("已经学习过了.")
+        end
+        return true
+    else
+        return Old_TeachFn(act)
+    end
+end
+
+local stu_skill = require("widgets/stu_skill")
+AddClassPostConstruct("widgets/controls", function(self)
+    if self.owner and self.owner:HasTag("stu") then
+        self.stu_skill_image = self:AddChild(stu_skill(self.owner))
+        self.stu_skill_image:SetVAnchor(2)
+        self.stu_skill_image:SetHAnchor(1)
+        self.stu_skill_image:SetPosition(0, 0)
+        self.stu_skill_image:Show()
+    end
+end)
+
+
+GLOBAL.setmetatable(env, { __index = function(t, k) return GLOBAL.rawget(GLOBAL, k) end })
+
+AddStategraphPostInit("wilson", function(sg)
+    sg.states["stu_jab_atk"] = State {
+        name = "stu_jab_atk",
+        tags = { "attack", "notalking", "abouttoattack", "autopredict" },
+        onenter = function(inst)
+            if inst.components.combat:InCooldown() then
+                inst.sg:RemoveStateTag("abouttoattack")
+                inst:ClearBufferedAction()
+                if not inst.sg:HasStateTag("dead") then
+                    inst.sg:GoToState("idle")
+                end
+                return
+            end
+
+            inst.components.locomotor:Stop()
+            inst.AnimState:PlayAnimation("spearjab_pre")
+            inst.AnimState:PushAnimation("spearjab", false)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_whoosh", nil, nil, true)
+
+            local buffaction = inst:GetBufferedAction()
+            local target = buffaction ~= nil and buffaction.target or nil
+
+            if buffaction then
+                local target = buffaction.target or nil
+                inst.components.combat:SetTarget(target)
+                inst.components.combat:StartAttack()
+                inst.sg.statemem.target = target
+            end
+        end,
+
+        timeline =
+        {
+            TimeEvent(6 * FRAMES, function(inst)
+                inst:PerformBufferedAction()
+                inst.sg:RemoveStateTag("abouttoattack")
+            end),
+
+            TimeEvent(12 * FRAMES, function(inst)
+                inst.sg:GoToState("idle", true)
+            end),
+        },
+
+        onexit = function(inst)
+            inst.components.combat:SetTarget(nil)
+            if inst.sg:HasStateTag("abouttoattack") then
+                inst.components.combat:CancelAttack()
+            end
+        end,
+
+        events =
+        {
+            EventHandler("equip", function(inst)
+                if not inst.sg:HasStateTag("dead") then
+                    inst.sg:GoToState("idle")
+                end
+            end),
+            EventHandler("unequip", function(inst)
+                if not inst.sg:HasStateTag("dead") then
+                    inst.sg:GoToState("idle")
+                end
+            end),
+            EventHandler("animqueueover", function(inst)
+                if inst.AnimState:AnimDone() then
+                    if not inst.sg:HasStateTag("dead") then
+                        inst.sg:GoToState("idle")
+                    end
+                end
+            end),
+        },
+    }
+end)
+
+AddStategraphPostInit("wilson_client", function(sg)
+    sg.states["stu_jab_atk"] = State {
+        name = "stu_jab_atk",
+        tags = { "attack", "notalking", "abouttoattack" },
+        server_states = { "stu_jab_atk" },
+        onenter = function(inst)
+            local combat = inst.replica.combat
+            if combat:InCooldown() then
+                inst.sg:RemoveStateTag("abouttoattack")
+                inst:ClearBufferedAction()
+                if not inst.sg:HasStateTag("dead") then
+                    inst.sg:GoToState("idle", true)
+                end
+                return
+            end
+
+            combat:StartAttack()
+            inst.components.locomotor:Stop()
+            inst.AnimState:PlayAnimation("spearjab_pre")
+            inst.AnimState:PushAnimation("spearjab", false)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_whoosh", nil, nil, true)
+
+            local buffaction = inst:GetBufferedAction()
+            if buffaction ~= nil then
+                inst:PerformPreviewBufferedAction()
+
+                if buffaction.target ~= nil and buffaction.target:IsValid() then
+                    inst:FacePoint(buffaction.target:GetPosition())
+                    inst.sg.statemem.attacktarget = buffaction.target
+                    inst.sg.statemem.retarget = buffaction.target
+                end
+            end
+            inst.AnimState:SetDeltaTimeMultiplier(1.5) --动画播放速度倍数，此处为2倍
+            inst.sg:SetTimeout(12 * FRAMES)
+        end,
+
+        ontimeout = function(inst)
+            inst:ClearBufferedAction()
+            if not inst.sg:HasStateTag("dead") then
+                inst.sg:GoToState("idle")
+            end
+            inst.AnimState:SetDeltaTimeMultiplier(1) --动画播放速度倍数，此处为1倍
+        end,
+    }
+end)
+
+
+AddStategraphPostInit("wilson", function(sg)
+    local oldStstate = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
+        local item = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        local Skill2_Buff = inst.components.timer ~= nil and (inst.components.timer:GetTimeLeft("Stu_Skill2") or 0) or
+            nil
+        local Skill3_Buff = inst.components.timer ~= nil and (inst.components.timer:GetTimeLeft("Stu_Skill3") or 0) or
+            nil
+        if item and item:HasTag("stu_chainsaw") and item:HasTag("jab") and (Skill2_Buff and Skill2_Buff > 0) and (not Skill3_Buff or Skill3_Buff <= 0)
+            and not (inst.components.rider and inst.components.rider:IsRiding()) then
+            return "stu_jab_atk"
+        end
+        return oldStstate(inst, action)
+    end
+end)
+
+AddStategraphPostInit("wilson_client", function(sg)
+    local oldStstate = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
+        local item = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        local Skill2_Buff = inst._skill2_Time ~= nil and inst._skill2_Time:value() or 0
+        local Skill3_Buff = inst._skill3_Time ~= nil and inst._skill3_Time:value() or 0
+        if item and item:HasTag("stu_chainsaw") and item:HasTag("jab") and (Skill2_Buff and Skill2_Buff > 0) and (not Skill3_Buff or Skill3_Buff <= 0)
+            and not (inst.components.rider and inst.components.rider:IsRiding()) then
+            return "stu_jab_atk"
+        end
+        return oldStstate(inst, action)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", nohitsg)
+
+
+AddComponentPostInit("moisture", function(self)
+    local OldOnUpdate = self.OnUpdate
+    function self:OnUpdate(dt, ...)
+        if self.inst:HasTag("stu") and self.inst.components.drownable and self.inst.components.drownable:IsOverWater()
+            and self.inst.components.stu_swim and self.inst.components.stu_swim.can_swim == true then
+            self.ratescale = RATE_SCALE.INCREASE_HIGH
+            return
+        end
+        return OldOnUpdate(self, dt, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:moisture
+
+AddComponentPostInit("moisture", function(self)
+    local OldOnUpdate = self.OnUpdate
+    function self:OnUpdate(dt, ...)
+        if self.inst:HasTag("stu") and self.inst.components.drownable and self.inst.components.drownable:IsOverWater()
+            and self.inst.components.stu_swim and self.inst.components.stu_swim.can_swim == true then
+            self.ratescale = RATE_SCALE.INCREASE_HIGH
+            return
+        end
+        return OldOnUpdate(self, dt, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:curseditem
+
+AddComponentPostInit("curseditem", function(self)
+    local oldOnUpdate = self.OnUpdate
+    function self:OnUpdate(dt, ...)
+        if self.target and self.target.prefab == "stu" then
+            return
+        end
+        return oldOnUpdate(self, dt, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+
+AddComponentPostInit("locomotor", function(self)
+    local oldGetRunSpeed = self.GetRunSpeed
+    function self:GetRunSpeed(...)
+        if self.inst:HasTag("is_ghosted") and self.inst.replica.inventory then
+            local speed = (self.inst.replica.inventory:EquipHasTag("stu_amulet1_3") and 6)
+                or (self.inst.replica.inventory:EquipHasTag("stu_amulet1_2") and 5)
+                or (self.inst.replica.inventory:EquipHasTag("stu_amulet1_1") and 4)
+                or 3
+            return speed
+        end
+        return oldGetRunSpeed(self, ...)
+    end
+
+    local _OldSetExternalSpeedMultiplier = self.SetExternalSpeedMultiplier
+    function self:SetExternalSpeedMultiplier(source, key, m, ...)
+        if self.inst:HasTag("stu") and self.inst:HasTag("stu_skill2_1")
+            and m and m < 1 then
+            m = 1
+        end
+        return _OldSetExternalSpeedMultiplier(self, source, key, m, ...)
+    end
+
+    local _OldPushAction = self.PushAction
+    function self:PushAction(bufferedaction, run, try_instant, ...)
+        if self.inst:HasTag("stu") and self.inst:HasTag("is_ghosted")
+            and bufferedaction and bufferedaction.action and bufferedaction.action ~= ACTIONS.WALKTO then
+            return
+        end
+        return _OldPushAction(self, bufferedaction, run, try_instant, ...)
+    end
+
+    local _OldPreviewAction = self.PreviewAction
+    function self:PreviewAction(bufferedaction, run, try_instant, ...)
+        if self.inst:HasTag("stu") and self.inst:HasTag("is_ghosted")
+            and bufferedaction and bufferedaction.action and bufferedaction.action ~= ACTIONS.WALKTO then
+            return
+        end
+        return _OldPreviewAction(self, bufferedaction, run, try_instant, ...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：芒伊木 (Mod 3027486043)
+- **变体场景与切面**：收录来自工坊 Mod 3027486043 (`芒伊木`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3027486043)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:mem
+
+AddPrefabPostInit("mem", function(inst)
+	inst:DoTaskInTime(0, function()
+		if not IsServer then
+			if inst.replica.builder then
+				local old_HasCharacterIngredient = inst.replica.builder.HasCharacterIngredient
+				inst.replica.builder.HasCharacterIngredient = function(self, ingredient, ...)
+					if ingredient.type == CHARACTER_INGREDIENT.MEM_SOUL then
+						local current = math.ceil(inst._mem_soul:value())
+						return (self.classified.isfreebuildmode:value() and 0) or current >= ingredient.amount, current
+					end
+					return old_HasCharacterIngredient(self, ingredient, ...)
+				end
+			end
+		else
+			local old_HasCharacterIngredient = inst.components.builder.HasCharacterIngredient
+			inst.components.builder.HasCharacterIngredient = function(self, ingredient, ...)
+				if ingredient.type == CHARACTER_INGREDIENT.MEM_SOUL then
+					return (self.freebuildmode and 0) or
+						math.ceil(inst.components.mem_soul.soul) >= ingredient.amount, inst.components.mem_soul.soul
+				end
+				return old_HasCharacterIngredient(self, ingredient, ...)
+			end
+
+			local old_RemoveIngredients = inst.components.builder.RemoveIngredients
+			inst.components.builder.RemoveIngredients = function(self, ingredients, recname)
+				local recipe = AllRecipes[recname]
+				if recipe then
+					for k, v in pairs(recipe.character_ingredients) do
+						if v.type == CHARACTER_INGREDIENT.MEM_SOUL then
+							local current = math.ceil(inst.components.mem_soul.soul)
+							if current >= v.amount then
+								inst.components.mem_soul:DoDelta(-v.amount)
+							end
+						end
+					end
+				end
+				return old_RemoveIngredients(self, ingredients, recname)
+			end
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+end
+AddComponentPostInit("builder", function(self, inst)
+	local oldHasCharacterIngredient = self.HasCharacterIngredient
+	self.HasCharacterIngredient = function(s, ingredient, ...)
+		if ingredient.type == key then
+			local current = math.ceil(self.inst.player_classified.currenthunger:value())
+			return (self.freebuildmode and 0) or current >= ingredient.amount, current
+		end
+		return oldHasCharacterIngredient(s, ingredient, ...)
+	end
+
+	local oldRemoveIngredients = self.RemoveIngredients
+	self.RemoveIngredients = function(s, ingredients, recname)
+		local recipe = AllRecipes[recname]
+		if recipe then
+			for _, v in pairs(recipe.character_ingredients) do
+				if v.type == key then
+					local current = math.ceil(self.inst.player_classified.currenthunger:value())
+					if current >= v.amount and not self.freebuildmode then
+						self.inst.components.hunger:DoDelta(-v.amount)
+					end
+				end
+			end
+		end
+		return oldRemoveIngredients(s, ingredients, recname)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tent
+--------------------------------------------------------------------------------------------------------------------变身 狐狸的凶宅
+AddPrefabPostInit("tent", function(inst)
+	if not IsServer then
+		return
+	end
+	if inst.components.hauntable then
+		local old_onhaunt = inst.components.hauntable.onhaunt
+		inst.components.hauntable.onhaunt = function(inst, haunter)
+			if haunter and haunter.prefab == 'mem' then
+				for k, v in pairs(Ents) do
+					if v.prefab == 'mem_hlxz' then
+						-- haunter.components.talker:Say('')
+						return old_onhaunt(inst, haunter)
+					end
+				end
+
+				SpawnAt('mem_hlxz', inst)
+				SpawnAt('collapse_small', inst)
+
+				inst:Remove()
+			else
+				old_onhaunt(inst, haunter)
+			end
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nightmarefuel
+FOODTYPE.NIGHTMAREFUEL = "NIGHTMAREFUEL"
+AddPrefabPostInit("nightmarefuel", function(inst)
+	if TheWorld.ismastersim then
+		inst:AddComponent("edible")
+		inst.components.edible.foodtype = "NIGHTMAREFUEL"
+		inst.components.edible.healthvalue = 0
+		inst.components.edible.hungervalue = 0 --40
+		inst.components.edible.sanityvalue = 20
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:horrorfuel
+end)
+AddPrefabPostInit("horrorfuel", function(inst)
+	if TheWorld.ismastersim then
+		inst:AddComponent("edible")
+		inst.components.edible.foodtype = "NIGHTMAREFUEL"
+		inst.components.edible.healthvalue = 0
+		inst.components.edible.hungervalue = 0 --40
+		inst.components.edible.sanityvalue = 40
+	end
+end)
+
+```
+
