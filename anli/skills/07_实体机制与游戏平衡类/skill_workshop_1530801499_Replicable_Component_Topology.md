@@ -9576,3 +9576,45 @@ if cook_pot then
 
 ```
 
+
+
+### 变体演进：Burning Timer [Updated] (Mod 3756749422)
+- **变体场景与切面**：收录来自工坊 Mod 3756749422 (`Burning Timer [Updated]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3756749422)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:fire
+if GetModConfigData("showBurningTimer") then
+	AddPrefabPostInit("fire", function(inst)
+		inst:DoTaskInTime(0.01, function()
+			inst:AddComponent("burningtimer")
+		end)
+		return
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:campfirefire
+if GetModConfigData("showCampfireTimer") then
+	AddPrefabPostInit("campfirefire",          function(inst) return campfireTimer(inst) end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:coldfirefire
+	AddPrefabPostInit("campfirefire",          function(inst) return campfireTimer(inst) end)
+	AddPrefabPostInit("coldfirefire",          function(inst) return campfireTimer(inst) end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nightlight_flame
+	AddPrefabPostInit("coldfirefire",          function(inst) return campfireTimer(inst) end)
+	AddPrefabPostInit("nightlight_flame",      function(inst) return campfireTimer(inst) end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigtorch_flame
+	AddPrefabPostInit("nightlight_flame",      function(inst) return campfireTimer(inst) end)
+	--AddPrefabPostInit("pigtorch_flame",      function(inst) return campfireTimer(inst) end) -- It works for pig torches but their light range does not depend on their available fuel so this mod will show obviously invalid numbers
+
+```
+

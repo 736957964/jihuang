@@ -44567,3 +44567,111 @@ end)
 
 ```
 
+
+
+### 变体演进：Arknights Aurora (Mod 3038395432)
+- **变体场景与切面**：收录来自工坊 Mod 3038395432 (`Arknights Aurora`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3038395432)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:aurora
+
+AddPrefabPostInit('aurora', function (inst)
+    inst._aurora_skill_1 = net_bool(inst.GUID, "_aurora_skill_1")
+    inst._aurora_skill_2 = net_shortint(inst.GUID, "_aurora_skill_2") --[-32767..32767]
+    inst._aurora_skill_3 = net_shortint(inst.GUID, "_aurora_skill_3") --[-32767..32767]
+    if IsServer then
+        inst:AddComponent('aurora_skill')
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:equippable
+--搬运重物不减速
+AddComponentPostInit("equippable", function(self) 
+	local oldGetWalkSpeedMult = self.GetWalkSpeedMult
+	function self:GetWalkSpeedMult(...)
+		local old = oldGetWalkSpeedMult(self,...)
+		local owner =  self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner or nil
+		if owner and owner:HasTag('not_heavyslow') then
+			return math.max(1,old)
+		end
+		return old
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+--------------------------------------------------------------------------------------------------------------------
+AddStategraphPostInit("wilson", function(sg)           --改变普攻动作-主机
+    local old_ATTACK = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action,...)
+        local weapon = inst.components.combat:GetWeapon()
+        if weapon  then 
+            if weapon:HasTag("aurora_aoeattack") then
+                return "aurora_aoeattack"
+            end
+        end 
+        return old_ATTACK(inst, action,...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+end)
+AddStategraphPostInit("wilson_client", function(sg)    --改变普攻动作-客机
+    local old_ATTACK = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action,...)
+        local weapon = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if weapon  then 
+            if weapon:HasTag("aurora_aoeattack") then
+                return "aurora_aoeattack"
+            end
+        end 
+        return old_ATTACK(inst, action,...)
+    end
+end)
+
+```
+
+
+
+### 变体演进：星见雅 (Mod 3610049880)
+- **变体场景与切面**：收录来自工坊 Mod 3610049880 (`星见雅`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3610049880)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:\119\105\108\115\111\110
+
+AddStategraphPostInit("\119\105\108\115\111\110",function(self) 
+	local olddeststate = self.actionhandlers[ACTIONS.ATTACK].deststate 
+	self.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action) 
+		if inst.prefab == "miyabi" then
+			inst.miyabi_multithrust = inst.miyabi_multithrust + 1
+			if inst.miyabi_multithrust > 2 then
+				inst.miyabi_multithrust = 0
+				return "miyabi_multithrust"
+			else
+				local weapon = inst.components.combat ~= nil and inst.components.combat:GetWeapon() or nil
+				if weapon ~= nil and weapon:HasTag("miyabi_skillwq") then
+					-- if inst.sg:HasStateTag("miyabi_ffff") then
+						-- return
+					-- end
+					return "miyabi_fff"
+				end
+			end
+		end
+		return olddeststate(inst, action) 
+	end 
+end)
+
+```
+
