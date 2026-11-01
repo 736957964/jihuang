@@ -8021,3 +8021,162 @@ if TheNet:GetIsServer() then
 
 ```
 
+
+
+### 变体演进：MAX_RANGE (Mod 2815192618)
+- **变体场景与切面**：收录来自工坊 Mod 2815192618 (`MAX_RANGE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2815192618)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+    AddComponentPostInit("inventory", function(self)
+
+        -----------------------------------------------------------
+        -- Has
+        -- 仅在 checkallcontainers == true（合成语境）时扩展。
+        -- 原实现无条件扩展，导致 Wortox 灵魂、绳桥、雕刻南瓜、猪人代币
+        -- 等只传两个参数的 Has 检查也算上了箱子里的东西 —— 但这些系统
+        -- 的扣除逻辑并不认箱子，于是出现 "检查通过、效果生效、材料不扣"。
+        -----------------------------------------------------------
+        local oldHas = self.Has
+
+        self.Has = function(self, item, amount, checkallcontainers)
+            local has_enough, num_found = oldHas(self, item, amount, checkallcontainers)
+
+            -- 不能因为「手上 + 已打开容器已够」就提前返回：那样 num_found 只含打开容器，
+            -- 制作栏显示的数量会被打开容器“覆盖”（附近箱子里的不计入）。
+            -- GetSurroundingCounts 按 tick 缓存，这里只是 O(1) 查表，不会变慢。
+            if not checkallcontainers then
+                return has_enough, num_found
+            end
+
+            local counts = GetSurroundingCounts(self)
+            num_found = num_found + (counts[item] or 0)
+
+            return num_found >= amount, num_found
+        end
+
+        -----------------------------------------------------------
+        -- RemoveItem
+        -- 原实现用 `oldRemoveItem(...) ~= nil` 判断"是否已成功移除"，
+        -- 但原生 Inventory:RemoveItem 在找不到物品时会 `return item`
+        -- （container.lua / inventory.lua 尾部），永远不返回 nil，
+        -- 所以后面遍历箱子的整段代码是死代码，从未执行过。
+        -- 这里改为先按 inventoryitem.owner 定位物品真正所在的容器，
+        -- 再交给对应容器的 RemoveItem 去扣。
+        -----------------------------------------------------------
+        local oldRemoveItem = self.RemoveItem
+
+        self.RemoveItem = function(self, item, wholestack, checkallcontainers, keepoverstacked)
+            if item == nil then
+                return
+            end
+
+            local invitem = item.components ~= nil and item.components.inventoryitem or nil
+            local owner = invitem ~= nil and invitem.owner or nil
+
+            -- 物品就在自己身上（背包 / 装备栏 / 鼠标 / 地上）→ 走原生逻辑
+            if owner == nil or owner == self.inst then
+                return oldRemoveItem(self, item, wholestack, checkallcontainers, keepoverstacked)
+            end
+
+            -- 自己的背包（overflow）或自己已打开的容器 → 原生逻辑已覆盖
+            local overflow = self:GetOverflowContainer()
+            if overflow ~= nil and overflow.inst == owner then
+                return oldRemoveItem(self, item, wholestack, checkallcontainers, keepoverstacked)
+            end
+            if self.opencontainers ~= nil and self.opencontainers[owner] then
+                return oldRemoveItem(self, item, wholestack, checkallcontainers, keepoverstacked)
+            end
+
+            -- 物品在周围的箱子里 → 从真正持有它的容器扣
+            local chests = GetSurroundingContainers(self.inst)
+            for i = 1, #chests do
+                if chests[i] == owner then
+                    local container = GetChestContainer(owner)
+                    if container ~= nil
+                        and container.GetItemSlot ~= nil
+                        and container:GetItemSlot(item) ~= nil
+                    then
+                        local removed = container:RemoveItem(item, wholestack, nil, keepoverstacked)
+                        InvalidateCounts(self.inst)
+                        if removed ~= nil then
+                            debug_print("RemoveItem from chest " .. tostring(owner.prefab) ..
+                                ": " .. tostring(item.prefab))
+                            return removed
+                        end
+                    end
+                    break
+                end
+            end
+
+            return oldRemoveItem(self, item, wholestack, checkallcontainers, keepoverstacked)
+        end
+
+        -----------------------------------------------------------
+        -- GetCraftingIngredient
+        -- 修正三点：
+        --   1. 不覆盖已有条目（原来的 crafting_items[k] = v 会把原生
+        --      算好的数量顶掉，同时 total_num_found 重复累加 → 取料不齐）
+        --   2. 过滤 v <= 0 与已销毁实体
+        --   3. 跳过 overflow / 已打开容器时口径与 Has 保持一致
+        -----------------------------------------------------------
+        local oldGetCraftingIngredient = self.GetCraftingIngredient
+
+        self.GetCraftingIngredient = function(self, item, amount)
+            local crafting_items = oldGetCraftingIngredient(self, item, amount) or {}
+
+            local total_num_found = 0
+            for k, v in pairs(crafting_items) do
+                total_num_found = total_num_found + v
+            end
+
+            if total_num_found >= amount then
+                return crafting_items
+            end
+
+            local chests = GetSurroundingContainers(self.inst)
+            local overflow = self:GetOverflowContainer()
+            local overflow_inst = overflow ~= nil and overflow.inst or nil
+            local opencontainers = self.opencontainers
+
+            for i = 1, #chests do
+                local chest = chests[i]
+                if not ShouldSkipChest(chest, opencontainers, overflow_inst) then
+                    local container = GetChestContainer(chest)
+                    if container ~= nil
+                        and container ~= overflow
+                        and container.GetCraftingIngredient ~= nil
+                    then
+                        local found = container:GetCraftingIngredient(item, amount - total_num_found, true)
+                        if found ~= nil then
+                            for k, v in pairs(found) do
+                                if v > 0 and crafting_items[k] == nil and k:IsValid() then
+                                    crafting_items[k] = v
+                                    total_num_found = total_num_found + v
+                                end
+                            end
+                        end
+
+                        if total_num_found >= amount then
+                            break
+                        end
+                    end
+                end
+            end
+
+            -- 即将扣料，聚合缓存必然过期
+            InvalidateCounts(self.inst)
+
+            return crafting_items
+        end
+
+    end)
+
+```
+

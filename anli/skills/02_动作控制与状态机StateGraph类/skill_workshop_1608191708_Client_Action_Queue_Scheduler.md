@@ -35598,3 +35598,622 @@ end)
 
 ```
 
+
+
+### 变体演进：琪露诺 (Mod 3670256635)
+- **变体场景与切面**：收录来自工坊 Mod 3670256635 (`琪露诺`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3670256635)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:farming_manager
+
+AddComponentPostInit("farming_manager", function(self)
+    local oldaddsoilmoisture = self.AddSoilMoistureAtPoint
+    if oldaddsoilmoisture == nil or self._cirno_safe_soilmoisture then
+        return
+    end
+
+    self.AddSoilMoistureAtPoint = function(manager, x, y, z, moisture_delta, ...)
+        if not IsFiniteNumber(x) or not IsFiniteNumber(y) or not IsFiniteNumber(z)
+            or not IsFiniteNumber(moisture_delta) then
+            return
+        end
+        local ok, result = pcall(oldaddsoilmoisture, manager, x, y, z, moisture_delta, ...)
+        return ok and result or nil
+    end
+    self._cirno_safe_soilmoisture = true
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:cursable
+------------------------------------------------------------------
+AddComponentPostInit("cursable", function(self)--免疫猴子诅咒
+    local oldapplycurse = self.ApplyCurse
+    function self:ApplyCurse(item, curse)
+        if self.inst:HasTag("cirno") then
+            return
+        end
+        oldapplycurse(self, item, curse)
+    end
+
+    local OldIsCursable = self.IsCursable
+    function self:IsCursable(item)
+        if self.inst:HasTag("cirno") then
+            return nil
+        end
+        return OldIsCursable(self, item)
+    end
+
+    local oldforceontoowner = self.ForceOntoOwner
+    function self:ForceOntoOwner(item)
+        if self.inst:HasTag("cirno") then
+            return
+        end
+        oldforceontoowner(self, item)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+end
+AddStategraphPostInit('wilson', NewAoeSg)
+AddStategraphPostInit('wilson_client', NewAoeSg)
+
+-- 不会在冰面上滑倒 --
+AddComponentPostInit("slipperyfeet", function(self)
+    local olddodelta = self.DoDelta
+    function self:DoDelta(delta)
+        if self.inst:HasTag("cirno") then
+            self:SetCurrent(0)
+            return
+        end
+        olddodelta(self, delta)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit('wilson', NewAoeSg)
+AddStategraphPostInit('wilson_client', NewAoeSg)
+
+-- 不会在冰面上滑倒 --
+AddComponentPostInit("slipperyfeet", function(self)
+    local olddodelta = self.DoDelta
+    function self:DoDelta(delta)
+        if self.inst:HasTag("cirno") then
+            self:SetCurrent(0)
+            return
+        end
+        olddodelta(self, delta)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:slipperyfeet
+-- 不会在冰面上滑倒 --
+AddComponentPostInit("slipperyfeet", function(self)
+    local olddodelta = self.DoDelta
+    function self:DoDelta(delta)
+        if self.inst:HasTag("cirno") then
+            self:SetCurrent(0)
+            return
+        end
+        olddodelta(self, delta)
+    end
+end)
+
+```
+
+
+
+### 变体演进：MineStarve 當個挨餓神 (Mod 3791478754)
+- **变体场景与切面**：收录来自工坊 Mod 3791478754 (`MineStarve 當個挨餓神`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3791478754)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+    AddComponentPostInit("inventory", function(inventory)
+        local old_apply_damage = inventory.ApplyDamage
+        local old_unequip = inventory.Unequip
+        local old_remove_item = inventory.RemoveItem
+        local old_drop_item = inventory.DropItem
+
+        local function IsLockedSevenCursesRing(self, item)
+            local component = GetSevenCursesComponent(self.inst)
+            return component ~= nil and component:IsActive() and
+                item ~= nil and item:IsValid() and
+                item.prefab == "mc_ring_seven_curses" and
+                not item._mc_bound_ring_removing and
+                self:GetEquippedItem(EQUIPSLOTS.MC_RING1) == item
+        end
+
+        function inventory:Unequip(equipslot, slip, force)
+            local item = self:GetEquippedItem(equipslot)
+            if IsLockedSevenCursesRing(self, item) then
+                return nil
+            end
+            return old_unequip(self, equipslot, slip, force)
+        end
+
+        function inventory:RemoveItem(
+            item,
+            wholestack,
+            checkallcontainers,
+            keepoverstacked
+        )
+            if IsLockedSevenCursesRing(self, item) then
+                return nil
+            end
+            return old_remove_item(
+                self,
+                item,
+                wholestack,
+                checkallcontainers,
+                keepoverstacked
+            )
+        end
+
+        function inventory:DropItem(
+            item,
+            wholestack,
+            randomdir,
+            pos,
+            keepoverstacked
+        )
+            if IsLockedSevenCursesRing(self, item) then
+                return nil
+            end
+            return old_drop_item(
+                self,
+                item,
+                wholestack,
+                randomdir,
+                pos,
+                keepoverstacked
+            )
+        end
+
+        function inventory:ApplyDamage(damage, attacker, weapon, spdamage)
+            local component = GetSevenCursesComponent(self.inst)
+            if component == nil or not component:IsActive() or
+                ((tonumber(damage) or 0) <= 0 and spdamage == nil) then
+                return old_apply_damage(self, damage, attacker, weapon, spdamage)
+            end
+
+            local max_absorption = 0
+            local damage_type_mult = 1
+            local fully_resisted = false
+            for _, item in pairs(self.equipslots) do
+                if item.components.resistance ~= nil and
+                    item.components.resistance:HasResistance(attacker, weapon) and
+                    item.components.resistance:ShouldResistDamage() then
+                    fully_resisted = true
+                elseif item.components.armor ~= nil then
+                    max_absorption = math.max(
+                        max_absorption,
+                        item.components.armor:GetAbsorption(attacker, weapon)
+                    )
+                end
+                if item.components.damagetyperesist ~= nil then
+                    damage_type_mult = damage_type_mult *
+                        item.components.damagetyperesist:GetResist(attacker, weapon)
+                end
+            end
+
+            local leftover, remaining_spdamage = old_apply_damage(
+                self,
+                damage,
+                attacker,
+                weapon,
+                spdamage
+            )
+            -- Grue/environmental hits enter combat with no attacker. Leave
+            -- those at normal strength while still weakening worn armour.
+            local suffering_multiplier = attacker ~= nil and
+                SUFFERING_MULTIPLIER or 1
+            if suffering_multiplier ~= 1 then
+                remaining_spdamage = SpDamageUtil.ApplyMult(
+                    remaining_spdamage,
+                    suffering_multiplier
+                )
+            end
+            if fully_resisted or max_absorption <= 0 then
+                return leftover * suffering_multiplier, remaining_spdamage
+            end
+
+            max_absorption = math.clamp(max_absorption, 0, 1)
+            local post_resistance_damage
+            if max_absorption <
+                SEVEN_CURSES_TUNING.FULL_ABSORPTION_THRESHOLD then
+                post_resistance_damage = leftover / (1 - max_absorption)
+            else
+                post_resistance_damage = damage * damage_type_mult
+            end
+            local weakened_absorption = max_absorption * ARMOR_EFFECTIVENESS
+            local weakened_leftover = post_resistance_damage *
+                (1 - weakened_absorption)
+            return math.max(leftover, weakened_leftover) *
+                suffering_multiplier, remaining_spdamage
+        end
+    end)
+
+    AddComponentPostInit("combat", function(combat)
+        local old_get_attacked = combat.GetAttacked
+        function combat:GetAttacked(attacker, damage, weapon, stimuli, spdamage)
+            if not ShouldReduceOutgoingDamage(attacker, self.inst) or
+                attacker._mc_seven_curses_scaling_damage then
+                return old_get_attacked(
+                    self,
+                    attacker,
+                    damage,
+                    weapon,
+                    stimuli,
+                    spdamage
+                )
+            end
+
+            local multiplier = self.inst:HasTag("epic") and
+                SEVEN_CURSES_TUNING.OUTGOING_EPIC_DAMAGE_MULTIPLIER or
+                SEVEN_CURSES_TUNING.OUTGOING_DAMAGE_MULTIPLIER
+            local scaled_spdamage = spdamage ~= nil and shallowcopy(spdamage) or nil
+            scaled_spdamage = SpDamageUtil.ApplyMult(scaled_spdamage, multiplier)
+            attacker._mc_seven_curses_scaling_damage = true
+            local results =
+            {
+                pcall(
+                    old_get_attacked,
+                    self,
+                    attacker,
+                    damage ~= nil and damage * multiplier or nil,
+                    weapon,
+                    stimuli,
+                    scaled_spdamage
+                ),
+            }
+            attacker._mc_seven_curses_scaling_damage = nil
+            if not results[1] then
+                error(results[2], 0)
+            end
+            return unpack(results, 2)
+        end
+    end)
+
+    AddComponentPostInit("follower", function(follower)
+        local old_set_leader = follower.SetLeader
+        function follower:SetLeader(new_leader)
+            local player = ResolvePlayer(new_leader)
+            if player ~= nil and IsActivePlayer(player) and
+                self.leader ~= new_leader and
+                not IsFollowerExempt(self.inst, new_leader) then
+                return false
+            end
+            return old_set_leader(self, new_leader)
+        end
+    end)
+
+    AddComponentPostInit("leader", function(leader)
+        local old_add_follower = leader.AddFollower
+        function leader:AddFollower(follower)
+            local player = ResolvePlayer(self.inst)
+            if player ~= nil and IsActivePlayer(player) and
+                not IsFollowerExempt(follower, self.inst) then
+                return false
+            end
+            return old_add_follower(self, follower)
+        end
+    end)
+
+    AddComponentPostInit("trader", function(trader)
+        local old_able_to_accept = trader.AbleToAccept
+        function trader:AbleToAccept(item, giver, count)
+            if IsActivePlayer(giver) and IsRecruitableCreature(self.inst) and
+                not IsInnateCompanion(self.inst) then
+                return false
+            end
+            return old_able_to_accept(self, item, giver, count)
+        end
+    end)
+
+    AddComponentPostInit("domesticatable", function(domesticatable)
+        local old_delta_domestication = domesticatable.DeltaDomestication
+        function domesticatable:DeltaDomestication(delta, doer)
+            if (tonumber(delta) or 0) > 0 and IsActivePlayer(doer) then
+                return
+            end
+            return old_delta_domestication(self, delta, doer)
+        end
+    end)
+
+    AddComponentPostInit("brushable", function(brushable)
+        local old_brush = brushable.Brush
+        function brushable:Brush(doer, brush)
+            if IsActivePlayer(doer) and
+                self.inst.components.domesticatable ~= nil then
+                return false
+            end
+            return old_brush(self, doer, brush)
+        end
+    end)
+
+    AddComponentPostInit("rideable", function(rideable)
+        local old_test_rider = rideable.TestRider
+        function rideable:TestRider(potential_rider)
+            if IsActivePlayer(potential_rider) and
+                not IsInnateCompanion(self.inst) then
+                return false
+            end
+            return old_test_rider(self, potential_rider)
+        end
+    end)
+
+    AddComponentPostInit("sleepingbag", function(sleepingbag)
+        local old_do_sleep = sleepingbag.DoSleep
+        function sleepingbag:DoSleep(doer, ...)
+            if IsActivePlayer(doer) then
+                return false
+            end
+            return old_do_sleep(self, doer, ...)
+        end
+    end)
+
+    AddComponentPostInit("sleepingbaguser", function(sleepingbaguser)
+        local old_should_sleep = sleepingbaguser.ShouldSleep
+        function sleepingbaguser:ShouldSleep(...)
+            if IsActivePlayer(self.inst) then
+                return false
+            end
+            return old_should_sleep(self, ...)
+        end
+    end)
+
+    AddComponentPostInit("grogginess", function(grogginess)
+        local old_knock_out = grogginess.KnockOut
+        function grogginess:KnockOut(...)
+            -- 保留困倦本身的效果，只阻止昏睡及其组件状态写入。
+            if IsActivePlayer(self.inst) then
+                return
+            end
+            return old_knock_out(self, ...)
+        end
+    end)
+
+    AddComponentPostInit("sleeper", function(sleeper)
+        local old_go_to_sleep = sleeper.GoToSleep
+        function sleeper:GoToSleep(...)
+            if IsActivePlayer(self.inst) then
+                return
+            end
+            return old_go_to_sleep(self, ...)
+        end
+    end)
+
+    AddComponentPostInit("wateryprotection", function(wateryprotection)
+        local old_apply = wateryprotection.ApplyProtectionToEntity
+        local old_spread = wateryprotection.SpreadProtectionAtPoint
+
+        function wateryprotection:ApplyProtectionToEntity(entity, noextinguish)
+            local component = GetSevenCursesComponent(entity)
+            if not noextinguish and component ~= nil and component:IsActive() and
+                ALLOWED_EXTINGUISHERS[self.inst.prefab] then
+                return component:AllowExternalExtinguish(function()
+                    return old_apply(self, entity, noextinguish)
+                end)
+            end
+            return old_apply(self, entity, noextinguish)
+        end
+
+        function wateryprotection:SpreadProtectionAtPoint(
+            x,
+            y,
+            z,
+            distance,
+            noextinguish
+        )
+            local results =
+            {
+                old_spread(self, x, y, z, distance, noextinguish),
+            }
+            if not noextinguish and
+                PLAYER_IGNORING_EXTINGUISHERS[self.inst.prefab] then
+                local radius = distance or self.protection_dist or
+                    SEVEN_CURSES_TUNING.DEFAULT_WATER_PROTECTION_RADIUS
+                local players = TheSim:FindEntities(
+                    x,
+                    y,
+                    z,
+                    radius,
+                    { "player", ACTIVE_TAG },
+                    { "playerghost", "INLIMBO" }
+                )
+                for _, player in ipairs(players) do
+                    local component = GetSevenCursesComponent(player)
+                    if component ~= nil and component:IsActive() then
+                        component:AllowExternalExtinguish(function()
+                            old_apply(self, player, false)
+                        end)
+                    end
+                end
+            end
+            return unpack(results)
+        end
+    end)
+
+    AddComponentPostInit("lootdropper", function(lootdropper)
+        local old_generate_loot = lootdropper.GenerateLoot
+        function lootdropper:GenerateLoot(...)
+            local loot = old_generate_loot(self, ...)
+            local victim_health = self.inst.components.health
+            local lucky_user = self:GetLuckyUser()
+            local looting_level = GetCombinedLootingLevel(lucky_user)
+            if looting_level > 0 and
+                victim_health ~= nil and victim_health:IsDead() and
+                not self.inst:HasAnyTag("structure", "wall") and
+                not IsInnateCompanion(self.inst) and
+                math.random() < SEVEN_CURSES_TUNING.LOOTING_CHANCE_PER_LEVEL *
+                    math.min(
+                        SEVEN_CURSES_TUNING.MAX_COMBINED_LOOTING_LEVEL,
+                        looting_level
+                    ) then
+                local extra = ChooseRegularLoot(self)
+                if extra ~= nil then
+                    table.insert(loot, extra)
+                end
+            end
+            return loot
+        end
+    end)
+
+    AddPlayerPostInit(function(player)
+        -- 七咒组件负责发布；物品栏与 Insight 只读取对应状态，不占用角色标签。
+        player._mc_hidden_curse_active = net_bool(player.GUID, "mc_seven_curses.hidden_active")
+        player._mc_ender_chest_open = net_bool(player.GUID, "mc_seven_curses.ender_open")
+        if not TheWorld.ismastersim then
+            return
+        end
+
+        if player.components.mc_seven_curses == nil then
+            player:AddComponent("mc_seven_curses")
+        end
+        ConfigurePlayer(player)
+
+        -- The authoritative join event runs after persisted player data has
+        -- been restored on both hosted and dedicated servers. Resolve the
+        -- world setting again so an existing world changed from disabled to
+        -- enabled grants and equips the ring.
+        if not player._mc_seven_curses_join_hooked then
+            player._mc_seven_curses_join_hooked = true
+            player:ListenForEvent("ms_playerjoined", function(_, joined_player)
+                if joined_player == player then
+                    ConfigurePlayer(player)
+                end
+            end, TheWorld)
+        end
+
+        if not player._mc_seven_curses_reroll_hooked then
+            player._mc_seven_curses_reroll_hooked = true
+            local old_save_for_reroll = player.SaveForReroll
+            local old_load_for_reroll = player.LoadForReroll
+
+            function player:SaveForReroll(...)
+                local data = old_save_for_reroll(self, ...) or {}
+                data.mc_seven_curses =
+                    self.components.mc_seven_curses:GetRerollData()
+                return next(data) ~= nil and data or nil
+            end
+
+            function player:LoadForReroll(data, ...)
+                local results =
+                {
+                    old_load_for_reroll(self, data, ...),
+                }
+                if data ~= nil and data.mc_seven_curses ~= nil then
+                    self.components.mc_seven_curses:LoadForReroll(
+                        data.mc_seven_curses
+                    )
+                end
+                return unpack(results)
+            end
+        end
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+    AddComponentPostInit("combat", function(combat)
+        local old_get_attacked = combat.GetAttacked
+        function combat:GetAttacked(attacker, damage, weapon, stimuli, spdamage)
+            if not ShouldReduceOutgoingDamage(attacker, self.inst) or
+                attacker._mc_seven_curses_scaling_damage then
+                return old_get_attacked(
+                    self,
+                    attacker,
+                    damage,
+                    weapon,
+                    stimuli,
+                    spdamage
+                )
+            end
+
+            local multiplier = self.inst:HasTag("epic") and
+                SEVEN_CURSES_TUNING.OUTGOING_EPIC_DAMAGE_MULTIPLIER or
+                SEVEN_CURSES_TUNING.OUTGOING_DAMAGE_MULTIPLIER
+            local scaled_spdamage = spdamage ~= nil and shallowcopy(spdamage) or nil
+            scaled_spdamage = SpDamageUtil.ApplyMult(scaled_spdamage, multiplier)
+            attacker._mc_seven_curses_scaling_damage = true
+            local results =
+            {
+                pcall(
+                    old_get_attacked,
+                    self,
+                    attacker,
+                    damage ~= nil and damage * multiplier or nil,
+                    weapon,
+                    stimuli,
+                    scaled_spdamage
+                ),
+            }
+            attacker._mc_seven_curses_scaling_damage = nil
+            if not results[1] then
+                error(results[2], 0)
+            end
+            return unpack(results, 2)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:follower
+
+    AddComponentPostInit("follower", function(follower)
+        local old_set_leader = follower.SetLeader
+        function follower:SetLeader(new_leader)
+            local player = ResolvePlayer(new_leader)
+            if player ~= nil and IsActivePlayer(player) and
+                self.leader ~= new_leader and
+                not IsFollowerExempt(self.inst, new_leader) then
+                return false
+            end
+            return old_set_leader(self, new_leader)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:leader
+
+    AddComponentPostInit("leader", function(leader)
+        local old_add_follower = leader.AddFollower
+        function leader:AddFollower(follower)
+            local player = ResolvePlayer(self.inst)
+            if player ~= nil and IsActivePlayer(player) and
+                not IsFollowerExempt(follower, self.inst) then
+                return false
+            end
+            return old_add_follower(self, follower)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:trader
+
+    AddComponentPostInit("trader", function(trader)
+        local old_able_to_accept = trader.AbleToAccept
+        function trader:AbleToAccept(item, giver, count)
+            if IsActivePlayer(giver) and IsRecruitableCreature(self.inst) and
+                not IsInnateCompanion(self.inst) then
+                return false
+            end
+            return old_able_to_accept(self, item, giver, count)
+        end
+    end)
+
+```
+

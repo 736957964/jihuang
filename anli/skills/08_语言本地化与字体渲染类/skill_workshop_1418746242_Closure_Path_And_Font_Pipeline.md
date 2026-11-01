@@ -149,3 +149,112 @@ end)
 
 ```
 
+
+
+### 变体演进：LANGUAGE (Mod 3789703667)
+- **变体场景与切面**：收录来自工坊 Mod 3789703667 (`LANGUAGE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3789703667)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:cave_exit
+
+AddPrefabPostInit("cave_exit", function(inst)
+    if not TheWorld.ismastersim or not TheWorld:HasTag("cave") then
+        return inst
+    end
+
+    inst:DoTaskInTime(0, function ()
+
+        CAVE_ENTRANCE_COUNT = CAVE_ENTRANCE_COUNT + 1
+        local sunken_boat, balloon_basket
+        TheWorld.meta.patcher = TheWorld.meta.patcher or {}
+        if TheWorld.meta.patcher.iac_spawnedsunken_boat then
+            if TheWorld.meta.patcher.iac_spawneddeflated_balloon then
+                return -- 都生成过了直接返回
+            end
+            sunken_boat = true -- 标记只生成了沉船
+        end
+        -- 寻找洞口附近天光
+        local cavelight = FindEntity(inst, 20,
+            function(ent)
+                if ent.prefab ~= "cavelight" then
+                    return false
+                end
+                -- 到第7个楼梯还没生成，那就不管周围有没有物品了
+                if CAVE_ENTRANCE_COUNT >= 8 then
+                    return true
+                end
+                -- 且该天光范围内不能有其他非天光也非楼梯的实体
+                if not FindEntity(ent, 4, function (item) return item.prefab ~= "cave_exit" end, 
+                nil, {"daylight", "INLIMBO", "FX", "NOCLICK"}) then
+                    return true
+                end
+                return false
+            end,
+            {"daylight", "sinkhole"}
+        )
+        -- 生成 沉船 / 泄气气球&柳条篮
+        if cavelight and cavelight:IsValid() then
+            local pos = cavelight:GetPosition()
+            if not sunken_boat then
+                -- 沉船
+                sunken_boat = SpawnPrefab("sunken_boat")
+                sunken_boat.Transform:SetPosition(pos.x, 0, pos.z)
+                TheWorld.meta.patcher.iac_spawnedsunken_boat = true
+                print("[IAC] Spawned the sunken_boat in cave; Exit NO." .. tostring(CAVE_ENTRANCE_COUNT))
+                -- 眼骨
+                if IAC_CHESTER_EYEBONE then
+                    local theta = math.random() * TWOPI
+                    local radius = 4
+                    local pt = pos
+                    local offset = FindWalkableOffset(pt, theta, radius, 12, true)
+
+                    if offset then
+                        local newPos = pt + offset
+                        if TheWorld.Map:IsVisualGroundAtPoint(newPos.x, 0, newPos.z) then
+                            local chester_eyebone = SpawnPrefab("chester_eyebone")
+                            chester_eyebone.Transform:SetPosition(newPos:Get())
+                            print("[IAC] Spawned the chester_eyebone in cave; Exit NO." .. tostring(CAVE_ENTRANCE_COUNT))
+                        end
+                    end
+                end
+            else-- 柳条篮
+                balloon_basket = SpawnPrefab("deflated_balloon_basket")
+                balloon_basket.Transform:SetPosition(pos.x, 0, pos.z)
+                TheWorld.meta.patcher.iac_spawneddeflated_balloon = true
+                print("[IAC] Spawned the deflated_balloon_basket in cave; Exit NO." .. tostring(CAVE_ENTRANCE_COUNT))
+                -- 泄气气球
+                local theta = math.random() * TWOPI
+                local radius = 7
+                local pt = pos
+                local offset = FindWalkableOffset(pt, theta, radius, 12, true)
+
+                if offset then
+                    local newPos = pt + offset
+                    if TheWorld.Map:IsVisualGroundAtPoint(newPos.x, 0, newPos.z) then
+                        local basket = SpawnPrefab("deflated_balloon")
+                        basket.Transform:SetPosition(newPos:Get())
+                        print("[IAC] Spawned the deflated_balloon in cave; Exit NO." .. tostring(CAVE_ENTRANCE_COUNT))
+                    end
+                end
+            end
+        end
+        -- 最后一个洞穴出口汇报失败 (别问，问就是官方硬编码楼梯数量为10)
+        if CAVE_ENTRANCE_COUNT == 10 then
+            if not TheWorld.meta.patcher.iac_spawnedsunken_boat then
+                print("[IAC] UH OH! We couldn't find a spot in the world for the sunken_boat in cave!")
+            end
+            if not TheWorld.meta.patcher.iac_spawneddeflated_balloon then
+                print("[IAC] UH OH! We couldn't find a spot in the world for the deflated_balloon_basket in cave!")
+            end
+        end
+
+    end)
+end)
+
+```
+
