@@ -27305,3 +27305,1489 @@ end)
 
 ```
 
+
+
+### 变体演进：咩咩教主汉化包 (Mod 3035009877)
+- **变体场景与切面**：收录来自工坊 Mod 3035009877 (`咩咩教主汉化包`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3035009877)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：不再令人遗憾的女武神 (Mod 3777965476)
+- **变体场景与切面**：收录来自工坊 Mod 3777965476 (`不再令人遗憾的女武神`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3777965476)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wathgrithr
+------------------------------------------------------------------------
+AddPrefabPostInit("wathgrithr", function(inst)
+    inst:DoTaskInTime(0, function(player)
+        if not (GLOBAL.TheWorld and GLOBAL.TheWorld.ismastersim) then return end
+        local was_running = false
+        if not player.components.updatelooper then
+            player:AddComponent("updatelooper")
+        end
+        player.components.updatelooper:AddOnUpdateFn(function()
+            if not (player and player:IsValid()) then return end
+            local loco = player.components.locomotor
+            local running = loco ~= nil and loco.isrunning
+            if was_running and not running then
+                player._last_stop_time = GLOBAL.GetTime()
+            end
+            was_running = running
+        end)
+    end)
+    inst:DoTaskInTime(0, function(player)
+        if GLOBAL.ThePlayer ~= player then return end
+        GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_R, function()
+            if GLOBAL.ThePlayer ~= player then return end
+            if GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd.screenstack and
+               #GLOBAL.TheFrontEnd.screenstack > 1 then return end
+
+            local rider_rep = player.replica and player.replica.rider
+            local inv_rep = player.replica and player.replica.inventory
+            local weapon = inv_rep and inv_rep:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+
+            if rider_rep and rider_rep:IsRiding() then
+                local saddle = player.replica.rider and player.replica.rider:GetSaddle()
+                local has_war_saddle = saddle and saddle.prefab == "saddle_wathgrithr"
+                if not has_war_saddle then return end
+
+                if weapon and (weapon.prefab == "spear_wathgrithr_lightning_charged"
+                    or weapon.prefab == "spear_wathgrithr_enlightened"
+                    or weapon.prefab == "spear_wathgrithr_radiant") then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local rot = player.Transform:GetRotation() * math.pi / 180
+                    local tx = x + math.cos(rot) * MOUNTED_LUNGE_DIST
+                    local tz = z - math.sin(rot) * MOUNTED_LUNGE_DIST
+                    local rpc_id = GLOBAL._mounted_lunge_rpc_id
+                    if rpc_id then SendModRPCToServer(rpc_id, tx, tz) end
+                elseif weapon and weapon:HasTag("battleshield")
+                        and (weapon:HasTag("nightmare_shield") or weapon:HasTag("ancient_shield")) then
+                    local rpc_id = GLOBAL._mounted_charge_rpc_id
+                    if rpc_id then SendModRPCToServer(rpc_id) end
+                end
+                return
+            end
+            -- 步行时：奔雷矛 → 收割冲刺（服务端处理，客户端只发 RPC）
+            if weapon and weapon:HasTag("battlespear") then
+                local rpc_id = GLOBAL._harvest_lunge_rpc_id
+                if rpc_id then SendModRPCToServer(rpc_id) end
+                return
+            end
+            -- 步行时：盾牌 → 格挡
+            if not (weapon and weapon:HasTag("battleshield")) then return end
+            if GLOBAL.TheWorld and GLOBAL.TheWorld.ismastersim then
+                if GLOBAL.WathgrithrShield_TryActivateParry then
+                    GLOBAL.WathgrithrShield_TryActivateParry(player)
+                end
+            else
+                local rpc_id = GLOBAL._parry_rpc_id
+                if rpc_id then SendModRPCToServer(rpc_id) end
+            end
+        end)
+    end)
+end)
+
+------------------------------------------------------------------------
+-- 盾牌冲锋（parry_idle stategraph patch）
+------------------------------------------------------------------------
+local CHARGE_PARRY_DURATION     = 1.5
+local CHARGE_PARRY_SPEED_MULT   = 1.6
+local CHARGE_PARRY_CD           = 5.0
+local CHARGE_MINI_POUND_RADIUS  = 4.5
+local CHARGE_MINI_POUND_DAMAGE  = 68
+
+local CHARGE_POUND_CANT_TAGS = { "FX", "NOCLICK", "DECOR", "INLIMBO", "groundpound_immune", "player" }
+
+local function DoMiniGroundPound(inst, shield_dmg)
+    if not (inst and inst:IsValid()) then return end
+    local px, py, pz = inst.Transform:GetWorldPosition()
+
+    inst.SoundEmitter:PlaySound("dontstarve_DLC001/creatures/bearger/groundpound")
+    GLOBAL.ShakeAllCameras(GLOBAL.CAMERASHAKE.FULL, 0.3, 0.01, 0.5, inst, 20)
+
+    local ring_fx = GLOBAL.SpawnPrefab("groundpoundring_fx")
+    if ring_fx then
+        ring_fx.Transform:SetPosition(px, 0, pz)
+        local fxscale = math.sqrt(CHARGE_MINI_POUND_RADIUS / 12)
+        ring_fx.Transform:SetScale(fxscale, fxscale, fxscale)
+    end
+
+    local gfx = GLOBAL.SpawnPrefab("groundpound_fx")
+    if gfx then gfx.Transform:SetPosition(px, 0, pz) end
+
+    local ents = GLOBAL.TheSim:FindEntities(px, py, pz, CHARGE_MINI_POUND_RADIUS, nil, CHARGE_POUND_CANT_TAGS)
+    for _, ent in ipairs(ents) do
+        if ent ~= inst and ent:IsValid() and not ent:IsInLimbo()
+            and ent.components.health and not ent.components.health:IsDead()
+            and inst.components.combat and not inst.components.combat:IsAlly(ent) then
+            ent.components.health:DoDelta(-shield_dmg, false, "shield_charge", false, inst)
+            ent:PushEvent("attacked", { attacker = inst, damage = shield_dmg })
+        end
+    end
+end
+
+AddStategraphPostInit("wilson", function(sg)
+    local state = sg.states["parry_idle"]
+    if not (state and state.onenter) then return end
+
+    local orig_onenter = state.onenter
+    local orig_onexit  = state.onexit
+
+    -- 冲锋清理函数：无论冲锋正常结束还是 SG 强制退出都会调用
+    local function StopCharge(inst, shield)
+        if not inst._charge_parry_active then return end
+        inst._charge_parry_active = false
+
+        -- 清除冲锋期间禁止格挡重置CD的标记
+        inst._charge_no_parry_reset = nil
+
+        -- 停止 updatelooper 驱动
+        if inst._charge_fn and inst.components.updatelooper then
+            inst.components.updatelooper:RemoveOnUpdateFn(inst._charge_fn)
+            inst._charge_fn = nil
+        end
+
+        -- 恢复碰撞
+        if inst.Physics then
+            inst.Physics:Stop()
+            inst.Physics:SetCollisionGroup(GLOBAL.COLLISION.CHARACTERS)
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.WORLD)
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.OBSTACLES)
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.CHARACTERS)
+        end
+
+        if inst.components.locomotor then inst.components.locomotor:Stop() end
+
+        -- 延迟1秒清除冲锋标记，让芜猴加速可以续上
+        if inst._charge_clear_task then
+            inst._charge_clear_task:Cancel()
+        end
+        inst._charge_clear_task = inst:DoTaskInTime(1.0, function()
+            inst._charge_clear_task = nil
+            if inst and inst:IsValid() then
+                inst._mounted_charging = nil
+            end
+        end)
+
+        -- CD 已在冲锋开始时触发，这里不再重复 Discharge
+    end
+
+    state.onenter = function(inst, data)
+        orig_onenter(inst, data)
+
+        -- 冲锋仍在进行中（从 parry_hit 返回），取消 SG 新设的 duration task
+        if inst._charge_parry_active then
+            if inst.sg.statemem.task then
+                inst.sg.statemem.task:Cancel()
+                inst.sg.statemem.task = nil
+            end
+            return
+        end
+
+        local dir    = inst._charge_parry_dir
+        local shield = inst._charge_parry_shield
+        if not (dir and shield and shield:IsValid()) then return end
+        inst._charge_parry_dir    = nil
+        inst._charge_parry_shield = nil
+        inst._charge_parry_active = true
+
+        -- 取消 SG 自带的 duration 计时器（1s 后会自动退回 idle），
+        -- 改由冲锋逻辑在 1.5s 结束后自己调 GoToState("idle")
+        if inst.sg.statemem.task then
+            inst.sg.statemem.task:Cancel()
+            inst.sg.statemem.task = nil
+        end
+
+        inst.Transform:SetRotation(dir * 180 / math.pi)
+
+        if inst.Physics then
+            inst.Physics:ClearCollisionMask()
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.GROUND)
+        end
+
+        local shield_dmg = CHARGE_MINI_POUND_DAMAGE
+        local CHARGE_FIXED_SPEED = 6 * 1.2  -- 固定速度，不依赖当前移速
+
+        -- 清零芜猴加速（无条件，直接清）
+        if inst.components.locomotor then
+            inst.components.locomotor:SetExternalSpeedMultiplier(shield, "wonkey_run", nil)
+        end
+        inst._wonkey_run_time  = 0
+        inst._wonkey_run_stage = 0
+        inst._wonkey_stop_time = 0
+        inst._mounted_charging = true
+
+        -- 冲锋开始时立即触发 5 秒 CD（冲锋 1.5 秒结束后剩余 3.5 秒）
+        if shield.components.rechargeable then
+            shield.components.rechargeable:Discharge(CHARGE_PARRY_CD)
+        end
+        -- 标记冲锋中：禁止格挡成功时的 CD 清零
+        inst._charge_no_parry_reset = true
+
+        -- 开始冲锋：第一击
+        DoMiniGroundPound(inst, shield_dmg)
+
+        local elapsed = 0
+        local mid_hit  = false
+        local end_hit  = false
+        local charge_rot = dir * 180 / math.pi
+
+        local function DoChargeFn(_, dt)
+            if not (inst and inst:IsValid()) then
+                StopCharge(inst, shield)
+                return
+            end
+            elapsed = elapsed + (dt or 0)
+
+            -- 中段击（0.75s）
+            if not mid_hit and elapsed >= 0.75 then
+                mid_hit = true
+                DoMiniGroundPound(inst, shield_dmg)
+            end
+
+            -- 冲锋结束（1.5s）
+            if not end_hit and elapsed >= CHARGE_PARRY_DURATION then
+                end_hit = true
+                DoMiniGroundPound(inst, shield_dmg)
+                StopCharge(inst, shield)
+                -- 冲锋结束后才让 SG 退回 idle
+                if inst.sg and inst.sg.currentstate
+                    and inst.sg.currentstate.name == "parry_idle" then
+                    inst.AnimState:PlayAnimation("shieldparry_pst")
+                    inst.sg:GoToState("idle", true)
+                end
+                return
+            end
+
+            -- 越水/掉落检测
+            if inst.Physics then
+                local cx, cy, cz = inst.Transform:GetWorldPosition()
+                local map = GLOBAL.TheWorld.Map
+                local on_land = map:IsAboveGroundAtPoint(cx, 0, cz)
+                    or map:GetTileAtPoint(cx, 0, cz) == GLOBAL.GROUND.ROAD
+                if not on_land then
+                    StopCharge(inst, shield)
+                    return
+                end
+            end
+
+            -- 每帧驱动物理
+            if inst.Physics then
+                if inst.components.locomotor then
+                    inst.components.locomotor:Stop()
+                    inst.components.locomotor:StopMoving()
+                end
+                inst.Transform:SetRotation(charge_rot)
+                inst.Physics:SetMotorVel(CHARGE_FIXED_SPEED, 0, 0)
+            end
+        end
+
+        if not inst.components.updatelooper then
+            inst:AddComponent("updatelooper")
+        end
+        inst._charge_fn = DoChargeFn
+        inst.components.updatelooper:AddOnUpdateFn(DoChargeFn)
+    end
+
+    -- onexit：SG 因任何原因退出 parry_idle 时清理冲锋
+    -- 跳过条件：进入 parry_hit（格挡成功动画）或 hit（受伤动画）
+    -- 受伤时 hit 结束后由下方 hit 状态 patch 重定向回 parry_idle
+    state.onexit = function(inst)
+        if orig_onexit then orig_onexit(inst) end
+        if inst._charge_parry_active then
+            local next_state = inst.sg.currentstate and inst.sg.currentstate.name
+            -- parry_hit：格挡成功，结束后会自动回 parry_idle
+            if inst.sg.statemem.parrying then return end
+            -- hit：受伤，结束后由 hit patch 重定向回 parry_idle
+            if next_state == "hit" then return end
+            local inv = inst.components and inst.components.inventory
+            local shield = inv and inv:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+            StopCharge(inst, shield)
+        end
+    end
+
+    -- patch hit 状态：冲锋激活时受伤，hit 结束后重定向回 parry_idle
+    local hit_state = sg.states["hit"]
+    if hit_state then
+        local orig_hit_ontimeout = hit_state.ontimeout
+        local orig_hit_animover  = hit_state.events and hit_state.events["animover"]
+        hit_state.ontimeout = function(inst)
+            if inst._charge_parry_active then
+                inst.sg:RemoveStateTag("keepchannelcasting")
+                inst.sg:GoToState("parry_idle")
+                return
+            end
+            if orig_hit_ontimeout then orig_hit_ontimeout(inst) end
+        end
+        if hit_state.events then
+            hit_state.events["animover"] = EventHandler("animover", function(inst)
+                if inst._charge_parry_active then
+                    if inst.AnimState:AnimDone() then
+                        inst.sg:GoToState("parry_idle")
+                    end
+                    return
+                end
+                if orig_hit_animover then orig_hit_animover.fn(inst) end
+            end)
+        end
+    end
+end)
+
+------------------------------------------------------------------------
+-- 技能点突破上限
+------------------------------------------------------------------------
+local base_SKILL_THRESHOLDS = GLOBAL.TUNING.SKILL_THRESHOLDS
+local function addNumberFive(times)
+    times = times - 15
+    if times > 0 then
+        for i = 1, times do
+            table.insert(base_SKILL_THRESHOLDS, 1)
+        end
+    end
+end
+addNumberFive(insights_max)
+GLOBAL.TUNING.SKILL_THRESHOLDS = base_SKILL_THRESHOLDS
+
+local AddPrefabPostInit = AddPrefabPostInit
+
+GLOBAL.setfenv(1, GLOBAL)
+local skilltree_defs = require("prefabs/skilltree_defs")
+
+------------------------------------------------------------------------
+-- 薇格弗德月影亲和解锁
+------------------------------------------------------------------------
+skilltree_defs.SKILLTREE_DEFS["wathgrithr"].wathgrithr_allegiance_shadow.tags = {"shadow"}
+skilltree_defs.SKILLTREE_DEFS["wathgrithr"].wathgrithr_allegiance_lunar.tags  = {"lunar"}
+
+------------------------------------------------------------------------
+-- 薇格弗德月影双修
+------------------------------------------------------------------------
+_modimport("scripts/main/wathgrithr_dualform.lua")
+
+-- 战歌激活台词（在 _modimport 之后设置，确保 STRINGS.CHARACTERS.WATHGRITHR 表已存在）
+-- SG sing 状态 onenter 读 "ANNOUNCE_" .. string.upper(songdata.NAME)
+-- songdata.NAME = prefab.."_buff"，所以 key 是 ANNOUNCE_BATTLESONG_LUNARALIGNED_BUFF
+STRINGS.CHARACTERS.WATHGRITHR.ANNOUNCE_BATTLESONG_SHADOWALIGNED_BUFF = "黑暗降临！"
+STRINGS.CHARACTERS.WATHGRITHR.ANNOUNCE_BATTLESONG_LUNARALIGNED_BUFF  = "光明指引！"
+
+------------------------------------------------------------------------
+-- 手持错误武器唱战歌：在 CanAddSong 阶段直接拒绝
+-- cantsing 状态会说 ANNOUNCE_NOINSPIRATION（"让激战为我开嗓"），
+-- 通过 patch cantsing 的 onenter 检测标记，改为说专属拒绝台词
+------------------------------------------------------------------------
+_AddComponentPostInit("singinginspiration", function(self)
+    local orig_CanAddSong = self.CanAddSong
+    self.CanAddSong = function(s, songdata, song_item)
+        local result = orig_CanAddSong(s, songdata, song_item)
+        if not result then return false end
+
+        local owner = s.inst
+        if not (owner and owner.prefab == "wathgrithr") then return result end
+
+        local sk = owner.components and owner.components.skilltreeupdater
+        if not (sk and sk:IsActivated("wathgrithr_allegiance_shadow")
+                   and sk:IsActivated("wathgrithr_allegiance_lunar")) then
+            return result
+        end
+
+        local name = songdata and songdata.ITEM_NAME
+        local inv = owner.components.inventory
+        local hand_item = inv and inv:GetEquippedItem(EQUIPSLOTS.HANDS)
+
+        if name == "battlesong_lunaraligned"
+                and hand_item and hand_item:HasTag("battleshield") then
+            owner._warcry_wrong_weapon = "lunar"
+            return false
+        elseif name == "battlesong_shadowaligned"
+                and hand_item and hand_item:HasTag("battlespear") then
+            owner._warcry_wrong_weapon = "shadow"
+            return false
+        end
+
+        return result
+    end
+end)
+
+-- patch SGwilson cantsing 状态：检测到错误武器标记时说专属台词
+_AddStategraphPostInit("wilson", function(sg)
+    local cantsing = sg.states["cantsing"]
+    if not (cantsing and cantsing.onenter) then return end
+    local orig_cantsing_onenter = cantsing.onenter
+    cantsing.onenter = function(inst)
+        if inst._warcry_wrong_weapon then
+            local wrong_type = inst._warcry_wrong_weapon
+            inst._warcry_wrong_weapon = nil
+            inst:ClearBufferedAction()
+            local line = wrong_type == "lunar"
+                and "这个道具不适合这个曲目。"
+                or "这不是这场演出的道具。"
+            inst.components.talker:Say(line, nil, true)
+            inst.AnimState:PlayAnimation("sing_fail", false)
+            inst.SoundEmitter:PlaySound("dontstarve_DLC001/characters/wathgrithr/fail")
+            return
+        end
+        orig_cantsing_onenter(inst)
+    end
+end)
+
+------------------------------------------------------------------------
+-- 薇格弗德奔雷矛系统
+------------------------------------------------------------------------
+STRINGS.NAMES.SPEAR_WATHGRITHR_ENLIGHTENED = "启迪奔雷矛"
+STRINGS.NAMES.SPEAR_WATHGRITHR_RADIANT     = "辉煌奔雷矛"
+
+STRINGS.CHARACTERS = STRINGS.CHARACTERS or {}
+STRINGS.CHARACTERS.GENERIC = STRINGS.CHARACTERS.GENERIC or {}
+STRINGS.CHARACTERS.GENERIC.DESCRIBE = STRINGS.CHARACTERS.GENERIC.DESCRIBE or {}
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SPEAR_WATHGRITHR_ENLIGHTENED = "赋予这柄矛以月光。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SPEAR_WATHGRITHR_RADIANT     = "将璀璨握在手中。"
+
+------------------------------------------------------------------------
+-- 薇格弗德圆盾系统
+------------------------------------------------------------------------
+STRINGS.NAMES.SHIELD_GUARDIAN  = "守护者圆盾"
+STRINGS.NAMES.SHIELD_NIGHTMARE = "暗夜重盾"
+STRINGS.NAMES.SHIELD_ANCIENT   = "远古武神盾"
+
+-- 通用检视台词（非薇格弗德角色看到的描述）
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIELD_GUARDIAN  = "坚固的盾牌，闪耀着守护者的光芒。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIELD_NIGHTMARE = "蕴含暗影力量的沉重盾牌。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIELD_ANCIENT   = "远古的武神之盾，低语着不为人知的秘密。"
+
+-- 薇格弗德专属检视台词
+STRINGS.CHARACTERS = STRINGS.CHARACTERS or {}
+STRINGS.CHARACTERS.WATHGRITHR = STRINGS.CHARACTERS.WATHGRITHR or {}
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE = STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE or {}
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE.SHIELD_GUARDIAN  = "盾牌的守护意志与我心意相通。"
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE.SHIELD_NIGHTMARE = "它跟黑暗之心一样预兆着最深沉的黑暗。"
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE.SHIELD_ANCIENT   = "它在……和我说话。"
+
+STRINGS.ACTIONS = STRINGS.ACTIONS or {}
+STRINGS.ACTIONS.CASTAOE = STRINGS.ACTIONS.CASTAOE or {}
+STRINGS.ACTIONS.CASTAOE.SHIELD_GUARDIAN  = "格挡"
+STRINGS.ACTIONS.CASTAOE.SHIELD_NIGHTMARE = "格挡"
+STRINGS.ACTIONS.CASTAOE.SHIELD_ANCIENT   = "格挡"
+
+UPGRADETYPES = UPGRADETYPES or {}
+UPGRADETYPES.SPEAR_LIGHTNING_ENLIGHTENED = "spear_lightning_enlightened"
+UPGRADETYPES.SHIELD_WATHGRITHR_HEART     = "shield_wathgrithr_heart"
+
+-- 心房升级动作显示为"喂养"
+STRINGS.ACTIONS.UPGRADE = STRINGS.ACTIONS.UPGRADE or {}
+STRINGS.ACTIONS.UPGRADE.SHIELD_HEART = "喂养"
+
+-- patch ACTIONS.UPGRADE.strfn，让心房盾牌显示"喂养"
+local _orig_upgrade_strfn = ACTIONS.UPGRADE.strfn
+ACTIONS.UPGRADE.strfn = function(act)
+    if act.target ~= nil and act.target:HasTag("shield_wathgrithr_heart_upgradeable") then
+        return "SHIELD_HEART"
+    end
+    if _orig_upgrade_strfn then
+        return _orig_upgrade_strfn(act)
+    end
+    return nil
+end
+
+-- 普通奔雷矛配方修改
+_AddRecipePostInit("spear_wathgrithr_lightning", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("lightninggoathorn", 1),
+        _Ingredient("spear_wathgrithr",  1),
+        _Ingredient("moonrocknugget",    5),
+    }
+end)
+
+-- 奔雷矛通用增强
+_modimport("scripts/main/wathgrithr_spear.lua")
+
+STRINGS.ACTIONS.CASTAOE.SPEAR_WATHGRITHR_ENLIGHTENED = "闪电突袭"
+STRINGS.ACTIONS.CASTAOE.SPEAR_WATHGRITHR_RADIANT     = "闪电突袭"
+
+-- queen_rose 贴图注册
+_AddPrefabPostInitAny(function()
+    if not _G.RegisterInventoryItemAtlas then return end
+    local atlas = _G.GetInventoryItemAtlas("charlierose.tex")
+    if atlas then
+        _G.RegisterInventoryItemAtlas(atlas, "queen_rose.tex")
+    end
+end)
+
+-- 圆盾冲锋 Action
+_AddAction("SHIELD_CHARGE", "冲锋", function(act)
+    return false
+end)
+
+-- 圆盾系列增强
+_modimport("scripts/main/wathgrithr_shield.lua")
+
+do
+    local fn = SHIELD_CHARGE_FN
+    if fn and ACTIONS.SHIELD_CHARGE then
+        ACTIONS.SHIELD_CHARGE.fn = fn
+    end
+    SHIELD_CHARGE_FN = nil
+end
+
+-- 战斗圆盾配方替换
+_AddRecipePostInit("wathgrithr_shield", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("pinecone", 10),
+        _Ingredient("boards",   3),
+        _Ingredient("flint",    6),
+    }
+end)
+
+-- 远古武神盾配方：修复 queen_rose 贴图
+_AddRecipePostInit("shield_ancient", function(recipe)
+    for _, ing in ipairs(recipe.ingredients) do
+        if ing.type == "queen_rose" then
+            local atlas = GetInventoryItemAtlas("charlierose.tex")
+            if atlas then
+                ing.atlas = atlas
+                ing.image = "charlierose.tex"
+            end
+            break
+        end
+    end
+end)
+
+-- 防火战歌配方替换
+_AddRecipePostInit("battlesong_fireresistance", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("papyrus",       1),
+        _Ingredient("featherpencil", 1),
+        _Ingredient("wateringcan",   1),
+    }
+end)
+
+-- 战斗号子罐配方替换
+_AddRecipePostInit("battlesong_container", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("boards",           6),
+        _Ingredient("turf_carpetfloor", 5),
+        _Ingredient("dragon_scales",    1),
+    }
+end)
+
+------------------------------------------------------------------------
+-- 薇格弗德头盔系统（统帅头盔补丁 + 瓦尔基里头盔）
+------------------------------------------------------------------------
+STRINGS.NAMES.HAT_VALKYRIE = "瓦尔基里头盔"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.HAT_VALKYRIE = "戴上它就像瓦尔基里亲临战场。"
+
+_modimport("scripts/main/wathgrithr_hat.lua")
+
+------------------------------------------------------------------------
+-- 女王的玫瑰：在织影者房间内采摘玫瑰获得 queen_rose
+------------------------------------------------------------------------
+STRINGS.NAMES.QUEEN_ROSE = "女王的玫瑰"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.QUEEN_ROSE = "散发着来自黑夜的气息。"
+
+local ATRIUM_HALF = 14.5
+local _atrium_gate_pos = nil
+
+local function GetAtriumGatePos()
+    if _atrium_gate_pos then return _atrium_gate_pos end
+    if not (TheWorld and TheWorld:HasTag("cave")) then return nil end
+    for _, p in ipairs(AllPlayers or {}) do
+        if p and p:IsValid() then
+            local px, _, pz = p.Transform:GetWorldPosition()
+            local ents = TheSim:FindEntities(px, 0, pz, 30, nil, { "INLIMBO" })
+            for _, ent in ipairs(ents) do
+                if ent.prefab == "atrium_gate" then
+                    local gx, _, gz = ent.Transform:GetWorldPosition()
+                    _atrium_gate_pos = { x = gx, z = gz }
+                    return _atrium_gate_pos
+                end
+            end
+        end
+    end
+    local ents = TheSim:FindEntities(0, 0, 0, 100000, nil, { "INLIMBO" })
+    for _, ent in ipairs(ents) do
+        if ent.prefab == "atrium_gate" then
+            local gx, _, gz = ent.Transform:GetWorldPosition()
+            _atrium_gate_pos = { x = gx, z = gz }
+            return _atrium_gate_pos
+        end
+    end
+    return nil
+end
+
+local function IsInAtriumRoom(inst)
+    local gate = GetAtriumGatePos()
+    if not gate then return false end
+    local x, _, z = inst.Transform:GetWorldPosition()
+    return math.abs(x - gate.x) <= ATRIUM_HALF and math.abs(z - gate.z) <= ATRIUM_HALF
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    local state = sg.states["parry_idle"]
+    if not (state and state.onenter) then return end
+
+    local orig_onenter = state.onenter
+    local orig_onexit  = state.onexit
+
+    -- 冲锋清理函数：无论冲锋正常结束还是 SG 强制退出都会调用
+    local function StopCharge(inst, shield)
+        if not inst._charge_parry_active then return end
+        inst._charge_parry_active = false
+
+        -- 清除冲锋期间禁止格挡重置CD的标记
+        inst._charge_no_parry_reset = nil
+
+        -- 停止 updatelooper 驱动
+        if inst._charge_fn and inst.components.updatelooper then
+            inst.components.updatelooper:RemoveOnUpdateFn(inst._charge_fn)
+            inst._charge_fn = nil
+        end
+
+        -- 恢复碰撞
+        if inst.Physics then
+            inst.Physics:Stop()
+            inst.Physics:SetCollisionGroup(GLOBAL.COLLISION.CHARACTERS)
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.WORLD)
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.OBSTACLES)
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.CHARACTERS)
+        end
+
+        if inst.components.locomotor then inst.components.locomotor:Stop() end
+
+        -- 延迟1秒清除冲锋标记，让芜猴加速可以续上
+        if inst._charge_clear_task then
+            inst._charge_clear_task:Cancel()
+        end
+        inst._charge_clear_task = inst:DoTaskInTime(1.0, function()
+            inst._charge_clear_task = nil
+            if inst and inst:IsValid() then
+                inst._mounted_charging = nil
+            end
+        end)
+
+        -- CD 已在冲锋开始时触发，这里不再重复 Discharge
+    end
+
+    state.onenter = function(inst, data)
+        orig_onenter(inst, data)
+
+        -- 冲锋仍在进行中（从 parry_hit 返回），取消 SG 新设的 duration task
+        if inst._charge_parry_active then
+            if inst.sg.statemem.task then
+                inst.sg.statemem.task:Cancel()
+                inst.sg.statemem.task = nil
+            end
+            return
+        end
+
+        local dir    = inst._charge_parry_dir
+        local shield = inst._charge_parry_shield
+        if not (dir and shield and shield:IsValid()) then return end
+        inst._charge_parry_dir    = nil
+        inst._charge_parry_shield = nil
+        inst._charge_parry_active = true
+
+        -- 取消 SG 自带的 duration 计时器（1s 后会自动退回 idle），
+        -- 改由冲锋逻辑在 1.5s 结束后自己调 GoToState("idle")
+        if inst.sg.statemem.task then
+            inst.sg.statemem.task:Cancel()
+            inst.sg.statemem.task = nil
+        end
+
+        inst.Transform:SetRotation(dir * 180 / math.pi)
+
+        if inst.Physics then
+            inst.Physics:ClearCollisionMask()
+            inst.Physics:CollidesWith(GLOBAL.COLLISION.GROUND)
+        end
+
+        local shield_dmg = CHARGE_MINI_POUND_DAMAGE
+        local CHARGE_FIXED_SPEED = 6 * 1.2  -- 固定速度，不依赖当前移速
+
+        -- 清零芜猴加速（无条件，直接清）
+        if inst.components.locomotor then
+            inst.components.locomotor:SetExternalSpeedMultiplier(shield, "wonkey_run", nil)
+        end
+        inst._wonkey_run_time  = 0
+        inst._wonkey_run_stage = 0
+        inst._wonkey_stop_time = 0
+        inst._mounted_charging = true
+
+        -- 冲锋开始时立即触发 5 秒 CD（冲锋 1.5 秒结束后剩余 3.5 秒）
+        if shield.components.rechargeable then
+            shield.components.rechargeable:Discharge(CHARGE_PARRY_CD)
+        end
+        -- 标记冲锋中：禁止格挡成功时的 CD 清零
+        inst._charge_no_parry_reset = true
+
+        -- 开始冲锋：第一击
+        DoMiniGroundPound(inst, shield_dmg)
+
+        local elapsed = 0
+        local mid_hit  = false
+        local end_hit  = false
+        local charge_rot = dir * 180 / math.pi
+
+        local function DoChargeFn(_, dt)
+            if not (inst and inst:IsValid()) then
+                StopCharge(inst, shield)
+                return
+            end
+            elapsed = elapsed + (dt or 0)
+
+            -- 中段击（0.75s）
+            if not mid_hit and elapsed >= 0.75 then
+                mid_hit = true
+                DoMiniGroundPound(inst, shield_dmg)
+            end
+
+            -- 冲锋结束（1.5s）
+            if not end_hit and elapsed >= CHARGE_PARRY_DURATION then
+                end_hit = true
+                DoMiniGroundPound(inst, shield_dmg)
+                StopCharge(inst, shield)
+                -- 冲锋结束后才让 SG 退回 idle
+                if inst.sg and inst.sg.currentstate
+                    and inst.sg.currentstate.name == "parry_idle" then
+                    inst.AnimState:PlayAnimation("shieldparry_pst")
+                    inst.sg:GoToState("idle", true)
+                end
+                return
+            end
+
+            -- 越水/掉落检测
+            if inst.Physics then
+                local cx, cy, cz = inst.Transform:GetWorldPosition()
+                local map = GLOBAL.TheWorld.Map
+                local on_land = map:IsAboveGroundAtPoint(cx, 0, cz)
+                    or map:GetTileAtPoint(cx, 0, cz) == GLOBAL.GROUND.ROAD
+                if not on_land then
+                    StopCharge(inst, shield)
+                    return
+                end
+            end
+
+            -- 每帧驱动物理
+            if inst.Physics then
+                if inst.components.locomotor then
+                    inst.components.locomotor:Stop()
+                    inst.components.locomotor:StopMoving()
+                end
+                inst.Transform:SetRotation(charge_rot)
+                inst.Physics:SetMotorVel(CHARGE_FIXED_SPEED, 0, 0)
+            end
+        end
+
+        if not inst.components.updatelooper then
+            inst:AddComponent("updatelooper")
+        end
+        inst._charge_fn = DoChargeFn
+        inst.components.updatelooper:AddOnUpdateFn(DoChargeFn)
+    end
+
+    -- onexit：SG 因任何原因退出 parry_idle 时清理冲锋
+    -- 跳过条件：进入 parry_hit（格挡成功动画）或 hit（受伤动画）
+    -- 受伤时 hit 结束后由下方 hit 状态 patch 重定向回 parry_idle
+    state.onexit = function(inst)
+        if orig_onexit then orig_onexit(inst) end
+        if inst._charge_parry_active then
+            local next_state = inst.sg.currentstate and inst.sg.currentstate.name
+            -- parry_hit：格挡成功，结束后会自动回 parry_idle
+            if inst.sg.statemem.parrying then return end
+            -- hit：受伤，结束后由 hit patch 重定向回 parry_idle
+            if next_state == "hit" then return end
+            local inv = inst.components and inst.components.inventory
+            local shield = inv and inv:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+            StopCharge(inst, shield)
+        end
+    end
+
+    -- patch hit 状态：冲锋激活时受伤，hit 结束后重定向回 parry_idle
+    local hit_state = sg.states["hit"]
+    if hit_state then
+        local orig_hit_ontimeout = hit_state.ontimeout
+        local orig_hit_animover  = hit_state.events and hit_state.events["animover"]
+        hit_state.ontimeout = function(inst)
+            if inst._charge_parry_active then
+                inst.sg:RemoveStateTag("keepchannelcasting")
+                inst.sg:GoToState("parry_idle")
+                return
+            end
+            if orig_hit_ontimeout then orig_hit_ontimeout(inst) end
+        end
+        if hit_state.events then
+            hit_state.events["animover"] = EventHandler("animover", function(inst)
+                if inst._charge_parry_active then
+                    if inst.AnimState:AnimDone() then
+                        inst.sg:GoToState("parry_idle")
+                    end
+                    return
+                end
+                if orig_hit_animover then orig_hit_animover.fn(inst) end
+            end)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:singinginspiration
+------------------------------------------------------------------------
+_AddComponentPostInit("singinginspiration", function(self)
+    local orig_CanAddSong = self.CanAddSong
+    self.CanAddSong = function(s, songdata, song_item)
+        local result = orig_CanAddSong(s, songdata, song_item)
+        if not result then return false end
+
+        local owner = s.inst
+        if not (owner and owner.prefab == "wathgrithr") then return result end
+
+        local sk = owner.components and owner.components.skilltreeupdater
+        if not (sk and sk:IsActivated("wathgrithr_allegiance_shadow")
+                   and sk:IsActivated("wathgrithr_allegiance_lunar")) then
+            return result
+        end
+
+        local name = songdata and songdata.ITEM_NAME
+        local inv = owner.components.inventory
+        local hand_item = inv and inv:GetEquippedItem(EQUIPSLOTS.HANDS)
+
+        if name == "battlesong_lunaraligned"
+                and hand_item and hand_item:HasTag("battleshield") then
+            owner._warcry_wrong_weapon = "lunar"
+            return false
+        elseif name == "battlesong_shadowaligned"
+                and hand_item and hand_item:HasTag("battlespear") then
+            owner._warcry_wrong_weapon = "shadow"
+            return false
+        end
+
+        return result
+    end
+end)
+
+-- patch SGwilson cantsing 状态：检测到错误武器标记时说专属台词
+_AddStategraphPostInit("wilson", function(sg)
+    local cantsing = sg.states["cantsing"]
+    if not (cantsing and cantsing.onenter) then return end
+    local orig_cantsing_onenter = cantsing.onenter
+    cantsing.onenter = function(inst)
+        if inst._warcry_wrong_weapon then
+            local wrong_type = inst._warcry_wrong_weapon
+            inst._warcry_wrong_weapon = nil
+            inst:ClearBufferedAction()
+            local line = wrong_type == "lunar"
+                and "这个道具不适合这个曲目。"
+                or "这不是这场演出的道具。"
+            inst.components.talker:Say(line, nil, true)
+            inst.AnimState:PlayAnimation("sing_fail", false)
+            inst.SoundEmitter:PlaySound("dontstarve_DLC001/characters/wathgrithr/fail")
+            return
+        end
+        orig_cantsing_onenter(inst)
+    end
+end)
+
+------------------------------------------------------------------------
+-- 薇格弗德奔雷矛系统
+------------------------------------------------------------------------
+STRINGS.NAMES.SPEAR_WATHGRITHR_ENLIGHTENED = "启迪奔雷矛"
+STRINGS.NAMES.SPEAR_WATHGRITHR_RADIANT     = "辉煌奔雷矛"
+
+STRINGS.CHARACTERS = STRINGS.CHARACTERS or {}
+STRINGS.CHARACTERS.GENERIC = STRINGS.CHARACTERS.GENERIC or {}
+STRINGS.CHARACTERS.GENERIC.DESCRIBE = STRINGS.CHARACTERS.GENERIC.DESCRIBE or {}
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SPEAR_WATHGRITHR_ENLIGHTENED = "赋予这柄矛以月光。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SPEAR_WATHGRITHR_RADIANT     = "将璀璨握在手中。"
+
+------------------------------------------------------------------------
+-- 薇格弗德圆盾系统
+------------------------------------------------------------------------
+STRINGS.NAMES.SHIELD_GUARDIAN  = "守护者圆盾"
+STRINGS.NAMES.SHIELD_NIGHTMARE = "暗夜重盾"
+STRINGS.NAMES.SHIELD_ANCIENT   = "远古武神盾"
+
+-- 通用检视台词（非薇格弗德角色看到的描述）
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIELD_GUARDIAN  = "坚固的盾牌，闪耀着守护者的光芒。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIELD_NIGHTMARE = "蕴含暗影力量的沉重盾牌。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIELD_ANCIENT   = "远古的武神之盾，低语着不为人知的秘密。"
+
+-- 薇格弗德专属检视台词
+STRINGS.CHARACTERS = STRINGS.CHARACTERS or {}
+STRINGS.CHARACTERS.WATHGRITHR = STRINGS.CHARACTERS.WATHGRITHR or {}
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE = STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE or {}
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE.SHIELD_GUARDIAN  = "盾牌的守护意志与我心意相通。"
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE.SHIELD_NIGHTMARE = "它跟黑暗之心一样预兆着最深沉的黑暗。"
+STRINGS.CHARACTERS.WATHGRITHR.DESCRIBE.SHIELD_ANCIENT   = "它在……和我说话。"
+
+STRINGS.ACTIONS = STRINGS.ACTIONS or {}
+STRINGS.ACTIONS.CASTAOE = STRINGS.ACTIONS.CASTAOE or {}
+STRINGS.ACTIONS.CASTAOE.SHIELD_GUARDIAN  = "格挡"
+STRINGS.ACTIONS.CASTAOE.SHIELD_NIGHTMARE = "格挡"
+STRINGS.ACTIONS.CASTAOE.SHIELD_ANCIENT   = "格挡"
+
+UPGRADETYPES = UPGRADETYPES or {}
+UPGRADETYPES.SPEAR_LIGHTNING_ENLIGHTENED = "spear_lightning_enlightened"
+UPGRADETYPES.SHIELD_WATHGRITHR_HEART     = "shield_wathgrithr_heart"
+
+-- 心房升级动作显示为"喂养"
+STRINGS.ACTIONS.UPGRADE = STRINGS.ACTIONS.UPGRADE or {}
+STRINGS.ACTIONS.UPGRADE.SHIELD_HEART = "喂养"
+
+-- patch ACTIONS.UPGRADE.strfn，让心房盾牌显示"喂养"
+local _orig_upgrade_strfn = ACTIONS.UPGRADE.strfn
+ACTIONS.UPGRADE.strfn = function(act)
+    if act.target ~= nil and act.target:HasTag("shield_wathgrithr_heart_upgradeable") then
+        return "SHIELD_HEART"
+    end
+    if _orig_upgrade_strfn then
+        return _orig_upgrade_strfn(act)
+    end
+    return nil
+end
+
+-- 普通奔雷矛配方修改
+_AddRecipePostInit("spear_wathgrithr_lightning", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("lightninggoathorn", 1),
+        _Ingredient("spear_wathgrithr",  1),
+        _Ingredient("moonrocknugget",    5),
+    }
+end)
+
+-- 奔雷矛通用增强
+_modimport("scripts/main/wathgrithr_spear.lua")
+
+STRINGS.ACTIONS.CASTAOE.SPEAR_WATHGRITHR_ENLIGHTENED = "闪电突袭"
+STRINGS.ACTIONS.CASTAOE.SPEAR_WATHGRITHR_RADIANT     = "闪电突袭"
+
+-- queen_rose 贴图注册
+_AddPrefabPostInitAny(function()
+    if not _G.RegisterInventoryItemAtlas then return end
+    local atlas = _G.GetInventoryItemAtlas("charlierose.tex")
+    if atlas then
+        _G.RegisterInventoryItemAtlas(atlas, "queen_rose.tex")
+    end
+end)
+
+-- 圆盾冲锋 Action
+_AddAction("SHIELD_CHARGE", "冲锋", function(act)
+    return false
+end)
+
+-- 圆盾系列增强
+_modimport("scripts/main/wathgrithr_shield.lua")
+
+do
+    local fn = SHIELD_CHARGE_FN
+    if fn and ACTIONS.SHIELD_CHARGE then
+        ACTIONS.SHIELD_CHARGE.fn = fn
+    end
+    SHIELD_CHARGE_FN = nil
+end
+
+-- 战斗圆盾配方替换
+_AddRecipePostInit("wathgrithr_shield", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("pinecone", 10),
+        _Ingredient("boards",   3),
+        _Ingredient("flint",    6),
+    }
+end)
+
+-- 远古武神盾配方：修复 queen_rose 贴图
+_AddRecipePostInit("shield_ancient", function(recipe)
+    for _, ing in ipairs(recipe.ingredients) do
+        if ing.type == "queen_rose" then
+            local atlas = GetInventoryItemAtlas("charlierose.tex")
+            if atlas then
+                ing.atlas = atlas
+                ing.image = "charlierose.tex"
+            end
+            break
+        end
+    end
+end)
+
+-- 防火战歌配方替换
+_AddRecipePostInit("battlesong_fireresistance", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("papyrus",       1),
+        _Ingredient("featherpencil", 1),
+        _Ingredient("wateringcan",   1),
+    }
+end)
+
+-- 战斗号子罐配方替换
+_AddRecipePostInit("battlesong_container", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("boards",           6),
+        _Ingredient("turf_carpetfloor", 5),
+        _Ingredient("dragon_scales",    1),
+    }
+end)
+
+------------------------------------------------------------------------
+-- 薇格弗德头盔系统（统帅头盔补丁 + 瓦尔基里头盔）
+------------------------------------------------------------------------
+STRINGS.NAMES.HAT_VALKYRIE = "瓦尔基里头盔"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.HAT_VALKYRIE = "戴上它就像瓦尔基里亲临战场。"
+
+_modimport("scripts/main/wathgrithr_hat.lua")
+
+------------------------------------------------------------------------
+-- 女王的玫瑰：在织影者房间内采摘玫瑰获得 queen_rose
+------------------------------------------------------------------------
+STRINGS.NAMES.QUEEN_ROSE = "女王的玫瑰"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.QUEEN_ROSE = "散发着来自黑夜的气息。"
+
+local ATRIUM_HALF = 14.5
+local _atrium_gate_pos = nil
+
+local function GetAtriumGatePos()
+    if _atrium_gate_pos then return _atrium_gate_pos end
+    if not (TheWorld and TheWorld:HasTag("cave")) then return nil end
+    for _, p in ipairs(AllPlayers or {}) do
+        if p and p:IsValid() then
+            local px, _, pz = p.Transform:GetWorldPosition()
+            local ents = TheSim:FindEntities(px, 0, pz, 30, nil, { "INLIMBO" })
+            for _, ent in ipairs(ents) do
+                if ent.prefab == "atrium_gate" then
+                    local gx, _, gz = ent.Transform:GetWorldPosition()
+                    _atrium_gate_pos = { x = gx, z = gz }
+                    return _atrium_gate_pos
+                end
+            end
+        end
+    end
+    local ents = TheSim:FindEntities(0, 0, 0, 100000, nil, { "INLIMBO" })
+    for _, ent in ipairs(ents) do
+        if ent.prefab == "atrium_gate" then
+            local gx, _, gz = ent.Transform:GetWorldPosition()
+            _atrium_gate_pos = { x = gx, z = gz }
+            return _atrium_gate_pos
+        end
+    end
+    return nil
+end
+
+local function IsInAtriumRoom(inst)
+    local gate = GetAtriumGatePos()
+    if not gate then return false end
+    local x, _, z = inst.Transform:GetWorldPosition()
+    return math.abs(x - gate.x) <= ATRIUM_HALF and math.abs(z - gate.z) <= ATRIUM_HALF
+end
+
+local function PatchFlowerPick(inst)
+    if not (TheWorld and TheWorld.ismastersim) then return end
+    local pickable = inst.components.pickable
+    if not pickable then return end
+
+    local orig_pick = pickable.Pick
+    pickable.Pick = function(self, picker)
+        if self.inst.animname == "rose" and IsInAtriumRoom(self.inst) then
+            self.canbepicked = false
+            self.inst:PushEvent("picked", { picker = picker })
+            if self.remove_when_picked then
+                self.inst:Remove()
+            end
+            if picker and picker.components.inventory then
+                local rose = SpawnPrefab("queen_rose")
+                if rose then
+                    picker.components.inventory:GiveItem(rose, nil, self.inst:GetPosition())
+                end
+            end
+            return true
+        else
+            return orig_pick(self, picker)
+        end
+    end
+end
+
+_AddPrefabPostInit("flower",      PatchFlowerPick)
+_AddPrefabPostInit("flower_rose", PatchFlowerPick)
+
+------------------------------------------------------------------------
+-- 号子罐容量改为 12 格（3×4）
+------------------------------------------------------------------------
+local _battlesong_containers = require("containers")
+local _battlesong_bc = _battlesong_containers.params.battlesong_container
+if _battlesong_bc then
+    _battlesong_bc.widget.slotpos  = {}
+    _battlesong_bc.widget.slotbg   = {}
+    _battlesong_bc.widget.animbank  = "ui_chester_shadow_3x4"
+    _battlesong_bc.widget.animbuild = "ui_chester_shadow_3x4"
+    _battlesong_bc.widget.pos = Vector3(0, 220, 0)
+    local _battlesong_bg = { image = "battlesong_slot.tex", atlas = "images/hud2.xml" }
+    for y = 2.5, -0.5, -1 do
+        for x = 0, 2 do
+            table.insert(_battlesong_bc.widget.slotpos, Vector3(75 * x - 75 * 2 + 75, 75 * y - 75 * 2 + 75, 0))
+            table.insert(_battlesong_bc.widget.slotbg,  _battlesong_bg)
+        end
+    end
+end
+
+------------------------------------------------------------------------
+-- 骨头帽mod（workshop-2976382468）适配
+-- 该mod的 ShadowToggleWidget.OnUpdate 每帧检查 CheckForSkeletonHat()，
+-- 未戴骨头帽时强制隐藏按钮并恢复影怪显示。
+-- 我们 patch OnUpdate，让暗夜悲歌期间（_warcry_shadow_active）也视为戴了骨头帽。
+-- 同时给 ruinsnightmare 补充屏蔽支持（骨头帽mod原生列表里没有这个）
+------------------------------------------------------------------------
+AddPrefabPostInit("ruinsnightmare", function(inst)
+    inst:DoTaskInTime(0, function()
+        if not (ThePlayer and ThePlayer.hasshadowsenabled ~= nil) then return end
+        if ThePlayer.hasshadowsenabled == false then
+            inst.AnimState:OverrideMultColour(1, 1, 1, 0)
+            inst:Hide()
+        end
+        ThePlayer:ListenForEvent("TurnOnShadows", function()
+            if inst and inst:IsValid() then
+                inst.AnimState:OverrideMultColour(1, 1, 1, 0.4)
+                inst:Show()
+            end
+        end)
+        ThePlayer:ListenForEvent("TurnOffShadows", function()
+            if inst and inst:IsValid() then
+                inst.AnimState:OverrideMultColour(1, 1, 1, 0)
+                inst:Hide()
+            end
+        end)
+    end)
+end)
+pcall(function()
+    local ok, ShadowToggleWidget = pcall(require, "widgets/shadowtogglewidget")
+    if not ok or not ShadowToggleWidget then return end
+
+    local orig_OnUpdate = ShadowToggleWidget.OnUpdate
+    ShadowToggleWidget.OnUpdate = function(self, dt)
+        -- 暗夜悲歌激活期间：读取 net_bool（两端均可见），使按钮可用
+        local player = ThePlayer
+        local is_warcry = player
+            and player._warcry_shadow_net
+            and player._warcry_shadow_net:value()
+        if is_warcry then
+            self.bg:Show()
+            if EQUIPSLOTS.BACK then
+                self.backpack = player.replica.inventory:GetEquippedItem(EQUIPSLOTS.BACK)
+            else
+                self.backpack = player.replica.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
+            end
+            if self.backpack and self.backpack.replica.container
+                and self.backpack.replica.container._isopen
+                and Profile:GetIntegratedBackpack() == true then
+                self.bg:SetPosition(-280, 125, 0)
+            else
+                self.bg:SetPosition(-280, 85, 0)
+            end
+        else
+            orig_OnUpdate(self, dt)
+        end
+    end
+end)
+
+------------------------------------------------------------------------
+-- 制作前置条件检查（patch Builder:DoBuild）
+--
+-- 辉煌奔雷矛：必须佩戴装有5颗 lunar_seed 的启迪之冠（alterguardianhat）
+-- 远古武神盾：必须同时装备骨头头盔、骨头盔甲、暗影香炉
+------------------------------------------------------------------------
+_AddComponentPostInit("builder", function(self)
+    local orig_DoBuild = self.DoBuild
+    self.DoBuild = function(self2, recname, pt, rotation, skin)
+        local inst = self2.inst
+        if not (inst and inst.components and inst.components.inventory) then
+            return orig_DoBuild(self2, recname, pt, rotation, skin)
+        end
+        local inv = inst.components.inventory
+
+        -- 辉煌奔雷矛制作检查：玩家处于强制启蒙状态（佩戴满珠宝启迪之冠）
+        if recname == "spear_wathgrithr_radiant" then
+            local valid = false
+            local sanity = inst.components.sanity
+            if sanity and sanity.inducedlunacy then
+                valid = true
+            end
+            if not valid then
+                inst:DoTaskInTime(0, function()
+                    if inst and inst:IsValid() and inst.components.talker then
+                        inst.components.talker:Say("只有在永恒的启迪之下才能制作。")
+                    end
+                end)
+                return false
+            end
+        end
+
+        -- 远古武神盾制作检查
+        if recname == "shield_ancient" then
+            -- 第一关：必须佩戴织影者三件套（骨头头盔+骨甲+暗影香炉）
+            local head = inv:GetEquippedItem(EQUIPSLOTS.HEAD)
+            local body = inv:GetEquippedItem(EQUIPSLOTS.BODY)
+            local valid = head and head.prefab == "skeletonhat"
+                      and body and body.prefab == "armorskeleton"
+            if valid then
+                local has_thurible = false
+                for _, slot_item in pairs(inv.itemslots or {}) do
+                    if slot_item and slot_item.prefab == "thurible" then
+                        has_thurible = true
+                        break
+                    end
+                end
+                if not has_thurible then
+                    local hands = inv:GetEquippedItem(EQUIPSLOTS.HANDS)
+                    if hands and hands.prefab == "thurible" then
+                        has_thurible = true
+                    end
+                end
+                valid = has_thurible
+            end
+            if not valid then
+                inst:DoTaskInTime(0, function()
+                    if inst and inst:IsValid() and inst.components.talker then
+                        inst.components.talker:Say("只有真正化身为守护者才能制作。")
+                    end
+                end)
+                return false
+            end
+
+            -- 第二关：材料里的暗夜盾必须至少灌注了1个心房
+            local nightmare_hearts = 0
+            for _, item in pairs(inv.itemslots or {}) do
+                if item and item.prefab == "shield_nightmare" then
+                    nightmare_hearts = item._heart_count or 0
+                    break
+                end
+            end
+            if nightmare_hearts <= 0 then
+                inst:DoTaskInTime(0, function()
+                    if inst and inst:IsValid() and inst.components.talker then
+                        inst.components.talker:Say("盾牌似乎还需要最黑暗的心跳。")
+                    end
+                end)
+                return false
+            end
+        end
+
+        return orig_DoBuild(self2, recname, pt, rotation, skin)
+    end
+end)
+
+------------------------------------------------------------------------
+-- 骨头帽摘除时不清除暗夜悲歌的 shadowdominance tag
+-- 原版骨头帽 unequip → shadowdominance 组件 onremove → RemoveTag
+-- patch skeletonhat 的 unequip，悲歌期间保住 tag
+------------------------------------------------------------------------
+_AddPrefabPostInit("skeletonhat", function(inst)
+    if not (_G.TheWorld and _G.TheWorld.ismastersim) then return end
+    if inst._mymod_skeleton_patched then return end
+    inst._mymod_skeleton_patched = true
+
+    local orig_unequip = inst.components.equippable.onunequipfn
+    inst.components.equippable:SetOnUnequip(function(hat, owner)
+        if orig_unequip then orig_unequip(hat, owner) end
+        -- 如果暗夜悲歌仍然激活，延迟一帧补回 shadowdominance tag
+        -- （原版 shadowdominance 组件 OnRemoveFromEntity 会在同帧清除 tag）
+        if owner and owner:IsValid() and owner._warcry_shadow_active then
+            owner:DoTaskInTime(0, function()
+                if owner and owner:IsValid() and owner._warcry_shadow_active then
+                    owner:AddTag("shadowdominance")
+                end
+            end)
+        end
+    end)
+end)
+
+------------------------------------------------------------------------
+-- 暗夜盾升级为远古盾时继承心房（改用 AddRecipePostInit 在制作时捕获）
+-- 在 DoBuild 里制作 shield_ancient 时，先扫描材料槽找暗夜盾的心房数
+------------------------------------------------------------------------
+_AddComponentPostInit("builder", function(self)
+    local orig_DoBuild2 = self.DoBuild
+    self.DoBuild = function(self2, recname, pt, rotation, skin)
+        if recname == "shield_ancient" then
+            local inv = self2.inst and self2.inst.components.inventory
+            if inv then
+                -- 扫描背包，在制作消耗材料之前读取暗夜盾的心房数
+                local nightmare_hearts = 0
+                for _, item in pairs(inv.itemslots or {}) do
+                    if item and item.prefab == "shield_nightmare"
+                        and (item._heart_count or 0) > 0 then
+                        nightmare_hearts = item._heart_count
+                        break
+                    end
+                end
+                if nightmare_hearts > 0 then
+                    rawset(_G, "_shield_heart_inherit", nightmare_hearts)
+                    _G.TheWorld:DoTaskInTime(2, function()
+                        rawset(_G, "_shield_heart_inherit", nil)
+                    end)
+                end
+            end
+        end
+        return orig_DoBuild2(self2, recname, pt, rotation, skin)
+    end
+end)
+
+------------------------------------------------------------------------
+-- 尊贵坐骑技能改动
+------------------------------------------------------------------------
+
+-- 一级：驯化速度 15% → 33%
+TUNING.SKILLS = TUNING.SKILLS or {}
+TUNING.SKILLS.WATHGRITHR = TUNING.SKILLS.WATHGRITHR or {}
+TUNING.SKILLS.WATHGRITHR.WATHGRITHRHAT_BEEFALO_DOMESTICATION_MOD = 1.33
+
+-- 甩鞍具阈值修改：顺从度低于 20% 才甩鞍具（原版 40%）
+-- 原版机制：SGBeefalo 的 idle 和 actual_alert 状态 ontimeout 里检查
+--   obedience < TUNING.BEEFALO_KEEP_SADDLE_OBEDIENCE 则 GoToState("shake_off_saddle")
+-- 直接修改 TUNING 值是最可靠的方案，不需要 patch SG（避免 orig 二次检查问题）
+TUNING.BEEFALO_KEEP_SADDLE_OBEDIENCE = 0.2
+
+-- 三级：女武神骑牛时给牛 1.25 倍攻击倍率
+-- 一级附加：薇格弗德喂牛的饱食度与血量回复提高 50%
+_AddPrefabPostInit("wathgrithr", function(inst)
+    if not (TheWorld and TheWorld.ismastersim) then return end
+    if inst._mymod_mount_skills_patched then return end
+    inst._mymod_mount_skills_patched = true
+
+    -- 三级：骑牛攻击加成
+    local function ApplyMountDamage(player)
+        local mount = player.components.rider and player.components.rider:GetMount()
+        if mount and mount:IsValid() and mount.components.combat
+            and player.components.skilltreeupdater
+            and player.components.skilltreeupdater:IsActivated("wathgrithr_beefalo_3") then
+            mount.components.combat.externaldamagemultipliers:SetModifier(player, 1.25, "wathgrithr_rider")
+        end
+    end
+    local function RemoveMountDamage(player)
+        local mount = player.components.rider and player.components.rider:GetMount()
+        if mount and mount:IsValid() and mount.components.combat then
+            mount.components.combat.externaldamagemultipliers:RemoveModifier(player, "wathgrithr_rider")
+        end
+    end
+    inst:ListenForEvent("mounted", function(player) ApplyMountDamage(player) end)
+    inst:ListenForEvent("dismounted", function(player) RemoveMountDamage(player) end)
+
+    -- 一级附加：喂牛饱食度和血量 +50%
+    inst:ListenForEvent("performaction", function(player, data)
+        if not data or not data.action then return end
+        if data.action.action ~= ACTIONS.FEEDPLAYER and data.action.action ~= ACTIONS.FEED then return end
+        -- 已在 eater patch 里处理
+    end)
+
+    -- 火鸡正餐加 33% 激励值
+    inst:ListenForEvent("oneat", function(player, data)
+        if not data or not data.food then return end
+        if data.food.prefab == "turkeydinner" then
+            local si = player.components.singinginspiration
+            if si then
+                si:DoDelta(si.max * 0.33)
+            end
+        end
+    end)
+end)
+
+-- 一级附加：喂牛饱食度和血量 +50%（patch eater 组件）
+_AddComponentPostInit("eater", function(self)
+    local orig_Eat = self.Eat
+    self.Eat = function(s, food, feeder)
+        if feeder and feeder.prefab == "wathgrithr"
+            and s.inst and s.inst:HasTag("beefalo")
+            and feeder.components.skilltreeupdater
+            and feeder.components.skilltreeupdater:IsActivated("wathgrithr_beefalo_1")
+        then
+            local foodcomp = food and food.components.edible
+            if foodcomp then
+                local orig_hunger = foodcomp.hungervalue
+                local orig_health = foodcomp.healthvalue
+                foodcomp.hungervalue = orig_hunger * 1.5
+                foodcomp.healthvalue = orig_health * 1.5
+                local result = orig_Eat(s, food, feeder)
+                return result
+            end
+        end
+        return orig_Eat(s, food, feeder)
+    end
+end)
+
+------------------------------------------------------------------------
+-- 战斗号子罐不可点燃
+------------------------------------------------------------------------
+_AddPrefabPostInit("battlesong_container", function(inst)
+    if not (TheWorld and TheWorld.ismastersim) then return end
+    if inst.components.burnable then
+        inst:RemoveComponent("burnable")
+    end
+    if inst.components.propagator then
+        inst:RemoveComponent("propagator")
+    end
+end)
+
+------------------------------------------------------------------------
+-- 惊心独白恐慌时间改为 9 秒
+------------------------------------------------------------------------
+TUNING.BATTLESONG_PANIC_TIME = 9
+
+------------------------------------------------------------------------
+-- 战斗鞍配方改为：saddle_basic×1 + saddlehorn×1 + marble×6 + horn×2
+------------------------------------------------------------------------
+_AddRecipePostInit("saddle_wathgrithr", function(recipe)
+    recipe.ingredients = {
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:spear_wathgrithr_lightning
+-- 普通奔雷矛配方修改
+_AddRecipePostInit("spear_wathgrithr_lightning", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("lightninggoathorn", 1),
+        _Ingredient("spear_wathgrithr",  1),
+        _Ingredient("moonrocknugget",    5),
+    }
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:wathgrithr_shield
+-- 战斗圆盾配方替换
+_AddRecipePostInit("wathgrithr_shield", function(recipe)
+    recipe.ingredients = {
+        _Ingredient("pinecone", 10),
+        _Ingredient("boards",   3),
+        _Ingredient("flint",    6),
+    }
+end)
+
+```
+
+
+
+### 变体演进：language (Mod 3809778115)
+- **变体场景与切面**：收录来自工坊 Mod 3809778115 (`language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3809778115)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+  ArkHookFunction(self, "GetSpecializedContainers", IncludeEquippedPieceBox)
+  ArkHookFunction(self, "GiveItem", GivePieceToBoxSilently)
+end)
+
+```
+

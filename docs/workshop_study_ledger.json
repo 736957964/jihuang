@@ -5826,8 +5826,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 08:22:16",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3035009877",
+      "name": "咩咩教主汉化包",
+      "author": "Neitonds",
+      "version": "1.0.4.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:26:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3777965476",
+      "name": "不再令人遗憾的女武神",
+      "author": "冬风的露奈",
+      "version": "1.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:26:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3809778115",
+      "name": "language",
+      "author": "让 望月心灵",
+      "version": "1.1.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:26:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:22:16"
+  "lastUpdated": "2026-11-01 08:26:32"
 }
