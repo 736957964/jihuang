@@ -7271,3 +7271,30 @@
 [2026-11-01 14:16:18] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 14:16:18] Reducer: 成功将 Mod 2986515645 (quick_pick_cactus) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 14:16:18] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:16:26] Git 自动提交并推送成功！
+[2026-11-01 14:16:27] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 14:16:27] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 14:16:57] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3277966689', '3780650262', '3451079419', '3352480994', '3155066294', '3606056931']
+[2026-11-01 14:16:57] SteamCMD 下载 3277966689 ...
+[2026-11-01 14:16:57] SteamCMD 下载 3780650262 ...
+[2026-11-01 14:16:57] SteamCMD 下载 3451079419 ...
+[2026-11-01 14:16:57] SteamCMD 下载 3352480994 ...
+[2026-11-01 14:16:57] SteamCMD 下载 3155066294 ...
+[2026-11-01 14:16:57] SteamCMD 下载 3606056931 ...
+[2026-11-01 14:18:27] Worker [3277966689] 成功解析入库暂存区 -> Reverse:1999 -- 37 (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 14:19:45] Worker [3780650262] 成功解析入库暂存区 -> Wurt: A Rainha do Pantano (Rework) [DEV] (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:20:12] Worker [3451079419] 成功解析入库暂存区 -> 滤镜RR增强版 (类别: 06_世界生成与生态系统类)
+[2026-11-01 14:20:42] Worker [3352480994] 成功解析入库暂存区 -> 快捷切换装备 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:22:01] Worker [3155066294] 成功解析入库暂存区 -> 大理石树优化/Marbetree Rework (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:23:14] Worker [3606056931] 过滤拦截: fontsize (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 14:23:14] Reducer Worker 7: 发现 5 份待存草稿，执行母本仲裁归约...
+[2026-11-01 14:23:15] Reducer: 成功将 Mod 3155066294 (大理石树优化/Marbetree Rework) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:23:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:23:15] Reducer: 成功将 Mod 3277966689 (Reverse:1999 -- 37) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 14:23:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 14:23:15] Reducer: 成功将 Mod 3352480994 (快捷切换装备) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:23:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:23:15] Reducer: 成功将 Mod 3451079419 (滤镜RR增强版) 增量归约合入既有权威母本 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-01 14:23:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-01 14:23:15] Reducer: 成功将 Mod 3780650262 (Wurt: A Rainha do Pantano (Rework) [DEV]) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:23:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md

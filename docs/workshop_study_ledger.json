@@ -8085,8 +8085,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 14:16:18",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3155066294",
+      "name": "大理石树优化/Marbetree Rework",
+      "author": "白令",
+      "version": "1.121",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:23:15",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3277966689",
+      "name": "Reverse:1999 -- 37",
+      "author": "雨栀",
+      "version": "1.0.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 14:23:15",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3352480994",
+      "name": "快捷切换装备",
+      "author": "zzzzzzzs",
+      "version": "20260402",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:23:15",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3451079419",
+      "name": "滤镜RR增强版",
+      "author": "puppet",
+      "version": "1.6",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 14:23:15",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3780650262",
+      "name": "Wurt: A Rainha do Pantano (Rework) [DEV]",
+      "author": "RikiRiquinho",
+      "version": "0.2.143",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:23:15",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 14:16:18"
+  "lastUpdated": "2026-11-01 14:23:15"
 }

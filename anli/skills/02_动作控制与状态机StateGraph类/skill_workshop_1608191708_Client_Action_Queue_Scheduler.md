@@ -59537,3 +59537,3163 @@ if GetModConfigData("quick_harvest") then
 
 ```
 
+
+
+### 变体演进：大理石树优化/Marbetree Rework (Mod 3155066294)
+- **变体场景与切面**：收录来自工坊 Mod 3155066294 (`大理石树优化/Marbetree Rework`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3155066294)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:ocean_trawler
+--捕鱼器优化
+AddPrefabPostInit("ocean_trawler", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	inst:ListenForEvent("itemget",function(inst) --满格自提
+    if inst.components.container:IsFull() and inst.components.oceantrawler:IsLowered() then
+	    inst:DoTaskInTime(0.5,function() 
+		    inst.components.oceantrawler:Raise()
+		end)
+	end
+	end)
+	inst:ListenForEvent("itemlose",function(inst) --失鱼自降
+    if inst.components.container:IsEmpty() and not inst.components.oceantrawler:IsLowered() then
+	    inst:DoTaskInTime(0,function() 
+		    inst.components.oceantrawler:Lower()
+		end)
+	end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winona
+
+AddPrefabPostInit("winona", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+    inst.components.combat.damagemultiplier = 1.5
+	inst.components.health:StartRegen(1.5,4)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:daywalker
+
+AddPrefabPostInit("daywalker", function(inst)  --昼行者二阶段限伤，连环锤击
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	inst.Transform:SetScale(1.35, 1.35, 1.35) --体积增大
+    if inst.components.combat ~= nil then
+        inst.components.combat.onhitotherfn = function(inst,target)
+	
+	if not (target.components.rider ~= nil and target.components.rider:IsRiding()) then
+        target:PushEvent("knockback", {
+            knocker = inst, 
+            radius = 300,
+            strengthmult = 1.5
+        })
+	end
+		    if inst.components.combat.target ~= nil and inst.components.health:GetPercent() ~= 0 and inst.components.health:GetPercent() <= 0.5 and not inst.components.health:IsDead() then
+            if inst.sg:HasStateTag("attack") and inst.sg:HasStateTag("busy") and inst.sg:HasStateTag("jumping") and inst.sg:HasStateTag("notalksound") then
+			if not inst.chained then
+			if math.random() <= 0.85 then  
+				inst.sg:GoToState("attack_slam")
+			end
+			end
+			end
+			end
+		end
+    end
+	local function xianshang3(inst,data)
+	    if inst.components.health:GetPercent() <= 0.5 and inst.components.health:GetPercent() >= 0.02 then
+		
+		if data.attacker then
+		    if data.damage and data.damage >= 128 and data.attacker.prefab == "wathom" then
+		        inst.components.health:DoDelta(data.damage-128)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2.25,2.25,2.25)
+                fx.entity:SetParent(inst.entity)
+		    elseif data.damage and data.damage >= 76 and data.attacker.prefab ~= "wathom" then
+		        inst.components.health:DoDelta(data.damage-76)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2.25,2.25,2.25)
+                fx.entity:SetParent(inst.entity)
+		    end
+		else
+		    if data.damage and data.damage >= 76 then
+			    inst.components.health:DoDelta(data.damage-76)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2.25,2.25,2.25)
+                fx.entity:SetParent(inst.entity)
+			end
+		end
+		
+		end
+	end
+	
+	inst:ListenForEvent("attacked",xianshang3)
+	--移动破坏建筑
+local WORKABLES_CANT_TAGS = { "insect", "INLIMBO" }
+local WORKABLES_ONEOF_TAGS = { "CHOP_workable","HAMMER_workable", "MINE_workable" }
+	inst:DoPeriodicTask(0.2,function() 
+	if not inst.chained then
+	local x, y, z = inst.Transform:GetWorldPosition()
+    local heading_angle = inst.Transform:GetRotation() * DEGREES
+    local x1, z1 = math.cos(heading_angle), -math.sin(heading_angle)
+    for i, v in ipairs(TheSim:FindEntities(x, 0, z, 4, nil, WORKABLES_CANT_TAGS, WORKABLES_ONEOF_TAGS)) do
+        local x2, y2, z2 = v.Transform:GetWorldPosition()
+        local dx, dz = x2 - x, z2 - z
+        local len = math.sqrt(dx * dx + dz * dz)
+        --Normalized, then Dot product
+        if len <= 0 or x1 * dx / len + z1 * dz / len > .3 then
+            v.components.workable:Destroy(inst)
+        end
+    end
+	end
+	end)
+	
+end)
+
+AddPrefabPostInit("stalker_atrium", function(inst)  --织影者二阶段限伤
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	inst:AddComponent("planarentity") --位面减伤
+	local function xianshang2(inst,data)
+	    if inst.components.health:GetPercent() <= 0.625 and not inst.components.health:IsDead() then
+		
+		if data.attacker then
+		    if data.damage and data.damage >= 128 and data.attacker.prefab == "wathom" then
+		        inst.components.health:DoDelta(data.damage-128)
+		    elseif data.damage and data.damage >= 75 and data.attacker.prefab ~= "wathom" then
+		        inst.components.health:DoDelta(data.damage-75)
+		    end
+		else
+		    if data.damage and data.damage >= 75 then
+			    inst.components.health:DoDelta(data.damage-75)
+			end
+		end
+		
+		end
+	end
+	
+	inst:ListenForEvent("attacked",xianshang2)
+end)
+
+AddPrefabPostInit("minotaur", function(inst)  --守护者二阶段限伤，体积增大，其他调整
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+
+    inst.components.lootdropper:AddChanceLoot("reskin_tool",1) --爆一个扫把
+	
+    inst.components.combat:SetDefaultDamage(200)
+    inst.components.combat.playerdamagepercent = 0.5
+    inst.components.combat:SetAreaDamage(4,0.8) --AOE
+	
+	inst.Transform:SetScale(1.15, 1.15, 1.15)
+	local function xianshang1(inst,data)
+	    if inst.components.health:GetPercent() <= 0.61 and not inst.components.health:IsDead() then
+		
+		if inst.components.planarentity == nil then
+		    inst:AddComponent("planarentity") --位面减伤
+		end
+		if data.attacker then
+		    if data.damage and data.damage >= 128 and data.attacker.prefab == "wathom" then
+		        inst.components.health:DoDelta(data.damage-128)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+		    elseif data.damage and data.damage >= 60 and data.attacker.prefab ~= "wathom" then
+		        inst.components.health:DoDelta(data.damage-60)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+		    end
+		else
+		    if data.damage and data.damage >= 60 then
+			    inst.components.health:DoDelta(data.damage-60)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+			end
+		end
+		
+		end
+	end
+	
+	inst:ListenForEvent("attacked",xianshang1)
+end)
+
+--高鸟
+AddPrefabPostInit("tallbird",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end	
+    if inst.components.combat then
+        inst.components.combat.onhitotherfn = function(inst,target)
+		if target and target:HasTag("player") then
+            inst.components.combat.laststartattacktime = 0 --打中玩家则立刻再打
+		end
+		end
+    end
+	inst:ListenForEvent("healthdelta",function(inst,data) 
+	    if data.newpercent and data.newpercent <=0.5 and not inst:HasTag("kuangbao") then
+		    inst:AddTag("kuangbao") 
+			inst:AddTag("ewdiaoluo") 
+			inst.Transform:SetScale(1.15,1.15,1.15)
+			SpawnPrefab("firesplash_fx").Transform:SetPosition(inst.Transform:GetWorldPosition())
+			inst.components.combat:SetAttackPeriod(1.2)
+			inst.components.locomotor:SetExternalSpeedMultiplier(inst,"kuagnbao",1.6)
+			inst:DoTaskInTime(15,function() 
+			if inst and inst.components.health and not inst.components.health:IsDead() then
+			    inst.Transform:SetScale(1,1,1)
+				inst:RemoveTag("ewdiaoluo") 
+				SpawnPrefab("shadow_despawn").Transform:SetPosition(inst.Transform:GetWorldPosition())
+				inst.components.combat:SetAttackPeriod(2)
+			    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst,"kuagnbao")
+            end				
+			end)
+		end
+	end)
+	inst:ListenForEvent("death",function(inst)   
+	    if inst:HasTag("ewdiaoluo") then
+			inst.components.lootdropper:SpawnLootPrefab("milkywhites")
+		end
+	end)
+end)
+
+AddPrefabPostInit("hoodedwidow",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.health:SetMaxHealth(10000)
+	inst:ListenForEvent("attacked",function(inst,data)
+	    if inst.components.health and inst.components.health:GetPercent() >= 0.05 and math.random() <= 0.2 then
+        if inst.sg and inst.sg:HasState("attack") and not inst.sg:HasStateTag("busy") then    
+			inst.sg:GoToState("attack") --被打20%立刻还手
+		end
+		end
+	end)
+	if not inst.components.combat.onhitotherfn then
+        inst.components.combat.onhitotherfn = function(inst, target, damage, stimuli, weapon, damageresolved) 
+		    if target and target:HasTag("player") then
+			    -- target.components.locomotor:SetExternalSpeedMultiplier(inst, "Mb3", 0.6)
+		        -- target:DoTaskInTime(10,function() 
+		           -- target.components.locomotor:RemoveExternalSpeedMultiplier(inst, "Mb3")
+	        	-- end)
+				-- if math.random() <= 0.5 then
+				    -- inst.sg:GoToState("leapattack") 
+				-- end
+                if target.components.grogginess then
+                    target.components.grogginess:AddGrogginess(1.25, 15)
+                end
+				if target.sg and target.sg:HasStateTag('sleeping') and target.components.health then
+				    target.components.health:DoDelta(-8000)
+				    local im = SpawnPrefab("impact")
+				    im.Transform:SetPosition(target.Transform:GetWorldPosition())
+	                im.Transform:SetScale(2, 2, 2)
+				end
+			end
+		end
+    end
+end)
+AddStategraphPostInit("hoodedwidow", function(sg)
+    sg.states["preleapattack"].events["animqueueover"].fn = function(inst) 
+	    inst.sg:GoToState("leapattack") 
+		if math.random() <= 0.75 then
+		    inst:DoTaskInTime(1.1,function() 
+		        inst.sg:GoToState("leapattack") 
+			end)
+		    if math.random() <= 0.75 then
+		    inst:DoTaskInTime(2.3,function() 
+		        inst.sg:GoToState("leapattack") 
+			end)
+				if math.random() <= 0.75 then
+		            inst:DoTaskInTime(3.5,function() 
+		            inst.sg:GoToState("leapattack") 
+			        end)
+					if math.random() <= 0.75 then
+		                inst:DoTaskInTime(4.6,function() 
+		                inst.sg:GoToState("leapattack") 
+			        end)
+		            end 
+		        end 
+		    end 
+
+		end 
+	end
+end)
+AddPrefabPostInit("widow_web_combat", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+    inst.components.health:SetMaxHealth(300)
+end)
+
+--蜗牛巢保护
+AddPrefabPostInit("slurtlehole",function(inst)
+	inst:AddTag("companion")  --防止蜗牛巢被某些AOE伤害波及
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.health:SetMaxHealth(800)  --提高血量，自我修复
+	inst.components.health:StartRegen(20,5)
+end)
+
+--牛保护
+AddPrefabPostInit("beefalo",function(inst)
+	inst:AddTag("companion")  --别打我的牛！
+end)
+
+--镐斧正常攻击，降低挖矿消耗的耐久
+AddPrefabPostInit("multitool_axe_pickaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(42.5)
+	inst.components.finiteuses:SetConsumption(ACTIONS.MINE, 2)
+end)
+--栅栏击剑重做
+AddPrefabPostInit("fence_rotator",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(42.5)
+	inst.components.weapon:SetRange(1)
+end)
+
+--三用工具砍伐所消耗的耐久减半  
+AddPrefabPostInit("tripleshovelaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetConsumption(ACTIONS.CHOP, 0.3)
+end)
+AddPrefabPostInit("triplegoldenshovelaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetConsumption(ACTIONS.CHOP, 0.05)
+end)
+
+--刮地皮头盔无耐久
+AddPrefabPostInit("antlionhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst:RemoveComponent("finiteuses")
+end)
+
+--永不凋零加强
+AddPrefabPostInit("neverfade",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(59.5)
+	inst.components.weapon:SetRange(0.8)
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_MED
+end)
+--软木塞15耐久
+AddPrefabPostInit("boatpatch_sludge",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetMaxUses(15)
+    inst.components.finiteuses:SetUses(15)
+end)
+--污泥提取物20耐久
+AddPrefabPostInit("sludge_oil",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetMaxUses(20)
+    inst.components.finiteuses:SetUses(20)
+end)
+--查尔斯25%加速
+AddPrefabPostInit("the_real_charles_t_horse",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.equippable.walkspeedmult = TUNING.CANE_SPEED_MULT
+end)
+--皇家斗篷
+AddPrefabPostInit("cherryvest",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.equippable.walkspeedmult = TUNING.CANE_SPEED_MULT
+	inst.components.waterproofer:SetEffectiveness(TUNING.WATERPROOFNESS_LARGE)
+	inst.components.equippable.insulated = true
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+	
+end)
+
+--铥套减轻官方击退
+AddPrefabPostInit("armorruins",function(inst)
+	inst:AddTag("heavyarmor")
+end)
+
+--子圭歃加强
+AddPrefabPostInit("siving_mask_gold",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.armor:InitCondition(1050,0.8)
+end)
+
+--羽毛帽大改
+AddPrefabPostInit("featherhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst:AddComponent("waterproofer")  --70%防水 海象帽回san
+    inst.components.waterproofer:SetEffectiveness(0.7)
+    inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+end)
+--雨帽新增60s隔热
+AddPrefabPostInit("rainhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:AddComponent("insulator")
+    inst.components.insulator:SetSummer()
+    inst.components.insulator:SetInsulation(TUNING.INSULATION_SMALL)
+end)
+
+--熊皮背心增强
+AddPrefabPostInit("beargervest",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.insulator:SetInsulation(480)
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+end)
+--海带帽扣san加大
+AddPrefabPostInit("kelphat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.equippable.dapperness = -TUNING.DAPPERNESS_LARGE
+end)
+
+--海象加强
+AddPrefabPostInit("walrus", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	inst.components.locomotor.runspeed = 4 * 1.4
+    inst.components.locomotor.walkspeed = 2 * 1.4
+    
+	local function mabi(inst, attacker, target)
+    if not target:IsValid() then
+        return
+    end
+	if target.SoundEmitter ~= nil then
+	    target.SoundEmitter:PlaySound("dontstarve/wilson/blowdart_impact_sleep")
+	end
+    if target.components.sleeper ~= nil then
+        --target.components.sleeper:AddSleepiness(1, 15, inst)
+	    if target:HasTag("player") then 
+		    local dun = target.replica.inventory and target.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+		    if dun and dun.components.shieldlegion then
+            
+			else
+			    target.components.sleeper:AddSleepiness(1, 15, inst)
+			end
+		else
+		    target.components.sleeper:AddSleepiness(1, 15, inst)
+		end
+    elseif target.components.grogginess ~= nil then
+	    if target:HasTag("player") then 
+		    local dun = target.replica.inventory and target.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+		    if dun and dun.components.shieldlegion then
+            
+			else
+			    target.components.grogginess:AddGrogginess(1.25, 15)
+			end
+		else
+		    target.components.grogginess:AddGrogginess(1.25, 15)
+		end
+    end
+    if target.components.combat ~= nil and not target:HasTag("player") then
+        target.components.combat:SuggestTarget(attacker)
+    end
+
+    end
+	
+    inst:DoTaskInTime(1.1, function() 
+	    if not inst.components.health:IsDead() then
+	    local chuijian = inst.components.inventory and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+	    if chuijian then
+		    chuijian.components.weapon:SetOnAttack(mabi)
+		end
+		end
+	end)
+end)
+
+
+--影刀理智越低越耐用
+AddPrefabPostInit("nightsword", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	local oldfn = inst.components.weapon.onattack
+	inst.components.weapon.onattack = function(inst, attacker, target, skipsanity) 
+	    --oldfn(inst, attacker, target, skipsanity)
+		if attacker and attacker.components.sanity then
+		    local beilv = math.floor((attacker.components.sanity:GetPercent()) * 100)/100
+            if beilv < 0.2 then  --最低20%也就是五倍耐久使用（正好也是处于疯狂状态的期间）
+			    beilv = 0.2
+			end
+			inst.components.weapon.attackwear = beilv
+		end
+	end
+end)
+
+
+--碎片蜘蛛优化，可攻击影怪
+AddPrefabPostInit("spider_moon", function(inst)
+    inst:AddTag("crazy")
+end)
+
+--喷射蜘蛛优化(火 力 优 势 学 说)
+AddStategraphPostInit("spider", function(sg)
+    sg.states["spitter_attack"].events["animover"].fn = function(inst)
+		inst.sg:GoToState("idle") --蜂后，黑寡妇和鹿鹅这三喜欢切后排的Boss不会触发
+		if inst.components.combat.target and inst.components.combat.target:IsValid() and inst.components.combat.target.prefab ~= "beequeen" and inst.components.combat.target.prefab ~= "hoodedwidow" and inst.components.combat.target.prefab ~= "moose" then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "Mb1", 0) --一个短暂的移速归0，用于解决老是莫名其妙往前走一步的问题
+		inst:DoTaskInTime(0.1,function() 
+		    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "Mb1")
+		end)
+		end
+    end
+end)
+
+AddPrefabPostInit("spider_spitter", function(inst)
+    if not TheWorld.ismastersim then
+		return
+	end
+	inst:ListenForEvent("equip", function(inst,data) 
+	    if not inst.components.health:IsDead() then
+	    local chuijian = inst.components.inventory and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+	    if chuijian and chuijian.components.weapon then
+		    chuijian.components.weapon:SetDamage(math.random(12,20)) --每次生成伤害取随机值
+			if chuijian.components.weapon.onattack == nil then
+		        chuijian.components.weapon:SetOnAttack(function(inst, attacker, target) 
+			        if target and math.random() <= 0.4 then
+						local fx = SpawnPrefab("impact")
+						--local fx1 = SpawnPrefab("slingshotammo_hitfx_rock")
+                        local x, y, z = target.Transform:GetWorldPosition()
+                        local radius = target:GetPhysicsRadius(.5)
+                        local angle = (attacker.Transform:GetRotation() - 90) * DEGREES
+                        fx.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+                        --fx1.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+				    end
+			    end)
+			end
+		end
+		end
+	end)
+
+end)
+AddPrefabPostInit("spider_web_spit", function(inst)
+    if not TheWorld.ismastersim then
+		return
+	end
+    inst.components.projectile:SetSpeed(30) --更快的速度
+end)
+
+--嘴哥移动攻击
+AddStategraphPostInit("shadowcreature", function(sg)
+	sg.states["attack"].onenter = function(inst, target)
+        inst.sg.statemem.target = target
+		if inst.prefab ~= "nightmarebeak" and inst.prefab ~= "terrorbeak" then
+            inst.Physics:Stop()
+		end
+        inst.components.combat:StartAttack()
+        inst.AnimState:PlayAnimation("atk_pre")
+        inst.AnimState:PushAnimation("atk", false)
+        --PlayExtendedSound(inst, "attack_grunt")
+        if inst.sg.mem.soundcache == nil then
+            inst.sg.mem.soundcache = {}
+            inst.sg.mem.soundid = 0
+        else
+            inst.sg.mem.soundid = inst.sg.mem.soundid + 1
+        end
+        inst.sg.mem.soundcache[inst.sg.mem.soundid] = true
+        inst.SoundEmitter:PlaySound(inst.sounds["attack_grunt"], "sound_"..tostring(inst.sg.mem.soundid))
+        inst:DoTaskInTime(5, function(inst, soundid)
+            inst.SoundEmitter:KillSound("sound_"..tostring(soundid))
+            inst.sg.mem.soundcache[soundid] = nil
+            if inst.sg.statemem.readytoremove and next(inst.sg.mem.soundcache) == nil then
+                inst:Remove()
+            end
+        end, inst.sg.mem.soundid)
+    end
+end)
+
+
+--倒带二次表旧设定
+AddPrefabPostInit("pocketwatch_revive", function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+    local function Revive_OnHaunt(inst, haunter)
+        inst.components.hauntable.hauntvalue = TUNING.HAUNT_SMALL
+        if haunter:HasTag("pocketwatchcaster") and
+            inst.components.pocketwatch:CastSpell(haunter, haunter) then
+            --SpawnPrefab("brokentool").Transform:SetPosition(inst.Transform:GetWorldPosition())
+        else
+            Launch(inst, haunter, TUNING.LAUNCH_SPEED_SMALL)
+        end
+    end
+        if inst.components.hauntable ~= nil then
+            inst.components.hauntable:SetOnHauntFn(Revive_OnHaunt)
+        end
+end)
+
+AddPrefabPostInitAny(function(inst)
+	if not TheWorld.ismastersim then
+       return inst
+    end
+	
+	if string.sub(inst.prefab, -11, -1) == "_spice_salt" then --盐粉不腐败，这三行代码真的是完美的大道至简
+		inst:RemoveComponent"perishable"
+	end 
+	if inst:HasTag"mastercookware" or inst.components.deployable and inst.components.deployable.restrictedtag == "masterchef" then --厨师用具防火
+		inst:AddTag"fireimmune"
+	end 
+	
+	--使维希的弹弓能击中鸟（希望没有副作用）
+	if inst:HasTag("bird") and not inst:HasTag("bird_mutant") then
+	    inst:DoTaskInTime(0,function() 
+	    if inst.components.inventoryitem and inst.components.inventoryitem.owner == nil then
+	        inst:AddTag("bird_mutant")
+	    end
+        inst:ListenForEvent("onputininventory", function(inst) --兼容鸟笼
+            inst:RemoveTag("bird_mutant") 
+		end)
+		end)
+	end
+	
+	
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:stalker_atrium
+
+AddPrefabPostInit("stalker_atrium", function(inst)  --织影者二阶段限伤
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	inst:AddComponent("planarentity") --位面减伤
+	local function xianshang2(inst,data)
+	    if inst.components.health:GetPercent() <= 0.625 and not inst.components.health:IsDead() then
+		
+		if data.attacker then
+		    if data.damage and data.damage >= 128 and data.attacker.prefab == "wathom" then
+		        inst.components.health:DoDelta(data.damage-128)
+		    elseif data.damage and data.damage >= 75 and data.attacker.prefab ~= "wathom" then
+		        inst.components.health:DoDelta(data.damage-75)
+		    end
+		else
+		    if data.damage and data.damage >= 75 then
+			    inst.components.health:DoDelta(data.damage-75)
+			end
+		end
+		
+		end
+	end
+	
+	inst:ListenForEvent("attacked",xianshang2)
+end)
+
+AddPrefabPostInit("minotaur", function(inst)  --守护者二阶段限伤，体积增大，其他调整
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+
+    inst.components.lootdropper:AddChanceLoot("reskin_tool",1) --爆一个扫把
+	
+    inst.components.combat:SetDefaultDamage(200)
+    inst.components.combat.playerdamagepercent = 0.5
+    inst.components.combat:SetAreaDamage(4,0.8) --AOE
+	
+	inst.Transform:SetScale(1.15, 1.15, 1.15)
+	local function xianshang1(inst,data)
+	    if inst.components.health:GetPercent() <= 0.61 and not inst.components.health:IsDead() then
+		
+		if inst.components.planarentity == nil then
+		    inst:AddComponent("planarentity") --位面减伤
+		end
+		if data.attacker then
+		    if data.damage and data.damage >= 128 and data.attacker.prefab == "wathom" then
+		        inst.components.health:DoDelta(data.damage-128)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+		    elseif data.damage and data.damage >= 60 and data.attacker.prefab ~= "wathom" then
+		        inst.components.health:DoDelta(data.damage-60)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+		    end
+		else
+		    if data.damage and data.damage >= 60 then
+			    inst.components.health:DoDelta(data.damage-60)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+			end
+		end
+		
+		end
+	end
+	
+	inst:ListenForEvent("attacked",xianshang1)
+end)
+
+--高鸟
+AddPrefabPostInit("tallbird",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end	
+    if inst.components.combat then
+        inst.components.combat.onhitotherfn = function(inst,target)
+		if target and target:HasTag("player") then
+            inst.components.combat.laststartattacktime = 0 --打中玩家则立刻再打
+		end
+		end
+    end
+	inst:ListenForEvent("healthdelta",function(inst,data) 
+	    if data.newpercent and data.newpercent <=0.5 and not inst:HasTag("kuangbao") then
+		    inst:AddTag("kuangbao") 
+			inst:AddTag("ewdiaoluo") 
+			inst.Transform:SetScale(1.15,1.15,1.15)
+			SpawnPrefab("firesplash_fx").Transform:SetPosition(inst.Transform:GetWorldPosition())
+			inst.components.combat:SetAttackPeriod(1.2)
+			inst.components.locomotor:SetExternalSpeedMultiplier(inst,"kuagnbao",1.6)
+			inst:DoTaskInTime(15,function() 
+			if inst and inst.components.health and not inst.components.health:IsDead() then
+			    inst.Transform:SetScale(1,1,1)
+				inst:RemoveTag("ewdiaoluo") 
+				SpawnPrefab("shadow_despawn").Transform:SetPosition(inst.Transform:GetWorldPosition())
+				inst.components.combat:SetAttackPeriod(2)
+			    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst,"kuagnbao")
+            end				
+			end)
+		end
+	end)
+	inst:ListenForEvent("death",function(inst)   
+	    if inst:HasTag("ewdiaoluo") then
+			inst.components.lootdropper:SpawnLootPrefab("milkywhites")
+		end
+	end)
+end)
+
+AddPrefabPostInit("hoodedwidow",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.health:SetMaxHealth(10000)
+	inst:ListenForEvent("attacked",function(inst,data)
+	    if inst.components.health and inst.components.health:GetPercent() >= 0.05 and math.random() <= 0.2 then
+        if inst.sg and inst.sg:HasState("attack") and not inst.sg:HasStateTag("busy") then    
+			inst.sg:GoToState("attack") --被打20%立刻还手
+		end
+		end
+	end)
+	if not inst.components.combat.onhitotherfn then
+        inst.components.combat.onhitotherfn = function(inst, target, damage, stimuli, weapon, damageresolved) 
+		    if target and target:HasTag("player") then
+			    -- target.components.locomotor:SetExternalSpeedMultiplier(inst, "Mb3", 0.6)
+		        -- target:DoTaskInTime(10,function() 
+		           -- target.components.locomotor:RemoveExternalSpeedMultiplier(inst, "Mb3")
+	        	-- end)
+				-- if math.random() <= 0.5 then
+				    -- inst.sg:GoToState("leapattack") 
+				-- end
+                if target.components.grogginess then
+                    target.components.grogginess:AddGrogginess(1.25, 15)
+                end
+				if target.sg and target.sg:HasStateTag('sleeping') and target.components.health then
+				    target.components.health:DoDelta(-8000)
+				    local im = SpawnPrefab("impact")
+				    im.Transform:SetPosition(target.Transform:GetWorldPosition())
+	                im.Transform:SetScale(2, 2, 2)
+				end
+			end
+		end
+    end
+end)
+AddStategraphPostInit("hoodedwidow", function(sg)
+    sg.states["preleapattack"].events["animqueueover"].fn = function(inst) 
+	    inst.sg:GoToState("leapattack") 
+		if math.random() <= 0.75 then
+		    inst:DoTaskInTime(1.1,function() 
+		        inst.sg:GoToState("leapattack") 
+			end)
+		    if math.random() <= 0.75 then
+		    inst:DoTaskInTime(2.3,function() 
+		        inst.sg:GoToState("leapattack") 
+			end)
+				if math.random() <= 0.75 then
+		            inst:DoTaskInTime(3.5,function() 
+		            inst.sg:GoToState("leapattack") 
+			        end)
+					if math.random() <= 0.75 then
+		                inst:DoTaskInTime(4.6,function() 
+		                inst.sg:GoToState("leapattack") 
+			        end)
+		            end 
+		        end 
+		    end 
+
+		end 
+	end
+end)
+AddPrefabPostInit("widow_web_combat", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+    inst.components.health:SetMaxHealth(300)
+end)
+
+--蜗牛巢保护
+AddPrefabPostInit("slurtlehole",function(inst)
+	inst:AddTag("companion")  --防止蜗牛巢被某些AOE伤害波及
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.health:SetMaxHealth(800)  --提高血量，自我修复
+	inst.components.health:StartRegen(20,5)
+end)
+
+--牛保护
+AddPrefabPostInit("beefalo",function(inst)
+	inst:AddTag("companion")  --别打我的牛！
+end)
+
+--镐斧正常攻击，降低挖矿消耗的耐久
+AddPrefabPostInit("multitool_axe_pickaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(42.5)
+	inst.components.finiteuses:SetConsumption(ACTIONS.MINE, 2)
+end)
+--栅栏击剑重做
+AddPrefabPostInit("fence_rotator",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(42.5)
+	inst.components.weapon:SetRange(1)
+end)
+
+--三用工具砍伐所消耗的耐久减半  
+AddPrefabPostInit("tripleshovelaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetConsumption(ACTIONS.CHOP, 0.3)
+end)
+AddPrefabPostInit("triplegoldenshovelaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetConsumption(ACTIONS.CHOP, 0.05)
+end)
+
+--刮地皮头盔无耐久
+AddPrefabPostInit("antlionhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst:RemoveComponent("finiteuses")
+end)
+
+--永不凋零加强
+AddPrefabPostInit("neverfade",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(59.5)
+	inst.components.weapon:SetRange(0.8)
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_MED
+end)
+--软木塞15耐久
+AddPrefabPostInit("boatpatch_sludge",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetMaxUses(15)
+    inst.components.finiteuses:SetUses(15)
+end)
+--污泥提取物20耐久
+AddPrefabPostInit("sludge_oil",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetMaxUses(20)
+    inst.components.finiteuses:SetUses(20)
+end)
+--查尔斯25%加速
+AddPrefabPostInit("the_real_charles_t_horse",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.equippable.walkspeedmult = TUNING.CANE_SPEED_MULT
+end)
+--皇家斗篷
+AddPrefabPostInit("cherryvest",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.equippable.walkspeedmult = TUNING.CANE_SPEED_MULT
+	inst.components.waterproofer:SetEffectiveness(TUNING.WATERPROOFNESS_LARGE)
+	inst.components.equippable.insulated = true
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+	
+end)
+
+--铥套减轻官方击退
+AddPrefabPostInit("armorruins",function(inst)
+	inst:AddTag("heavyarmor")
+end)
+
+--子圭歃加强
+AddPrefabPostInit("siving_mask_gold",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.armor:InitCondition(1050,0.8)
+end)
+
+--羽毛帽大改
+AddPrefabPostInit("featherhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst:AddComponent("waterproofer")  --70%防水 海象帽回san
+    inst.components.waterproofer:SetEffectiveness(0.7)
+    inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+end)
+--雨帽新增60s隔热
+AddPrefabPostInit("rainhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:AddComponent("insulator")
+    inst.components.insulator:SetSummer()
+    inst.components.insulator:SetInsulation(TUNING.INSULATION_SMALL)
+end)
+
+--熊皮背心增强
+AddPrefabPostInit("beargervest",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.insulator:SetInsulation(480)
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+end)
+--海带帽扣san加大
+AddPrefabPostInit("kelphat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.equippable.dapperness = -TUNING.DAPPERNESS_LARGE
+end)
+
+--海象加强
+AddPrefabPostInit("walrus", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	inst.components.locomotor.runspeed = 4 * 1.4
+    inst.components.locomotor.walkspeed = 2 * 1.4
+    
+	local function mabi(inst, attacker, target)
+    if not target:IsValid() then
+        return
+    end
+	if target.SoundEmitter ~= nil then
+	    target.SoundEmitter:PlaySound("dontstarve/wilson/blowdart_impact_sleep")
+	end
+    if target.components.sleeper ~= nil then
+        --target.components.sleeper:AddSleepiness(1, 15, inst)
+	    if target:HasTag("player") then 
+		    local dun = target.replica.inventory and target.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+		    if dun and dun.components.shieldlegion then
+            
+			else
+			    target.components.sleeper:AddSleepiness(1, 15, inst)
+			end
+		else
+		    target.components.sleeper:AddSleepiness(1, 15, inst)
+		end
+    elseif target.components.grogginess ~= nil then
+	    if target:HasTag("player") then 
+		    local dun = target.replica.inventory and target.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+		    if dun and dun.components.shieldlegion then
+            
+			else
+			    target.components.grogginess:AddGrogginess(1.25, 15)
+			end
+		else
+		    target.components.grogginess:AddGrogginess(1.25, 15)
+		end
+    end
+    if target.components.combat ~= nil and not target:HasTag("player") then
+        target.components.combat:SuggestTarget(attacker)
+    end
+
+    end
+	
+    inst:DoTaskInTime(1.1, function() 
+	    if not inst.components.health:IsDead() then
+	    local chuijian = inst.components.inventory and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+	    if chuijian then
+		    chuijian.components.weapon:SetOnAttack(mabi)
+		end
+		end
+	end)
+end)
+
+
+--影刀理智越低越耐用
+AddPrefabPostInit("nightsword", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	local oldfn = inst.components.weapon.onattack
+	inst.components.weapon.onattack = function(inst, attacker, target, skipsanity) 
+	    --oldfn(inst, attacker, target, skipsanity)
+		if attacker and attacker.components.sanity then
+		    local beilv = math.floor((attacker.components.sanity:GetPercent()) * 100)/100
+            if beilv < 0.2 then  --最低20%也就是五倍耐久使用（正好也是处于疯狂状态的期间）
+			    beilv = 0.2
+			end
+			inst.components.weapon.attackwear = beilv
+		end
+	end
+end)
+
+
+--碎片蜘蛛优化，可攻击影怪
+AddPrefabPostInit("spider_moon", function(inst)
+    inst:AddTag("crazy")
+end)
+
+--喷射蜘蛛优化(火 力 优 势 学 说)
+AddStategraphPostInit("spider", function(sg)
+    sg.states["spitter_attack"].events["animover"].fn = function(inst)
+		inst.sg:GoToState("idle") --蜂后，黑寡妇和鹿鹅这三喜欢切后排的Boss不会触发
+		if inst.components.combat.target and inst.components.combat.target:IsValid() and inst.components.combat.target.prefab ~= "beequeen" and inst.components.combat.target.prefab ~= "hoodedwidow" and inst.components.combat.target.prefab ~= "moose" then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "Mb1", 0) --一个短暂的移速归0，用于解决老是莫名其妙往前走一步的问题
+		inst:DoTaskInTime(0.1,function() 
+		    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "Mb1")
+		end)
+		end
+    end
+end)
+
+AddPrefabPostInit("spider_spitter", function(inst)
+    if not TheWorld.ismastersim then
+		return
+	end
+	inst:ListenForEvent("equip", function(inst,data) 
+	    if not inst.components.health:IsDead() then
+	    local chuijian = inst.components.inventory and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+	    if chuijian and chuijian.components.weapon then
+		    chuijian.components.weapon:SetDamage(math.random(12,20)) --每次生成伤害取随机值
+			if chuijian.components.weapon.onattack == nil then
+		        chuijian.components.weapon:SetOnAttack(function(inst, attacker, target) 
+			        if target and math.random() <= 0.4 then
+						local fx = SpawnPrefab("impact")
+						--local fx1 = SpawnPrefab("slingshotammo_hitfx_rock")
+                        local x, y, z = target.Transform:GetWorldPosition()
+                        local radius = target:GetPhysicsRadius(.5)
+                        local angle = (attacker.Transform:GetRotation() - 90) * DEGREES
+                        fx.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+                        --fx1.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+				    end
+			    end)
+			end
+		end
+		end
+	end)
+
+end)
+AddPrefabPostInit("spider_web_spit", function(inst)
+    if not TheWorld.ismastersim then
+		return
+	end
+    inst.components.projectile:SetSpeed(30) --更快的速度
+end)
+
+--嘴哥移动攻击
+AddStategraphPostInit("shadowcreature", function(sg)
+	sg.states["attack"].onenter = function(inst, target)
+        inst.sg.statemem.target = target
+		if inst.prefab ~= "nightmarebeak" and inst.prefab ~= "terrorbeak" then
+            inst.Physics:Stop()
+		end
+        inst.components.combat:StartAttack()
+        inst.AnimState:PlayAnimation("atk_pre")
+        inst.AnimState:PushAnimation("atk", false)
+        --PlayExtendedSound(inst, "attack_grunt")
+        if inst.sg.mem.soundcache == nil then
+            inst.sg.mem.soundcache = {}
+            inst.sg.mem.soundid = 0
+        else
+            inst.sg.mem.soundid = inst.sg.mem.soundid + 1
+        end
+        inst.sg.mem.soundcache[inst.sg.mem.soundid] = true
+        inst.SoundEmitter:PlaySound(inst.sounds["attack_grunt"], "sound_"..tostring(inst.sg.mem.soundid))
+        inst:DoTaskInTime(5, function(inst, soundid)
+            inst.SoundEmitter:KillSound("sound_"..tostring(soundid))
+            inst.sg.mem.soundcache[soundid] = nil
+            if inst.sg.statemem.readytoremove and next(inst.sg.mem.soundcache) == nil then
+                inst:Remove()
+            end
+        end, inst.sg.mem.soundid)
+    end
+end)
+
+
+--倒带二次表旧设定
+AddPrefabPostInit("pocketwatch_revive", function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+    local function Revive_OnHaunt(inst, haunter)
+        inst.components.hauntable.hauntvalue = TUNING.HAUNT_SMALL
+        if haunter:HasTag("pocketwatchcaster") and
+            inst.components.pocketwatch:CastSpell(haunter, haunter) then
+            --SpawnPrefab("brokentool").Transform:SetPosition(inst.Transform:GetWorldPosition())
+        else
+            Launch(inst, haunter, TUNING.LAUNCH_SPEED_SMALL)
+        end
+    end
+        if inst.components.hauntable ~= nil then
+            inst.components.hauntable:SetOnHauntFn(Revive_OnHaunt)
+        end
+end)
+
+AddPrefabPostInitAny(function(inst)
+	if not TheWorld.ismastersim then
+       return inst
+    end
+	
+	if string.sub(inst.prefab, -11, -1) == "_spice_salt" then --盐粉不腐败，这三行代码真的是完美的大道至简
+		inst:RemoveComponent"perishable"
+	end 
+	if inst:HasTag"mastercookware" or inst.components.deployable and inst.components.deployable.restrictedtag == "masterchef" then --厨师用具防火
+		inst:AddTag"fireimmune"
+	end 
+	
+	--使维希的弹弓能击中鸟（希望没有副作用）
+	if inst:HasTag("bird") and not inst:HasTag("bird_mutant") then
+	    inst:DoTaskInTime(0,function() 
+	    if inst.components.inventoryitem and inst.components.inventoryitem.owner == nil then
+	        inst:AddTag("bird_mutant")
+	    end
+        inst:ListenForEvent("onputininventory", function(inst) --兼容鸟笼
+            inst:RemoveTag("bird_mutant") 
+		end)
+		end)
+	end
+	
+	
+	if inst:HasTag("preparedfood") then
+	inst:DoTaskInTime(0,function() 
+		local x,y,z = inst.Transform:GetWorldPosition() 
+        for k,v in pairs(TheSim:FindEntities(x,y,z,2)) do
+		    if v.prefab == "portablecookpot" and inst.components.perishable then
+			    inst.components.perishable:SetPercent(1)
+			end
+		end	
+	end)
+	end
+	
+	if (inst.components.equippable or inst.components.armor or inst.components.finiteuses or inst.components.fueled or inst.prefab == "sewing_tape" or inst.prefab == "razor") and inst.components.inventoryitem then
+	   inst:AddTag("toolbox_item")
+	end
+	
+	--一个精简的随机化大小函数，不影响生物除移速以外的属性,只对一些小生物生效 
+	if inst.components.sleeper and inst.components.combat and inst.components.locomotor and inst.components.health and not inst:HasTag("epic") and not inst:HasTag("player") and not inst:HasTag("abigail") then
+    if inst.prefab == "eyeofterror_mini" or inst.prefab == "lunarfrog" or inst.prefab == "aphid" or inst.prefab == "squid" or inst.prefab == "mutated_penguin" or inst.prefab == "penguin" or inst.prefab == "catcoon" or inst:HasTag("hound") or inst.prefab == "mermguard" or inst.prefab == "merm" or inst.prefab == "bunnyman" or inst.prefab == "pigman" or inst.prefab == "terrorbeak" or inst.prefab == "nightmarebeak" or inst.prefab == "crawlingnightmare" or inst.prefab == "crawlinghorror" or inst.prefab == "tentacle" or inst:HasTag("spider") or inst.prefab == "rabbit" or inst.prefab == "frog" or inst.prefab == "uncompromising_rat" then
+        local random_dx ={0.94,0.95,0.96,0.97,0.98,0.99,1,1.01,1.02,1.03,1.04,1.05,1.06,1.07,1.08,1.09,1.1}
+        local DX = math.random(1, #random_dx)
+        local selected_dx = random_dx[DX]
+		inst.Transform:SetScale(selected_dx,selected_dx,selected_dx)
+	end 
+	end
+end)   
+
+--弹弓爆兔儿子金币
+AddPrefabPostInit("rabbit",function(inst)
+    inst:RemoveTag("rabbit")
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:ListenForEvent("onputininventory", function(inst) --修复可能的问题
+        inst:AddTag("rabbit") 
+	end)
+end)
+
+--暗影wixie优化~
+AddPrefabPostInit("shadow_wixie",function(inst)
+    inst:AddTag("puzzlespawn")
+end)
+AddPrefabPostInit("wixie_wardrobe", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+
+local function ShouldAcceptItem(inst, item)
+    if item and item.prefab == "shadowheart" and not inst:HasTag("lengque") then
+	    return true
+	else
+	    return false
+	end
+end
+
+local function OnGetItem(inst, giver, item)
+    if item and item.prefab == "shadowheart" and not inst:HasTag("lengque") then
+	    local boss = SpawnPrefab("shadow_wixie")
+		boss.Transform:SetPosition(inst.Transform:GetWorldPosition())
+	    SpawnPrefab("shadow_despawn").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		SpawnPrefab("shadow_despawn").Transform:SetPosition(inst.Transform:GetWorldPosition())
+	    SpawnPrefab("statue_transition_2").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		SpawnPrefab("statue_transition_2").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		boss:AddTag("puzzlespawn")
+		inst:AddTag("lengque")
+		inst:DoTaskInTime(480,function() 
+		    inst:RemoveTag("lengque")		
+		end)
+	end
+end
+
+	inst:AddComponent("trader")
+    inst.components.trader:SetAcceptTest(ShouldAcceptItem)
+    inst.components.trader.onaccept = OnGetItem
+    inst.components.trader.onrefuse = function() end
+    inst.components.trader:Enable()
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minotaur
+
+AddPrefabPostInit("minotaur", function(inst)  --守护者二阶段限伤，体积增大，其他调整
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+
+    inst.components.lootdropper:AddChanceLoot("reskin_tool",1) --爆一个扫把
+	
+    inst.components.combat:SetDefaultDamage(200)
+    inst.components.combat.playerdamagepercent = 0.5
+    inst.components.combat:SetAreaDamage(4,0.8) --AOE
+	
+	inst.Transform:SetScale(1.15, 1.15, 1.15)
+	local function xianshang1(inst,data)
+	    if inst.components.health:GetPercent() <= 0.61 and not inst.components.health:IsDead() then
+		
+		if inst.components.planarentity == nil then
+		    inst:AddComponent("planarentity") --位面减伤
+		end
+		if data.attacker then
+		    if data.damage and data.damage >= 128 and data.attacker.prefab == "wathom" then
+		        inst.components.health:DoDelta(data.damage-128)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+		    elseif data.damage and data.damage >= 60 and data.attacker.prefab ~= "wathom" then
+		        inst.components.health:DoDelta(data.damage-60)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+		    end
+		else
+		    if data.damage and data.damage >= 60 then
+			    inst.components.health:DoDelta(data.damage-60)
+				local fx = SpawnPrefab("shadow_shield"..tostring(math.random(1,3))) 
+				fx.Transform:SetScale(2,2,2)
+                fx.entity:SetParent(inst.entity)
+			end
+		end
+		
+		end
+	end
+	
+	inst:ListenForEvent("attacked",xianshang1)
+end)
+
+--高鸟
+AddPrefabPostInit("tallbird",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end	
+    if inst.components.combat then
+        inst.components.combat.onhitotherfn = function(inst,target)
+		if target and target:HasTag("player") then
+            inst.components.combat.laststartattacktime = 0 --打中玩家则立刻再打
+		end
+		end
+    end
+	inst:ListenForEvent("healthdelta",function(inst,data) 
+	    if data.newpercent and data.newpercent <=0.5 and not inst:HasTag("kuangbao") then
+		    inst:AddTag("kuangbao") 
+			inst:AddTag("ewdiaoluo") 
+			inst.Transform:SetScale(1.15,1.15,1.15)
+			SpawnPrefab("firesplash_fx").Transform:SetPosition(inst.Transform:GetWorldPosition())
+			inst.components.combat:SetAttackPeriod(1.2)
+			inst.components.locomotor:SetExternalSpeedMultiplier(inst,"kuagnbao",1.6)
+			inst:DoTaskInTime(15,function() 
+			if inst and inst.components.health and not inst.components.health:IsDead() then
+			    inst.Transform:SetScale(1,1,1)
+				inst:RemoveTag("ewdiaoluo") 
+				SpawnPrefab("shadow_despawn").Transform:SetPosition(inst.Transform:GetWorldPosition())
+				inst.components.combat:SetAttackPeriod(2)
+			    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst,"kuagnbao")
+            end				
+			end)
+		end
+	end)
+	inst:ListenForEvent("death",function(inst)   
+	    if inst:HasTag("ewdiaoluo") then
+			inst.components.lootdropper:SpawnLootPrefab("milkywhites")
+		end
+	end)
+end)
+
+AddPrefabPostInit("hoodedwidow",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.health:SetMaxHealth(10000)
+	inst:ListenForEvent("attacked",function(inst,data)
+	    if inst.components.health and inst.components.health:GetPercent() >= 0.05 and math.random() <= 0.2 then
+        if inst.sg and inst.sg:HasState("attack") and not inst.sg:HasStateTag("busy") then    
+			inst.sg:GoToState("attack") --被打20%立刻还手
+		end
+		end
+	end)
+	if not inst.components.combat.onhitotherfn then
+        inst.components.combat.onhitotherfn = function(inst, target, damage, stimuli, weapon, damageresolved) 
+		    if target and target:HasTag("player") then
+			    -- target.components.locomotor:SetExternalSpeedMultiplier(inst, "Mb3", 0.6)
+		        -- target:DoTaskInTime(10,function() 
+		           -- target.components.locomotor:RemoveExternalSpeedMultiplier(inst, "Mb3")
+	        	-- end)
+				-- if math.random() <= 0.5 then
+				    -- inst.sg:GoToState("leapattack") 
+				-- end
+                if target.components.grogginess then
+                    target.components.grogginess:AddGrogginess(1.25, 15)
+                end
+				if target.sg and target.sg:HasStateTag('sleeping') and target.components.health then
+				    target.components.health:DoDelta(-8000)
+				    local im = SpawnPrefab("impact")
+				    im.Transform:SetPosition(target.Transform:GetWorldPosition())
+	                im.Transform:SetScale(2, 2, 2)
+				end
+			end
+		end
+    end
+end)
+AddStategraphPostInit("hoodedwidow", function(sg)
+    sg.states["preleapattack"].events["animqueueover"].fn = function(inst) 
+	    inst.sg:GoToState("leapattack") 
+		if math.random() <= 0.75 then
+		    inst:DoTaskInTime(1.1,function() 
+		        inst.sg:GoToState("leapattack") 
+			end)
+		    if math.random() <= 0.75 then
+		    inst:DoTaskInTime(2.3,function() 
+		        inst.sg:GoToState("leapattack") 
+			end)
+				if math.random() <= 0.75 then
+		            inst:DoTaskInTime(3.5,function() 
+		            inst.sg:GoToState("leapattack") 
+			        end)
+					if math.random() <= 0.75 then
+		                inst:DoTaskInTime(4.6,function() 
+		                inst.sg:GoToState("leapattack") 
+			        end)
+		            end 
+		        end 
+		    end 
+
+		end 
+	end
+end)
+AddPrefabPostInit("widow_web_combat", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+    inst.components.health:SetMaxHealth(300)
+end)
+
+--蜗牛巢保护
+AddPrefabPostInit("slurtlehole",function(inst)
+	inst:AddTag("companion")  --防止蜗牛巢被某些AOE伤害波及
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.health:SetMaxHealth(800)  --提高血量，自我修复
+	inst.components.health:StartRegen(20,5)
+end)
+
+--牛保护
+AddPrefabPostInit("beefalo",function(inst)
+	inst:AddTag("companion")  --别打我的牛！
+end)
+
+--镐斧正常攻击，降低挖矿消耗的耐久
+AddPrefabPostInit("multitool_axe_pickaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(42.5)
+	inst.components.finiteuses:SetConsumption(ACTIONS.MINE, 2)
+end)
+--栅栏击剑重做
+AddPrefabPostInit("fence_rotator",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(42.5)
+	inst.components.weapon:SetRange(1)
+end)
+
+--三用工具砍伐所消耗的耐久减半  
+AddPrefabPostInit("tripleshovelaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetConsumption(ACTIONS.CHOP, 0.3)
+end)
+AddPrefabPostInit("triplegoldenshovelaxe",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetConsumption(ACTIONS.CHOP, 0.05)
+end)
+
+--刮地皮头盔无耐久
+AddPrefabPostInit("antlionhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst:RemoveComponent("finiteuses")
+end)
+
+--永不凋零加强
+AddPrefabPostInit("neverfade",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetDamage(59.5)
+	inst.components.weapon:SetRange(0.8)
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_MED
+end)
+--软木塞15耐久
+AddPrefabPostInit("boatpatch_sludge",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetMaxUses(15)
+    inst.components.finiteuses:SetUses(15)
+end)
+--污泥提取物20耐久
+AddPrefabPostInit("sludge_oil",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.finiteuses:SetMaxUses(20)
+    inst.components.finiteuses:SetUses(20)
+end)
+--查尔斯25%加速
+AddPrefabPostInit("the_real_charles_t_horse",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.equippable.walkspeedmult = TUNING.CANE_SPEED_MULT
+end)
+--皇家斗篷
+AddPrefabPostInit("cherryvest",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.equippable.walkspeedmult = TUNING.CANE_SPEED_MULT
+	inst.components.waterproofer:SetEffectiveness(TUNING.WATERPROOFNESS_LARGE)
+	inst.components.equippable.insulated = true
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+	
+end)
+
+--铥套减轻官方击退
+AddPrefabPostInit("armorruins",function(inst)
+	inst:AddTag("heavyarmor")
+end)
+
+--子圭歃加强
+AddPrefabPostInit("siving_mask_gold",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.armor:InitCondition(1050,0.8)
+end)
+
+--羽毛帽大改
+AddPrefabPostInit("featherhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst:AddComponent("waterproofer")  --70%防水 海象帽回san
+    inst.components.waterproofer:SetEffectiveness(0.7)
+    inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+end)
+--雨帽新增60s隔热
+AddPrefabPostInit("rainhat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:AddComponent("insulator")
+    inst.components.insulator:SetSummer()
+    inst.components.insulator:SetInsulation(TUNING.INSULATION_SMALL)
+end)
+
+--熊皮背心增强
+AddPrefabPostInit("beargervest",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.insulator:SetInsulation(480)
+	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE
+end)
+--海带帽扣san加大
+AddPrefabPostInit("kelphat",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.components.equippable.dapperness = -TUNING.DAPPERNESS_LARGE
+end)
+
+--海象加强
+AddPrefabPostInit("walrus", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	inst.components.locomotor.runspeed = 4 * 1.4
+    inst.components.locomotor.walkspeed = 2 * 1.4
+    
+	local function mabi(inst, attacker, target)
+    if not target:IsValid() then
+        return
+    end
+	if target.SoundEmitter ~= nil then
+	    target.SoundEmitter:PlaySound("dontstarve/wilson/blowdart_impact_sleep")
+	end
+    if target.components.sleeper ~= nil then
+        --target.components.sleeper:AddSleepiness(1, 15, inst)
+	    if target:HasTag("player") then 
+		    local dun = target.replica.inventory and target.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+		    if dun and dun.components.shieldlegion then
+            
+			else
+			    target.components.sleeper:AddSleepiness(1, 15, inst)
+			end
+		else
+		    target.components.sleeper:AddSleepiness(1, 15, inst)
+		end
+    elseif target.components.grogginess ~= nil then
+	    if target:HasTag("player") then 
+		    local dun = target.replica.inventory and target.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+		    if dun and dun.components.shieldlegion then
+            
+			else
+			    target.components.grogginess:AddGrogginess(1.25, 15)
+			end
+		else
+		    target.components.grogginess:AddGrogginess(1.25, 15)
+		end
+    end
+    if target.components.combat ~= nil and not target:HasTag("player") then
+        target.components.combat:SuggestTarget(attacker)
+    end
+
+    end
+	
+    inst:DoTaskInTime(1.1, function() 
+	    if not inst.components.health:IsDead() then
+	    local chuijian = inst.components.inventory and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+	    if chuijian then
+		    chuijian.components.weapon:SetOnAttack(mabi)
+		end
+		end
+	end)
+end)
+
+
+--影刀理智越低越耐用
+AddPrefabPostInit("nightsword", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	local oldfn = inst.components.weapon.onattack
+	inst.components.weapon.onattack = function(inst, attacker, target, skipsanity) 
+	    --oldfn(inst, attacker, target, skipsanity)
+		if attacker and attacker.components.sanity then
+		    local beilv = math.floor((attacker.components.sanity:GetPercent()) * 100)/100
+            if beilv < 0.2 then  --最低20%也就是五倍耐久使用（正好也是处于疯狂状态的期间）
+			    beilv = 0.2
+			end
+			inst.components.weapon.attackwear = beilv
+		end
+	end
+end)
+
+
+--碎片蜘蛛优化，可攻击影怪
+AddPrefabPostInit("spider_moon", function(inst)
+    inst:AddTag("crazy")
+end)
+
+--喷射蜘蛛优化(火 力 优 势 学 说)
+AddStategraphPostInit("spider", function(sg)
+    sg.states["spitter_attack"].events["animover"].fn = function(inst)
+		inst.sg:GoToState("idle") --蜂后，黑寡妇和鹿鹅这三喜欢切后排的Boss不会触发
+		if inst.components.combat.target and inst.components.combat.target:IsValid() and inst.components.combat.target.prefab ~= "beequeen" and inst.components.combat.target.prefab ~= "hoodedwidow" and inst.components.combat.target.prefab ~= "moose" then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "Mb1", 0) --一个短暂的移速归0，用于解决老是莫名其妙往前走一步的问题
+		inst:DoTaskInTime(0.1,function() 
+		    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "Mb1")
+		end)
+		end
+    end
+end)
+
+AddPrefabPostInit("spider_spitter", function(inst)
+    if not TheWorld.ismastersim then
+		return
+	end
+	inst:ListenForEvent("equip", function(inst,data) 
+	    if not inst.components.health:IsDead() then
+	    local chuijian = inst.components.inventory and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+	    if chuijian and chuijian.components.weapon then
+		    chuijian.components.weapon:SetDamage(math.random(12,20)) --每次生成伤害取随机值
+			if chuijian.components.weapon.onattack == nil then
+		        chuijian.components.weapon:SetOnAttack(function(inst, attacker, target) 
+			        if target and math.random() <= 0.4 then
+						local fx = SpawnPrefab("impact")
+						--local fx1 = SpawnPrefab("slingshotammo_hitfx_rock")
+                        local x, y, z = target.Transform:GetWorldPosition()
+                        local radius = target:GetPhysicsRadius(.5)
+                        local angle = (attacker.Transform:GetRotation() - 90) * DEGREES
+                        fx.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+                        --fx1.Transform:SetPosition(x + math.sin(angle) * radius, 0, z + math.cos(angle) * radius)
+				    end
+			    end)
+			end
+		end
+		end
+	end)
+
+end)
+AddPrefabPostInit("spider_web_spit", function(inst)
+    if not TheWorld.ismastersim then
+		return
+	end
+    inst.components.projectile:SetSpeed(30) --更快的速度
+end)
+
+--嘴哥移动攻击
+AddStategraphPostInit("shadowcreature", function(sg)
+	sg.states["attack"].onenter = function(inst, target)
+        inst.sg.statemem.target = target
+		if inst.prefab ~= "nightmarebeak" and inst.prefab ~= "terrorbeak" then
+            inst.Physics:Stop()
+		end
+        inst.components.combat:StartAttack()
+        inst.AnimState:PlayAnimation("atk_pre")
+        inst.AnimState:PushAnimation("atk", false)
+        --PlayExtendedSound(inst, "attack_grunt")
+        if inst.sg.mem.soundcache == nil then
+            inst.sg.mem.soundcache = {}
+            inst.sg.mem.soundid = 0
+        else
+            inst.sg.mem.soundid = inst.sg.mem.soundid + 1
+        end
+        inst.sg.mem.soundcache[inst.sg.mem.soundid] = true
+        inst.SoundEmitter:PlaySound(inst.sounds["attack_grunt"], "sound_"..tostring(inst.sg.mem.soundid))
+        inst:DoTaskInTime(5, function(inst, soundid)
+            inst.SoundEmitter:KillSound("sound_"..tostring(soundid))
+            inst.sg.mem.soundcache[soundid] = nil
+            if inst.sg.statemem.readytoremove and next(inst.sg.mem.soundcache) == nil then
+                inst:Remove()
+            end
+        end, inst.sg.mem.soundid)
+    end
+end)
+
+
+--倒带二次表旧设定
+AddPrefabPostInit("pocketwatch_revive", function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end
+    local function Revive_OnHaunt(inst, haunter)
+        inst.components.hauntable.hauntvalue = TUNING.HAUNT_SMALL
+        if haunter:HasTag("pocketwatchcaster") and
+            inst.components.pocketwatch:CastSpell(haunter, haunter) then
+            --SpawnPrefab("brokentool").Transform:SetPosition(inst.Transform:GetWorldPosition())
+        else
+            Launch(inst, haunter, TUNING.LAUNCH_SPEED_SMALL)
+        end
+    end
+        if inst.components.hauntable ~= nil then
+            inst.components.hauntable:SetOnHauntFn(Revive_OnHaunt)
+        end
+end)
+
+AddPrefabPostInitAny(function(inst)
+	if not TheWorld.ismastersim then
+       return inst
+    end
+	
+	if string.sub(inst.prefab, -11, -1) == "_spice_salt" then --盐粉不腐败，这三行代码真的是完美的大道至简
+		inst:RemoveComponent"perishable"
+	end 
+	if inst:HasTag"mastercookware" or inst.components.deployable and inst.components.deployable.restrictedtag == "masterchef" then --厨师用具防火
+		inst:AddTag"fireimmune"
+	end 
+	
+	--使维希的弹弓能击中鸟（希望没有副作用）
+	if inst:HasTag("bird") and not inst:HasTag("bird_mutant") then
+	    inst:DoTaskInTime(0,function() 
+	    if inst.components.inventoryitem and inst.components.inventoryitem.owner == nil then
+	        inst:AddTag("bird_mutant")
+	    end
+        inst:ListenForEvent("onputininventory", function(inst) --兼容鸟笼
+            inst:RemoveTag("bird_mutant") 
+		end)
+		end)
+	end
+	
+	
+	if inst:HasTag("preparedfood") then
+	inst:DoTaskInTime(0,function() 
+		local x,y,z = inst.Transform:GetWorldPosition() 
+        for k,v in pairs(TheSim:FindEntities(x,y,z,2)) do
+		    if v.prefab == "portablecookpot" and inst.components.perishable then
+			    inst.components.perishable:SetPercent(1)
+			end
+		end	
+	end)
+	end
+	
+	if (inst.components.equippable or inst.components.armor or inst.components.finiteuses or inst.components.fueled or inst.prefab == "sewing_tape" or inst.prefab == "razor") and inst.components.inventoryitem then
+	   inst:AddTag("toolbox_item")
+	end
+	
+	--一个精简的随机化大小函数，不影响生物除移速以外的属性,只对一些小生物生效 
+	if inst.components.sleeper and inst.components.combat and inst.components.locomotor and inst.components.health and not inst:HasTag("epic") and not inst:HasTag("player") and not inst:HasTag("abigail") then
+    if inst.prefab == "eyeofterror_mini" or inst.prefab == "lunarfrog" or inst.prefab == "aphid" or inst.prefab == "squid" or inst.prefab == "mutated_penguin" or inst.prefab == "penguin" or inst.prefab == "catcoon" or inst:HasTag("hound") or inst.prefab == "mermguard" or inst.prefab == "merm" or inst.prefab == "bunnyman" or inst.prefab == "pigman" or inst.prefab == "terrorbeak" or inst.prefab == "nightmarebeak" or inst.prefab == "crawlingnightmare" or inst.prefab == "crawlinghorror" or inst.prefab == "tentacle" or inst:HasTag("spider") or inst.prefab == "rabbit" or inst.prefab == "frog" or inst.prefab == "uncompromising_rat" then
+        local random_dx ={0.94,0.95,0.96,0.97,0.98,0.99,1,1.01,1.02,1.03,1.04,1.05,1.06,1.07,1.08,1.09,1.1}
+        local DX = math.random(1, #random_dx)
+        local selected_dx = random_dx[DX]
+		inst.Transform:SetScale(selected_dx,selected_dx,selected_dx)
+	end 
+	end
+end)   
+
+--弹弓爆兔儿子金币
+AddPrefabPostInit("rabbit",function(inst)
+    inst:RemoveTag("rabbit")
+	if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:ListenForEvent("onputininventory", function(inst) --修复可能的问题
+        inst:AddTag("rabbit") 
+	end)
+end)
+
+--暗影wixie优化~
+AddPrefabPostInit("shadow_wixie",function(inst)
+    inst:AddTag("puzzlespawn")
+end)
+AddPrefabPostInit("wixie_wardrobe", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+
+local function ShouldAcceptItem(inst, item)
+    if item and item.prefab == "shadowheart" and not inst:HasTag("lengque") then
+	    return true
+	else
+	    return false
+	end
+end
+
+local function OnGetItem(inst, giver, item)
+    if item and item.prefab == "shadowheart" and not inst:HasTag("lengque") then
+	    local boss = SpawnPrefab("shadow_wixie")
+		boss.Transform:SetPosition(inst.Transform:GetWorldPosition())
+	    SpawnPrefab("shadow_despawn").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		SpawnPrefab("shadow_despawn").Transform:SetPosition(inst.Transform:GetWorldPosition())
+	    SpawnPrefab("statue_transition_2").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		SpawnPrefab("statue_transition_2").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		boss:AddTag("puzzlespawn")
+		inst:AddTag("lengque")
+		inst:DoTaskInTime(480,function() 
+		    inst:RemoveTag("lengque")		
+		end)
+	end
+end
+
+	inst:AddComponent("trader")
+    inst.components.trader:SetAcceptTest(ShouldAcceptItem)
+    inst.components.trader.onaccept = OnGetItem
+    inst.components.trader.onrefuse = function() end
+    inst.components.trader:Enable()
+end)
+
+--部分生物常驻潮湿
+AddPrefabPostInit("crabking",       function(inst)      inst:AddTag("wet") end)
+AddPrefabPostInit("crabking_claw",  function(inst)      inst:AddTag("wet") end)
+AddPrefabPostInit("gnarwail",       function(inst)      inst:AddTag("wet") end)
+AddPrefabPostInit("cookiecutter",   function(inst)      inst:AddTag("wet") end)
+AddPrefabPostInit("squid",          function(inst)      inst:AddTag("wet") end)
+AddPrefabPostInit("waterplant",     function(inst)      inst:AddTag("wet") end)
+AddPrefabPostInit("frog",           function(inst)      inst:AddTag("wet") end)
+AddPrefabPostInit("lunarfrog",      function(inst)      inst:AddTag("wet") end)
+
+--小眼球爆金币！
+AddPrefabPostInit("eyeofterror_mini",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.lootdropper:AddChanceLoot("milkywhites", 0.35)
+end)
+
+--寡爪2攻距，10次耐久
+AddPrefabPostInit("widowsgrasp",function(inst)
+	if not TheWorld.ismastersim then
+        return inst
+    end
+	inst.components.weapon:SetRange(2)
+    inst.components.finiteuses:SetMaxUses(10)
+
+```
+
+
+
+### 变体演进：快捷切换装备 (Mod 3352480994)
+- **变体场景与切面**：收录来自工坊 Mod 3352480994 (`快捷切换装备`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3352480994)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+      else
+        AddPrefabPostInit("world", function(inst)
+          inst:ListenForEvent("ms_playerspawn", utils._playeroninit)
+        end)
+
+```
+
+
+
+### 变体演进：Wurt: A Rainha do Pantano (Rework) [DEV] (Mod 3780650262)
+- **变体场景与切面**：收录来自工坊 Mod 3780650262 (`Wurt: A Rainha do Pantano (Rework) [DEV]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3780650262)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wurt
+--  - "GLOBAL" e como o mod acessa coisas do jogo (mundo, tuning, etc).
+--  - "AddPrefabPostInit('wurt', fn)" roda a funcao fn logo depois que
+--    a Wurt e criada. E assim que a gente "encaixa" codigo nela.
+--  - Tudo que muda o mundo (vida, velocidade) so pode rodar no SERVIDOR:
+--    por isso o "if TheWorld.ismastersim".
+-- ============================================================
+
+-- ============================================================
+--  IDIOMA (config do mod): "pt" (padrao) ou "en". WurtTR(pt, en) devolve o
+--  texto no idioma escolhido. Definido em GLOBAL pra funcionar tambem nos
+--  prefabs e na economia da vila. IMPORTANTE: usamos GLOBAL (nao _G) aqui porque
+--  o atalho "local _G = GLOBAL" so e declarado mais abaixo neste arquivo.
+--  Deve ser definido ANTES de qualquer AddAction/STRINGS.
+-- ============================================================
+GLOBAL.WURT_LANG = GetModConfigData("language") or "pt"
+-- Config: liga a captura AUTOMATICA (sem apertar espaco) de peixe de oceano/
+-- Wobster ao nadar por cima deles. Default FALSE (pedido do jogador, 2026-08-31):
+-- por padrao a coleta continua MANUAL -- precisa nadar por cima E apertar o
+-- botao de acao (espaco), igual a coleta no fundo do mar. GetModConfigData pode
+-- devolver "false" de verdade (nao "nil"), entao o teste tem que ser
+-- "== nil" pra so cair no default quando a config realmente nao existir.
+GLOBAL.WURT_SWIM_CATCH_FISH = GetModConfigData("swim_catch_fish")
+if GLOBAL.WURT_SWIM_CATCH_FISH == nil then GLOBAL.WURT_SWIM_CATCH_FISH = false end
+-- WurtTR(pt, en, es): devolve o texto no idioma escolhido. Se faltar o espanhol,
+-- cai pro ingles e depois pro portugues.
+GLOBAL.WurtTR = function(pt, en, es, zh)
+    local l = GLOBAL.WURT_LANG
+    if l == "en" then return en
+    elseif l == "es" then return es or en or pt
+    elseif l == "zh" then return zh or en or pt
+    else return pt end
+end
+
+-- Registra o atlas do ICONE de minimapa do portal do mar. Sem isto, SetIcon
+-- ("wurt_seaportal.tex") nao acha a textura e o portal aparece como quadrado ROXO
+-- (missing texture) no mapa.
+AddMinimapAtlas("images/minimap/wurt_seaportal.xml")
+
+-- 2026-09-13: as 3 chaves do construtor (portal/rei porco/terrario) ja tinham
+-- arte de icone de minimapa pronta em images/minimap/, mas nunca foram
+-- registradas aqui -- SetIcon delas nunca encontrava a textura (mesmo bug do
+-- portal do mar acima, so que nunca tinha sido corrigido pra elas).
+AddMinimapAtlas("images/minimap/wurt_construtor_key_portal.xml")
+AddMinimapAtlas("images/minimap/wurt_construtor_key_pigking.xml")
+AddMinimapAtlas("images/minimap/wurt_construtor_key_terrarium.xml")
+
+-- 2026-09-13: registra pra uso como icone de MINIMAPA os mesmos atlas que ja
+-- existiam so pro icone de CRAFT (Asset ATLAS/IMAGE declarados mais abaixo) --
+-- AddMinimapAtlas e um registro SEPARADO do Asset("ATLAS",...): sem isto,
+-- MiniMapEntity:SetIcon(...) usando esses nomes nao acharia a textura, mesmo
+-- com o atlas ja carregado pro craft. Usado pelas casas da vila, pela arvore-
+-- isca e pela casa do pescador (ver prefabs correspondentes).
+AddMinimapAtlas("images/inventoryimages/wurt_house_healer_icon.xml")
+AddMinimapAtlas("images/inventoryimages/wurt_house_cook_icon.xml")
+AddMinimapAtlas("images/inventoryimages/wurt_house_blacksmith_icon.xml")
+AddMinimapAtlas("images/inventoryimages/wurt_house_construtor_icon.xml")
+AddMinimapAtlas("images/inventoryimages/wurt_fisherhouse_icon.xml")
+AddMinimapAtlas("images/inventoryimages/wurt_mosquito_luretree_icon.xml")
+
+-- #6: PEIXES VANILLA sem nome no hover. Os peixes do MOD (wurt_oceanfish_N) ja tem
+-- nome, mas os peixes VANILLA oceanfish_medium/small_N (que aparecem no fundo do mar,
+-- ex.: "Corn Cod" = oceanfish_medium_5) mostravam "Attack " em branco quando viram
+-- alvo. O STRINGS.NAMES vanilla existe, mas o display da CRIATURA nao o usava; forcamos
+-- o inst.name a partir do STRINGS.NAMES pra o nome aparecer.
+for i = 1, 9 do
+    local mid = "oceanfish_medium_"..i
+    AddPrefabPostInit(mid, function(inst)
+        local nm = GLOBAL.STRINGS.NAMES["OCEANFISH_MEDIUM_"..i]
+        if nm ~= nil then inst.name = nm end
+    end)
+    local sm = "oceanfish_small_"..i
+    AddPrefabPostInit(sm, function(inst)
+        local nm = GLOBAL.STRINGS.NAMES["OCEANFISH_SMALL_"..i]
+        if nm ~= nil then inst.name = nm end
+    end)
+end
+
+-- ============================================================
+-- #15: A GARRAFA (Message in a Bottle) revela 1 REDEMOINHO por vez pra Wurt.
+-- Ao LER a garrafa (mesma da hermit crab/oceano), em vez do tesouro vanilla, ela
+-- revela no mapa o REDEMOINHO de superficie NAO descoberto mais proximo. Vira uma
+-- caca progressiva pelos portais. (So pra Wurt; outros personagens veem o tesouro.)
+-- ============================================================
+-- CORRIGIDO (2026-09-19, "mais de 200 locais"): embrulhado em do...end -- os
+-- nomes aqui dentro nao sao usados fora deste bloco, entao isso libera a
+-- variavel local pro resto do arquivo sem mudar nada de comportamento (ver
+-- explicacao completa no bloco do merm da luz, mais abaixo).
+do
+local function WurtRegisterWhirlpool(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    GLOBAL.TheWorld._wurt_whirlpools = GLOBAL.TheWorld._wurt_whirlpools or {}
+    table.insert(GLOBAL.TheWorld._wurt_whirlpools, inst)
+end
+for i = 1, 8 do AddPrefabPostInit("wurt_seaportal_surface_"..i, WurtRegisterWhirlpool) end
+end
+
+AddPrefabPostInit("messagebottle", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    if inst.components.mapspotrevealer == nil then return end
+    local oldfn = inst.components.mapspotrevealer.gettargetfn
+    inst.components.mapspotrevealer:SetGetTargetFn(function(bottle, doer)
+        if doer ~= nil and doer.prefab == "wurt" then
+            local list = GLOBAL.TheWorld._wurt_whirlpools
+            local best, bestd
+            if list ~= nil then
+                local dx, dy, dz = doer.Transform:GetWorldPosition()
+                for _, w in ipairs(list) do
+                    if w ~= nil and w:IsValid() and not w._wurt_revealed then
+                        local wx, wy, wz = w.Transform:GetWorldPosition()
+                        local d = (wx - dx) * (wx - dx) + (wz - dz) * (wz - dz)
+                        if bestd == nil or d < bestd then best, bestd = w, d end
+                    end
+                end
+            end
+            if best ~= nil then
+                best._wurt_revealed = true
+                if doer.components.talker ~= nil then
+                    doer.components.talker:Say(GLOBAL.WurtTR(
+                        "Um redemoinho! Vou lembrar dele.", "A whirlpool! I'll remember it.",
+                        "Un remolino! Lo recordare.", "一个漩涡！我记住了。"))
+                end
+                return best:GetPosition()
+            end
+            -- ja revelou todos: nao gasta a garrafa (retorna sem alvo)
+            if doer.components.talker ~= nil then
+                doer.components.talker:Say(GLOBAL.WurtTR(
+                    "Ja achei todos os redemoinhos.", "Found all the whirlpools already.",
+                    "Ya encontre todos los remolinos.", "所有漩涡都已找到。"))
+            end
+            return false, "WURT_NO_WHIRLPOOL"
+        end
+        -- outros personagens / sem redemoinho: tesouro vanilla.
+        return oldfn ~= nil and oldfn(bottle, doer) or nil
+    end)
+end)
+
+-- ============================================================
+--  ESPACOS DE VASSALO EM RUNTIME (substituem a geracao das ilhas nas cavernas).
+--  Cada espaco e uma ILHA ISOLADA criada em runtime num CANTO de vazio DENTRO do
+--  mapa da superficie: convertemos um quadrado de tiles em terreno caminhavel
+--  (Map:SetTile, a mesma tecnica comprovada do turf/plantar), cercado pelo vazio
+--  do canto (isolamento), e colocamos o rei vassalo + 6 casas + uma saida.
+--  Entrada = redemoinho (teleporte no MESMO shard). Sem depender das cavernas.
+--
+--  NOTA: o mapa tem ~425 tiles/lado; usamos um canto DENTRO desse limite (SetTile
+--  fora do array nao e confiavel). Cada espaco fica numa fileira perto da borda,
+--  espacados o suficiente pra nao encostarem um no outro.
+-- ============================================================
+-- CORRIGIDO (2026-09-19, "mais de 200 locais"): embrulhado em do...end -- os
+-- nomes locais deste bloco (WURT_SPACE_*, WurtSpaceCenterTile, WurtBuildSpace,
+-- WurtEnterSpace) so sao usados aqui dentro; as duas funcoes que precisam ficar
+-- acessiveis de fora (WurtSpaceTest no console, etc.) ja sao publicadas via
+-- GLOBAL.WurtBuildSpace/GLOBAL.WurtEnterSpace, entao nada quebra.
+do
+local WURT_SPACE_HALF = 6     -- raio do quadrado caminhavel (13x13 tiles ~= 52x52 un.)
+local WURT_SPACE_MARGIN = 12  -- distancia da borda do mapa (em tiles)
+local WURT_SPACE_GAP = 34     -- distancia entre centros de espacos (em tiles)
+local WURT_SPACE_TILE = GLOBAL.WORLD_TILES.MARSH   -- tile caminhavel (pantano: tema da Rainha)
+
+-- Dados de cada espaco (mesma ordem/tema das antigas ilhas dos vassalos).
+local WURT_SPACES = {
+    { vassal = "wurt_vassal_pescador",   house = "mermfishhouse"        },
+    { vassal = "wurt_vassal_cozinheiro", house = "wurt_house_cook"      },
+    { vassal = "wurt_vassal_curandeiro", house = "wurt_house_healer"    },
+    { vassal = "wurt_vassal_guarda",     house = "mermwatchtower"       },
+    { vassal = "wurt_vassal_ferreiro",   house = "wurt_house_blacksmith"},
+}
+
+-- tile-centro do espaco N (dentro dos limites do mapa, perto de um canto).
+local function WurtSpaceCenterTile(N)
+    local map = GLOBAL.TheWorld.Map
+    local tx = WURT_SPACE_MARGIN + WURT_SPACE_HALF + (N - 1) * WURT_SPACE_GAP
+    local ty = WURT_SPACE_MARGIN + WURT_SPACE_HALF
+    return tx, ty
+end
+
+-- constroi o espaco N: terreno + vassalo + 6 casas + saida. Idempotente (usa o
+-- componente wurt_vassal_spaces do TheWorld pra nao reconstruir/duplicar).
+local function WurtBuildSpace(N)
+    local world = GLOBAL.TheWorld
+    if not world.ismastersim then return end
+    local spaces = world.components.wurt_vassal_spaces
+    if spaces == nil or spaces:IsBuilt(N) then return end
+    local spec = WURT_SPACES[N]
+    if spec == nil then return end
+    local map = world.Map
+
+    local ctx, cty = WurtSpaceCenterTile(N)
+    -- 1) TERRENO: converte um quadrado de tiles em terreno caminhavel.
+    for dx = -WURT_SPACE_HALF, WURT_SPACE_HALF do
+        for dy = -WURT_SPACE_HALF, WURT_SPACE_HALF do
+            map:SetTile(ctx + dx, cty + dy, WURT_SPACE_TILE)
+        end
+    end
+
+    -- centro em coordenadas de mundo.
+    local cx, cy, cz = map:GetTileCenterPoint(ctx, cty)
+
+    -- 2) VASSALO no centro.
+    local king = GLOBAL.SpawnPrefab(spec.vassal)
+    if king ~= nil then king.Transform:SetPosition(cx, 0, cz) end
+
+    -- 3) 6 CASAS da profissao em anel ao redor.
+    for i = 1, 6 do
+        local ang = (i / 6) * 2 * GLOBAL.PI
+        local r = 9
+        local h = GLOBAL.SpawnPrefab(spec.house)
+        if h ~= nil then
+            h.Transform:SetPosition(cx + GLOBAL.math.cos(ang) * r, 0, cz + GLOBAL.math.sin(ang) * r)
+        end
+    end
+
+    -- 4) SAIDA (retorno) perto do centro.
+    local exit = GLOBAL.SpawnPrefab("wurt_space_exit")
+    if exit ~= nil then exit.Transform:SetPosition(cx + 4, 0, cz + 4) end
+
+    -- 5) ponto de ENTRADA (onde o jogador aparece): a alguns tiles do centro,
+    --    ainda dentro do terreno caminhavel.
+    local ex = cx - (WURT_SPACE_HALF - 2) * 4
+    local ez = cz
+    spaces:SetBuilt(N, ex, ez)
+end
+GLOBAL.WurtBuildSpace = WurtBuildSpace
+
+-- leva um jogador pro espaco N (constroi sob demanda). Guarda de onde ele veio.
+local function WurtEnterSpace(player, N)
+    local world = GLOBAL.TheWorld
+    if not world.ismastersim or player == nil or player.Physics == nil then return end
+    local spaces = world.components.wurt_vassal_spaces
+    if spaces == nil then return end
+    if not spaces:IsBuilt(N) then WurtBuildSpace(N) end
+    local ex, ez = spaces:GetEntry(N)
+    if ex == nil then return end
+    local px, py, pz = player.Transform:GetWorldPosition()
+    player._wurt_space_return = { px, py, pz }
+    player.Physics:Teleport(ex, 0, ez)
+end
+GLOBAL.WurtEnterSpace = WurtEnterSpace
+
+-- TheWorld ganha o componente de rastreio dos espacos (so na SUPERFICIE / master).
+AddPrefabPostInit("world", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    if GLOBAL.TheWorld:HasTag("cave") then return end   -- espacos ficam na superficie
+    if inst.components.wurt_vassal_spaces == nil then
+        inst:AddComponent("wurt_vassal_spaces")
+    end
+end)
+
+-- DEBUG (host): no console, WurtSpaceTest(N) constroi e teleporta pro espaco N.
+-- Ex.: WurtSpaceTest(1). Serve pra validar terreno/casas/teleporte antes de
+-- ligar os redemoinhos.
+GLOBAL.WurtSpaceTest = function(N)
+    WurtEnterSpace(GLOBAL.ThePlayer, N or 1)
+end
+end
+
+-- ============================================================
+-- ISOLAMENTO GARANTIDO DAS ILHAS (fosso de vazio) -- medida definitiva.
+-- Em vez de depender da colocacao do worldgen (que insistia em colar as ilhas no
+-- continente), ao carregar a CAVERNA escavamos um anel de IMPASSABLE ao redor de
+-- CADA ilha do fundo do mar. O tile UNDERWATER_SANDY so existe nas NOSSAS ilhas,
+-- entao achamos elas com 100% de precisao e convertemos pra vazio QUALQUER tile
+-- caminhavel do continente que faca fronteira com a ilha (inclusive nas diagonais).
+-- Depois do passe, nenhum tile de ilha encosta em terra do continente -> ilha 100%
+-- separada. O acesso continua SO pelo portal (worldmigrator), entao o fosso nao
+-- atrapalha a chegada. Roda 1x por sessao; e idempotente (re-rodar nao muda nada).
+-- ============================================================
+AddPrefabPostInit("world", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    if not GLOBAL.TheWorld:HasTag("cave") then return end   -- as ilhas ficam nas cavernas
+    inst:DoTaskInTime(3, function()
+        if inst._wurt_isle_moated then return end
+        inst._wurt_isle_moated = true
+        local map = GLOBAL.TheWorld.Map
+        if map == nil then return end
+        local UW  = (GLOBAL.TheWorld.wurt_uw_tile_id)
+                 or (GLOBAL.GROUND and GLOBAL.GROUND.UNDERWATER_SANDY)
+        local IMP = GLOBAL.WORLD_TILES.IMPASSABLE
+        if UW == nil or IMP == nil then
+            print("[Wurt Rework] Fosso das ilhas ABORTADO: tile UNDERWATER_SANDY nao resolvido.")
+            return
+        end
+        local w, h = map:GetSize()
+        local moated = 0
+        for tx = 0, w - 1 do
+            for ty = 0, h - 1 do
+                if map:GetTile(tx, ty) == UW then
+                    for dx = -1, 1 do
+                        for dy = -1, 1 do
+                            local nx, ny = tx + dx, ty + dy
+                            if (dx ~= 0 or dy ~= 0) and nx >= 0 and nx < w and ny >= 0 and ny < h then
+                                local nt = map:GetTile(nx, ny)
+                                if nt ~= UW and nt ~= IMP then
+                                    map:SetTile(nx, ny, IMP)
+                                    moated = moated + 1
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        print("[Wurt Rework] Fosso das ilhas: " .. moated .. " tiles de vazio escavados ao redor das ilhas.")
+    end)
+end)
+
+-- Prefabs custom deste mod (casa do pescador + merm pescador).
+PrefabFiles = {
+    "wurt_mermfisher",       -- pescador (custom, funciona)
+    "mermhouse_fisher",      -- casa do pescador
+    "wurt_worker_houses",    -- casas de guarda e curandeiro (geram merms base customizados)
+    "wurt_dishes",           -- 3 pratos do cozinheiro
+    "wurt_goldtrident",      -- tridente de ouro (arma pessoal da Wurt)
+    "wurt_kingtrident",      -- Tridente do Rei (regalia, arte ivyspear recolorida)
+    "wurt_vassal_kings",     -- reis vassalos (troca: oferenda -> reliquia + blueprint)
+    "wurt_ripple",           -- fx de ondulacao do nado (mod Wurt Swimming)
+    "wurt_coral",            -- coral decorativo do fundo do mar (submerso)
+    "wurt_seaportal",        -- portais Whirlportal cross-shard (5 pares, um por vassalo)
+    "wurt_space_portal",     -- saida (wurt_space_exit) dos espacos runtime dos vassalos
+    "wurt_seaweed",          -- alga raspavel com lamina -> dropa kelp vanilla
+    "wurt_commonfish",       -- peixe que nada pelo fundo (fauna, adaptado do CitD)
+    "wurt_bubblevent",       -- fissura que solta bolhas (decoracao) + fx wurt_bubble
+    "wurt_seadecor",         -- decoracoes: recife, naufragio, estatua merm, concha, caixa
+    "wurt_kingtotem",        -- estatua-totem custom do Rei (arte do autor)
+    "wurt_relic_gold",       -- reliquia inerte do ouro (arte de goldnugget)
+    "wurt_poisonbubble",     -- fx da bolha verde de envenenado (arte poison da IA)
+    "wurt_swimflotsam",      -- fx (TESTE): flotsam boiando no lugar do merm ao nadar
+    "wurt_oceanfish",        -- peixes (especies vanilla, arte nado CitD)
+    "wurt_skittersquid",     -- Skittersquid (lula vanilla) versao underwater do CitD  (NAO usar "wurt_squid": colide com a skin The Little Sinker)
+    "wurt_lobster",          -- Underwater Lobster (criatura passiva, adaptado do CitD)
+    "wurt_taxpot",           -- mesas de tributo (kelp -> presentes dos merms) [skills civ_1/civ_1_2]
+    "wurt_warehouse",        -- Armazem da Colonia (Communal Kelp Dish): estoque + vacuo [skill civ_1_2]
+    "wurt_recallhorn",       -- Chamado da Rainha: item que RECOLHE os merms (grito)
+    -- "wurt_affinitytridents", -- (adiado) tridente proprio; por ora usamos os mudslingers vanilla
+    "wurt_projectiles",      -- projetil de sombra (wurt_shadowbolt) do tiro do Dreaded Mudslinger
+    "wurt_regalia",          -- coroa + ombreiras da Rainha (regalias)
+    "wurt_sealight",         -- fresta de luz aquatica (ciclo dia/noite, sem morcegos)
+    "wurt_mermcook",         -- merm cozinheiro (prefab dedicado c/ loja embutida + aba propria)
+    "wurt_mermblacksmith",   -- merm ferreiro (prefab dedicado c/ forja embutida + aba propria)
+    "wurt_merm_custom",      -- merm com arte propria do autor (bank pigman + build custom); nome/papel ainda em aberto (ver NOTAS_ARTE.md secao 6)
+    "wurt_merm_construtor",       -- merm construtor: NPC unico (arte vanilla merm_shadow_build, por enquanto)
+    "wurt_merm_construtor_cage",  -- jaula dele (resgate por 3 chaves, ver wurt_construtor_keys.lua)
+    "wurt_construtor_keys",       -- as 3 chaves (portal / rei porco / bau conspicuous)
+    "wurt_construction_sites",    -- os 12 canteiros de obras (materiais parados esperando o construtor martelar)
+    "wurt_baby_tentacle",         -- summon da habilidade wurt_civ_2 (Toolshed 1): port simplificado do Baby Tentacle real
+    "wurt_tentacle",              -- summon da habilidade wurt_civ_2_2 (Toolshed 2): port simplificado do Tentaculo comum real
+    "wurt_poison_mosquito",        -- summon amigavel da habilidade wurt_civ_3 ("Enxame de Mosquitos", ver bloco WURT_ENXAME_MOSQUITOS em modmain.lua)
+    "wurt_poison_dartfrog",        -- summon amigavel da habilidade wurt_civ_3_2 (upgrade do Enxame)
+    "wurt_forge_dart",             -- Dardo da Forja: arma a distancia (200 usos, 20 dano) SO pro merm jovem
+    "wurt_dart_shed",              -- Paiol de Dardos: estrutura da loja do construtor que guarda/entrega o dardo acima
+    -- (wurt_merm_construtor_test.lua fica orfao no disco, sem entrada aqui: era so
+    -- o teste visual antes do sistema completo existir; nao remove sozinho o arquivo)
+}
+
+-- ABAS DEDICADAS das lojas (como Hermit Crab/Wandering Trader). Keyed pelo NOME
+-- DO PREFAB do prototyper. is_crafting_station=true -> aba focavel que abre ao
+-- chegar perto do merm; action_str = verbo; filter_text = titulo da aba.
+GLOBAL.PROTOTYPER_DEFS.wurt_mermcook = {
+    icon_atlas = "images/inventoryimages/wurt_cooktab.xml",
+    icon_image = "wurt_cooktab.tex",
+    is_crafting_station = true,
+    action_str = "TRADE",
+    filter_text = "Cozinha da Rainha",
+}
+GLOBAL.PROTOTYPER_DEFS.wurt_mermblacksmith = {
+    icon_atlas = "images/inventoryimages/wurt_forgetab.xml",
+    icon_image = "wurt_forgetab.tex",
+    is_crafting_station = true,
+    action_str = "TRADE",
+    filter_text = "Forja da Rainha",
+}
+-- OFICINA DO CONSTRUTOR (2026-09-05): reusa o icone da casa dele (ainda sem arte
+-- dedicada de aba) -- estacao onde a Wurt ergue TODAS as outras estruturas da
+-- vila merm (ver station_tag "wurt_construtorshop" nas receitas, mais abaixo).
+GLOBAL.PROTOTYPER_DEFS.wurt_merm_construtor = {
+    icon_atlas = "images/inventoryimages/wurt_house_construtor_icon.xml",
+    icon_image = "wurt_house_construtor_icon.tex",
+    is_crafting_station = true,
+    action_str = "TRADE",
+    filter_text = "Construcao da Rainha",
+}
+
+-- ============================================================
+-- CANTEIRO DE OBRAS (2026-09-05, v4 -- causa raiz do v2 corrigida de verdade):
+-- a Wurt paga o custo normal da receita (como sempre), mas em vez da
+-- construcao nascer pronta na hora, nasce um CANTEIRO (scripts/prefabs/
+-- wurt_construction_sites.lua) -- o merm construtor precisa chegar la e
+-- martelar antes dele virar a construcao de verdade (componente
+-- "wurt_buildsite").
+--
+-- 1a versao: estado proprio com SetTimeout de 10s fixos + animacao "atk" em
+-- loop. Quebrou por: "atk" e o soco vanilla (braco ERRADO) + FaceEntity
+-- (cerebro compartilhado com ferreiro/cozinheiro) preemptando o timer, que
+-- nunca tinha progresso persistido em lugar nenhum.
+--
+-- 2a versao (pedido do jogador: "use a logica dos merms comuns com a
+-- ferramenta"): WORKABLE de verdade (igual arvore) + "tool" de verdade no
+-- martelo, roteado pro estado VANILLA "use_tool" (mesma animacao "work" que
+-- os trabalhadores usam). O jogador reportou o braco do martelo sumindo
+-- durante "work" e construcao infinita -- na hora, calculamos (errado, ver
+-- abaixo) que "hammer" nao tinha arte pra pose "work" e trocamos pra um
+-- estado hibrido tocando "atk" com workable:WorkedBy() manual (v3).
+--
+-- CAUSA RAIZ REAL (achada so agora, decompilando build.bin/anim.bin de
+-- verdade em vez de comparar so a CONTAGEM de frames): a animacao "work"
+-- (merm_actions_skills.zip) so referencia 5 poses do item equipado (frames
+-- 0, 2, 3, 5 e 7 do build "swap_object"). Comparamos essas 5 poses no
+-- proprio atlas do "hammer" (swap_hammer.zip) pixel a pixel -- TODAS AS 5
+-- tem arte de verdade (um martelo em 5 angulos de balanco diferentes,
+-- incluindo uma pose quase de perfil pro frame 3). Ou seja, o "hammer" NUNCA
+-- teve um problema de arte faltando pra "work" -- a hipotese do v3 estava
+-- errada. O bug real do v2 (braco sumindo/construcao infinita) tinha outra
+-- causa, que ficou pra tras junto com o codigo do v2 quando reescrevemos pro
+-- hibrido -- nao foi mais isolada.
+--
+-- v4 (martelo "merm_tool_upgraded" + estado vanilla "use_tool"/"work"):
+-- corrigiu a falha de EQUIPAR (ferramentas orfas, Equip() falhando calado
+-- logo apos reload -- ver historico em wurt_merm_construtor.lua), mas o
+-- jogador reportou que o braco CONTINUAVA sumindo por completo durante a
+-- pose "work", mesmo com a ferramenta equipada e funcionando (efetividade
+-- OK, golpes contando certo no log). Decompilamos o build.bin de verdade:
+-- "merm_shadow_build" (arte do construtor) tem 1 grupo de peca a MENOS que o
+-- merm_build normal (falta "merm_mutation_parts") -- suspeita forte de que
+-- isso quebra o encaixe do resto do rig (cabeca/braco/perna) especificamente
+-- na pose "work"/"atk" com item na mao.
+--
+-- SOLUCAO v5 (pedido do jogador: "faca ele bater na estrutura com a mao
+-- mesmo"): tira a ferramenta da equacao de vez -- o construtor agora martela
+-- com um ESTADO PROPRIO que toca "atk" (o soco vanilla, sem item nenhum na
+-- mao) e chama target.components.workable:WorkedBy() manualmente no frame de
+-- impacto, com efetividade fixa (sem tool:GetEffectiveness(), pois nao ha
+-- mais tool nenhuma). Sem item equipado, nao ha OverrideSymbol/Show(ARM_
+-- carry) pra dar errado -- e evita de vez a corrida de equip do v4.
+-- ============================================================
+-- CORRIGIDO (2026-09-19, "mais de 200 locais"): embrulhado em do...end -- todo
+-- este trecho (acao de martelar + nado dos seguidores + drop intencional) so
+-- usa seus proprios nomes locais aqui dentro, nada e' referenciado depois.
+do
+local acao_martelar = AddAction("WURT_CONSTRUTOR_MARTELAR", GLOBAL.WurtTR("Martelar", "Hammer", "Martillar", "敲打"), function(act)
+    return true   -- logica de verdade mora no workable:OnFinishCallback do canteiro, nao aqui
+end)
+acao_martelar.distance = 2.5
+
+local WURT_CONSTRUTOR_BATER_EFFECTIVENESS = 1
+
+local wurt_construtor_bater_state = GLOBAL.State{
+    name = "wurt_construtor_bater",
+    tags = { "busy" },
+
+    onenter = function(inst)
+        inst.Physics:Stop()
+        inst.AnimState:PlayAnimation("atk")
+    end,
+
+    timeline = {
+        GLOBAL.TimeEvent(13 * GLOBAL.FRAMES, function(inst)
+            local act = inst:GetBufferedAction()
+            local target = act ~= nil and act.target or nil
+            if target ~= nil and target:IsValid()
+                and target.components.workable ~= nil
+                and target.components.workable:CanBeWorked() then
+                target.components.workable:WorkedBy(inst, WURT_CONSTRUTOR_BATER_EFFECTIVENESS)
+            end
+            if inst.SoundEmitter ~= nil then
+                inst.SoundEmitter:PlaySound("dontstarve/creatures/merm/attack")
+            end
+            inst:PerformBufferedAction()
+        end),
+    },
+
+    events = {
+        GLOBAL.EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+}
+AddStategraphState("merm", wurt_construtor_bater_state)
+AddStategraphActionHandler("merm", GLOBAL.ActionHandler(GLOBAL.ACTIONS.WURT_CONSTRUTOR_MARTELAR, "wurt_construtor_bater"))
+
+-- MERMS COMUNS = TRABALHADORES: injeta no mermbrain (so p/ merms liderados
+-- pela Wurt) o comportamento de trabalhar (cortar/minerar/arrancar toco) e
+-- coletar+entregar os drops na mao da Wurt, estilo fantoches do Maxwell.
+GLOBAL.require("brains/wurt_mermworker")
+
+-- ENTREGA: o SGmerm nao tinha estado para DAR/DROPAR item, entao o merm ia ate
+-- a Wurt mas nao completava a entrega (ficava so empurrando). Rota GIVEALLTOPLAYER
+-- (dar na mao) e DROP (fallback do helper, se a mochila da Wurt estiver cheia)
+-- para o estado "pickup", que ja existe e executa a acao em buffer.
+AddStategraphActionHandler("merm", GLOBAL.ActionHandler(GLOBAL.ACTIONS.GIVEALLTOPLAYER, "pickup"))
+AddStategraphActionHandler("merm", GLOBAL.ActionHandler(GLOBAL.ACTIONS.DROP, "pickup"))
+-- COLHER grama/gravetos: SGmerm tambem nao tinha estado p/ PICK. Rota p/ "pickup".
+AddStategraphActionHandler("merm", GLOBAL.ActionHandler(GLOBAL.ACTIONS.PICK, "pickup"))
+-- ESTOCAR no Armazem: SGmerm nao tinha estado p/ STORE. Rota p/ "pickup".
+AddStategraphActionHandler("merm", GLOBAL.ActionHandler(GLOBAL.ACTIONS.STORE, "pickup"))
+
+-- SEGUIDORES ANDAM SOBRE A AGUA: merm comum + guarda/curandeiro (mermguard)
+-- que seguem a Wurt podem atravessar a agua com ela (sem arte de nado por ora).
+local AttachFollowerSwim = GLOBAL.require("wurt_follower_water")
+AddPrefabPostInit("merm",      AttachFollowerSwim)
+AddPrefabPostInit("mermguard", AttachFollowerSwim)
+-- merm_shadow = merm RESSUSCITADO pela afinidade sombria (prefab proprio, nao "merm").
+-- Sem isto ele nao acompanhava a Wurt no oceano. Idempotente/inofensivo p/ nao-seguidores.
+AddPrefabPostInit("merm_shadow",     AttachFollowerSwim)
+-- merm_lunar (mutacao lunar) estava DE FORA -> lunares nem tentavam nadar. Incluidos
+-- agora, junto das variantes GUARDA mutadas, com o mesmo sistema de nado do comum.
+AddPrefabPostInit("merm_lunar",         AttachFollowerSwim)
+AddPrefabPostInit("mermguard_shadow",   AttachFollowerSwim)
+AddPrefabPostInit("mermguard_lunar",    AttachFollowerSwim)
+AddPrefabPostInit("wurt_mermguard",  AttachFollowerSwim)
+
+
+-- MIGRACAO CROSS-SHARD: leva os merms seguidores da Wurt junto ao migrar para
+-- as cavernas / fundo do mar (mesma tecnica do "Keep Followers+", embutida).
+local KeepMermFollowers = GLOBAL.require("wurt_keepfollowers")
+AddPrefabPostInit("wurt", KeepMermFollowers)
+
+-- DROP INTENCIONAL: quando a Wurt SOLTA um item de proposito, marca com a tag
+-- "wurt_recentdrop" por um tempo, para os merms trabalhadores NAO devolverem.
+-- (o filtro do worker ignora itens com essa tag). Tempo ajustavel abaixo.
+local WURT_RECENTDROP_TIME = 480   -- ~1 dia; itens soltos ficam "em paz" por esse tempo
+AddPrefabPostInit("wurt", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    inst:ListenForEvent("dropitem", function(_, data)
+        local item = data ~= nil and data.item or nil
+        if item ~= nil and item:IsValid() then
+            item:AddTag("wurt_recentdrop")
+            item:DoTaskInTime(WURT_RECENTDROP_TIME, function(it)
+                if it:IsValid() then it:RemoveTag("wurt_recentdrop") end
+            end)
+        end
+    end)
+end)
+end
+
+-- CASA DE FERRAMENTAS VANILLA (merm_toolshed / merm_toolshed_upgraded): 2026-09-06,
+-- bug reportado pelo jogador e CONFIRMADO por ele mesmo (teste decisivo: mundo SEM
+-- este mod = estrutura aparece normal; mundo COM este mod = invisivel tanto no
+-- fantasma do posicionamento quanto ja construida). Investigacao NAO achou corrupcao
+-- do arquivo (build.bin/anim.bin batem byte a byte com o backup em data/anim/copia,
+-- nome interno "merm_toolshed" correto) nem nenhuma referencia direta a essa arte em
+-- lugar nenhum do nosso codigo -- ou seja, o carregamento "preguicoso" padrao do
+-- vanilla pra essa build especifica esta falhando so quando este mod esta ativo
+-- (possivel efeito colateral de ordem de carregamento/registro de prefabs quando
+-- ha mods). MESMA CLASSE de bug ja vista neste projeto com "anim/lobster.zip"
+-- colidindo com o asset vanilla da Wobster (ver comentario mais abaixo, "Underwater
+-- Lobster") -- la a causa foi colisao de NOME; aqui nao achamos colisao, mas o
+-- sintoma (asset vanilla que so quebra com o mod ligado) e o mesmo. FIX: declarar
+-- a asset aqui, na tabela GLOBAL do mod, forca ela a ser carregada de forma
+-- confiavel no boot do mod (momento que controlamos) em vez de depender do
+-- carregamento tardio/lazy que estava falhando. bank=build="merm_toolshed" pra
+-- AMBOS os toolsheds (o "_upgraded" so troca hiddensymbol -- ver
+-- merm_supply_structures.lua vanilla), entao 1 unica declaracao cobre os 2.
+--
+-- ARSENAL VANILLA (merm_armory / merm_armory_upgraded): mesmo preload preventivo
+-- do Toolshed acima -- 2026-09-06, agora que o Arsenal tambem passa pelo canteiro
+-- de obras (nao e mais spawnado direto pelo jogador com a receita vanilla pura),
+-- fica exposto ao mesmo risco de carregamento tardio falhar com o mod ligado.
+--
+-- Artes usadas (do Tropical Experience - creditar/pedir permissao ao publicar).
+Assets = {
+    Asset("ANIM", "anim/merm_toolshed.zip"),   -- ver bloco de comentario logo acima
+    Asset("ANIM", "anim/merm_armory.zip"),     -- ver bloco de comentario logo acima
+    Asset("ANIM", "anim/hermitcrab_fx.zip"),   -- FX do Redemoinho (habilidade wurt_civ_1, ver mais abaixo) -- mesmo motivo do preload explicito acima: sem isso o jogo pode falhar em achar o anim/build quando carregado via mod.
+    Asset("ANIM", "anim/tentacle_arm.zip"),        -- Baby Tentacle (habilidade wurt_civ_2) -- mesmo motivo do preload explicito acima
+    Asset("ANIM", "anim/tentacle_arm_build.zip"),  -- Baby Tentacle (habilidade wurt_civ_2)
+    Asset("ANIM", "anim/tentacle.zip"),            -- Tentaculo normal (habilidade wurt_civ_2_2) -- mesmo motivo do preload explicito acima
+    Asset("SOUND", "sound/tentacle.fsb"),          -- som compartilhado pelos 2 summons de tentaculo acima
+    Asset("ANIM", "anim/mosquito_yellow_build.zip"), -- Poison Mosquito (habilidade wurt_civ_3) -- build portado do mod Island Adventures, bank/stategraph "mosquito"/SGmosquito ja sao vanilla DST
+    Asset("ANIM", "anim/frog_treefrog_build.zip"),   -- Poison Dartfrog (habilidade wurt_civ_3_2) -- build portado do mod Above the Clouds - Hamlet in DST, bank/stategraph "frog"/SGfrog ja sao vanilla DST
+    Asset("ANIM", "anim/merm_fisherman_build.zip"),
+    Asset("ANIM", "anim/merm_trader1_build.zip"),   -- cozinheiro (Sammy, The Gorge)
+    Asset("ANIM", "anim/merm_shadow_build.zip"),    -- ferreiro (variante escura vanilla do merm)
+    Asset("ANIM", "anim/pig_shop.zip"),             -- bank/animacoes das lojas Pig City (idle/hit/place)
+    Asset("ANIM", "anim/pig_shop_deli.zip"),        -- casa do cozinheiro (Sterling Trough Deli, Pig City)
+    Asset("ANIM", "anim/pig_shop_weapons.zip"),     -- casa do ferreiro (Boar's Tusk Weapon Shop, Pig City)
+    Asset("ANIM", "anim/merm_fisherman_house.zip"),
+    Asset("ANIM", "anim/merm_fishing.zip"),
+    -- Coroa da Rainha: arte da coroa do Rei Merm (reaproveitada do mod DIYKing)
+    Asset("ATLAS", "images/inventoryimages/hat_mermking.xml"),
+    Asset("IMAGE", "images/inventoryimages/hat_mermking.tex"),
+    Asset("ANIM", "anim/hat_mermking.zip"),
+    -- Tridente do Rei: arte ivyspear recolorida (mod Wormwood Overhaul)
+    Asset("ATLAS", "images/inventoryimages/wurt_kingtrident.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_kingtrident.tex"),
+    Asset("ANIM", "anim/ivyspear.zip"),
+    Asset("ANIM", "anim/swap_ivyspear.zip"),
+    -- Icones das abas de loja (caldeirao / martelo de forja)
+    Asset("ATLAS", "images/inventoryimages/wurt_cooktab.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_cooktab.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_forgetab.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_forgetab.tex"),
+    -- Icones das casas no menu de craft (gerados da propria arte)
+    Asset("ATLAS", "images/inventoryimages/wurt_house_cook_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_house_cook_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_house_blacksmith_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_house_blacksmith_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_house_healer_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_house_healer_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_house_construtor_icon.xml"),
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wurt_seaportal_surface_
+end
+for i = 1, 8 do AddPrefabPostInit("wurt_seaportal_surface_"..i, WurtRegisterWhirlpool) end
+end
+
+AddPrefabPostInit("messagebottle", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:messagebottle
+
+AddPrefabPostInit("messagebottle", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    if inst.components.mapspotrevealer == nil then return end
+    local oldfn = inst.components.mapspotrevealer.gettargetfn
+    inst.components.mapspotrevealer:SetGetTargetFn(function(bottle, doer)
+        if doer ~= nil and doer.prefab == "wurt" then
+            local list = GLOBAL.TheWorld._wurt_whirlpools
+            local best, bestd
+            if list ~= nil then
+                local dx, dy, dz = doer.Transform:GetWorldPosition()
+                for _, w in ipairs(list) do
+                    if w ~= nil and w:IsValid() and not w._wurt_revealed then
+                        local wx, wy, wz = w.Transform:GetWorldPosition()
+                        local d = (wx - dx) * (wx - dx) + (wz - dz) * (wz - dz)
+                        if bestd == nil or d < bestd then best, bestd = w, d end
+                    end
+                end
+            end
+            if best ~= nil then
+                best._wurt_revealed = true
+                if doer.components.talker ~= nil then
+                    doer.components.talker:Say(GLOBAL.WurtTR(
+                        "Um redemoinho! Vou lembrar dele.", "A whirlpool! I'll remember it.",
+                        "Un remolino! Lo recordare.", "一个漩涡！我记住了。"))
+                end
+                return best:GetPosition()
+            end
+            -- ja revelou todos: nao gasta a garrafa (retorna sem alvo)
+            if doer.components.talker ~= nil then
+                doer.components.talker:Say(GLOBAL.WurtTR(
+                    "Ja achei todos os redemoinhos.", "Found all the whirlpools already.",
+                    "Ya encontre todos los remolinos.", "所有漩涡都已找到。"))
+            end
+            return false, "WURT_NO_WHIRLPOOL"
+        end
+        -- outros personagens / sem redemoinho: tesouro vanilla.
+        return oldfn ~= nil and oldfn(bottle, doer) or nil
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- TheWorld ganha o componente de rastreio dos espacos (so na SUPERFICIE / master).
+AddPrefabPostInit("world", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    if GLOBAL.TheWorld:HasTag("cave") then return end   -- espacos ficam na superficie
+    if inst.components.wurt_vassal_spaces == nil then
+        inst:AddComponent("wurt_vassal_spaces")
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:merm
+local AttachFollowerSwim = GLOBAL.require("wurt_follower_water")
+AddPrefabPostInit("merm",      AttachFollowerSwim)
+AddPrefabPostInit("mermguard", AttachFollowerSwim)
+-- merm_shadow = merm RESSUSCITADO pela afinidade sombria (prefab proprio, nao "merm").
+-- Sem isto ele nao acompanhava a Wurt no oceano. Idempotente/inofensivo p/ nao-seguidores.
+AddPrefabPostInit("merm_shadow",     AttachFollowerSwim)
+-- merm_lunar (mutacao lunar) estava DE FORA -> lunares nem tentavam nadar. Incluidos
+-- agora, junto das variantes GUARDA mutadas, com o mesmo sistema de nado do comum.
+AddPrefabPostInit("merm_lunar",         AttachFollowerSwim)
+AddPrefabPostInit("mermguard_shadow",   AttachFollowerSwim)
+AddPrefabPostInit("mermguard_lunar",    AttachFollowerSwim)
+AddPrefabPostInit("wurt_mermguard",  AttachFollowerSwim)
+
+
+-- MIGRACAO CROSS-SHARD: leva os merms seguidores da Wurt junto ao migrar para
+-- as cavernas / fundo do mar (mesma tecnica do "Keep Followers+", embutida).
+local KeepMermFollowers = GLOBAL.require("wurt_keepfollowers")
+AddPrefabPostInit("wurt", KeepMermFollowers)
+
+-- DROP INTENCIONAL: quando a Wurt SOLTA um item de proposito, marca com a tag
+-- "wurt_recentdrop" por um tempo, para os merms trabalhadores NAO devolverem.
+-- (o filtro do worker ignora itens com essa tag). Tempo ajustavel abaixo.
+local WURT_RECENTDROP_TIME = 480   -- ~1 dia; itens soltos ficam "em paz" por esse tempo
+AddPrefabPostInit("wurt", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    inst:ListenForEvent("dropitem", function(_, data)
+        local item = data ~= nil and data.item or nil
+        if item ~= nil and item:IsValid() then
+            item:AddTag("wurt_recentdrop")
+            item:DoTaskInTime(WURT_RECENTDROP_TIME, function(it)
+                if it:IsValid() then it:RemoveTag("wurt_recentdrop") end
+            end)
+        end
+    end)
+end)
+end
+
+-- CASA DE FERRAMENTAS VANILLA (merm_toolshed / merm_toolshed_upgraded): 2026-09-06,
+-- bug reportado pelo jogador e CONFIRMADO por ele mesmo (teste decisivo: mundo SEM
+-- este mod = estrutura aparece normal; mundo COM este mod = invisivel tanto no
+-- fantasma do posicionamento quanto ja construida). Investigacao NAO achou corrupcao
+-- do arquivo (build.bin/anim.bin batem byte a byte com o backup em data/anim/copia,
+-- nome interno "merm_toolshed" correto) nem nenhuma referencia direta a essa arte em
+-- lugar nenhum do nosso codigo -- ou seja, o carregamento "preguicoso" padrao do
+-- vanilla pra essa build especifica esta falhando so quando este mod esta ativo
+-- (possivel efeito colateral de ordem de carregamento/registro de prefabs quando
+-- ha mods). MESMA CLASSE de bug ja vista neste projeto com "anim/lobster.zip"
+-- colidindo com o asset vanilla da Wobster (ver comentario mais abaixo, "Underwater
+-- Lobster") -- la a causa foi colisao de NOME; aqui nao achamos colisao, mas o
+-- sintoma (asset vanilla que so quebra com o mod ligado) e o mesmo. FIX: declarar
+-- a asset aqui, na tabela GLOBAL do mod, forca ela a ser carregada de forma
+-- confiavel no boot do mod (momento que controlamos) em vez de depender do
+-- carregamento tardio/lazy que estava falhando. bank=build="merm_toolshed" pra
+-- AMBOS os toolsheds (o "_upgraded" so troca hiddensymbol -- ver
+-- merm_supply_structures.lua vanilla), entao 1 unica declaracao cobre os 2.
+--
+-- ARSENAL VANILLA (merm_armory / merm_armory_upgraded): mesmo preload preventivo
+-- do Toolshed acima -- 2026-09-06, agora que o Arsenal tambem passa pelo canteiro
+-- de obras (nao e mais spawnado direto pelo jogador com a receita vanilla pura),
+-- fica exposto ao mesmo risco de carregamento tardio falhar com o mod ligado.
+--
+-- Artes usadas (do Tropical Experience - creditar/pedir permissao ao publicar).
+Assets = {
+    Asset("ANIM", "anim/merm_toolshed.zip"),   -- ver bloco de comentario logo acima
+    Asset("ANIM", "anim/merm_armory.zip"),     -- ver bloco de comentario logo acima
+    Asset("ANIM", "anim/hermitcrab_fx.zip"),   -- FX do Redemoinho (habilidade wurt_civ_1, ver mais abaixo) -- mesmo motivo do preload explicito acima: sem isso o jogo pode falhar em achar o anim/build quando carregado via mod.
+    Asset("ANIM", "anim/tentacle_arm.zip"),        -- Baby Tentacle (habilidade wurt_civ_2) -- mesmo motivo do preload explicito acima
+    Asset("ANIM", "anim/tentacle_arm_build.zip"),  -- Baby Tentacle (habilidade wurt_civ_2)
+    Asset("ANIM", "anim/tentacle.zip"),            -- Tentaculo normal (habilidade wurt_civ_2_2) -- mesmo motivo do preload explicito acima
+    Asset("SOUND", "sound/tentacle.fsb"),          -- som compartilhado pelos 2 summons de tentaculo acima
+    Asset("ANIM", "anim/mosquito_yellow_build.zip"), -- Poison Mosquito (habilidade wurt_civ_3) -- build portado do mod Island Adventures, bank/stategraph "mosquito"/SGmosquito ja sao vanilla DST
+    Asset("ANIM", "anim/frog_treefrog_build.zip"),   -- Poison Dartfrog (habilidade wurt_civ_3_2) -- build portado do mod Above the Clouds - Hamlet in DST, bank/stategraph "frog"/SGfrog ja sao vanilla DST
+    Asset("ANIM", "anim/merm_fisherman_build.zip"),
+    Asset("ANIM", "anim/merm_trader1_build.zip"),   -- cozinheiro (Sammy, The Gorge)
+    Asset("ANIM", "anim/merm_shadow_build.zip"),    -- ferreiro (variante escura vanilla do merm)
+    Asset("ANIM", "anim/pig_shop.zip"),             -- bank/animacoes das lojas Pig City (idle/hit/place)
+    Asset("ANIM", "anim/pig_shop_deli.zip"),        -- casa do cozinheiro (Sterling Trough Deli, Pig City)
+    Asset("ANIM", "anim/pig_shop_weapons.zip"),     -- casa do ferreiro (Boar's Tusk Weapon Shop, Pig City)
+    Asset("ANIM", "anim/merm_fisherman_house.zip"),
+    Asset("ANIM", "anim/merm_fishing.zip"),
+    -- Coroa da Rainha: arte da coroa do Rei Merm (reaproveitada do mod DIYKing)
+    Asset("ATLAS", "images/inventoryimages/hat_mermking.xml"),
+    Asset("IMAGE", "images/inventoryimages/hat_mermking.tex"),
+    Asset("ANIM", "anim/hat_mermking.zip"),
+    -- Tridente do Rei: arte ivyspear recolorida (mod Wormwood Overhaul)
+    Asset("ATLAS", "images/inventoryimages/wurt_kingtrident.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_kingtrident.tex"),
+    Asset("ANIM", "anim/ivyspear.zip"),
+    Asset("ANIM", "anim/swap_ivyspear.zip"),
+    -- Icones das abas de loja (caldeirao / martelo de forja)
+    Asset("ATLAS", "images/inventoryimages/wurt_cooktab.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_cooktab.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_forgetab.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_forgetab.tex"),
+    -- Icones das casas no menu de craft (gerados da propria arte)
+    Asset("ATLAS", "images/inventoryimages/wurt_house_cook_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_house_cook_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_house_blacksmith_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_house_blacksmith_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_house_healer_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_house_healer_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_house_construtor_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_house_construtor_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_fisherhouse_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_fisherhouse_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_mosquito_luretree_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_mosquito_luretree_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_dart_shed_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_dart_shed_icon.tex"),
+    Asset("ATLAS", "images/inventoryimages/wurt_kingtotem_icon.xml"),
+    Asset("IMAGE", "images/inventoryimages/wurt_kingtotem_icon.tex"),
+    -- 2026-09-12 (v0.2.119): DESATIVADO. anim/customanim.zip so tem build.bin+
+    -- anim.bin (sem atlas-0.tex/atlas-1.tex de verdade dentro do zip) -- o
+    -- motor tenta carregar essas texturas ao entrar em qualquer mundo (LoadAssets
+    -- roda pra TODOS os Asset() declarados) e crasha de vez (Assert failure
+    -- 'Platform() == PLATFORM_OPENGL' em HWTexture.cpp, com .dmp gerado),
+    -- travando o jogo pra qualquer save com o mod ativo. O clip "customanim"
+    -- (nado correndo) ja estava quebrado mesmo (sem textura pra mostrar) --
+    -- ver fallback em wurt_swim.lua. Se um dia regenerarmos a arte de nado de
+    -- verdade, reativar aqui.
+    -- Asset("ANIM", "anim/customanim.zip"),
+    Asset("ANIM", "anim/coral_orange.zip"), -- coral decorativo (submerso, arte do TE)
+    Asset("ANIM", "anim/coral_blue.zip"),
+    Asset("ANIM", "anim/coral_green.zip"),
+    Asset("ANIM", "anim/wurt_seaportal.zip"),          -- portal (lado terra) - arte CitD
+    Asset("ANIM", "anim/kelpunderwater.zip"),          -- alga submersa (arte do TE)
+    Asset("ANIM", "anim/commonfish.zip"),              -- peixe (fauna, arte do CitD)
+    Asset("ANIM", "anim/vent.zip"),                    -- fissura de bolhas (arte do CitD)
+    Asset("ANIM", "anim/bubbles.zip"),                 -- bolhas (arte do CitD)
+    Asset("ANIM", "anim/oxygen_meter_player.zip"),     -- badge de folego no HUD (arte do CitD)
+    Asset("ANIM", "anim/coral_rock_underwater.zip"),   -- recife de coral (decoracao, CitD)
+    Asset("ANIM", "anim/shipunder.zip"),               -- naufragio (decoracao, CitD)
+    Asset("ANIM", "anim/mermstatue.zip"),              -- estatua de merm (decoracao, CitD)
+    Asset("ANIM", "anim/merm_king_fisher.zip"),        -- arte do Rei da IA (transformacao pela pocao)
+    Asset("ANIM", "anim/mermkingswaps.zip"),           -- regalias do Rei (tridente/coroa/ombreiras)
+    Asset("ANIM", "anim/poison.zip"),                  -- bolha verde de envenenado (fx wurt_poisonbubble)
+    Asset("ANIM", "anim/flotsam.zip"),                 -- flotsam boiando (fx de nado dos merms - TESTE)
+    Asset("ANIM", "anim/decorative_shell.zip"),        -- concha decorativa (CitD)
+    Asset("ANIM", "anim/crates.zip"),                  -- caixa de tesouro (decoracao, CitD)
+    Asset("ANIM", "anim/iron_boulder.zip"),            -- cristal/rocha de minerio (CitD)
+    Asset("ANIM", "anim/sandstone_boulder.zip"),       -- rocha de arenito (CitD)
+    -- Underwater Lobster (CitD). O arquivo de anim foi RENOMEADO (2026-08-23)
+    -- de "anim/lobster.zip" pra "anim/wurt_swlobster.zip": o nome antigo
+    -- colidia com o asset vanilla "data/anim/lobster.zip" (usado pela
+    -- Wobster de verdade) e sobrescrevia a arte dela. Ver wurt_lobster.lua.
+    Asset("ANIM", "anim/wurt_swlobster.zip"),
+    Asset("ANIM", "anim/lobster_build.zip"),
+    Asset("ANIM", "anim/lobster_build_color.zip"),
+    Asset("ANIM", "anim/oceanfish_medium_underwater1.zip"), -- peixes (especies vanilla, arte nado CitD)
+    Asset("ANIM", "anim/oceanfish_medium_underwater2.zip"),
+    Asset("ANIM", "anim/oceanfish_medium_underwater3.zip"),
+    Asset("ANIM", "anim/oceanfish_medium_underwater4.zip"),
+    Asset("ANIM", "anim/oceanfish_medium_underwater5.zip"),
+    Asset("ANIM", "anim/oceanfish_medium_underwater6.zip"),
+    Asset("ANIM", "anim/oceanfish_medium_underwater7.zip"),
+    Asset("ANIM", "anim/oceanfish_medium_underwater8.zip"),
+    Asset("ANIM", "anim/oceanfish_small_underwater.zip"),  -- bank dos 9 peixes pequenos (CitD)
+    Asset("MINIMAP_IMAGE", "wurt_seaportal"),
+}
+
+local _G = GLOBAL
+local TUNING = _G.TUNING
+
+-- ============================================================
+-- TILE DO FUNDO DO MAR (metodo do Tropical Experience).
+-- No lado do jogo (modmain): registra as camadas de minimapa/render.
+-- A geracao em si (AddTiles) roda no modworldgenmain.
+-- ============================================================
+modimport("tileadder.lua")
+AddMinimap()
+
+-- ============================================================
+-- NADO (copiado do mod Wurt Swimming v3.0.1 - autor Masked_Koopa; creditar).
+-- Reusa o componente vanilla amphibiouscreature + estados de pulo na agua.
+-- ============================================================
+modimport("scripts/util/wurt_settings.lua")
+modimport("scripts/util/wurt_swim.lua")
+local ClearFloaters = require "prefabs/wurt_clear_floaters"
+local WurtSwimmer   = require "modifications/wurt_swimmer"
+modimport("scripts/wurt_quotes.lua")
+
+local isButtonSystem = GetModConfigData("button_should_be_pressed")  -- nil = nada na agua livremente
+
+local ATTEMPTSWIM_ACTION = AddAction("ATTEMPTSWIM", GLOBAL.WurtTR("Abrir guelras", "Open gills", "Abrir branquias", "张开腮"), function(act)
+    if act.doer:HasTag("wurt") and act.doer._wurt_tryingswim:value() == false then
+        act.doer.components.talker:Say(GLOBAL.GetString(act.doer, "ANNOUNCE_PRESWIM"))
+        act.doer._wurt_tryingswim:set(true)
+        act.doer:DoTaskInTime(3, function(player)
+            local function ensureNoLand()
+                local x, y, z = act.doer.Transform:GetWorldPosition()
+                local land_in_water = (GLOBAL.TheWorld.Map:IsOceanAtPoint(x, y, z) and GLOBAL.TheWorld.Map:GetPlatformAtPoint(x, z) == nil)
+                if (land_in_water == false) then
+                    act.doer.components.talker:Say(GLOBAL.GetString(act.doer, "ANNOUNCE_DONESWIM"))
+                    act.doer._wurt_tryingswim:set(false)
+                else
+                    act.doer:DoTaskInTime(1, function(player) ensureNoLand() end)
+                end
+            end
+            ensureNoLand()
+        end)
+        return true
+    end
+    return false
+end)
+ATTEMPTSWIM_ACTION.priority = 10
+ATTEMPTSWIM_ACTION.distance = 100
+
+AddStategraphActionHandler("wilson",        GLOBAL.ActionHandler(GLOBAL.ACTIONS.ATTEMPTSWIM, "mount_plank"))
+AddStategraphActionHandler("wilson_client", GLOBAL.ActionHandler(GLOBAL.ACTIONS.ATTEMPTSWIM, "mount_plank"))
+
+local function OnMount(inst)    inst._wurt_swimmer:set(false) end
+local function OnDismount(inst) inst._wurt_swimmer:set(true)  end
+local function OnBucked(inst)   inst._wurt_swimmer:set(true)  end
+
+local function onbecamehuman(inst)
+    if inst._wurt_swimmer then inst._wurt_swimmer:set(true) end
+end
+local function onbecameghost(inst)
+    if inst._wurt_swimmer then inst._wurt_swimmer:set(false) end
+end
+
+local function swim_drop(inst)
+    -- DESATIVADO no rework: a Rainha nada ARMADA (nao derruba a arma ao nadar).
+    return
+end
+
+local function OnWater(inst)
+    return inst:HasTag("swimming") and inst._wurt_swimmer:value() and inst:HasTag("jump_swim")
+end
+
+-- O jogo so oferece acoes de ponto em TERRA (agua nao e alvo clicavel enquanto
+-- ela nao nada), entao nao da pra exigir "seta no mar". Em vez disso, a acao
+-- "Abrir guelras" so aparece quando a Wurt esta ENCOSTADA na borda do oceano
+-- (ha agua perto dela) -- assim para de aparecer em terra firme longe da agua.
+local EDGE_OFFSETS = { {4,0},{-4,0},{0,4},{0,-4},{3,3},{-3,3},{3,-3},{-3,-3} }
+local function GetPointSpecialActions(inst, pos, useitem, right)
+    if not right or useitem ~= nil then return {} end
+    if inst._wurt_tryingswim ~= nil and inst._wurt_tryingswim:value() then return {} end
+    local rider = inst.replica ~= nil and inst.replica.rider or nil
+    if rider ~= nil and rider:IsRiding() then return {} end
+    local map = GLOBAL.TheWorld.Map
+    if map == nil or map.IsVisualGroundAtPoint == nil then return {} end
+    local wx, wy, wz = inst.Transform:GetWorldPosition()
+    -- na BORDA: algum ponto proximo (~4) precisa ser AGUA (nao-terra).
+    for _, o in ipairs(EDGE_OFFSETS) do
+        if not map:IsVisualGroundAtPoint(wx + o[1], 0, wz + o[2]) then
+            return { GLOBAL.ACTIONS.ATTEMPTSWIM }
+        end
+    end
+    return {}
+end
+
+local function OnSetOwner(inst)
+    if inst.components.playeractionpicker ~= nil then
+        inst.components.playeractionpicker.pointspecialactionsfn = GetPointSpecialActions
+    end
+end
+
+AddPrefabPostInit("wurt", function(inst)
+    inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)
+    inst:ListenForEvent("ms_becameghost", onbecameghost)
+    inst.floater1 = nil
+    inst.floater2 = nil
+    inst.water_shadow = nil
+    if inst:HasTag("playerghost") then onbecameghost(inst) else onbecamehuman(inst) end
+    inst:AddTag("jump_swim")
+
+    inst._wurt_swimmer   = GLOBAL.net_bool(inst.GUID, "wurt._wurt_swimmer", "_wurt_swimmer_dirty")
+    inst._wurt_tryingswim = GLOBAL.net_bool(inst.GUID, "wurt._wurt_tryingswim", "_wurt_tryingswim_dirty")
+    inst:AddTag("wurt")
+    inst._wurt_swimmer:set(true)
+
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local in_water = (GLOBAL.TheWorld.Map:IsOceanAtPoint(x, y, z) and GLOBAL.TheWorld.Map:GetPlatformAtPoint(x, z) == nil)
+    inst._wurt_tryingswim:set(in_water and true or false)
+
+    WurtSwimmer(inst)
+    inst:ListenForEvent("playeractivated", WurtSwimmer)
+    inst:ListenForEvent("wurtMount", OnMount)
+    inst:ListenForEvent("wurtDismount", OnDismount)
+    inst:ListenForEvent("wurtBucked", OnBucked)
+
+    -- Modo BOTAO e o padrao ROBUSTO: so desliga o gating se a config for
+    -- EXPLICITAMENTE Automatico (0). Se GetModConfigData vier nil (ex.: a config foi
+    -- reindexada/resetada ao editar o modinfo), assumimos Botao -- assim a Wurt nao
+    -- cai no mar sem querer (auto-entrar + travar) por causa de um glitch de config.
+    if (isButtonSystem ~= 0) then
+        inst:ListenForEvent("setowner", OnSetOwner)
+        inst:AddTag("buttonSwim")
+    end
+
+    inst:ListenForEvent("_wurt_swimmer_dirty", function(inst)
+        if not inst._wurt_swimmer:value() then ClearFloaters(inst) end
+        WurtSwimmer(inst)
+    end)
+    inst:ListenForEvent("_wurt_tryingswim_dirty", WurtSwimmer)
+
+    inst:ListenForEvent("equip", function(inst)
+        if GLOBAL.TheWorld.ismastersim then
+            if OnWater(inst) and inst.sg:HasStateTag("running") then
+                swim_drop(inst)
+            end
+        end
+    end)
+
+    -- TRAVA (modo botao): se a Wurt acabar em OCEANO PROFUNDO sem estar "nadando"
+    -- (ex.: emergiu do mundo submerso via portal, ou foi teleportada), forca o nado.
+    -- Sem isto ela fica PARADA sobre a agua com a animacao quebrada. NAO age no
+    -- fundo do mar (tile submerso), onde ela ANDA normalmente.
+    if GLOBAL.TheWorld.ismastersim then
+        inst:DoPeriodicTask(0.33, function(inst)
+            if inst._wurt_tryingswim == nil or inst._wurt_tryingswim:value() then return end
+            local map = GLOBAL.TheWorld.Map
+            if map == nil then return end
+            local x, y, z = inst.Transform:GetWorldPosition()
+            local uw = GLOBAL.TheWorld.wurt_uw_tile_id
+            if uw ~= nil and map:GetTileAtPoint(x, 0, z) == uw then return end   -- no fundo do mar: anda
+            if map:IsOceanAtPoint(x, y, z) and map:GetPlatformAtPoint(x, z) == nil then
+                inst._wurt_tryingswim:set(true)
+                WurtSwimmer(inst)
+            end
+        end)
+    end
+end)
+
+-- ============================================================
+-- COLETAR PEIXE COM ESPACO (enquanto nada).
+-- O botao de acao (espaco) exclui NOCLICK e e um sistema fixo; entao
+-- ENVOLVEMOS o GetActionButtonAction da Wurt: se ela esta nadando e ha
+-- um peixe de oceano perto, retornamos a acao de coletar. Sem tocar no
+-- resto do input. FindEntity acha o peixe mesmo com NOCLICK.
+-- ============================================================
+-- Wobster (vanilla) NAO tem prefab "_inv" -- ao inves de virar item na hora
+-- do reel-in (como os peixes normais), ela vira o prefab "_land" (a mesma
+-- criatura, so que na forma "em terra"/item de inventario, VIVA -- e assim
+-- que a vara de pesca vanilla entrega ela, ver on_projectile_landed em
+-- prefabs/wobster.lua). fish_def.loot ("wobster_sheller_dead"/"moonglass")
+-- e o loot de MATA-LA, nao o de pesca-la -- nao usar aqui.
+-- Cobre as 4 variantes vivas (agua/terra x normal/lunar).
+local function IsWobster(item)
+    return item ~= nil and item.prefab ~= nil and item.prefab:find("^wobster_") ~= nil
+end
+
+-- Logica de "dar o item certo e remover o peixe" extraida pra uma funcao a
+-- parte: usada tanto pela acao manual (botao, fundo do mar/lagosta/Wobster
+-- em terra) quanto pela captura AUTOMATICA ao nadar por cima (ver mais
+-- abaixo) -- as duas precisam do mesmo resultado, so mudam em COMO o peixe
+-- e encontrado/disparado.
+local function DoWurtCollectFish(doer, fish)
+    if doer == nil or fish == nil or not fish:IsValid() then return false end
+    if not _G.TheWorld.ismastersim then return true end
+
+    local item
+    if IsWobster(fish) then
+        -- HOTFIX (bug reportado 31/08/2026): esta coleta sem vara estava
+        -- pegando fish.fish_def.loot[1] -- o loot de MORTE da Wobster --
+        -- entao toda Wobster coletada assim vinha morta. Corrigido pra
+        -- spawnar o prefab "_land" (a forma viva/coletavel), igual a vara
+        -- de pesca faz de verdade.
+        local landprefab = fish.fish_def ~= nil and fish.fish_def.prefab ~= nil
+            and (fish.fish_def.prefab .. "_land") or nil
+        item = _G.SpawnPrefab(landprefab or "wobster_sheller_land")
+        if item ~= nil and item.components.weighable ~= nil and fish.components.weighable ~= nil then
+            item.components.weighable:CopyWeighable(fish.components.weighable)
+        end
+    else
+        -- Peixe de oceano vira "<prefab>_inv"; nossos peixes da ilha (sem
+        -- fish_def) dao fishmeat.
+        local invname = (fish.fish_def ~= nil and fish.fish_def.prefab ~= nil)
+            and (fish.fish_def.prefab .. "_inv") or nil
+        item = _G.SpawnPrefab(invname or "fishmeat")
+    end
+    if item ~= nil and doer.components.inventory ~= nil then
+        doer.components.inventory:GiveItem(item)
+    end
+    if doer.SoundEmitter ~= nil then
+        doer.SoundEmitter:PlaySound("dontstarve/movement/foley/wetplayer")
+    end
+    -- respawn simples: agenda um novo peixe da especie no lugar (so os da ilha).
+    if fish.SpawnFishRespawner ~= nil then fish:SpawnFishRespawner() end
+    fish:Remove()
+    return true
+end
+
+local acao_peixe = AddAction("WURT_COLLECT_FISH", _G.WurtTR("Coletar", "Collect", "Recolectar", "收集"), function(act)
+    return DoWurtCollectFish(act.doer, act.target)
+end)
+acao_peixe.distance = 4
+_G.STRINGS.ACTIONS.WURT_COLLECT_FISH = _G.WurtTR("Coletar", "Collect", "Recolectar", "收集")
+
+AddStategraphActionHandler("wilson",        _G.ActionHandler(_G.ACTIONS.WURT_COLLECT_FISH, "dolongaction"))
+AddStategraphActionHandler("wilson_client", _G.ActionHandler(_G.ACTIONS.WURT_COLLECT_FISH, "dolongaction"))
+-- Merm pescador tambem usa esta acao pra "coletar" o cardume que ele mesmo
+-- atrai com a isca (ver secao PESCA NO MAR em wurt_village_economy.lua) --
+-- reusa a MESMA sequencia de animacao da pesca de lago (fish_pre/fish_loop/
+-- .../fishcatch, ver "fishing_pre" em SGmermfisher.lua), so que sem chance
+-- de errar e sem depender de um "fishable" de verdade (pedido do jogador:
+-- reusar a animacao de pesca em vez do gesto generico de "pegar").
+AddStategraphActionHandler("mermfisher",    _G.ActionHandler(_G.ACTIONS.WURT_COLLECT_FISH, "fishing_pre"))
+
+-- Coleta com BOTAO (espaco): cobre sempre o fundo do mar (peixe da
+-- ilha/lagosta, Wobster em terra/den), e cobre TAMBEM o peixe de
+-- oceano/Wobster nadando na superficie QUANDO a config "swim_catch_fish"
+-- estiver DESATIVADA (== padrao, pedido do jogador 2026-08-31: por padrao a
+-- captura a nado continua manual -- precisa nadar por cima E apertar o
+-- botao). Se a config estiver ativada, esse caso vira automatico (ver bloco
+-- de auto-captura logo abaixo) e some daqui pra nao disparar duas vezes.
+AddComponentPostInit("playercontroller", function(self)
+    local old_getbutton = self.GetActionButtonAction
+    function self:GetActionButtonAction(force_target)
+        local inst = self.inst
+        if inst ~= nil and inst.prefab == "wurt" then
+            local fish
+            -- nadando na superficie: peixe de oceano OU Wobster nadando --
+            -- so entra aqui se a auto-captura estiver DESLIGADA.
+            if inst:HasTag("swimming") and not _G.WURT_SWIM_CATCH_FISH then
+                fish = _G.FindEntity(inst, 6, nil, { "oceanfish" }, { "INLIMBO", "FX", "catchable" })
+                if fish == nil then
+                    fish = _G.FindEntity(inst, 6, IsWobster, nil, { "INLIMBO", "FX" })
+                end
+            end
+            -- no fundo do mar: peixes da ilha (nossos), perto
+            if fish == nil then
+                fish = _G.FindEntity(inst, 4, nil, { "wurt_commonfish" }, { "INLIMBO", "FX" })
+            end
+            -- no fundo do mar: a lagosta (wurt_lobster) tambem, perto
+            if fish == nil then
+                fish = _G.FindEntity(inst, 4, nil, { "wurt_lobster" }, { "INLIMBO", "FX" })
+            end
+            -- Wobster em terra/rochedo (den) -- nao precisa estar nadando.
+            if fish == nil then
+                fish = _G.FindEntity(inst, 4, IsWobster, nil, { "INLIMBO", "FX" })
+            end
+            if fish ~= nil then
+                return _G.BufferedAction(inst, fish, _G.ACTIONS.WURT_COLLECT_FISH)
+            end
+        end
+        return old_getbutton(self, force_target)
+    end
+end)
+
+-- ============================================================
+-- CAPTURA AUTOMATICA nadando por cima do peixe (SEM apertar espaco).
+-- So roda quando a config "swim_catch_fish" estiver ATIVADA (padrao e
+-- DESLIGADA -- pedido do jogador 2026-08-31; nesse caso a captura a nado
+-- usa o botao, no bloco acima). Raio bem menor que o do botao (era 6)
+-- porque aqui e por CONTATO, nao por mira do jogador. So roda no servidor.
+-- ============================================================
+local WURT_AUTOCATCH_RADIUS = 1.5
+local WURT_AUTOCATCH_PERIOD = 0.2
+
+AddPrefabPostInit("wurt", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    inst:DoPeriodicTask(WURT_AUTOCATCH_PERIOD, function(inst)
+        if not (_G.WURT_SWIM_CATCH_FISH and inst:HasTag("swimming")) then return end
+        local x, y, z = inst.Transform:GetWorldPosition()
+        -- peixes de oceano de verdade: pode ter varios num cardume, pega todos
+        -- que estiverem no raio de contato nesta passada.
+        local fishes = _G.TheSim:FindEntities(x, y, z, WURT_AUTOCATCH_RADIUS, { "oceanfish" }, { "INLIMBO", "FX", "catchable" })
+        for _, fish in ipairs(fishes) do
+            if fish:IsValid() then DoWurtCollectFish(inst, fish) end
+        end
+        -- Wobster nadando: sem tag "oceanfish", precisa de busca por prefab
+        -- (FindEntity so devolve uma por vez, mas dificilmente ha mais de uma
+        -- Wobster por perto ao mesmo tempo).
+        local wobster = _G.FindEntity(inst, WURT_AUTOCATCH_RADIUS, IsWobster, nil, { "INLIMBO", "FX" })
+        if wobster ~= nil then DoWurtCollectFish(inst, wobster) end
+    end)
+end)
+
+-- ============================================================
+-- SOLTAR PEIXE NO FUNDO -> volta a nadar. Ao dropar o peixe pescado no tile
+-- submerso (id gravado pelo portal em TheWorld), ele vira o peixe nadador.
+-- Na superficie (wurt_uw_tile_id nil) nao acontece nada -> pesca normal intacta.
+-- ============================================================
+local FISH_RELEASE = {}
+for i = 1, 8 do
+    FISH_RELEASE["oceanfish_medium_" .. i .. "_inv"] = "wurt_oceanfish_" .. i
+end
+for i = 1, 9 do
+    FISH_RELEASE["oceanfish_small_" .. i .. "_inv"] = "wurt_smallfish_" .. i
+end
+
+for invname, swimname in pairs(FISH_RELEASE) do
+    AddPrefabPostInit(invname, function(inst)
+        if not _G.TheWorld.ismastersim then return end
+        inst:ListenForEvent("ondropped", function(inst)
+            inst:DoTaskInTime(0.1, function(inst)
+                if not inst:IsValid() then return end
+                local uw = _G.TheWorld ~= nil and _G.TheWorld.wurt_uw_tile_id
+                if uw == nil or _G.TheWorld.Map == nil then return end
+                local x, y, z = inst.Transform:GetWorldPosition()
+                if _G.TheWorld.Map:GetTileAtPoint(x, 0, z) == uw then
+                    local fish = _G.SpawnPrefab(swimname)
+                    if fish ~= nil then fish.Transform:SetPosition(x, 0, z) end
+                    inst:Remove()
+                end
+            end)
+        end)
+    end)
+end
+
+-- WIDGET DO CONTAINER DO ARMAZEM DA COLONIA (wurt_warehouse). Reusa o widget do
+-- bau (9 slots) sob o nome do nosso prefab, aceitando qualquer item.
+local containers = _G.require("containers")
+containers.params.wurt_warehouse = _G.deepcopy(containers.params.treasurechest)
+containers.params.wurt_warehouse.itemtestfn = function(container, item, slot)
+    return not container.inst:HasTag("burnt")
+end
+
+-- WIDGET DO CONTAINER DA CASA DO PESCADOR: reusa o widget do "Tin Fishin' Bin"
+-- (fish_box, 20 slots) e so aceita PEIXE: de lago, de oceano e ENGUIA.
+-- IMPORTANTE: o cliente resolve o widget pelo NOME DO PREFAB, entao precisamos
+-- registrar um param para CADA prefab de casa (a natural e a craftada).
+local function _MakeFishHouseWidget()
+    local w = _G.deepcopy(containers.params.fish_box)
+    w.itemtestfn = function(container, item, slot)
+        if container.inst:HasTag("burnt") then return false end
+        return item:HasTag("pondfish")            -- peixe de lago
+            or item:HasTag("oceanfish")           -- peixe de oceano
+            or item:HasTag("smalloceancreature")  -- peixe de oceano (forma pescada)
+            or item.prefab == "eel"               -- enguia
+            or _G.WURT_IsSeedItem(item)           -- sementes (entregues pelos merms comuns)
+            or item.prefab == "chum"              -- isca (fabricada aqui, ver PESCA NO MAR)
+    end
+    return w
+end
+containers.params.mermfishhouse         = _MakeFishHouseWidget()
+containers.params.mermfishhouse_crafted = _MakeFishHouseWidget()
+
+-- ============================================================
+-- ACAO FISH1 (necessaria pelo stategraph do merm pescador).
+-- O jogo base NAO tem essa acao (o Tropical Experience a criava).
+-- Sem ela, o ActionHandler do SG tem chave nil e o merm CRASHA ao nascer.
+-- ============================================================
+AddAction("FISH1", _G.WurtTR("Pescar", "Fish", "Pescar", "钓鱼"), function(act)
+    local fishingrod = (act.invobject ~= nil and act.invobject.components.fishingrod)
+        or (act.doer ~= nil and act.doer.components.fishingrod)
+    if fishingrod ~= nil then
+        fishingrod:StartFishing(act.target, act.doer)
+    end
+    return true
+end)
+
+-- ============================================================
+-- ACAO "GUARDAR PEIXE": o merm pescador leva o peixe do inventario dele e
+-- deposita no BIN da casa (home). Usada pelo brain quando o merm carrega peixe.
+-- ============================================================
+AddAction("WURT_STOREFISH", _G.WurtTR("Guardar", "Store", "Guardar", "存放"), function(act)
+    local doer = act.doer
+    local home = act.target
+    if doer == nil or home == nil or not home:IsValid()
+        or home.components.container == nil or doer.components.inventory == nil then
+        return false
+    end
+    -- coleta os itens do inventario do merm (copia, pois vamos mexer nos slots)
+    local items = {}
+    for _, it in pairs(doer.components.inventory.itemslots) do
+        if it ~= nil then table.insert(items, it) end
+    end
+    for _, it in ipairs(items) do
+        if home.components.container:IsFull() then break end
+        if home.components.container:CanTakeItemInSlot(it) then
+            local removed = doer.components.inventory:RemoveItem(it, true)
+            if removed ~= nil and not home.components.container:GiveItem(removed) then
+                doer.components.inventory:GiveItem(removed)   -- devolve se nao coube
+            end
+        end
+    end
+    if home.SoundEmitter ~= nil then
+        home.SoundEmitter:PlaySound("dontstarve/common/together/fish_box/place")
+    end
+    return true
+end)
+_G.ACTIONS.WURT_STOREFISH.distance = 3   -- guarda parado perto da casa
+
+-- ============================================================
+-- RECEITA da CASA DO PESCADOR (so a Wurt constroi: tag "merm_builder").
+-- Sem icone custom por enquanto (aparece um quadrado vazio na aba, mas
+-- funciona). Colocada na aba de ESTRUTURAS.
+-- ============================================================
+-- TECH "impossivel": nenhuma maquina fornece SCIENCE 99, entao estas casas
+-- SO ficam craftaveis depois que o Rei Vassalo desbloqueia via blueprint
+-- (builder:UnlockRecipe ignora o tech). Assim o blueprint tem valor real.
+local VASSAL_LOCKED = { SCIENCE = 99 }
+
+-- RESTRICAO DE TERRENO (pedido do jogador, 02/09/2026): toda estrutura da vila
+-- merm DESTE MOD (casas/totem/mesas de tributo/armazem) so pode ser construida
+-- em terreno de PANTANO (turf_marsh) -- igual as estruturas VANILLA relacionadas
+-- a Wurt (Casa do Merm, Trono, Torre de Guarda, Arsenal comum/superior: todas ja
+-- usam "testfn=IsMarshLand" nativamente, ver recipes.lua). Essa funcao local do
+-- vanilla nao e exportada pra mods, entao recriamos a MESMA logica aqui.
+local function WurtIsMarshLand(pt, rot)
+    local ground_tile = _G.TheWorld.Map:GetTileAtPoint(pt.x, pt.y, pt.z)
+    return ground_tile ~= nil and ground_tile == _G.WORLD_TILES.MARSH
+end
+
+-- PROXIMIDADE DA LOJA DO CONSTRUTOR (2026-09-05): "station_tag" sozinho (setado
+-- nas receitas abaixo) NAO bloqueia construcao nenhuma fora da aba "CRAFTING_
+-- STATION" -- conferido direto no widget real (craftingmenu_widget.lua,
+-- IsRecipeValidForStation): ele so filtra QUAIS receitas aparecem DENTRO
+
+```
+

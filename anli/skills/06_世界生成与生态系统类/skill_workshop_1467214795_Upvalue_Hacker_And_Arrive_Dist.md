@@ -5373,3 +5373,172 @@ end)
 
 ```
 
+
+
+### 变体演进：滤镜RR增强版 (Mod 3451079419)
+- **变体场景与切面**：收录来自工坊 Mod 3451079419 (`滤镜RR增强版`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3451079419)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+then
+    AddPrefabPostInit("world",
+        function(self)
+            local map = self.Map
+            if map
+            then
+                local mt = GLOBAL.getmetatable(map)
+                if mt and mt.__index
+                then
+                    local mt_index = mt.__index
+                    local SetOverlayLerp_old = mt_index.SetOverlayLerp
+                    if SetOverlayLerp_old
+                    then
+                        mt_index.SetOverlayLerp = function(somemap, level, ...)
+                            if somemap == map
+                            then
+                                level = level <= allowance and level or allowance
+                            end
+                            return SetOverlayLerp_old(somemap, level, ...)
+                        end
+                    end
+                end
+            end
+        end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self, inst)
+    if inst ~= GLOBAL.ThePlayer then return end
+
+    if CONFIG_REMOVE_FILTER ~= 0 then
+        local PostProcessor = GLOBAL.PostProcessor
+        if not PostProcessor then return end
+
+        local PostProcessor_mt = GLOBAL.getmetatable(PostProcessor)
+        if not PostProcessor_mt then return end
+
+        local LUNACY_CHANNEL = 2
+        local OldSetColourCubeLerp = PostProcessor_mt.__index.SetColourCubeLerp
+
+        if OldSetColourCubeLerp then
+            PostProcessor_mt.__index.SetColourCubeLerp = function(self2, channel, blend_amount)
+                if channel == LUNACY_CHANNEL then
+                    blend_amount = 0
+                end
+                return OldSetColourCubeLerp(self2, channel, blend_amount)
+            end
+        end
+
+        if should_remove_overlay then
+            local OldSetOverlayBlend = PostProcessor_mt.__index.SetOverlayBlend
+            if OldSetOverlayBlend then
+                if PostProcessor.SetOverlayBlend then
+                    PostProcessor:SetOverlayBlend(0)
+                end
+                PostProcessor_mt.__index.SetOverlayBlend = function(self2, blend)
+                    return OldSetOverlayBlend(self2, 0)
+                end
+            end
+        end
+    end
+
+    if LUNACY_SOUND_MODE ~= nil and LUNACY_SOUND_MODE ~= 1 then
+        local fp = GLOBAL.TheFocalPoint
+        if fp ~= nil and fp.SoundEmitter ~= nil then
+            local mt = GLOBAL.getmetatable(fp.SoundEmitter)
+            if mt ~= nil and mt.__index ~= nil and not mt.__index._ecd_lunacy_sound_patch then
+                local old_PlaySound = mt.__index.PlaySound
+                if old_PlaySound ~= nil then
+                    mt.__index.PlaySound = function(se, event, name, ...)
+                        local e = type(event) == "string" and string.lower(event) or ""
+                        local is_stinger = (e == "dontstarve/sanity/lunacy_stinger") or (e:find("lunacy_stinger", 1, true) ~= nil)
+                        local is_loop = (e == "turnoftides/sanity/lunacy_lp")
+                            or (e:find("lunacy", 1, true) ~= nil and (e:find("_lp", 1, true) ~= nil or e:find("loop", 1, true) ~= nil))
+                        if LUNACY_SOUND_MODE == 2 then
+                            if is_loop then
+                                return
+                            end
+                        elseif LUNACY_SOUND_MODE == 3 then
+                            if is_stinger or is_loop then
+                                return
+                            end
+                        end
+                        return old_PlaySound(se, event, name, ...)
+                    end
+                    mt.__index._ecd_lunacy_sound_patch = true
+                end
+            end
+        end
+    end
+end)
+
+AddComponentPostInit("ambientsound", function(self, inst)
+    if LUNACY_SOUND_MODE ~= nil and LUNACY_SOUND_MODE ~= 1 then
+        local old_OnUpdate = self.OnUpdate
+        self.OnUpdate = function(self2, dt)
+            if old_OnUpdate ~= nil then
+                old_OnUpdate(self2, dt)
+            end
+            if inst.SoundEmitter ~= nil then
+                inst.SoundEmitter:KillSound("ENLIGHT")
+            end
+        end
+    end
+end)
+
+AddComponentPostInit("playercontroller", function(self, inst)
+    if inst ~= GLOBAL.ThePlayer then return end
+    if LUNACY_SOUND_MODE ~= nil and LUNACY_SOUND_MODE ~= 1 then
+        local fp = GLOBAL.TheFocalPoint
+        if fp ~= nil and fp.SoundEmitter ~= nil then
+            local mt = GLOBAL.getmetatable(fp.SoundEmitter)
+            if mt ~= nil and mt.__index ~= nil and not mt.__index._ecd_lunacy_param_patch then
+                local old_SetParameter = mt.__index.SetParameter
+                if old_SetParameter ~= nil then
+                    mt.__index.SetParameter = function(se, name, param, value, ...)
+                        if type(name) == "string" and name == "ENLIGHT" then
+                            return
+                        end
+                        return old_SetParameter(se, name, param, value, ...)
+                    end
+                end
+                local old_SetVolume = mt.__index.SetVolume
+                if old_SetVolume ~= nil then
+                    mt.__index.SetVolume = function(se, name, vol, ...)
+                        if type(name) == "string" and name == "ENLIGHT" then
+                            return
+                        end
+                        return old_SetVolume(se, name, vol, ...)
+                    end
+                end
+                mt.__index._ecd_lunacy_param_patch = true
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:ambientsound
+
+AddComponentPostInit("ambientsound", function(self, inst)
+    if LUNACY_SOUND_MODE ~= nil and LUNACY_SOUND_MODE ~= 1 then
+        local old_OnUpdate = self.OnUpdate
+        self.OnUpdate = function(self2, dt)
+            if old_OnUpdate ~= nil then
+                old_OnUpdate(self2, dt)
+            end
+            if inst.SoundEmitter ~= nil then
+                inst.SoundEmitter:KillSound("ENLIGHT")
+            end
+        end
+    end
+end)
+
+```
+
