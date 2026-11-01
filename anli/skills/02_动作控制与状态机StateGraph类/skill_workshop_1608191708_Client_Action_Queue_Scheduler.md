@@ -38878,3 +38878,158 @@ end)
 
 ```
 
+
+
+### 变体演进：For The Winona (Mod 3026217602)
+- **变体场景与切面**：收录来自工坊 Mod 3026217602 (`For The Winona`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3026217602)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:winona
+if GetModConfigData"ftwinona_hungry" == false then
+	AddPrefabPostInit("winona", function(inst)
+		inst:RemoveTag("hungrybuilder")
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+--------------------------------------------------------------------------
+AddComponentPostInit("locomotor", function(self)
+	if TUNING.FTWINONA_CARRY then
+		local _GetSpeedMultiplier = self.GetSpeedMultiplier
+		self.GetSpeedMultiplier = function(self)
+			return (self.inst:HasTag("portableengineer") and math.max(_GetSpeedMultiplier(self), 0.5)) -- doesn't affect sandstorms yippee
+			or _GetSpeedMultiplier(self)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sewing_tape
+
+AddPrefabPostInit("sewing_tape", function(inst)
+	inst:AddComponent("patching")
+	inst.components.patching.repair_value_armor = TUNING.PATCHING_ARMOR
+	inst.components.patching.repair_value_tool = TUNING.PATCHING_TOOL
+	inst.components.patching.onpatched = onpatched
+	--inst.components.sewing.repair_value = TUNING.SEWING_TAPE_REPAIR_VALUE
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bearger
+-------------------------------------------------------------------------- 
+AddPrefabPostInit("bearger", function(inst) -- Preventing Bearger disarm
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	if TUNING.FTWINONA_GRIP then
+		local listeners = inst.event_listeners.onhitother
+		local listener_fns = listeners[inst]
+		local old = listener_fns[1]
+		listener_fns[1] = function(inst, data)
+			local other = data.target
+			if other and other.prefab == "winona" then
+				return
+			end
+			return old(inst, data)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:moose
+
+AddStategraphPostInit("moose", function(sg) -- Preventing moose/goose disarm
+	if TUNING.FTWINONA_GRIP then
+		local disarm_state = sg.states.disarm
+		local old = disarm_state.timeline[5].fn
+		disarm_state.timeline[5].fn = function(inst)
+			local target = inst.components.combat.target
+			if target and target.prefab == "winona" then
+				inst.CanDisarm = false
+				return	
+			end
+			old(inst)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：language (Mod 3677314942)
+- **变体场景与切面**：收录来自工坊 Mod 3677314942 (`language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3677314942)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:tent
+-- 帐篷作为云山亭的入口
+-- AddPrefabPostInit("tent", function(inst)
+--     if not TheWorld.ismastersim then
+--         return
+--     end
+--     inst:AddComponent("ling_cloud_pavilion_enter")
+-- end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+-- 在云山亭里禁止睡觉
+AddStategraphPostInit("wilson", function(sg)
+    local no_sleep_states = { "bedroll", "tent" }
+    for _, state_name in ipairs(no_sleep_states) do
+        local state = sg.states[state_name]
+        if state and state.onenter then
+            local old_onenter = state.onenter
+            state.onenter = function(inst, ...)
+                inst.components.locomotor:Stop()
+                if IsEntityInCloudPavilion(inst) then
+                    inst:PushEvent("performaction", { action = inst.bufferedaction })
+                    inst:ClearBufferedAction()
+                    inst.sg:GoToState("idle")
+                    SayAndVoice(inst, 'LING_CLOUD_PAVILION_PRIVATE_SLEEP')
+                    return
+                end
+                old_onenter(inst, ...)
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+    inst:AddComponent("ling_interiorspawner")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+end)
+AddPrefabPostInit("cave", function(inst)
+    inst:AddComponent("ling_interiorspawner")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:birdspawner
+-- 室内不生成鸟
+AddComponentPostInit("birdspawner", function(self)
+    local _orig_GetSpawnPoint = self.GetSpawnPoint
+    self.GetSpawnPoint = function(self, pt, ...)
+        if pt and IsInteriorZ(pt.z) then
+            return nil
+        end
+        return _orig_GetSpawnPoint(self, pt, ...)
+    end
+end)
+
+```
+

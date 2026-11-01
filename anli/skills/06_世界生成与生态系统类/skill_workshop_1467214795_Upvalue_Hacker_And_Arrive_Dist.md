@@ -3929,3 +3929,35 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod 3794362938 (Mod 3794362938)
+- **变体场景与切面**：收录来自工坊 Mod 3794362938 (`Mod 3794362938`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3794362938)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:lightrays_canopy
+
+AddPrefabPostInit("lightrays_canopy", function(inst)
+    inst.AnimState:SetForceSinglePass(true)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- 组件内部会生成 entity_ocean_surface 并每帧跟随摄像机。
+AddPrefabPostInit("world", function(inst)
+	-- oceancolor 组件：海洋清屏颜色强制纯黑（覆盖 default/dusk/night 所有相位）。
+
+	if not TheNet:IsDedicated() then
+		inst:DoStaticTaskInTime(0, function()
+			ShadowPatches.ApplyOceanEnabled(ShadowPatches.IsOceanEnabled())
+		end)
+	end
+end)
+
+```
+
