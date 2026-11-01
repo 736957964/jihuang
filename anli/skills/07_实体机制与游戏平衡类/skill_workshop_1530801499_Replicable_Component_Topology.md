@@ -9237,3 +9237,193 @@ end)
 
 ```
 
+
+
+### 变体演进：Auto Rowing (Updated) (Mod 2836299735)
+- **变体场景与切面**：收录来自工坊 Mod 2836299735 (`Auto Rowing (Updated)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2836299735)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    if(type(self.automation_tasks)~="table")then
+        self.automation_tasks={}
+    end
+
+    self.automation_tasks.paddle={}
+    local script = self.automation_tasks.paddle 
+
+    script.inst = nil -- ThePlayer
+    script.animation_fail_time = _G.FRAMES -- Not currently used. (4/30) -- Time from scripts\componentactions.lua Row(inst, doer, pos, actions) line: 35.
+    script.relative_x, relative_z = 0, 0, 0
+    script.platform = nil
+    script.oar = nil
+    script.period = _G.FRAMES * paddling_speed
+
+    script.oars = { -- Is there any way to tell what's an oar?
+        oar = true,
+        oar_driftwood = true,
+        malbatross_beak = true,
+        oar_monkey = true,
+        yotd_oar = true,
+    }
+
+    script.action_row = {
+        action = _G.ACTIONS.ROW,
+        invobject = nil,
+        target = nil,
+        doer = nil, -- ThePlayer
+        pos = _G.Vector3(0, 0, 0),
+    }
+
+    ------------------------------------------------------------ Functions.
+
+    script.Interrupt = function(self)
+        if self.task then
+            self.task:Cancel()
+            self.task = nil
+        end
+    end
+
+    script.AcceptControllerAction = function(self, control, down, LMBaction, RMBaction, inst)
+        if enable_custom_key then  -- Solo activar si la opción está habilitada.
+            if control == _G.CONTROL_SECONDARY and RMBaction and 
+               (RMBaction.action == _G.ACTIONS.ROW or RMBaction.action == _G.ACTIONS.ROW_FAIL) then
+                if down and _G.TheInput:IsKeyDown(CUSTOM_CONTROL_KEY) then -- Usa la tecla personalizada.
+                    self.enabled = not self.enabled -- Alterna el estado del mod.
+                    if self.enabled then
+                        inst.components.talker:Say("Auto Row: Activated") -- Mensaje al activar.
+                    else
+                        self:Interrupt() -- Detén cualquier tarea activa.
+                        inst.components.talker:Say("Auto Row: Deactivated") -- Mensaje al desactivar.
+                    end
+                    return true
+                end
+
+                if self.enabled then
+                    self.inst = inst
+                    self.action_row.doer = inst
+                    local temp_act_pos = RMBaction:GetActionPoint()
+                    if not temp_act_pos then 
+                        temp_act_pos = _G.TheInput:GetWorldPosition()
+                    end
+                    if temp_act_pos then
+                        local inst_x, _, inst_z = self.inst.Transform:GetWorldPosition()
+                        if inst_x and inst_z then
+                            self.platform = _G.TheWorld.Map:GetPlatformAtPoint(inst_x, inst_z)
+                            if self.IsValidPlatform(self.platform) then
+                                local platform_x, platform_y, platform_z = self.platform.Transform:GetWorldPosition()
+                                self.relative_x = temp_act_pos.x - platform_x -- Offset desde el bote.
+                                self.relative_z = temp_act_pos.z - platform_z -- Offset desde el bote.
+                                self:Start()
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        else
+            -- Si la opción de tecla personalizada está deshabilitada, solo usar clic derecho
+            if control == _G.CONTROL_SECONDARY and RMBaction and 
+               (RMBaction.action == _G.ACTIONS.ROW or RMBaction.action == _G.ACTIONS.ROW_FAIL) then
+                self.inst = inst
+                self.action_row.doer = inst
+                local temp_act_pos = RMBaction:GetActionPoint()
+                if not temp_act_pos then 
+                    temp_act_pos = _G.TheInput:GetWorldPosition()
+                end
+                if temp_act_pos then
+                    local inst_x, _, inst_z = self.inst.Transform:GetWorldPosition()
+                    if inst_x and inst_z then
+                        self.platform = _G.TheWorld.Map:GetPlatformAtPoint(inst_x, inst_z)
+                        if self.IsValidPlatform(self.platform) then
+                            local platform_x, platform_y, platform_z = self.platform.Transform:GetWorldPosition()
+                            self.relative_x = temp_act_pos.x - platform_x -- Offset desde el bote.
+                            self.relative_z = temp_act_pos.z - platform_z -- Offset desde el bote.
+                            self:Start()
+                            return true
+                        end
+                    end
+                end
+            end
+        end
+        return false
+    end
+
+    script.Start = function(self)
+        if self.task then return end
+        if IsValidEntity(self.inst) then
+            self.task = self.inst:DoPeriodicTask(self.period, self.Run, 0, self)
+        end
+    end
+
+    script.Run = function(_, self)
+        if self.IsValidPlatform(self.platform) then
+            local has_oar = false
+            if self.IsValidOar(GetEquippedItemInHand(self.inst)) then
+                local platform_x, platform_y, platform_z = self.platform.Transform:GetWorldPosition()
+                self.action_row.pos.x = platform_x + self.relative_x
+                self.action_row.pos.z = platform_z + self.relative_z
+                SendAction(self.inst, self.action_row)
+            else
+                self.oar = GetItemFromInventories(self.inst, self.IsValidOar)
+                if self.oar == nil then
+                    self:Interrupt()
+                end
+                self.inst.replica.inventory:UseItemFromInvTile(self.oar)
+            end
+        else
+            self:Interrupt()
+        end
+    end
+
+    script.IsValidPlatform = function(ent)
+        return IsValidEntity(ent) -- Platform health check?
+    end
+
+    script.IsValidOar = function(ent)
+        return IsValidEntity(ent) and ent.prefab and script.oars[ent.prefab] ~= nil
+    end
+
+    if self.automation_components_setup then return else self.automation_components_setup = true end
+
+    _G.assert(type(self.automation_tasks) == "table", "[BasicUtility] Automation enabled but unable to load scripts.\n"
+            .."Try disabling automation in the mod settings.")
+    self.mouse_controls = { [_G.CONTROL_PRIMARY] = true, [_G.CONTROL_SECONDARY] = true }
+    self.interrupt_controls = {}
+    for control = _G.CONTROL_ATTACK, _G.CONTROL_MOVE_RIGHT do
+        self.interrupt_controls[control] = true
+    end
+    
+    self.eat_control = false
+    self.should_interrupt = false
+    local playercontroller_OnControl = self.OnControl
+    self.OnControl = function(self, control, down)
+        -- self.do_automation = TheInput:IsControlPressed(automation_control)
+        self.eat_control = false -- eat_control is only for eating the playercontroller action.
+        self.should_interrupt = down                                                               -- Interrupt only down actions; up is meaningless.
+                and (self.inst.HUD and not self.inst.HUD:HasInputFocus())                          -- Don't interrupt when the HUD has focus.
+                and (self.interrupt_controls[control]                                              -- Interrupt any key press.
+                    or (self.mouse_controls[control] and not _G.TheInput:GetHUDEntityUnderMouse()) -- Don't interrupt mouse presses when hovering over HUD.
+                )
+        for _, task in pairs(self.automation_tasks) do
+            if task:AcceptControllerAction(control, down, self:GetLeftMouseAction(), self:GetRightMouseAction(), self.inst) then
+                self.eat_control = true
+            elseif self.should_interrupt then
+                task:Interrupt()
+            end
+        end
+        
+        if not self.eat_control then
+            playercontroller_OnControl(self, control, down)
+        end
+    end
+end)
+
+```
+

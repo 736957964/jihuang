@@ -43460,3 +43460,139 @@ end)
 
 ```
 
+
+
+### 变体演进：language (Mod 3155853064)
+- **变体场景与切面**：收录来自工坊 Mod 3155853064 (`language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3155853064)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+	TELEBASES = Waffles.GetUpvalue(_G.FindNearestActiveTelebase, "TELEBASES")
+	Waffles.Parallel(_G, "FindNearestActiveTelebase", DisableCoveredTelebases)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+	if ToggleOffPhysics == nil then
+		ToggleOffPhysics = Waffles.GetUpvalue(sg.states.jumpout.onenter, "ToggleOffPhysics")
+		ToggleOnPhysics = Waffles.GetUpvalue(sg.states.jumpout.onexit, "ToggleOnPhysics")
+	end
+	
+	Waffles.Branch(sg.states.jumpin, "onenter", function(onenter, inst, data, ...)
+		if Waffles.Browse(data, "teleporter") and data.teleporter:HasTag("stairs") then
+			inst.sg:GoToState("jump_stairs", data)
+		else
+			onenter(inst, data)
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:telestaff
+
+AddPrefabPostInit("telestaff", function(inst)
+	Waffles.Branch(inst.components.spellcaster, "spell", TelestaffSpellRedirect)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:sinkholespawner
+
+AddComponentPostInit("sinkholespawner", function(self, inst)
+	Waffles.Branch(self, "SpawnSinkhole", SpawnSinkholeRedirect)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cavein_boulder
+
+AddPrefabPostInit("cavein_boulder", function(inst)
+	inst:ListenForEvent("startfalling", OverrideCaveinDebris)
+end)
+
+```
+
+
+
+### 变体演进：梅花十三2.4 (Mod 3602601773)
+- **变体场景与切面**：收录来自工坊 Mod 3602601773 (`梅花十三2.4`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3602601773)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+--达到20级增加20伤害
+--[[AddComponentPostInit("combat", function(self, inst)
+    local Old_GetAttacked = self.GetAttacked
+    function self:GetAttacked(attacker, damage, weapon, stimuli, spdamage)
+        if attacker and attacker.components and attacker.components.mhss_level then
+            if attacker.components.mhss_level.level >= 20 then
+                damage = damage + 20
+            end
+        end
+        if (self.inst and self.inst.components.mhss_miss and self.inst.components.mhss_miss:TryMiss()) or (self.inst and self.inst.sg and self.inst.sg:HasStateTag("qylsj_special_attack")) then
+            return false
+        else
+            return Old_GetAttacked(self, attacker, damage, weapon, stimuli, spdamage)
+        end
+    end
+end)]]
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst._qylsj = net_entity(inst.GUID, "mhss_qylsj")
+    --inst._can_summon_qylsj = net_bool(inst.GUID, "can_summon_qylsj")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:greengem
+end]]
+AddPrefabPostInit("greengem", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    inst:AddComponent("qylsj_exp_material")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:finiteuses
+
+AddComponentPostInit("finiteuses", function(self, inst)
+    self.inst:AddTag("has_finiteuses")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:fueled
+
+AddComponentPostInit("fueled", function(self, inst)
+    self.inst:AddTag("has_fueled")
+end)
+
+```
+
+
+
+### 变体演进：Ganja (Mod 925172054)
+- **变体场景与切面**：收录来自工坊 Mod 925172054 (`Ganja`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 925172054)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+

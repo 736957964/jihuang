@@ -7516,3 +7516,73 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：王国-核心包 (Mod 1869928570)
+- **变体场景与切面**：收录来自工坊 Mod 1869928570 (`王国-核心包`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1869928570)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+-- end
+AddPrefabPostInit("world", function(inst)
+    if not TheWorld.ismastersim then return end
+
+    inst:ListenForEvent("entity_death", function(world, data)
+        local victim = data.inst
+        local afflicter = data.afflicter
+        --print("让我看看谁嗝屁了",afflicter,victim)
+        -- 存在死者和凶手，且凶手是自己的随从
+        if victim and afflicter and afflicter:HasTag("oldfish_soldier") then
+            -- 随从是否有主人
+            if afflicter.components.follower and afflicter.components.follower:GetLeader() then
+                local exp = CalculateExp(victim)
+                if exp > 0 then
+                    afflicter.components.follower:GetLeader():PushEvent("showExp", { value = exp })
+                end
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail
+
+-- AddPrefabPostInit("abigail", function(inst)
+--     inst:ListenForEvent("killed", function(inst, data)
+--         for i, v in ipairs(STRINGS.EXP_TYPE) do
+--             if data.victim.prefab == v.name then
+--                 if inst.components.follower ~= nil and inst.components.follower:GetLeader() ~= nil then
+--                     inst.components.follower:GetLeader():PushEvent("showExp", { value = v.value })
+--                     break
+--                 end
+--             end
+--         end
+--     end)
+-- end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+
+AddComponentPostInit("container", function(self)
+    local oldgiveitem = self.GiveItem
+    function self:GiveItem(item, slot, ...)
+        if item ~= nil and item.prefab == "oldfish_manypeople_sign" then
+            if slot ~= nil then
+                if self.inst and self.inst.components.inventoryitem and self.inst.components.inventoryitem:GetGrandOwner() ~= nil then
+                    item:PushEvent("continueFollow", { player = self.inst.components.inventoryitem:GetGrandOwner() })
+                else
+                    item:PushEvent("stopFollow")
+                end
+            end
+        end
+        return oldgiveitem(self, item, slot, ...)
+    end
+end)
+
+```
+

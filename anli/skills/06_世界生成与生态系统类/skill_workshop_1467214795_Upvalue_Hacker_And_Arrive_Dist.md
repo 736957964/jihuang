@@ -3961,3 +3961,33 @@ end)
 
 ```
 
+
+
+### 变体演进：Observer Camera [Reworked] (Mod 1877306887)
+- **变体场景与切面**：收录来自工坊 Mod 1877306887 (`Observer Camera [Reworked]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1877306887)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    inst:ListenForEvent("playerexited", ClearOutFocusTarget)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:focalpoint
+
+AddComponentPostInit("focalpoint", FocalPointPostInit)
+
+local function GetKeyFromConfig(config)
+    local key = GetModConfigData(config, true)
+    if type(key) == "string" and _G:rawget(key) then key = _G[key] end
+    return type(key) == "number" and key or -1
+end
+
+```
+
