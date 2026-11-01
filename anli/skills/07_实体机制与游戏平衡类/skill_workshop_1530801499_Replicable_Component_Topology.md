@@ -8397,3 +8397,216 @@ AddModCharacter("tsukasa", "MALE", skin_modes)
 
 ```
 
+
+
+### 变体演进：Mount/Dismount Assist (Mod 3048315935)
+- **变体场景与切面**：收录来自工坊 Mod 3048315935 (`Mount/Dismount Assist`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3048315935)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+
+AddPrefabPostInit("beefalo", function(inst)
+   if inst._watchFeedTask then return end
+   inst._lastFeedTime = -1000 -- Always assume beefalo has not been fed
+   
+   inst._watchFeedTask = inst:DoPeriodicTask(FRAMES, function(inst)
+      if inst.AnimState:IsCurrentAnimation("graze_loop") then
+         inst._lastFeedTime = GLOBAL.TheSim:GetTick()
+      end
+   end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(player_classified)
+   player_classified:ListenForEvent("wormholetraveldirty", function()
+      if tasks["wormhole"] then
+         CancelTask("wormhole")
+         CancelTask("feed")
+         CancelTask("cancelfeed")
+         
+         AddTask("waitwormhole", GLOBAL.ThePlayer:DoPeriodicTask(0.1, function()
+            if GLOBAL.ThePlayer.AnimState:IsCurrentAnimation("run_pre") or GLOBAL.ThePlayer.AnimState:IsCurrentAnimation("jump_pre") then
+               return
+            elseif GLOBAL.ThePlayer.AnimState:IsCurrentAnimation("jump") then
+               CancelTask("waitwormhole")
+               AddTask("finishwormhole", GLOBAL.ThePlayer:DoTaskInTime(FRAMES*16, function()
+                  cancelAnim()
+                  GLOBAL.ThePlayer:DoTaskInTime(FRAMES*10, function() TryMount() end)
+               end))
+            -- elseif GLOBAL.ThePlayer.AnimState:IsCurrentAnimation("jumpout") then
+               -- SendRPCToServer(RPC.MakeRecipeFromMenu, torch.rpc_id)
+               -- cancelAnim()
+               -- TryMount()
+            -- else
+               -- CancelTask("waitwormhole")
+               -- TryMount()
+            end
+         end))
+         
+      end
+   end)
+end)
+
+function KeyHandler(key, down)
+   if not CanAcceptKeyInput() or not down then
+      return
+   end
+   -- print("KeyHandler MB " .. tostring(key) .. " - " .. tostring(down))
+   if GLOBAL.ConsoleCommandPlayer() then
+      if key == MOUNT_KEYCODE then
+         if SADDLE_KEY_MOD and GLOBAL.TheInput:IsControlPressed(SADDLE_KEY_MOD) and not IsMounted() then
+            SwapSaddle()
+         elseif FEED_KEY_MOD and GLOBAL.TheInput:IsControlPressed(FEED_KEY_MOD) and IsMounted() then
+            FeedMounted()
+         elseif ARM_ENABLED and GLOBAL.TheInput:IsControlPressed(GLOBAL.CONTROL_FORCE_INSPECT) then  
+            if ARMTask then 
+               GLOBAL.ThePlayer.components.talker:Say("ARM Mode Disabled")
+               justBucked = false
+               justMounted = false
+               ARMTask:Cancel()
+               ARMTask = nil
+            else
+               GLOBAL.ThePlayer.components.talker:Say("ARM Mode Enabled")
+               ARMTask = GLOBAL.ThePlayer:DoPeriodicTask(FRAMES, DoARM)
+            end
+         else
+            OnButtonPressed()
+         end
+      elseif key == SADDLE_KEY and not IsMounted() then
+         SwapSaddle()
+      elseif key == FEED_KEY and IsMounted() then
+         FeedMounted()
+      elseif key == GLOBAL.KEY_F3 then
+
+      end
+   end
+end
+
+AddGamePostInit(function()
+   GLOBAL.TheInput:AddKeyHandler(KeyHandler)
+   GLOBAL.TheInput:AddMouseButtonHandler(KeyHandler)
+end)
+
+AddComponentPostInit("playercontroller", function(self, inst)
+   if inst ~= GLOBAL.ThePlayer then return end
+   pc = self
+   -- ThePlayer = GLOBAL..ThePlayer
+   -- TheWorld = GLOBAL..TheWorld
+
+   local oldOnControl = self.OnControl
+   self.OnControl = function(self, control, down, ...)
+      --print("Control: " .. tostring(control))
+      if CanAcceptKeyInput() and down and (interrupt_controls[control] or mouse_controls[control] and not GLOBAL.TheInput:GetHUDEntityUnderMouse()) then
+         CancelAllTasks()
+         -- print("OnControl " .. tostring(control) .. " - " .. tostring(down))
+      end
+      return oldOnControl(self, control, down, ...)
+   end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self, inst)
+   if inst ~= GLOBAL.ThePlayer then return end
+   pc = self
+   -- ThePlayer = GLOBAL..ThePlayer
+   -- TheWorld = GLOBAL..TheWorld
+
+   local oldOnControl = self.OnControl
+   self.OnControl = function(self, control, down, ...)
+      --print("Control: " .. tostring(control))
+      if CanAcceptKeyInput() and down and (interrupt_controls[control] or mouse_controls[control] and not GLOBAL.TheInput:GetHUDEntityUnderMouse()) then
+         CancelAllTasks()
+         -- print("OnControl " .. tostring(control) .. " - " .. tostring(down))
+      end
+      return oldOnControl(self, control, down, ...)
+   end
+end)
+
+```
+
+
+
+### 变体演进：Title (Mod 3145616359)
+- **变体场景与切面**：收录来自工坊 Mod 3145616359 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3145616359)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wathgrithr
+if GetModConfigData("isLungeBreak") then
+AddPrefabPostInit("wathgrithr", function(inst)  
+    inst:ListenForEvent("combat_lunge", function(inst2, data)  lungeBuff(inst2, data) end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:spear_wathgrithr_lightning
+--侵删
+if GetModConfigData("isSpearRepair") then AddPrefabPostInit("spear_wathgrithr_lightning",normalSpearStrengthen) end
+
+
+--头盔攻击回耐久
+if GetModConfigData("isHelmetRepair") then 
+    AddPrefabPostInit("wathgrithr", function(inst)  
+        inst:ListenForEvent("onattackother", function(inst, data) OnAttack(inst, data) end)
+        inst:ListenForEvent("death", function(inst) OnDeath() end)
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:battlesong_container
+if GetModConfigData("isQuickSong") then 
+AddPrefabPostInit("battlesong_container", function(inst)
+    if inst.components.container then
+        local old_Open = inst.components.container.Open
+        inst.components.container.Open = function(self, opener)
+            if opener and opener.prefab == "wathgrithr" and opener.components.singinginspiration then
+			    if allowMusic then
+				--神秘0721音效
+				    opener.entity:AddSoundEmitter()
+			        opener.SoundEmitter:PlaySound("onanimusic/soundtrack/onani",nil,0.1)
+				end
+                for k,v in pairs(inst.components.container.slots) do
+				    if v and v.components.singable then
+					    if not opener.components.singinginspiration:IsSongActive(v.songdata) then
+						    v.components.singable:Sing(opener)
+						end
+					end
+				end
+            end
+            return old_Open(self, opener)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardian_phase1
+-- 将任务函数绑定
+--AddPrefabPostInit("alterguardian_phase1", function(inst)
+    --inst.StartPeriodicTask = StartPeriodicTask
+--end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardianhat
+
+AddPrefabPostInit("alterguardianhat", function(inst)
+    if not TheWorld.ismastersim then
+          return
+    end
+    inst:AddComponent("wigchallenge")   
+    -- 延迟到实体就绪后执行
+end)
+
+```
+

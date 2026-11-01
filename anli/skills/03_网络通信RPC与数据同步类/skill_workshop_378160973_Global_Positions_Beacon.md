@@ -6178,3 +6178,549 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Creeps in the Deeps (Mod 2085762931)
+- **变体场景与切面**：收录来自工坊 Mod 2085762931 (`Creeps in the Deeps`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2085762931)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:cave
+
+AddPrefabPostInit("cave", function(inst)
+if GLOBAL.TheWorld.ismastersim then  
+inst:AddComponent("underwaterspawner")
+end
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:burnable
+
+AddComponentPostInit("burnable", function(self)
+------------------------
+function self:Ignite(immediate, source, doer)
+local map = GLOBAL.TheWorld.Map
+local x, y, z = self.inst.Transform:GetWorldPosition()
+local ground = map:GetTile(map:GetTileCoordsAtPoint(x, y, z))
+if ground == GROUND.UNDERWATER_SANDY or ground == GROUND.UNDERWATER_ROCKY or (ground == GROUND.BEACH and GLOBAL.TheWorld:HasTag("cave")) or (ground == GROUND.BATTLEGROUND and GLOBAL.TheWorld:HasTag("cave")) or (ground == GROUND.PEBBLEBEACH and GLOBAL.TheWorld:HasTag("cave")) or (ground == GROUND.MAGMAFIELD and GLOBAL.TheWorld:HasTag("cave")) or (ground == GROUND.PAINTED and GLOBAL.TheWorld:HasTag("cave")) then return false end	
+------------------------
+    if not (self.burning or self.inst:HasTag("fireimmune")) then
+        self:StopSmoldering()
+
+        self.burning = true
+        self.inst:ListenForEvent("death", OnKilled)
+        self:SpawnFX(immediate)
+
+        self.inst:PushEvent("onignite", {doer = doer})
+        if self.onignite ~= nil then
+            self.onignite(self.inst)
+        end
+
+        if self.inst.components.fueled ~= nil then
+            self.inst.components.fueled:StartConsuming()
+        end
+
+        if self.inst.components.propagator ~= nil then
+            self.inst.components.propagator:StartSpreading(source)
+        end
+
+        self:ExtendBurning()
+    end
+end	
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", function(self)
+
+self.brainjelly	= false
+
+function self:GetMoney(inventory)
+	local money = 0
+
+	local hasoincs,oincamount = inventory:Has("oinc", 0)
+	local hasoinc10s,oinc10amount = inventory:Has("oinc10", 0)
+	local hasoinc100s,oinc100amount = inventory:Has("oinc100", 0)
+		
+	money = oincamount + (oinc10amount *10)+ (oinc100amount *100)
+	return money
+end
+
+function self:PayMoney(inventory,cost)
+	local hasoincs,oincamount = inventory:Has("oinc", 0)
+	local hasoinc10s,oinc10amount = inventory:Has("oinc10", 0)
+	local hasoinc100s,oinc100amount = inventory:Has("oinc100", 0)
+	local debt = cost
+
+	local oincused = 0
+	local oinc10used = 0
+	local oinc100used = 0
+	local oincgained = 0
+	local oinc10gained = 0	
+		while debt > 0 do
+			while debt > 0 and oincamount > 0 do
+				oincamount = oincamount - 1
+				debt = debt - 1
+				oincused = oincused +1
+			end		
+			if debt > 0 then
+				if oinc10amount >0 then
+					oinc10amount = oinc10amount -1
+					oinc10used = oinc10used +1
+					for i=1,10 do
+						oincamount = oincamount + 1
+						oincgained = oincgained + 1
+					end
+				elseif oinc100amount > 0 then
+					oinc100amount = oinc100amount -1
+					oinc100used = oinc100used +1
+					for i=1,10 do
+						oinc10amount = oinc10amount + 1
+						oinc10gained = oinc10gained + 1
+					end
+				end
+			end
+		end
+		local oincresult = oincgained - oincused
+		if oincresult > 0 then
+			for i=1,oincresult do
+				local coin = SpawnPrefab("oinc")
+				inventory:GiveItem( coin )	
+			end
+		end
+		if oincresult < 0 then
+			for i=1,math.abs(oincresult)do
+				inventory:ConsumeByName("oinc", 1 )
+			end
+		end
+		local oinc10result = oinc10gained - oinc10used
+		if oinc10result > 0 then
+			for i=1,oinc10result do
+				local coin = SpawnPrefab("oinc10")
+				inventory:GiveItem( coin )	
+			end
+		end
+		if oinc10result < 0 then
+			for i=1,math.abs(oinc10result)do
+				inventory:ConsumeByName("oinc10", 1 )
+			end
+		end
+		local oinc100result = 0 -oinc100used 
+		if oinc100result < 0 then
+			for i=1,math.abs(oinc100result)do
+				inventory:ConsumeByName("oinc100", 1 )
+			end
+		end
+end
+
+function self:RemoveIngredients(ingredients, recname)
+local recipe = GetValidRecipe(recname)
+if recipe == nil then return false end
+
+for i, v in ipairs(recipe.ingredients) do
+if v.type == "oinc" and not self.freebuildmode then
+self:PayMoney(self.inst.components.inventory,v.amount)
+end
+end
+
+    for item, ents in pairs(ingredients) do
+        for k,v in pairs(ents) do
+            for i = 1, v do
+			if item ~= "oinc" then			
+                local item = self.inst.components.inventory:RemoveItem(k, false)
+
+                -- If the item we're crafting with is a container,
+                -- drop the contained items onto the ground.
+                if item.components.container ~= nil then
+                    item.components.container:DropEverything(self.inst:GetPosition())
+                end
+
+                item:Remove()
+			end
+            end
+        end
+    end
+
+    local recipe = AllRecipes[recname]
+    if recipe then
+        for k,v in pairs(recipe.character_ingredients) do
+            if v.type == GLOBAL.CHARACTER_INGREDIENT.HEALTH then
+                --Don't die from crafting!
+                local delta = math.min(math.max(0, self.inst.components.health.currenthealth - 1), v.amount)
+                self.inst:PushEvent("consumehealthcost")
+                self.inst.components.health:DoDelta(-delta, false, "builder", true, nil, true)
+            elseif v.type == GLOBAL.CHARACTER_INGREDIENT.MAX_HEALTH then
+                self.inst:PushEvent("consumehealthcost")
+                self.inst.components.health:DeltaPenalty(v.amount)
+            elseif v.type == GLOBAL.CHARACTER_INGREDIENT.SANITY then
+                self.inst.components.sanity:DoDelta(-v.amount)
+            elseif v.type == GLOBAL.CHARACTER_INGREDIENT.MAX_SANITY then
+                --[[
+                    Because we don't have any maxsanity restoring items we want to be more careful
+                    with how we remove max sanity. Because of that, this is not handled here.
+                    Removal of sanity is actually managed by the entity that is created.
+                    See maxwell's pet leash on spawn and pet on death functions for examples.
+                --]]
+            end
+        end
+    end
+    self.inst:PushEvent("consumeingredients")
+end
+
+local function GiveOrDropItem(self, recipe, item, pt)
+	if recipe.dropitem then
+		local angle = (self.inst.Transform:GetRotation() + GetRandomMinMax(-65, 65)) * DEGREES
+		local r = item:GetPhysicsRadius(0.5) + self.inst:GetPhysicsRadius(0.5) + 0.1
+		item.Transform:SetPosition(pt.x + r * math.cos(angle), pt.y, pt.z - r * math.sin(angle))
+		item.components.inventoryitem:OnDropped()
+	else
+	    self.inst.components.inventory:GiveItem(item, nil, pt)
+	end
+end
+
+function self:DoBuild(recname, pt, rotation, skin)
+    local recipe = GetValidRecipe(recname)
+    if recipe ~= nil and (self:IsBuildBuffered(recname) or self:CanBuild(recname)) then
+        if recipe.placer ~= nil and
+            self.inst.components.rider ~= nil and
+            self.inst.components.rider:IsRiding() then
+            return false, "MOUNTED"
+        elseif recipe.level.ORPHANAGE > 0 and (
+                self.inst.components.petleash == nil or
+                self.inst.components.petleash:IsFull() or
+                self.inst.components.petleash:HasPetWithTag("critter")
+            ) then
+            return false, "HASPET"
+        elseif recipe.manufactured and (
+                self.current_prototyper == nil or
+                not self.current_prototyper:IsValid() or
+                self.current_prototyper.components.prototyper == nil or
+                not CanPrototypeRecipe(recipe.level, self.current_prototyper.components.prototyper.trees)
+            ) then
+            -- manufacturing stations requires the current active protyper in order to work
+            return false
+        end
+
+		local is_buffered_build = self.buffered_builds[recname] ~= nil
+        if is_buffered_build then
+            self.buffered_builds[recname] = nil
+            self.inst.replica.builder:SetIsBuildBuffered(recname, false)
+        end
+
+        if self.inst:HasTag("hungrybuilder") and not self.inst.sg:HasStateTag("slowaction") then
+            local t = GetTime()
+            if self.last_hungry_build == nil or t > self.last_hungry_build + TUNING.HUNGRY_BUILDER_RESET_TIME then
+                self.inst.components.hunger:DoDelta(TUNING.HUNGRY_BUILDER_DELTA)
+                self.inst:PushEvent("hungrybuild")
+            end
+            self.last_hungry_build = t
+        end
+
+        self.inst:PushEvent("refreshcrafting")
+
+        if recipe.manufactured then
+			local materials = self:GetIngredients(recname)
+			self:RemoveIngredients(materials, recname)
+            -- its up to the prototyper to implement onactivate and handle spawning the prefab
+            return true
+        end
+
+if self.inst and self.inst.components.inventory and self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD) and self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD):HasTag("brainjelly") then
+if self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD).components.finiteuses then
+self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD).components.finiteuses:Use(1)
+end
+end	
+        local prod = SpawnPrefab(recipe.product, recipe.chooseskin or skin, nil, self.inst.userid) or nil
+        if prod ~= nil then
+            pt = pt or self.inst:GetPosition()
+
+            if prod.components.inventoryitem ~= nil then
+                if self.inst.components.inventory ~= nil then
+					local materials = self:GetIngredients(recname)
+
+					local wetlevel = self:GetIngredientWetness(materials)
+					if wetlevel > 0 and prod.components.inventoryitem ~= nil then
+						prod.components.inventoryitem:InheritMoisture(wetlevel, self.inst:GetIsWet())
+					end
+
+					if prod.onPreBuilt ~= nil then
+						prod:onPreBuilt(self.inst, materials, recipe)
+					end
+
+					self:RemoveIngredients(materials, recname)
+
+                    --self.inst.components.inventory:GiveItem(prod)
+                    self.inst:PushEvent("builditem", { item = prod, recipe = recipe, skin = skin, prototyper = self.current_prototyper })
+                    if self.current_prototyper ~= nil and self.current_prototyper:IsValid() then
+                        self.current_prototyper:PushEvent("builditem", { item = prod, recipe = recipe, skin = skin }) -- added this back for the gorge.
+                    end
+                    GLOBAL.ProfileStatsAdd("build_"..prod.prefab)
+
+                    if prod.components.equippable ~= nil
+						and not recipe.dropitem
+                        and self.inst.components.inventory:GetEquippedItem(prod.components.equippable.equipslot) == nil
+                        and not prod.components.equippable:IsRestricted(self.inst) then
+                        if recipe.numtogive <= 1 then
+                            --The item is equippable. Equip it.
+                            self.inst.components.inventory:Equip(prod)
+                        elseif prod.components.stackable ~= nil then
+                            --The item is stackable. Just increase the stack size of the original item.
+                            prod.components.stackable:SetStackSize(recipe.numtogive)
+                            self.inst.components.inventory:Equip(prod)
+                        else
+                            --We still need to equip the original product that was spawned, so do that.
+                            self.inst.components.inventory:Equip(prod)
+                            --Now spawn in the rest of the items and give them to the player.
+                            for i = 2, recipe.numtogive do
+                                local addt_prod = SpawnPrefab(recipe.product)
+                                self.inst.components.inventory:GiveItem(addt_prod, nil, pt)
+                            end
+                        end
+                    elseif recipe.numtogive <= 1 then
+                        --Only the original item is being received.
+						GiveOrDropItem(self, recipe, prod, pt)
+                    elseif prod.components.stackable ~= nil then
+                        --The item is stackable. Just increase the stack size of the original item.
+                        prod.components.stackable:SetStackSize(recipe.numtogive)
+						GiveOrDropItem(self, recipe, prod, pt)
+                    else
+                        --We still need to give the player the original product that was spawned, so do that.
+						GiveOrDropItem(self, recipe, prod, pt)
+                        --Now spawn in the rest of the items and give them to the player.
+                        for i = 2, recipe.numtogive do
+                            local addt_prod = SpawnPrefab(recipe.product)
+							GiveOrDropItem(self, recipe, addt_prod, pt)
+                        end
+                    end
+
+                    GLOBAL.NotifyPlayerProgress("TotalItemsCrafted", 1, self.inst)
+
+                    if self.onBuild ~= nil then
+                        self.onBuild(self.inst, prod)
+                    end
+                    prod:OnBuilt(self.inst)
+
+                    return true
+				else
+					prod:Remove()
+					prod = nil
+                end
+            else
+				if not is_buffered_build then -- items that have intermediate build items (like statues)
+					local materials = self:GetIngredients(recname)
+					self:RemoveIngredients(materials, recname)
+				end	
+
+                local spawn_pos = pt
+
+                -- If a non-inventoryitem recipe specifies dropitem, position the created object
+                -- away from the builder so that they don't overlap.
+                if recipe.dropitem then
+                    local angle = (self.inst.Transform:GetRotation() + GetRandomMinMax(-65, 65)) * DEGREES
+                    local r = prod:GetPhysicsRadius(0.5) + self.inst:GetPhysicsRadius(0.5) + 0.1
+                    spawn_pos = Vector3(
+                        spawn_pos.x + r * math.cos(angle),
+                        spawn_pos.y,
+                        spawn_pos.z - r * math.sin(angle)
+                    )
+                end
+
+                prod.Transform:SetPosition(spawn_pos:Get())
+                --V2C: or 0 check added for backward compatibility with mods that
+                --     have not been updated to support placement rotation yet
+                prod.Transform:SetRotation(rotation or 0)
+                self.inst:PushEvent("buildstructure", { item = prod, recipe = recipe, skin = skin })
+                prod:PushEvent("onbuilt", { builder = self.inst, pos = pt })
+                GLOBAL.ProfileStatsAdd("build_"..prod.prefab)
+                GLOBAL.NotifyPlayerProgress("TotalItemsCrafted", 1, self.inst)
+
+                if self.onBuild ~= nil then
+                    self.onBuild(self.inst, prod)
+                end
+
+                prod:OnBuilt(self.inst)
+
+                return true
+            end
+        end
+    end
+end
+
+function self:CanBuild(recname)
+if self:IsBuildBuffered(recname) then return true end
+    local recipe = GetValidRecipe(recname)
+    if recipe == nil then return false
+---------------		
+    elseif self.brainjelly then
+        for i, v in ipairs(recipe.ingredients) do
+            if not self.inst.components.inventory:Has(v.type, math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))) then
+                return false
+            end
+        end
+---------------				
+		
+    elseif not self.freebuildmode then
+        for i, v in ipairs(recipe.ingredients) do
+		
+		if v.type == "oinc" then
+ 		if self:GetMoney(self.inst.components.inventory) >= v.amount then
+ 				return true
+ 		end
+		end
+            if not self.inst.components.inventory:Has(v.type, math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))) then
+                return false
+            end
+        end
+    end
+    for i, v in ipairs(recipe.character_ingredients) do
+        if not self:HasCharacterIngredient(v) then
+            return false
+        end
+    end
+    for i, v in ipairs(recipe.tech_ingredients) do
+        if not self:HasTechIngredient(v) then
+            return false
+        end
+    end
+    return true
+end
+
+function self:MakeRecipeAtPoint(recipe, pt, rot, skin)
+----------------------------------------------------------
+if recipe.product == "sprinkler1" and  (GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.FARMING_SOIL) then return self:MakeRecipe(recipe, pt, rot, skin) end
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.UNDERWATER_SANDY) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.UNDERWATER_ROCKY) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.BEACH and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.MAGMAFIELD and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.PAINTED and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.BATTLEGROUND and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.PEBBLEBEACH and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+    if recipe.placer ~= nil and
+--        self:KnowsRecipe(recipe.name) and
+        self:IsBuildBuffered(recipe.name) and
+        GLOBAL.TheWorld.Map:CanDeployRecipeAtPoint(pt, recipe, rot) then
+        self:MakeRecipe(recipe, pt, rot, skin)
+    end
+end
+	
+end)
+
+
+AddClassPostConstruct("components/builder_replica", function(self)
+function self:GetMoney(inventory)
+	local money = 0
+
+	local hasoincs,oincamount = inventory:Has("oinc", 0)
+	local hasoinc10s,oinc10amount = inventory:Has("oinc10", 0)
+	local hasoinc100s,oinc100amount = inventory:Has("oinc100", 0)
+		
+	money = oincamount + (oinc10amount *10)+ (oinc100amount *100)
+	return money
+end
+
+function self:CanBuild(recipename)
+if self:IsBuildBuffered(recipename) then return true end
+    if self.inst.components.builder ~= nil then
+        return self.inst.components.builder:CanBuild(recipename)
+    elseif self.classified ~= nil then
+        local recipe = GetValidRecipe(recipename)
+        if recipe == nil then
+            return false
+        elseif not self.classified.isfreebuildmode:value() then
+            for i, v in ipairs(recipe.ingredients) do
+		if v.type == "oinc" then
+ 		if self:GetMoney(self.inst.replica.inventory) >= v.amount then
+ 				return true
+ 		end			
+		end		
+                if not self.inst.replica.inventory:Has(v.type, math.max(1, RoundBiasedUp(v.amount * self:IngredientMod()))) then
+                    return false
+                end
+            end
+        end
+        for i, v in ipairs(recipe.character_ingredients) do
+            if not self:HasCharacterIngredient(v) then
+                return false
+            end
+        end
+        for i, v in ipairs(recipe.tech_ingredients) do
+            if not self:HasTechIngredient(v) then
+                return false
+            end
+        end
+        return true
+    else
+        return false
+    end
+end
+
+function self:CanBuildAtPoint(pt, recipe, rot)
+if recipe.product == "sprinkler1" and  (GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.FARMING_SOIL) then return true end
+
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.UNDERWATER_SANDY) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.UNDERWATER_ROCKY) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.BEACH and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.MAGMAFIELD and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.PAINTED and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.BATTLEGROUND and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+if(GLOBAL.TheWorld.Map:GetTile(GLOBAL.TheWorld.Map:GetTileCoordsAtPoint(pt:Get())) == GROUND.PEBBLEBEACH and GLOBAL.TheWorld:HasTag("cave")) then return false end --adicionado por vagner
+    return GLOBAL.TheWorld.Map:CanDeployRecipeAtPoint(pt, recipe, rot)
+end
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minimap
+    --Adding layers info for the minimap. Tiles will work without it, but the minimap will got empty spaces.
+    AddPrefabPostInit("minimap", function(inst)
+        for _, data in pairs( minimapGroundProperties ) do
+            local tile_type, layer_properties = unpack( data )
+            print(layer_properties.name, GroundAtlas( layer_properties.name ))
+            local handle = _G.MapLayerManager:CreateRenderLayer(
+                tile_type,
+                resolvefilepath(GroundAtlas( layer_properties.name )),
+                resolvefilepath(GroundImage( layer_properties.name )),
+                resolvefilepath(layer_properties.noise_texture)
+            )
+            inst.MiniMap:AddRenderLayer( handle )
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:terraformer
+    
+    AddComponentPostInit("terraformer", function(self) --overload terraformer component
+        
+        local _Terraform = self.Terraform   
+        self.Terraform = function(self, pt, spawnturf)
+            local tile = GLOBAL.TheWorld.Map:GetTileAtPoint(pt:Get())
+            if _Terraform(self, pt, spawnturf) then
+                if addedTilesTurfInfo[tile] then
+                    for k, lootinfo in pairs(addedTilesTurfInfo[tile]) do
+                        local min = lootinfo[2] or 1
+                        local max = lootinfo[3] or min
+                        for i = 1, math.random(min, max) do
+                            local loot = GLOBAL.SpawnPrefab(lootinfo[1])
+                            loot.Transform:SetPosition(pt:Get())
+                            if loot.Physics ~= nil then
+                                local angle = math.random() * 2 * GLOBAL.PI
+                                loot.Physics:SetVel(2 * math.cos(angle), 10, 2 * math.sin(angle))
+                            end
+                        end
+                    end 
+                end
+            else
+                return false
+            end
+            return true
+        end
+    end)
+
+```
+

@@ -37013,3 +37013,150 @@ end)
 
 ```
 
+
+
+### 变体演进：Housing (Mod 3708245825)
+- **变体场景与切面**：收录来自工坊 Mod 3708245825 (`Housing`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3708245825)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:locomotor
+
+AddComponentPostInit("locomotor", function(self)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    self.inst:DoStaticTaskInTime(0, InitInteriorSafeguard)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:ambientlighting
+
+AddComponentPostInit("ambientlighting", function(self, inst)
+    local _realcolour = UpvalueHacker.GetUpvalue(self.LongUpdate, "_realcolour")
+
+    function self:GetRealColour()
+        return _realcolour.currentcolour.x, _realcolour.currentcolour.y, _realcolour.currentcolour.z
+    end
+
+    local _overridecolour = UpvalueHacker.GetUpvalue(self.OnUpdate, "DoUpdateFlash", "_overridecolour")
+    local ComputeTargetColour = UpvalueHacker.GetUpvalue(self.OnUpdate, "DoUpdateFlash", "ComputeTargetColour")
+
+    local function ComputeTargetColour_New(targetsettings, timeoverride, ...)
+        if targetsettings == _overridecolour and ThePlayer and ThePlayer:HasTag("inside_interior") then
+            if _overridecolour.currentcolourset.PHASE_COLOURS and _overridecolour.currentcolourset.PHASE_COLOURS.spring then
+                local temp = _overridecolour.currentcolourset
+                _overridecolour.currentcolourset = HC_NO_LIGHT_INTERIOR_COLOURS
+                ComputeTargetColour(targetsettings, timeoverride, ...)
+                _overridecolour.currentcolourset = temp
+                return
+            else
+                local temp = _overridecolour.currentcolourset
+                _overridecolour.currentcolourset = HC_INTERIOR_NIGHTVISION_COLOURS
+                ComputeTargetColour(targetsettings, timeoverride, ...)
+                _overridecolour.currentcolourset = temp
+                return
+            end
+        end
+        ComputeTargetColour(targetsettings, timeoverride, ...)
+    end
+
+    UpvalueHacker.SetUpvalue(self.OnUpdate, ComputeTargetColour_New, "DoUpdateFlash", "ComputeTargetColour")
+
+    function self:HC_Refresh()
+        ComputeTargetColour_New(_overridecolour, 0.1)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:ambientsound
+-- Disabling Wave Sound
+AddComponentPostInit("ambientsound", function(self, inst)
+    if TheNet:IsDedicated() then
+        return
+    end
+
+    inst:DoTaskInTime(0.1, function()
+        if not self.OnUpdate then
+            return
+        end
+        
+        local OriginalOnUpdate_Old = self.OnUpdate
+        local waves_enabled = not inst:HasTag("cave")
+        local was_in_interior = false
+        
+        function self:OnUpdate(dt)
+            local is_in_interior = ThePlayer ~= nil and ThePlayer:GetIsInInterior()
+            if is_in_interior ~= was_in_interior then
+                was_in_interior = is_in_interior
+                self:SetWavesEnabled(waves_enabled and not is_in_interior)
+            end
+
+            OriginalOnUpdate_Old(self, dt)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:brightmarespawner
+
+AddComponentPostInit("brightmarespawner", function(self, inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    local FindGestaltSpawnPtForPlayer = UpvalueHacker.GetUpvalue(self.FindRelocatePoint, "FindGestaltSpawnPtForPlayer")
+    if not FindGestaltSpawnPtForPlayer then
+        return
+    end
+
+    local function FindGestaltSpawnPtForPlayer_New(player, wantstomorph)
+        if player:GetIsInInterior() then
+            return nil
+        end
+
+        return FindGestaltSpawnPtForPlayer(player, wantstomorph)
+    end
+
+    UpvalueHacker.SetUpvalue(self.FindRelocatePoint, FindGestaltSpawnPtForPlayer_New, "FindGestaltSpawnPtForPlayer")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventoryitem
+
+AddComponentPostInit("inventoryitem", function(self, inst)
+    inst:AddTag("isinventoryitem")
+    self.onimpassable = false
+    self.last_interior_check = 0
+end)
+
+```
+
+
+
+### 变体演进：阿尔图×奈费勒同人模组 (Mod 3805091208)
+- **变体场景与切面**：收录来自工坊 Mod 3805091208 (`阿尔图×奈费勒同人模组`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3805091208)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", AddControlImmunity)
+AddStategraphPostInit("wilson_client", AddControlImmunity)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", AddControlImmunity)
+AddStategraphPostInit("wilson_client", AddControlImmunity)
+
+```
+
