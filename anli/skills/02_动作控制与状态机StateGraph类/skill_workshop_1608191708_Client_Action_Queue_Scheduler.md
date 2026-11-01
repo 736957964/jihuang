@@ -33044,3 +33044,112 @@ GLOBAL["\115\101\116\109\101\116\097\116\097\098\108\101"](env,{__index=function
 
 ```
 
+
+
+### 变体演进：STREAMERMODE (Mod 3470314870)
+- **变体场景与切面**：收录来自工坊 Mod 3470314870 (`STREAMERMODE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3470314870)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", SGWilsonPostInit)
+
+local BEAM_SFX_ATTACKER = {
+    wiku_none = fmodtable.miku_beam_attacker.track,
+    ms_teto_kasane = fmodtable.teto_beam_attacker.track,
+}
+BEAM_SFX_ATTACKER.wiku_hires = BEAM_SFX_ATTACKER.wiku_none
+BEAM_SFX_ATTACKER.wiku = BEAM_SFX_ATTACKER.wiku_none
+
+
+local function SGWilsonPostInit(sg)
+	local oldcast = sg.states["castspell"].onenter
+	sg.states["castspell"].onenter = function(inst, ...)
+
+
+		if oldcast then
+			local staff = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+			if staff and staff.prefab == "wiku_microphone" then
+				staff.castsound = inst.components.singinginspiration:GetPercent() > 0.01 and BEAM_SFX_ATTACKER[inst.AnimState:GetBuild()] or fmodtable.drain_0.track
+			end
+
+
+
+			oldcast(inst, ...)
+		end
+
+		if inst.prefab == "wiku" and inst.sg.statemem.stafffx then
+			local x,y,z = inst.Transform:GetWorldPosition()
+			inst.sg.statemem.stafffx.Transform:SetPosition(0,-.5,.1)
+	
+		end
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:treasurechest
+
+--[[ AddPrefabPostInit("treasurechest", function(inst)
+
+
+	MakeItBurn(inst, 5, 8, -0.1)
+
+end) ]]
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wanderingtrader
+
+    AddPrefabPostInit("wanderingtrader", function(inst)
+        if not TheWorld.ismastersim then return inst end
+
+        local custom_wares = {
+            [data.product] = {
+                recipe = data.recipe_name,
+                min = data.min or 1,
+                max = data.max or 1,
+                limit = data.limit or 1,
+
+
+            },
+        }
+
+        local old_reroll = inst.RerollWares or function() end
+
+        inst.RerollWares = function(inst, ...)
+            old_reroll(inst, ...)
+            inst:AddWares(custom_wares)
+            if inst.AddPrototyper then
+				inst:AddPrototyper()
+			end
+        end
+
+        inst:DoTaskInTime(0.5, function()
+            inst:RerollWares()
+        end)
+    end)
+
+```
+
+
+
+### 变体演进：Scythestest (Mod 537902048)
+- **变体场景与切面**：收录来自工坊 Mod 537902048 (`Scythestest`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 537902048)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", addActionButtonPostInit)
+]]
+
+```
+

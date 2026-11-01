@@ -6186,8 +6186,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 09:27:33",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3161117403",
+      "name": "群鸟绘卷 · 春󰀜",
+      "author": "呼吸",
+      "version": "12.1",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-01 09:31:36",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3470314870",
+      "name": "STREAMERMODE",
+      "author": "mentos",
+      "version": "2.0.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:31:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "537902048",
+      "name": "Scythestest",
+      "author": "Captain_M",
+      "version": "2.42",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:31:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 09:27:33"
+  "lastUpdated": "2026-11-01 09:31:36"
 }

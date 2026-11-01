@@ -695,3 +695,140 @@ AddPrefabPostInit("chester", onhauntfn)
 
 ```
 
+
+
+### 变体演进：群鸟绘卷 · 春󰀜 (Mod 3161117403)
+- **变体场景与切面**：收录来自工坊 Mod 3161117403 (`群鸟绘卷 · 春󰀜`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3161117403)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:animal_track
+
+AddPrefabPostInit("animal_track", function(inst)
+    local next_thing
+    inst:DoPeriodicTask(0.5, function()
+        if not c_data.animal_track or not e_util:IsAnim("idle", inst) or not e_util:IsValid(inst) then
+            return
+        end
+        local x, y, z = inst.entity:LocalToWorldSpace(0, 0, -40)
+        next_thing = next_thing or e_util:FindEnt({
+            x = x,
+            y = y,
+            z = z
+        }, nil, 10, nil, nil, nil, nil, function(e)
+            return e:HasOneOfTags({"dirtpile", "_health"})
+        end)
+        if e_util:IsValid(next_thing) then
+            SpawnPrefab("harrow"):SetColor(save_data.color_track):GoTo(inst, next_thing)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wagstaff_npc
+end
+AddPrefabPostInit("wagstaff_npc", function(inst)
+    inst:DoTaskInTime(0.25, function(inst)
+        needprefab = nil
+        e_util:Hook_Say(inst, function(str_say)
+            for i, prefab in ipairs(prefabs) do
+                if str_say == STRINGS["WAGSTAFF_NPC_WANT_TOOL_" .. i] then
+                    needprefab = prefab
+                    break
+                end
+            end
+            for i = 1, 2 do
+                if str_say == STRINGS["WAGSTAFF_NPC_EXPERIMENT_DONE_" .. i] or str_say ==
+                    STRINGS["WAGSTAFF_NPC_EXPERIMENT_FAIL_" .. i] then
+                    done = true
+                    break
+                end
+            end
+            if needprefab then
+                for i = 1, 2 do
+                    if str_say == STRINGS.WAGSTAFF_NPC_YES_THIS_TOOL[i] then
+                        needprefab = nil
+                        break
+                    end
+                end
+            end
+        end)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:smoke_plant
+local data_warn = {"关闭", "全部", "仅自燃"}
+AddPrefabPostInit("smoke_plant", function(inst)
+    if save_data.sw == "关闭" then
+        return
+    end
+    inst:DoTaskInTime(0.1, function(inst)
+        local ent = e_util:FindEnt(inst, nil, 0.0001, nil, {'FX', 'DECOR', 'INLIMBO', 'NOCLICK', 'player'}, nil, nil,
+            function(ent)
+                return ent:HasTag("smolder")
+            end)
+        if not ent then
+            return
+        end
+        if e_util:FindEnt(ent, "firesuppressor", TUNING.FIRE_DETECTOR_RANGE or 15, nil,
+            {'FX', 'DECOR', 'INLIMBO', 'NOCLICK', 'player', 'fueldepleted'}, nil, {"idle_off"}) then
+            return
+        end
+        local name = e_util:GetPrefabName(ent.prefab)
+        if not (name and TheWorld and TheWorld.state) then
+            return
+        end
+        local threshold = TUNING.WILDFIRE_THRESHOLD or 80
+        local content = " 被引燃！"
+        local iswild
+        if TheWorld.state.issummer and TheWorld.state.isday and type(TheWorld.state.temperature) == "number" and
+            TheWorld.state.temperature >= threshold then
+            content = " 发生自燃！"
+            iswild = true
+        end
+        if save_data.sw == "全部" or (save_data.sw == "仅自燃" and iswild) then
+            u_util:Say(string_warning, name .. content, "self", "红色")
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:oceanfish_medium_
+for i = 1, 9 do
+    AddPrefabPostInit("oceanfish_medium_" .. i, AddFishName)
+    AddPrefabPostInit("oceanfish_small_" .. i, AddFishName)
+end
+local data_rgb = require("data/valuetable").RGB_datatable
+local screen_data = {{
+    id = "bilibili",
+    prefab = "bilibili",
+    type = "imgstr",
+    label = "教程演示",
+    hover = "点击查看视频教程或功能演示",
+    fn = function()
+        VisitURL("https://www.bilibili.com/video/BV16FUZBEE32/", true)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:oceanfish_small_
+    AddPrefabPostInit("oceanfish_medium_" .. i, AddFishName)
+    AddPrefabPostInit("oceanfish_small_" .. i, AddFishName)
+end
+local data_rgb = require("data/valuetable").RGB_datatable
+local screen_data = {{
+    id = "bilibili",
+    prefab = "bilibili",
+    type = "imgstr",
+    label = "教程演示",
+    hover = "点击查看视频教程或功能演示",
+    fn = function()
+        VisitURL("https://www.bilibili.com/video/BV16FUZBEE32/", true)
+    end
+
+```
+
