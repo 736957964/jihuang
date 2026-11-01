@@ -31570,3 +31570,156 @@ end)
 
 ```
 
+
+
+### 变体演进：Rin Satsuki (Mod 1310278195)
+- **变体场景与切面**：收录来自工坊 Mod 1310278195 (`Rin Satsuki`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1310278195)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+AddStategraphState("SGwilson", play_satsukierhu_loop_state)
+AddStategraphPostInit("wilson", SGWilsonPostInit2) 
+
+local function SGWilsonPostInit3(sg)
+    sg.states["play_satsukierhu_end_state"] = play_satsukierhu_end_state
+end
+
+```
+
+
+
+### 变体演进：晓美焰 时停修复 & DLC扩展补丁 v2.5 (Mod 3680323787)
+- **变体场景与切面**：收录来自工坊 Mod 3680323787 (`晓美焰 时停修复 & DLC扩展补丁 v2.5`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3680323787)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- 2. 拦截客户端动作生成器
+AddComponentPostInit("playercontroller", function(self)
+    local old_DoAction = self.DoAction
+    self.DoAction = function(self, buffaction, ...)
+        if buffaction and buffaction.action == GLOBAL.ACTIONS.ATTACK then
+            local weapon = GetEquippedWeapon(self.inst)
+            if weapon and weapon:HasTag("homura_bow") then
+                return -- 强制吞噬动作
+            end
+        end
+        if old_DoAction then
+            return old_DoAction(self, buffaction, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:homura_clientkey
+-- 3. 注入快捷键按键伪装逻辑
+AddComponentPostInit("homura_clientkey", function(self)
+    self.custom_hotkey_down = false
+
+    local old_IsPressing = self.IsPressing
+    function self:IsPressing(key_type)
+        if key_type == "raction" then
+            local weapon = GetEquippedWeapon(self.inst)
+            if weapon and weapon:HasTag("homura_bow") then
+                return self.raction or self.custom_hotkey_down
+            end
+        end
+        
+        if old_IsPressing then 
+            local success, res = GLOBAL.pcall(old_IsPressing, self, key_type)
+            if success then return res end
+            if key_type == "attack" then return self.attack end
+            if key_type == "raction" then return self.raction end
+            return false
+        end
+        return false
+    end
+
+    self.inst:DoTaskInTime(0, function()
+        if self.inst == GLOBAL.ThePlayer then
+            GLOBAL.TheInput:AddKeyHandler(function(key, down)
+                if key == HOTKEY then
+                    local weapon = GetEquippedWeapon(self.inst)
+                    if weapon and weapon:HasTag("homura_bow") then
+                        if self.custom_hotkey_down ~= down then
+                            self.custom_hotkey_down = down
+                            if self.inst.components.playercontroller then
+                                self.inst.components.playercontroller:OnControl(GLOBAL.CONTROL_SECONDARY, down)
+                            end
+                            if self.HandleRAction then
+                                self:HandleRAction(down)
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:homura_skill
+-- A. 前摇设置：默认 0.5 秒，点技能后 0.15 秒 (缩短 70%)
+AddComponentPostInit("homura_skill", function(self)
+    local old_GetPreTime = self.GetPreTime
+    self.GetPreTime = function(self)
+        if self.inst.components.skilltreeupdater and self.inst.components.skilltreeupdater:IsActivated("homura_timemagic_pre") then
+            return 0.15
+        else
+            return 0.5
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+    local old_calc_damage = self.CalcDamage
+    self.CalcDamage = function(self, target, weapon, multiplier, ...)
+        local damage, spdam = old_calc_damage(self, target, weapon, multiplier, ...)
+        local attacker = self.inst
+
+        if attacker and attacker:IsValid() and IsInSkillRange(attacker) then
+            if not (weapon and weapon:HasTag("homuraTag_ranged")) then
+                damage = damage * 1.1
+            end
+        end
+
+        return damage, spdam
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:homura_projectile
+
+AddComponentPostInit("homura_projectile", function(self)
+    local old_Attack = self.Attack
+    if old_Attack then
+        self.Attack = function(self, target, ...)
+            local attacker = self.player or (self.owner and self.owner.components.inventoryitem and self.owner.components.inventoryitem:GetGrandOwner())
+            if attacker and attacker:IsValid() and IsInSkillRange(attacker) then
+                local raw_dmg = self.damage1
+                if raw_dmg then
+                    self.damage1 = raw_dmg * 1.2
+                    old_Attack(self, target, ...)
+                    self.damage1 = raw_dmg
+                    return
+                end
+            end
+            return old_Attack(self, target, ...)
+        end
+    end
+end)
+
+```
+

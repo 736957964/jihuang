@@ -1707,3 +1707,1697 @@ end
 
 ```
 
+
+
+### 变体演进：Geometric Placement 几何放置 (Mod 3678114053)
+- **变体场景与切面**：收录来自工坊 Mod 3678114053 (`Geometric Placement 几何放置`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3678114053)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function()
+	-- This needs to be done in this post-init because the recipe loading code is not idempotent
+	if REDUCECHESTSPACING then
+	-- other geometry mods ignore the special case for chests that increases the spacing for them
+	-- in Builder:CanBuildAtPoint; however, reducing the built-in spacing by just a little bit
+	-- gives similar behavior in terms of which lattice points you can build the chest
+		local treasurechestrecipe = DST
+									and GLOBAL.GetValidRecipe('treasurechest')
+									or  GLOBAL.GetRecipe('treasurechest')
+		treasurechestrecipe.min_spacing = treasurechestrecipe.min_spacing - 0.1
+	end
+	
+	local Prefabs = GLOBAL.Prefabs
+	-- Veggie seeds for Wormwood, their test is just checking for natural turf
+	for veggie,data in pairs(GLOBAL.VEGGIES) do
+		local seed_placer = veggie.."_seeds_placer"
+		if Prefabs[seed_placer] then
+			ALLOW_PLACE_TEST[seed_placer] = true
+			PLACER_SPACING_OVERRIDES[seed_placer] = TILL_SPACING
+		end
+	end
+	-- Pig shops in Hamlet, their test just hides some AnimState symbols; could be put in placer-only logic when it exists
+	for prefab, _ in pairs(Prefabs) do
+		if type(prefab) == "string" and prefab:match("^pig_shop") and prefab:match("_placer$") then
+			ALLOW_PLACE_TEST[prefab] = true
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:gridplacer
+end
+AddPrefabPostInit("gridplacer", ReplaceGridplacerAnim)
+if DST then
+	AddPrefabPostInit("tile_outline", ReplaceGridplacerAnim)
+	AddPrefabPostInit("gridplacer_farmablesoil", ReplaceGridplacerAnim)
+end
+
+-- But these things do need to get built every time
+local function PlacerPostInit(self)
+	--there's gotta be a better place to put this; also may not be necessary, but it's safe and cheap
+	local TheWorld = DST and GLOBAL.TheWorld or GLOBAL.GetWorld()
+	TheCamera = GLOBAL.TheCamera
+	ORIGIN_OFFSETS.tile = Vector3(TheWorld.Map:GetTileCenterPoint(0, 0, 0))*-1
+	if TheWorld.Flooding then
+		ORIGIN_OFFSETS.flood = Vector3(TheWorld.Flooding:GetTileCenterPoint(0, 0, 0))*-1
+	end
+	
+	if not CONTROLLEROFFSET then
+		--Then the ground action hints can get in the way; increase the offset
+		-- note that these action hints only get used by controllers
+		GetPlayer().HUD.controls.groundactionhint:SetOffset(Vector3(0, 200, 0))
+	end
+
+	--used in DST to track attachments to farm placers, telebase, etc;
+	-- set to empty list if not present for simpler logic
+	self.linked = self.linked or {}
+	--keeps track of the build grid objects, indexed by lattice coordinates
+	self.build_grid = nil
+	--keeps track of the build grid positions, indexed by lattice coordinates
+	self.build_grid_positions = nil 
+	--keep a queue of locations to check the collision for
+	--Why did I do this as storing lattice coordinates instead of storing the buildgridplacer objects?
+	-- because this way I don't have to worry about buildgridplacer objects going in multiple times
+	-- if it pops one out and it's not in the grid, no big deal, that's way faster than testing the point
+	self.refresh_queue = nil
+	self.lastpt = nil
+	self.placertype = "buildgridplacer"
+	self.waiting_for_geometry = true -- to prevent the wrong geometry being used on the first update
+	self.cursor_visible = true
+	self.cursor_quantity_visible = true
+			
+	self.inst:ListenForEvent("onremove", function()
+		self:RemoveBuildGrid()
+		self:SetCursorVisibility(true)
+		if self.tileinst then self.tileinst:Remove() end
+		if self.gridinst then self.gridinst:Remove() end
+		if self.controller_child then self.controller_child:Remove() end
+	end)
+	
+	-- Delay to capture the prefab name
+	self.inst:DoTaskInTime(0, function()
+		local prefab = self.inst.prefab
+		if prefab == "sprinkler_placer" then
+			self.placeTestFn = sprinklerPlaceTestFn
+		end
+		self.showFirstLinked = PLACERS_SHOWFIRSTLINKED[prefab]
+		if GRIDPLACER_PREFABS[prefab] then
+			ReplaceGridplacerAnim(self.inst)
+			local _oncanbuild = self.oncanbuild
+			self.oncanbuild = function(inst, ...)
+				if CTRL ~= TheInput:IsKeyDown(KEY_CTRL) then
+					UndoReplaceGridplacerAnim(self.inst)
+					return _oncanbuild(inst, ...)
+				else
+					ReplaceGridplacerAnim(self.inst)
+				end
+			end
+			local _oncannotbuild = self.oncanbuild
+			self.oncannotbuild = function(inst, ...)
+				if CTRL ~= TheInput:IsKeyDown(KEY_CTRL) then
+					UndoReplaceGridplacerAnim(self.inst)
+					return _oncannotbuild(inst, ...)
+				else
+					ReplaceGridplacerAnim(self.inst)
+				end
+			end
+		end
+	end)
+	
+end
+AddComponentPostInit("placer", PlacerPostInit)
+
+--[[ Builder Component ]]--
+-- For DST
+local function BuilderReplicaPostConstruct(self)
+	local OldCanBuildAtPoint = self.CanBuildAtPoint
+	local function NewCanBuildAtPoint(self, pt, recipe, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldCanBuildAtPoint(self, pt, recipe, ...)
+	end
+	self.CanBuildAtPoint = NewCanBuildAtPoint
+	local OldMakeRecipeAtPoint = self.MakeRecipeAtPoint
+	local function NewMakeRecipeAtPoint(self, recipe, pt, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldMakeRecipeAtPoint(self, recipe, pt, ...)
+	end
+	self.MakeRecipeAtPoint = NewMakeRecipeAtPoint
+end
+
+-- For single-player; doesn't add the rotation stuff
+local function BuilderPostInit(self)
+	local OldCanBuildAtPoint = self.CanBuildAtPoint
+	local function NewCanBuildAtPoint(self, pt, recipe, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldCanBuildAtPoint(self, pt, recipe, ...)
+	end
+	self.CanBuildAtPoint = NewCanBuildAtPoint
+	local OldMakeRecipe = self.MakeRecipe
+	local function NewMakeRecipe(self, recipe, pt, ...)
+		if pt and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldMakeRecipe(self, recipe, pt, ...)
+	end
+	self.MakeRecipe = NewMakeRecipe
+end
+
+if DST then
+	AddClassPostConstruct("components/builder_replica", BuilderReplicaPostConstruct)
+else
+	AddComponentPostInit("builder", BuilderPostInit)
+end
+
+--[[ Deployable Component ]]--
+-- Tore this from RoG's deployable component; the mouseover messes up the grid for
+--  things that use default_test as their main CanDeploy reporter (e.g. tooth traps)
+local function default_test(inst, pt)
+	local tiletype = GLOBAL.GetGroundTypeAtPosition(pt)
+	local ground_OK = tiletype ~= GLOBAL.GROUND.IMPASSABLE
+	if ground_OK then
+		-- local MouseCharacter = TheInput:GetWorldEntityUnderMouse()
+		-- if MouseCharacter and not MouseCharacter:HasTag("player") then
+			-- return false
+		-- end
+	    local ents = GLOBAL.TheSim:FindEntities(pt.x,pt.y,pt.z, 4, nil, {'NOBLOCK', 'player', 'FX'}) -- or we could include a flag to the search?
+		local min_spacing = inst.components.deployable.min_spacing or 2
+
+	    for k, v in pairs(ents) do
+			if v ~= inst and v.entity:IsValid() and v.entity:IsVisible() and not v.components.placer and v.parent == nil then
+				if GLOBAL.distsq( Vector3(v.Transform:GetWorldPosition()), pt) < min_spacing*min_spacing then
+					return false
+				end
+			end
+		end
+		return true
+	end
+	return false
+end
+
+local function CanSnapDeployable(inst, mode)
+	local DEPLOYMODE = GLOBAL.DEPLOYMODE
+	if mode == DEPLOYMODE.CUSTOM then
+		return inst:HasTag("deployedplant")
+	end
+	return mode ~= DEPLOYMODE.WALL and mode ~= DEPLOYMODE.TURF
+end
+
+-- Rewrote this a bit to no longer fully replace the old functions
+-- instead, it just modifies the point that gets passed to them
+local function DeployablePostInit(self)
+	local function ShouldRound(self, deployer, player)
+		local continue = false
+		local grid_type = "default" --to remove when sandbag fix isn't needed
+		if DST then
+			if CanSnapDeployable(self.inst, self.mode) then
+				continue = true
+			end
+		else
+			if self.placer == nil or (self.placer ~= "gridplacer"
+							and self.placer:sub(1,5) ~= "wall_"
+							and self.placer:sub(1,5) ~= "mech_"
+							)-- and self.placer:sub(1,12) ~= "sandbagsmall") --to add back in when sandbags are fixed
+			then
+				continue = true
+				grid_type = (self.placer and self.placer:sub(1,12) == "sandbagsmall") and "flood" or "default"
+			end
+		end
+		if continue then
+			return CTRL == TheInput:IsKeyDown(KEY_CTRL) and (player == nil or deployer == player), grid_type
+		else	
+			return false, grid_type
+		end
+	end
+	
+	-- This only gets called on the host, so we need to modify inventoryitem too
+	-- now that I've modified inventoryitem_replica, this may no longer be necessary
+	local OldCanDeploy = self.CanDeploy
+	if not DST then
+		OldCanDeploy = function(self, ...)
+			-- Shipwrecked version of this code
+			if self.test then
+				return self.test(self.inst, ...)
+			else
+				return default_test(self.inst, ...)
+			end
+			-- This is the vanilla version, but the Shipwrecked one above should be better.
+			-- Specifically, the vanilla version lets you place where
+			--   self.test fails but default_test succeeds (this was unintended)
+			-- return self.test and self.test(self.inst, ...) or default_test(self.inst, ...)
+		end
+	end
+	local function NewCanDeploy(self, pt, mouseover, ...)
+		local player = GetPlayer()
+		if ShouldRound(self, player, player) then
+			pt = Snap(pt)
+		end
+		return OldCanDeploy(self, pt, nil, ...) --removing mouseover should help some DST things
+	end
+	self.CanDeploy = NewCanDeploy
+	
+	local OldDeploy = self.Deploy
+	local function NewDeploy(self, pt, deployer, ...)
+		local player = GetPlayer()
+		-- if ShouldRound(self, deployer, player) then
+			-- pt = Snap(pt)
+		-- end
+		--small fix for sandbags that I can hopefully remove at some point
+		local round, grid_type = ShouldRound(self, deployer, player)
+		if round then
+			pt = Snap(pt, grid_type)
+		end
+		return OldDeploy(self, pt, deployer, ...)
+	end
+	self.Deploy = NewDeploy
+end
+AddComponentPostInit("deployable", DeployablePostInit)
+
+local function InventoryItemReplicaPostConstruct(self)
+	local OldCanDeploy = self.CanDeploy
+	local function NewCanDeploy(self, pt, mouseover, ...)
+		local mode = self.classified and self.classified.deploymode:value() or nil
+		if CanSnapDeployable(self.inst, mode) then
+			if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+				pt = Snap(pt)
+			end
+		end
+		return OldCanDeploy(self, pt, nil, ...)
+	end
+	self.CanDeploy = NewCanDeploy
+end
+if DST then
+	AddClassPostConstruct("components/inventoryitem_replica", InventoryItemReplicaPostConstruct)
+end
+
+if kleifileexists("scripts/components/farmtiller.lua") then
+	FarmTiller = require("components/farmtiller")
+	local _FarmTiller_Till = FarmTiller.Till
+	function FarmTiller:Till(pt, doer, ...)
+		-- Filter on ThePlayer to prevent host grid from overriding clients
+		if rawget(GLOBAL, "ThePlayer") == doer and ACTION_ENABLED.TILL and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return _FarmTiller_Till(self, pt, doer, ...)
+	end
+end
+
+-- Fixes deploying on clients in DST
+-- This feels really hackish...... but there doesn't seem to be a better way to do it,
+--  since this is directly called from the monstrous PlayerController functions
+--  (PlayerController:OnRightClick and PlayerController:DoControllerActionButton)
+if DST then
+	local ACTIONS_TO_SNAP = {
+		DEPLOY = function() return true end,
+	}
+	for action, _ in pairs(RMB_ACTION_GRID_SPACING) do
+		ACTIONS_TO_SNAP[action] = function() return ACTION_ENABLED[action] end
+	end
+	local ACTION_CODES_TO_SNAP = {}
+	for action, _ in pairs(ACTIONS_TO_SNAP) do
+		if rawget(GLOBAL.ACTIONS, action) then
+			ACTION_CODES_TO_SNAP[GLOBAL.ACTIONS[action].code] = function() return ACTIONS_TO_SNAP[action]() end
+		end
+	end
+	local _SendRPCToServer = GLOBAL.SendRPCToServer
+	function GLOBAL.SendRPCToServer(code, action_code, x, z, ...)
+		if code == GLOBAL.RPC.RightClick -- We don't need ControllerActionButtonDeploy because it grabs the placer's location
+		and ACTION_CODES_TO_SNAP[action_code] and ACTION_CODES_TO_SNAP[action_code]()
+		and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			local ThePlayer = GLOBAL.ThePlayer
+			local activeitem = ThePlayer and ThePlayer.replica
+							and ThePlayer.replica.inventory
+							and ThePlayer.replica.inventory.classified
+							and ThePlayer.replica.inventory.classified:GetActiveItem()
+			if not activeitem or not (
+				   activeitem:HasTag("wallbuilder")
+				or activeitem:HasTag("fencebuilder")
+				or activeitem:HasTag("gatebuilder")
+				or activeitem:HasTag("groundtile")
+				) then
+				x,_,z = Snap(Vector3(x, 0, z)):Get()
+			end
+		end
+		_SendRPCToServer(code, action_code, x, z, ...)
+	end
+end
+
+--[[ Menu/Option Systems ]]--
+
+-- We want to make sure that chatting, or being in menus, etc, doesn't toggle
+local function GetActiveScreenName()
+	local screen = GLOBAL.TheFrontEnd:GetActiveScreen()
+	return screen and screen.name or ""
+end
+local function IsDefaultScreen()
+	return GetActiveScreenName():find("HUD") and GetPlayer() and GetPlayer().components.playercontroller:IsEnabled()
+end
+local function IsScoreboardScreen()
+	return GetActiveScreenName():find("PlayerStatusScreen") ~= nil
+end
+
+local COLOR_PRESETS = {
+	redgreen			= {bad = "red",				good = "green"},
+	redblue				= {bad = "red",				good = "blue"},
+	blackwhite			= {bad = "black",			good = "white"},
+	blackwhiteoutline	= {bad = "blackoutline",	good = "whiteoutline"},
+}
+local COLOR_PRESET_LOOKUP = {}
+local color_type_ordering = {"GOOD", "BAD", "GOODTILE", "BADTILE", "GOODPLACER", "BADPLACER"}
+for color_preset_name, color_preset in pairs(COLOR_PRESETS) do
+	local preset_comparison_string = ""
+	for _, color_type in ipairs(color_type_ordering) do
+		local color_option = color_type:match("^GOOD") and "good" or "bad"
+		preset_comparison_string = preset_comparison_string .. ResolveColor(color_type, color_preset[color_option])
+	end
+	COLOR_PRESET_LOOKUP[preset_comparison_string] = color_preset_name
+end
+local function get_preset_comparison_string()
+	local preset_comparison_string = ""
+	for _, color_type in ipairs(color_type_ordering) do
+		local color = COLORS[color_type]
+		preset_comparison_string = preset_comparison_string .. (COLOR_OPTION_LOOKUP[color] or color)
+	end
+	return preset_comparison_string
+end
+local IsKey = {}
+local ignore_key = false
+local function set_ignore() ignore_key = true end
+local function PushOptionsScreen()
+	if not SHOWMENU then
+		CTRL = not CTRL
+		return
+	end
+	local screen = GeometricOptionsScreen(modname, COLOR_OPTIONS, OUTLINED_OPTIONS)
+	screen.IsOptionsMenuKey = IsKey.OptionsMenu
+	screen.callbacks.save = function()
+		local _print = GLOBAL.print
+		GLOBAL.print = function() end --janky, but KnownModIndex functions kinda spam the logs
+		local config = GLOBAL.KnownModIndex:LoadModConfigurationOptions(modname, true)
+		local settings = {}
+		local namelookup = {} --makes it more resilient if I shift the order of options
+		for i,v in ipairs(config) do
+			namelookup[v.name] = i
+			table.insert(settings, {name = v.name, label = v.label, options = v.options, default = v.default, saved = v.saved})
+		end
+		settings[namelookup.CTRL].saved = CTRL
+		settings[namelookup.GEOMETRY].saved = SAVED_GEOMETRY_NAME
+		settings[namelookup.BUILDGRID].saved = BUILDGRID
+		settings[namelookup.HIDEPLACER].saved = HIDEPLACER
+		settings[namelookup.HIDECURSOR].saved = HIDECURSORQUANTITY and 1 or HIDECURSOR
+		settings[namelookup.SMARTSPACING].saved = SMARTSPACING
+		for color_type, color_option in pairs(COLORS) do
+			settings[namelookup[color_type .. "COLOR"]].saved = COLOR_OPTION_LOOKUP[color_option] or color_option
+		end
+		for action, enabled in pairs(ACTION_ENABLED) do
+			settings[namelookup["ACTION_"..action]].saved = enabled
+		end
+		settings[namelookup.TIMEBUDGET].saved = timebudget_percent
+		settings[namelookup.SMALLGRIDSIZE].saved = GRID_SIZES.SMALL
+		settings[namelookup.MEDGRIDSIZE].saved = GRID_SIZES.MED
+		settings[namelookup.BIGGRIDSIZE].saved = GRID_SIZES.BIG
+		--Note: don't need to include options that aren't in the menu,
+		-- because they're already in there from the options load above
+		GLOBAL.KnownModIndex:SaveConfigurationOptions(function() end, modname, settings, true)
+		GLOBAL.print = _print --restore print functionality!
+	end
+	screen.callbacks.geometry = function(geometry)
+		GRID_DIRTY = true
+		GEOMETRY_DIRTY = true
+		SAVED_LAST_GEOMETRY_NAME = SAVED_GEOMETRY_NAME
+		SAVED_GEOMETRY_NAME = geometry
+	end
+	for name,button in pairs(screen.geometry_buttons) do
+		if name:upper() == SAVED_GEOMETRY_NAME then
+			if DST then button:Select() else button:Disable() end
+		else
+			if DST then button:Unselect() else button:Enable() end
+		end
+	end
+	screen.callbacks.color = SetColor
+	local function update_color_spinners_buttons()
+		for color_type, color_option in pairs(COLORS) do
+			local color_name = COLOR_OPTION_LOOKUP[color_option] or color_option
+			screen.color_spinners[color_type]:SetSelected(color_name)
+		end
+		for _, button in pairs(screen.color_buttons) do
+			if DST then button:Unselect() else button:Enable() end
+		end
+		local preset = COLOR_PRESET_LOOKUP[get_preset_comparison_string()]
+		if preset then
+			if DST then screen.color_buttons[preset]:Select() else screen.color_buttons[preset]:Disable() end
+		end
+	end
+	update_color_spinners_buttons()
+	screen.callbacks.color_update = update_color_spinners_buttons
+	if CTRL then screen.toggle_button.onclick() end
+	screen.callbacks.toggle = function(toggle) CTRL = not toggle end
+	if not BUILDGRID then screen.grid_button.onclick() end
+	screen.callbacks.grid = function(toggle)
+		GRID_DIRTY = true
+		BUILDGRID = toggle == 1
+	end
+	if HIDEPLACER then screen.placer_button.onclick() end
+	screen.callbacks.placer = function(toggle) HIDEPLACER = toggle == 0 end
+	if HIDECURSOR then screen.cursor_button.onclick() end
+	if HIDECURSORQUANTITY then screen.cursor_button.onclick() end
+	screen.callbacks.cursor = function(toggle)
+		HIDECURSOR = toggle ~= 2
+		HIDECURSORQUANTITY = toggle == 0
+	end
+	if not SMARTSPACING then screen.smart_spacing_button.onclick() end
+	screen.callbacks.smart_spacing = function()
+		SMARTSPACING = not SMARTSPACING
+		GRID_DIRTY = true
+		GEOMETRY_DIRTY = true
+	end
+	if screen.till_grid_button then
+		if not ACTION_ENABLED.TILL then screen.till_grid_button.onclick() end
+		screen.callbacks.till_grid = function()
+			SetGridForRmbAction("TILL", not ACTION_ENABLED.TILL)
+		end
+	end
+	screen.refresh:SetSelected(timebudget_percent)
+	screen.callbacks.refresh = SetTimeBudget
+	screen.smallgrid:SetSelected(GRID_SIZES.SMALL)
+	screen.medgrid:SetSelected(GRID_SIZES.MED)
+	screen.biggrid:SetSelected(GRID_SIZES.BIG)
+	screen.callbacks.gridsize = SetGridSize
+	screen.callbacks.ignore = set_ignore
+	GLOBAL.TheFrontEnd:PushScreen(screen)
+end
+
+-- Keyboard controls
+local function SwapGeometry()
+	GRID_DIRTY = true
+	GEOMETRY_DIRTY = true
+	local _SAVED_GEOMETRY_NAME = SAVED_GEOMETRY_NAME
+	SAVED_GEOMETRY_NAME = SAVED_LAST_GEOMETRY_NAME
+	SAVED_LAST_GEOMETRY_NAME = _SAVED_GEOMETRY_NAME
+end
+IsKey.OptionsMenu = ModSettings.AddControl(
+	modname,
+	"KEYBOARDTOGGLEKEY",
+	"Options Menu",
+	"B",
+	function()
+		if IsDefaultScreen() then
+			if ignore_key then
+				ignore_key = false
+			else
+				PushOptionsScreen()				
+			end
+		end
+	end,
+	false
+)
+ModSettings.AddControl(
+	modname,
+	"GEOMETRYTOGGLEKEY",
+	"Toggle Geometry",
+	"V",
+	function()
+		if IsDefaultScreen() then
+			SwapGeometry()
+		end
+	end,
+	false
+)
+ModSettings.AddControl(
+	modname,
+	"SNAPGRIDKEY",
+	"Snap Grid",
+	"",
+	function ()
+		if IsDefaultScreen() then
+			SnapGrid()
+		end
+	end,
+	false
+)
+
+-- Controller controls
+-- This is pressing the right stick in
+-- CONTROL_MENU_MISC_3 is the same thing as CONTROL_OPEN_DEBUG_MENU
+-- CONTROL_MENU_MISC_4 is the right stick click
+local function IsOptionsMenuBound()
+	return not IsKey.OptionsMenu()
+end
+local controller_control = DST and
+	GLOBAL.CONTROL_MENU_MISC_3 or
+	GLOBAL.CONTROL_OPEN_DEBUG_MENU
+local controller_control_handler = DST and
+	function(down)
+		-- In DST, only let them do it on the scoreboard screen
+		if IsOptionsMenuBound() and not down and IsScoreboardScreen() then
+			local ss = GLOBAL.TheFrontEnd.screenstack
+			ss[#ss]:ClearFocus()
+			PushOptionsScreen()
+		end
+	end or function(down)
+		-- In single-player, let them do it on the main screen
+		if IsOptionsMenuBound() and not down and IsDefaultScreen() then
+			PushOptionsScreen()
+		end
+	end
+TheInput:AddControlHandler(controller_control, controller_control_handler)
+
+if DST then
+	local PlayerStatusScreen = require("screens/playerstatusscreen")
+	local PlayerStatusScreen_GetHelpText = PlayerStatusScreen.GetHelpText
+	function PlayerStatusScreen:GetHelpText(...)
+		local control_string = SHOWMENU and " Geometric Placement Options  " or " Toggle Geometric Placement  "
+		return TheInput:GetLocalizedControl(TheInput:GetControllerID(), GLOBAL.CONTROL_MENU_MISC_3)
+			.. control_string .. PlayerStatusScreen_GetHelpText(self, ...)
+	end
+	-- This is only necessary because they added a thing to filter out CONTROL_OPEN_DEBUG_MENU on this screen,
+	-- but CONTROL_OPEN_DEBUG_MENU happens to be the same value as CONTROL_MENU_MISC_3
+	local PlayerStatusScreen_OnControl = PlayerStatusScreen.OnControl
+	function PlayerStatusScreen:OnControl(control, down, ...)
+		if control == controller_control and not down then
+			return false
+		end
+		return PlayerStatusScreen_OnControl(self, control, down, ...)
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tile_outline
+if DST then
+	AddPrefabPostInit("tile_outline", ReplaceGridplacerAnim)
+	AddPrefabPostInit("gridplacer_farmablesoil", ReplaceGridplacerAnim)
+end
+
+-- But these things do need to get built every time
+local function PlacerPostInit(self)
+	--there's gotta be a better place to put this; also may not be necessary, but it's safe and cheap
+	local TheWorld = DST and GLOBAL.TheWorld or GLOBAL.GetWorld()
+	TheCamera = GLOBAL.TheCamera
+	ORIGIN_OFFSETS.tile = Vector3(TheWorld.Map:GetTileCenterPoint(0, 0, 0))*-1
+	if TheWorld.Flooding then
+		ORIGIN_OFFSETS.flood = Vector3(TheWorld.Flooding:GetTileCenterPoint(0, 0, 0))*-1
+	end
+	
+	if not CONTROLLEROFFSET then
+		--Then the ground action hints can get in the way; increase the offset
+		-- note that these action hints only get used by controllers
+		GetPlayer().HUD.controls.groundactionhint:SetOffset(Vector3(0, 200, 0))
+	end
+
+	--used in DST to track attachments to farm placers, telebase, etc;
+	-- set to empty list if not present for simpler logic
+	self.linked = self.linked or {}
+	--keeps track of the build grid objects, indexed by lattice coordinates
+	self.build_grid = nil
+	--keeps track of the build grid positions, indexed by lattice coordinates
+	self.build_grid_positions = nil 
+	--keep a queue of locations to check the collision for
+	--Why did I do this as storing lattice coordinates instead of storing the buildgridplacer objects?
+	-- because this way I don't have to worry about buildgridplacer objects going in multiple times
+	-- if it pops one out and it's not in the grid, no big deal, that's way faster than testing the point
+	self.refresh_queue = nil
+	self.lastpt = nil
+	self.placertype = "buildgridplacer"
+	self.waiting_for_geometry = true -- to prevent the wrong geometry being used on the first update
+	self.cursor_visible = true
+	self.cursor_quantity_visible = true
+			
+	self.inst:ListenForEvent("onremove", function()
+		self:RemoveBuildGrid()
+		self:SetCursorVisibility(true)
+		if self.tileinst then self.tileinst:Remove() end
+		if self.gridinst then self.gridinst:Remove() end
+		if self.controller_child then self.controller_child:Remove() end
+	end)
+	
+	-- Delay to capture the prefab name
+	self.inst:DoTaskInTime(0, function()
+		local prefab = self.inst.prefab
+		if prefab == "sprinkler_placer" then
+			self.placeTestFn = sprinklerPlaceTestFn
+		end
+		self.showFirstLinked = PLACERS_SHOWFIRSTLINKED[prefab]
+		if GRIDPLACER_PREFABS[prefab] then
+			ReplaceGridplacerAnim(self.inst)
+			local _oncanbuild = self.oncanbuild
+			self.oncanbuild = function(inst, ...)
+				if CTRL ~= TheInput:IsKeyDown(KEY_CTRL) then
+					UndoReplaceGridplacerAnim(self.inst)
+					return _oncanbuild(inst, ...)
+				else
+					ReplaceGridplacerAnim(self.inst)
+				end
+			end
+			local _oncannotbuild = self.oncanbuild
+			self.oncannotbuild = function(inst, ...)
+				if CTRL ~= TheInput:IsKeyDown(KEY_CTRL) then
+					UndoReplaceGridplacerAnim(self.inst)
+					return _oncannotbuild(inst, ...)
+				else
+					ReplaceGridplacerAnim(self.inst)
+				end
+			end
+		end
+	end)
+	
+end
+AddComponentPostInit("placer", PlacerPostInit)
+
+--[[ Builder Component ]]--
+-- For DST
+local function BuilderReplicaPostConstruct(self)
+	local OldCanBuildAtPoint = self.CanBuildAtPoint
+	local function NewCanBuildAtPoint(self, pt, recipe, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldCanBuildAtPoint(self, pt, recipe, ...)
+	end
+	self.CanBuildAtPoint = NewCanBuildAtPoint
+	local OldMakeRecipeAtPoint = self.MakeRecipeAtPoint
+	local function NewMakeRecipeAtPoint(self, recipe, pt, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldMakeRecipeAtPoint(self, recipe, pt, ...)
+	end
+	self.MakeRecipeAtPoint = NewMakeRecipeAtPoint
+end
+
+-- For single-player; doesn't add the rotation stuff
+local function BuilderPostInit(self)
+	local OldCanBuildAtPoint = self.CanBuildAtPoint
+	local function NewCanBuildAtPoint(self, pt, recipe, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldCanBuildAtPoint(self, pt, recipe, ...)
+	end
+	self.CanBuildAtPoint = NewCanBuildAtPoint
+	local OldMakeRecipe = self.MakeRecipe
+	local function NewMakeRecipe(self, recipe, pt, ...)
+		if pt and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldMakeRecipe(self, recipe, pt, ...)
+	end
+	self.MakeRecipe = NewMakeRecipe
+end
+
+if DST then
+	AddClassPostConstruct("components/builder_replica", BuilderReplicaPostConstruct)
+else
+	AddComponentPostInit("builder", BuilderPostInit)
+end
+
+--[[ Deployable Component ]]--
+-- Tore this from RoG's deployable component; the mouseover messes up the grid for
+--  things that use default_test as their main CanDeploy reporter (e.g. tooth traps)
+local function default_test(inst, pt)
+	local tiletype = GLOBAL.GetGroundTypeAtPosition(pt)
+	local ground_OK = tiletype ~= GLOBAL.GROUND.IMPASSABLE
+	if ground_OK then
+		-- local MouseCharacter = TheInput:GetWorldEntityUnderMouse()
+		-- if MouseCharacter and not MouseCharacter:HasTag("player") then
+			-- return false
+		-- end
+	    local ents = GLOBAL.TheSim:FindEntities(pt.x,pt.y,pt.z, 4, nil, {'NOBLOCK', 'player', 'FX'}) -- or we could include a flag to the search?
+		local min_spacing = inst.components.deployable.min_spacing or 2
+
+	    for k, v in pairs(ents) do
+			if v ~= inst and v.entity:IsValid() and v.entity:IsVisible() and not v.components.placer and v.parent == nil then
+				if GLOBAL.distsq( Vector3(v.Transform:GetWorldPosition()), pt) < min_spacing*min_spacing then
+					return false
+				end
+			end
+		end
+		return true
+	end
+	return false
+end
+
+local function CanSnapDeployable(inst, mode)
+	local DEPLOYMODE = GLOBAL.DEPLOYMODE
+	if mode == DEPLOYMODE.CUSTOM then
+		return inst:HasTag("deployedplant")
+	end
+	return mode ~= DEPLOYMODE.WALL and mode ~= DEPLOYMODE.TURF
+end
+
+-- Rewrote this a bit to no longer fully replace the old functions
+-- instead, it just modifies the point that gets passed to them
+local function DeployablePostInit(self)
+	local function ShouldRound(self, deployer, player)
+		local continue = false
+		local grid_type = "default" --to remove when sandbag fix isn't needed
+		if DST then
+			if CanSnapDeployable(self.inst, self.mode) then
+				continue = true
+			end
+		else
+			if self.placer == nil or (self.placer ~= "gridplacer"
+							and self.placer:sub(1,5) ~= "wall_"
+							and self.placer:sub(1,5) ~= "mech_"
+							)-- and self.placer:sub(1,12) ~= "sandbagsmall") --to add back in when sandbags are fixed
+			then
+				continue = true
+				grid_type = (self.placer and self.placer:sub(1,12) == "sandbagsmall") and "flood" or "default"
+			end
+		end
+		if continue then
+			return CTRL == TheInput:IsKeyDown(KEY_CTRL) and (player == nil or deployer == player), grid_type
+		else	
+			return false, grid_type
+		end
+	end
+	
+	-- This only gets called on the host, so we need to modify inventoryitem too
+	-- now that I've modified inventoryitem_replica, this may no longer be necessary
+	local OldCanDeploy = self.CanDeploy
+	if not DST then
+		OldCanDeploy = function(self, ...)
+			-- Shipwrecked version of this code
+			if self.test then
+				return self.test(self.inst, ...)
+			else
+				return default_test(self.inst, ...)
+			end
+			-- This is the vanilla version, but the Shipwrecked one above should be better.
+			-- Specifically, the vanilla version lets you place where
+			--   self.test fails but default_test succeeds (this was unintended)
+			-- return self.test and self.test(self.inst, ...) or default_test(self.inst, ...)
+		end
+	end
+	local function NewCanDeploy(self, pt, mouseover, ...)
+		local player = GetPlayer()
+		if ShouldRound(self, player, player) then
+			pt = Snap(pt)
+		end
+		return OldCanDeploy(self, pt, nil, ...) --removing mouseover should help some DST things
+	end
+	self.CanDeploy = NewCanDeploy
+	
+	local OldDeploy = self.Deploy
+	local function NewDeploy(self, pt, deployer, ...)
+		local player = GetPlayer()
+		-- if ShouldRound(self, deployer, player) then
+			-- pt = Snap(pt)
+		-- end
+		--small fix for sandbags that I can hopefully remove at some point
+		local round, grid_type = ShouldRound(self, deployer, player)
+		if round then
+			pt = Snap(pt, grid_type)
+		end
+		return OldDeploy(self, pt, deployer, ...)
+	end
+	self.Deploy = NewDeploy
+end
+AddComponentPostInit("deployable", DeployablePostInit)
+
+local function InventoryItemReplicaPostConstruct(self)
+	local OldCanDeploy = self.CanDeploy
+	local function NewCanDeploy(self, pt, mouseover, ...)
+		local mode = self.classified and self.classified.deploymode:value() or nil
+		if CanSnapDeployable(self.inst, mode) then
+			if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+				pt = Snap(pt)
+			end
+		end
+		return OldCanDeploy(self, pt, nil, ...)
+	end
+	self.CanDeploy = NewCanDeploy
+end
+if DST then
+	AddClassPostConstruct("components/inventoryitem_replica", InventoryItemReplicaPostConstruct)
+end
+
+if kleifileexists("scripts/components/farmtiller.lua") then
+	FarmTiller = require("components/farmtiller")
+	local _FarmTiller_Till = FarmTiller.Till
+	function FarmTiller:Till(pt, doer, ...)
+		-- Filter on ThePlayer to prevent host grid from overriding clients
+		if rawget(GLOBAL, "ThePlayer") == doer and ACTION_ENABLED.TILL and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return _FarmTiller_Till(self, pt, doer, ...)
+	end
+end
+
+-- Fixes deploying on clients in DST
+-- This feels really hackish...... but there doesn't seem to be a better way to do it,
+--  since this is directly called from the monstrous PlayerController functions
+--  (PlayerController:OnRightClick and PlayerController:DoControllerActionButton)
+if DST then
+	local ACTIONS_TO_SNAP = {
+		DEPLOY = function() return true end,
+	}
+	for action, _ in pairs(RMB_ACTION_GRID_SPACING) do
+		ACTIONS_TO_SNAP[action] = function() return ACTION_ENABLED[action] end
+	end
+	local ACTION_CODES_TO_SNAP = {}
+	for action, _ in pairs(ACTIONS_TO_SNAP) do
+		if rawget(GLOBAL.ACTIONS, action) then
+			ACTION_CODES_TO_SNAP[GLOBAL.ACTIONS[action].code] = function() return ACTIONS_TO_SNAP[action]() end
+		end
+	end
+	local _SendRPCToServer = GLOBAL.SendRPCToServer
+	function GLOBAL.SendRPCToServer(code, action_code, x, z, ...)
+		if code == GLOBAL.RPC.RightClick -- We don't need ControllerActionButtonDeploy because it grabs the placer's location
+		and ACTION_CODES_TO_SNAP[action_code] and ACTION_CODES_TO_SNAP[action_code]()
+		and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			local ThePlayer = GLOBAL.ThePlayer
+			local activeitem = ThePlayer and ThePlayer.replica
+							and ThePlayer.replica.inventory
+							and ThePlayer.replica.inventory.classified
+							and ThePlayer.replica.inventory.classified:GetActiveItem()
+			if not activeitem or not (
+				   activeitem:HasTag("wallbuilder")
+				or activeitem:HasTag("fencebuilder")
+				or activeitem:HasTag("gatebuilder")
+				or activeitem:HasTag("groundtile")
+				) then
+				x,_,z = Snap(Vector3(x, 0, z)):Get()
+			end
+		end
+		_SendRPCToServer(code, action_code, x, z, ...)
+	end
+end
+
+--[[ Menu/Option Systems ]]--
+
+-- We want to make sure that chatting, or being in menus, etc, doesn't toggle
+local function GetActiveScreenName()
+	local screen = GLOBAL.TheFrontEnd:GetActiveScreen()
+	return screen and screen.name or ""
+end
+local function IsDefaultScreen()
+	return GetActiveScreenName():find("HUD") and GetPlayer() and GetPlayer().components.playercontroller:IsEnabled()
+end
+local function IsScoreboardScreen()
+	return GetActiveScreenName():find("PlayerStatusScreen") ~= nil
+end
+
+local COLOR_PRESETS = {
+	redgreen			= {bad = "red",				good = "green"},
+	redblue				= {bad = "red",				good = "blue"},
+	blackwhite			= {bad = "black",			good = "white"},
+	blackwhiteoutline	= {bad = "blackoutline",	good = "whiteoutline"},
+}
+local COLOR_PRESET_LOOKUP = {}
+local color_type_ordering = {"GOOD", "BAD", "GOODTILE", "BADTILE", "GOODPLACER", "BADPLACER"}
+for color_preset_name, color_preset in pairs(COLOR_PRESETS) do
+	local preset_comparison_string = ""
+	for _, color_type in ipairs(color_type_ordering) do
+		local color_option = color_type:match("^GOOD") and "good" or "bad"
+		preset_comparison_string = preset_comparison_string .. ResolveColor(color_type, color_preset[color_option])
+	end
+	COLOR_PRESET_LOOKUP[preset_comparison_string] = color_preset_name
+end
+local function get_preset_comparison_string()
+	local preset_comparison_string = ""
+	for _, color_type in ipairs(color_type_ordering) do
+		local color = COLORS[color_type]
+		preset_comparison_string = preset_comparison_string .. (COLOR_OPTION_LOOKUP[color] or color)
+	end
+	return preset_comparison_string
+end
+local IsKey = {}
+local ignore_key = false
+local function set_ignore() ignore_key = true end
+local function PushOptionsScreen()
+	if not SHOWMENU then
+		CTRL = not CTRL
+		return
+	end
+	local screen = GeometricOptionsScreen(modname, COLOR_OPTIONS, OUTLINED_OPTIONS)
+	screen.IsOptionsMenuKey = IsKey.OptionsMenu
+	screen.callbacks.save = function()
+		local _print = GLOBAL.print
+		GLOBAL.print = function() end --janky, but KnownModIndex functions kinda spam the logs
+		local config = GLOBAL.KnownModIndex:LoadModConfigurationOptions(modname, true)
+		local settings = {}
+		local namelookup = {} --makes it more resilient if I shift the order of options
+		for i,v in ipairs(config) do
+			namelookup[v.name] = i
+			table.insert(settings, {name = v.name, label = v.label, options = v.options, default = v.default, saved = v.saved})
+		end
+		settings[namelookup.CTRL].saved = CTRL
+		settings[namelookup.GEOMETRY].saved = SAVED_GEOMETRY_NAME
+		settings[namelookup.BUILDGRID].saved = BUILDGRID
+		settings[namelookup.HIDEPLACER].saved = HIDEPLACER
+		settings[namelookup.HIDECURSOR].saved = HIDECURSORQUANTITY and 1 or HIDECURSOR
+		settings[namelookup.SMARTSPACING].saved = SMARTSPACING
+		for color_type, color_option in pairs(COLORS) do
+			settings[namelookup[color_type .. "COLOR"]].saved = COLOR_OPTION_LOOKUP[color_option] or color_option
+		end
+		for action, enabled in pairs(ACTION_ENABLED) do
+			settings[namelookup["ACTION_"..action]].saved = enabled
+		end
+		settings[namelookup.TIMEBUDGET].saved = timebudget_percent
+		settings[namelookup.SMALLGRIDSIZE].saved = GRID_SIZES.SMALL
+		settings[namelookup.MEDGRIDSIZE].saved = GRID_SIZES.MED
+		settings[namelookup.BIGGRIDSIZE].saved = GRID_SIZES.BIG
+		--Note: don't need to include options that aren't in the menu,
+		-- because they're already in there from the options load above
+		GLOBAL.KnownModIndex:SaveConfigurationOptions(function() end, modname, settings, true)
+		GLOBAL.print = _print --restore print functionality!
+	end
+	screen.callbacks.geometry = function(geometry)
+		GRID_DIRTY = true
+		GEOMETRY_DIRTY = true
+		SAVED_LAST_GEOMETRY_NAME = SAVED_GEOMETRY_NAME
+		SAVED_GEOMETRY_NAME = geometry
+	end
+	for name,button in pairs(screen.geometry_buttons) do
+		if name:upper() == SAVED_GEOMETRY_NAME then
+			if DST then button:Select() else button:Disable() end
+		else
+			if DST then button:Unselect() else button:Enable() end
+		end
+	end
+	screen.callbacks.color = SetColor
+	local function update_color_spinners_buttons()
+		for color_type, color_option in pairs(COLORS) do
+			local color_name = COLOR_OPTION_LOOKUP[color_option] or color_option
+			screen.color_spinners[color_type]:SetSelected(color_name)
+		end
+		for _, button in pairs(screen.color_buttons) do
+			if DST then button:Unselect() else button:Enable() end
+		end
+		local preset = COLOR_PRESET_LOOKUP[get_preset_comparison_string()]
+		if preset then
+			if DST then screen.color_buttons[preset]:Select() else screen.color_buttons[preset]:Disable() end
+		end
+	end
+	update_color_spinners_buttons()
+	screen.callbacks.color_update = update_color_spinners_buttons
+	if CTRL then screen.toggle_button.onclick() end
+	screen.callbacks.toggle = function(toggle) CTRL = not toggle end
+	if not BUILDGRID then screen.grid_button.onclick() end
+	screen.callbacks.grid = function(toggle)
+		GRID_DIRTY = true
+		BUILDGRID = toggle == 1
+	end
+	if HIDEPLACER then screen.placer_button.onclick() end
+	screen.callbacks.placer = function(toggle) HIDEPLACER = toggle == 0 end
+	if HIDECURSOR then screen.cursor_button.onclick() end
+	if HIDECURSORQUANTITY then screen.cursor_button.onclick() end
+	screen.callbacks.cursor = function(toggle)
+		HIDECURSOR = toggle ~= 2
+		HIDECURSORQUANTITY = toggle == 0
+	end
+	if not SMARTSPACING then screen.smart_spacing_button.onclick() end
+	screen.callbacks.smart_spacing = function()
+		SMARTSPACING = not SMARTSPACING
+		GRID_DIRTY = true
+		GEOMETRY_DIRTY = true
+	end
+	if screen.till_grid_button then
+		if not ACTION_ENABLED.TILL then screen.till_grid_button.onclick() end
+		screen.callbacks.till_grid = function()
+			SetGridForRmbAction("TILL", not ACTION_ENABLED.TILL)
+		end
+	end
+	screen.refresh:SetSelected(timebudget_percent)
+	screen.callbacks.refresh = SetTimeBudget
+	screen.smallgrid:SetSelected(GRID_SIZES.SMALL)
+	screen.medgrid:SetSelected(GRID_SIZES.MED)
+	screen.biggrid:SetSelected(GRID_SIZES.BIG)
+	screen.callbacks.gridsize = SetGridSize
+	screen.callbacks.ignore = set_ignore
+	GLOBAL.TheFrontEnd:PushScreen(screen)
+end
+
+-- Keyboard controls
+local function SwapGeometry()
+	GRID_DIRTY = true
+	GEOMETRY_DIRTY = true
+	local _SAVED_GEOMETRY_NAME = SAVED_GEOMETRY_NAME
+	SAVED_GEOMETRY_NAME = SAVED_LAST_GEOMETRY_NAME
+	SAVED_LAST_GEOMETRY_NAME = _SAVED_GEOMETRY_NAME
+end
+IsKey.OptionsMenu = ModSettings.AddControl(
+	modname,
+	"KEYBOARDTOGGLEKEY",
+	"Options Menu",
+	"B",
+	function()
+		if IsDefaultScreen() then
+			if ignore_key then
+				ignore_key = false
+			else
+				PushOptionsScreen()				
+			end
+		end
+	end,
+	false
+)
+ModSettings.AddControl(
+	modname,
+	"GEOMETRYTOGGLEKEY",
+	"Toggle Geometry",
+	"V",
+	function()
+		if IsDefaultScreen() then
+			SwapGeometry()
+		end
+	end,
+	false
+)
+ModSettings.AddControl(
+	modname,
+	"SNAPGRIDKEY",
+	"Snap Grid",
+	"",
+	function ()
+		if IsDefaultScreen() then
+			SnapGrid()
+		end
+	end,
+	false
+)
+
+-- Controller controls
+-- This is pressing the right stick in
+-- CONTROL_MENU_MISC_3 is the same thing as CONTROL_OPEN_DEBUG_MENU
+-- CONTROL_MENU_MISC_4 is the right stick click
+local function IsOptionsMenuBound()
+	return not IsKey.OptionsMenu()
+end
+local controller_control = DST and
+	GLOBAL.CONTROL_MENU_MISC_3 or
+	GLOBAL.CONTROL_OPEN_DEBUG_MENU
+local controller_control_handler = DST and
+	function(down)
+		-- In DST, only let them do it on the scoreboard screen
+		if IsOptionsMenuBound() and not down and IsScoreboardScreen() then
+			local ss = GLOBAL.TheFrontEnd.screenstack
+			ss[#ss]:ClearFocus()
+			PushOptionsScreen()
+		end
+	end or function(down)
+		-- In single-player, let them do it on the main screen
+		if IsOptionsMenuBound() and not down and IsDefaultScreen() then
+			PushOptionsScreen()
+		end
+	end
+TheInput:AddControlHandler(controller_control, controller_control_handler)
+
+if DST then
+	local PlayerStatusScreen = require("screens/playerstatusscreen")
+	local PlayerStatusScreen_GetHelpText = PlayerStatusScreen.GetHelpText
+	function PlayerStatusScreen:GetHelpText(...)
+		local control_string = SHOWMENU and " Geometric Placement Options  " or " Toggle Geometric Placement  "
+		return TheInput:GetLocalizedControl(TheInput:GetControllerID(), GLOBAL.CONTROL_MENU_MISC_3)
+			.. control_string .. PlayerStatusScreen_GetHelpText(self, ...)
+	end
+	-- This is only necessary because they added a thing to filter out CONTROL_OPEN_DEBUG_MENU on this screen,
+	-- but CONTROL_OPEN_DEBUG_MENU happens to be the same value as CONTROL_MENU_MISC_3
+	local PlayerStatusScreen_OnControl = PlayerStatusScreen.OnControl
+	function PlayerStatusScreen:OnControl(control, down, ...)
+		if control == controller_control and not down then
+			return false
+		end
+		return PlayerStatusScreen_OnControl(self, control, down, ...)
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:gridplacer_farmablesoil
+	AddPrefabPostInit("tile_outline", ReplaceGridplacerAnim)
+	AddPrefabPostInit("gridplacer_farmablesoil", ReplaceGridplacerAnim)
+end
+
+-- But these things do need to get built every time
+local function PlacerPostInit(self)
+	--there's gotta be a better place to put this; also may not be necessary, but it's safe and cheap
+	local TheWorld = DST and GLOBAL.TheWorld or GLOBAL.GetWorld()
+	TheCamera = GLOBAL.TheCamera
+	ORIGIN_OFFSETS.tile = Vector3(TheWorld.Map:GetTileCenterPoint(0, 0, 0))*-1
+	if TheWorld.Flooding then
+		ORIGIN_OFFSETS.flood = Vector3(TheWorld.Flooding:GetTileCenterPoint(0, 0, 0))*-1
+	end
+	
+	if not CONTROLLEROFFSET then
+		--Then the ground action hints can get in the way; increase the offset
+		-- note that these action hints only get used by controllers
+		GetPlayer().HUD.controls.groundactionhint:SetOffset(Vector3(0, 200, 0))
+	end
+
+	--used in DST to track attachments to farm placers, telebase, etc;
+	-- set to empty list if not present for simpler logic
+	self.linked = self.linked or {}
+	--keeps track of the build grid objects, indexed by lattice coordinates
+	self.build_grid = nil
+	--keeps track of the build grid positions, indexed by lattice coordinates
+	self.build_grid_positions = nil 
+	--keep a queue of locations to check the collision for
+	--Why did I do this as storing lattice coordinates instead of storing the buildgridplacer objects?
+	-- because this way I don't have to worry about buildgridplacer objects going in multiple times
+	-- if it pops one out and it's not in the grid, no big deal, that's way faster than testing the point
+	self.refresh_queue = nil
+	self.lastpt = nil
+	self.placertype = "buildgridplacer"
+	self.waiting_for_geometry = true -- to prevent the wrong geometry being used on the first update
+	self.cursor_visible = true
+	self.cursor_quantity_visible = true
+			
+	self.inst:ListenForEvent("onremove", function()
+		self:RemoveBuildGrid()
+		self:SetCursorVisibility(true)
+		if self.tileinst then self.tileinst:Remove() end
+		if self.gridinst then self.gridinst:Remove() end
+		if self.controller_child then self.controller_child:Remove() end
+	end)
+	
+	-- Delay to capture the prefab name
+	self.inst:DoTaskInTime(0, function()
+		local prefab = self.inst.prefab
+		if prefab == "sprinkler_placer" then
+			self.placeTestFn = sprinklerPlaceTestFn
+		end
+		self.showFirstLinked = PLACERS_SHOWFIRSTLINKED[prefab]
+		if GRIDPLACER_PREFABS[prefab] then
+			ReplaceGridplacerAnim(self.inst)
+			local _oncanbuild = self.oncanbuild
+			self.oncanbuild = function(inst, ...)
+				if CTRL ~= TheInput:IsKeyDown(KEY_CTRL) then
+					UndoReplaceGridplacerAnim(self.inst)
+					return _oncanbuild(inst, ...)
+				else
+					ReplaceGridplacerAnim(self.inst)
+				end
+			end
+			local _oncannotbuild = self.oncanbuild
+			self.oncannotbuild = function(inst, ...)
+				if CTRL ~= TheInput:IsKeyDown(KEY_CTRL) then
+					UndoReplaceGridplacerAnim(self.inst)
+					return _oncannotbuild(inst, ...)
+				else
+					ReplaceGridplacerAnim(self.inst)
+				end
+			end
+		end
+	end)
+	
+end
+AddComponentPostInit("placer", PlacerPostInit)
+
+--[[ Builder Component ]]--
+-- For DST
+local function BuilderReplicaPostConstruct(self)
+	local OldCanBuildAtPoint = self.CanBuildAtPoint
+	local function NewCanBuildAtPoint(self, pt, recipe, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldCanBuildAtPoint(self, pt, recipe, ...)
+	end
+	self.CanBuildAtPoint = NewCanBuildAtPoint
+	local OldMakeRecipeAtPoint = self.MakeRecipeAtPoint
+	local function NewMakeRecipeAtPoint(self, recipe, pt, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldMakeRecipeAtPoint(self, recipe, pt, ...)
+	end
+	self.MakeRecipeAtPoint = NewMakeRecipeAtPoint
+end
+
+-- For single-player; doesn't add the rotation stuff
+local function BuilderPostInit(self)
+	local OldCanBuildAtPoint = self.CanBuildAtPoint
+	local function NewCanBuildAtPoint(self, pt, recipe, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldCanBuildAtPoint(self, pt, recipe, ...)
+	end
+	self.CanBuildAtPoint = NewCanBuildAtPoint
+	local OldMakeRecipe = self.MakeRecipe
+	local function NewMakeRecipe(self, recipe, pt, ...)
+		if pt and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldMakeRecipe(self, recipe, pt, ...)
+	end
+	self.MakeRecipe = NewMakeRecipe
+end
+
+if DST then
+	AddClassPostConstruct("components/builder_replica", BuilderReplicaPostConstruct)
+else
+	AddComponentPostInit("builder", BuilderPostInit)
+end
+
+--[[ Deployable Component ]]--
+-- Tore this from RoG's deployable component; the mouseover messes up the grid for
+--  things that use default_test as their main CanDeploy reporter (e.g. tooth traps)
+local function default_test(inst, pt)
+	local tiletype = GLOBAL.GetGroundTypeAtPosition(pt)
+	local ground_OK = tiletype ~= GLOBAL.GROUND.IMPASSABLE
+	if ground_OK then
+		-- local MouseCharacter = TheInput:GetWorldEntityUnderMouse()
+		-- if MouseCharacter and not MouseCharacter:HasTag("player") then
+			-- return false
+		-- end
+	    local ents = GLOBAL.TheSim:FindEntities(pt.x,pt.y,pt.z, 4, nil, {'NOBLOCK', 'player', 'FX'}) -- or we could include a flag to the search?
+		local min_spacing = inst.components.deployable.min_spacing or 2
+
+	    for k, v in pairs(ents) do
+			if v ~= inst and v.entity:IsValid() and v.entity:IsVisible() and not v.components.placer and v.parent == nil then
+				if GLOBAL.distsq( Vector3(v.Transform:GetWorldPosition()), pt) < min_spacing*min_spacing then
+					return false
+				end
+			end
+		end
+		return true
+	end
+	return false
+end
+
+local function CanSnapDeployable(inst, mode)
+	local DEPLOYMODE = GLOBAL.DEPLOYMODE
+	if mode == DEPLOYMODE.CUSTOM then
+		return inst:HasTag("deployedplant")
+	end
+	return mode ~= DEPLOYMODE.WALL and mode ~= DEPLOYMODE.TURF
+end
+
+-- Rewrote this a bit to no longer fully replace the old functions
+-- instead, it just modifies the point that gets passed to them
+local function DeployablePostInit(self)
+	local function ShouldRound(self, deployer, player)
+		local continue = false
+		local grid_type = "default" --to remove when sandbag fix isn't needed
+		if DST then
+			if CanSnapDeployable(self.inst, self.mode) then
+				continue = true
+			end
+		else
+			if self.placer == nil or (self.placer ~= "gridplacer"
+							and self.placer:sub(1,5) ~= "wall_"
+							and self.placer:sub(1,5) ~= "mech_"
+							)-- and self.placer:sub(1,12) ~= "sandbagsmall") --to add back in when sandbags are fixed
+			then
+				continue = true
+				grid_type = (self.placer and self.placer:sub(1,12) == "sandbagsmall") and "flood" or "default"
+			end
+		end
+		if continue then
+			return CTRL == TheInput:IsKeyDown(KEY_CTRL) and (player == nil or deployer == player), grid_type
+		else	
+			return false, grid_type
+		end
+	end
+	
+	-- This only gets called on the host, so we need to modify inventoryitem too
+	-- now that I've modified inventoryitem_replica, this may no longer be necessary
+	local OldCanDeploy = self.CanDeploy
+	if not DST then
+		OldCanDeploy = function(self, ...)
+			-- Shipwrecked version of this code
+			if self.test then
+				return self.test(self.inst, ...)
+			else
+				return default_test(self.inst, ...)
+			end
+			-- This is the vanilla version, but the Shipwrecked one above should be better.
+			-- Specifically, the vanilla version lets you place where
+			--   self.test fails but default_test succeeds (this was unintended)
+			-- return self.test and self.test(self.inst, ...) or default_test(self.inst, ...)
+		end
+	end
+	local function NewCanDeploy(self, pt, mouseover, ...)
+		local player = GetPlayer()
+		if ShouldRound(self, player, player) then
+			pt = Snap(pt)
+		end
+		return OldCanDeploy(self, pt, nil, ...) --removing mouseover should help some DST things
+	end
+	self.CanDeploy = NewCanDeploy
+	
+	local OldDeploy = self.Deploy
+	local function NewDeploy(self, pt, deployer, ...)
+		local player = GetPlayer()
+		-- if ShouldRound(self, deployer, player) then
+			-- pt = Snap(pt)
+		-- end
+		--small fix for sandbags that I can hopefully remove at some point
+		local round, grid_type = ShouldRound(self, deployer, player)
+		if round then
+			pt = Snap(pt, grid_type)
+		end
+		return OldDeploy(self, pt, deployer, ...)
+	end
+	self.Deploy = NewDeploy
+end
+AddComponentPostInit("deployable", DeployablePostInit)
+
+local function InventoryItemReplicaPostConstruct(self)
+	local OldCanDeploy = self.CanDeploy
+	local function NewCanDeploy(self, pt, mouseover, ...)
+		local mode = self.classified and self.classified.deploymode:value() or nil
+		if CanSnapDeployable(self.inst, mode) then
+			if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+				pt = Snap(pt)
+			end
+		end
+		return OldCanDeploy(self, pt, nil, ...)
+	end
+	self.CanDeploy = NewCanDeploy
+end
+if DST then
+	AddClassPostConstruct("components/inventoryitem_replica", InventoryItemReplicaPostConstruct)
+end
+
+if kleifileexists("scripts/components/farmtiller.lua") then
+	FarmTiller = require("components/farmtiller")
+	local _FarmTiller_Till = FarmTiller.Till
+	function FarmTiller:Till(pt, doer, ...)
+		-- Filter on ThePlayer to prevent host grid from overriding clients
+		if rawget(GLOBAL, "ThePlayer") == doer and ACTION_ENABLED.TILL and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return _FarmTiller_Till(self, pt, doer, ...)
+	end
+end
+
+-- Fixes deploying on clients in DST
+-- This feels really hackish...... but there doesn't seem to be a better way to do it,
+--  since this is directly called from the monstrous PlayerController functions
+--  (PlayerController:OnRightClick and PlayerController:DoControllerActionButton)
+if DST then
+	local ACTIONS_TO_SNAP = {
+		DEPLOY = function() return true end,
+	}
+	for action, _ in pairs(RMB_ACTION_GRID_SPACING) do
+		ACTIONS_TO_SNAP[action] = function() return ACTION_ENABLED[action] end
+	end
+	local ACTION_CODES_TO_SNAP = {}
+	for action, _ in pairs(ACTIONS_TO_SNAP) do
+		if rawget(GLOBAL.ACTIONS, action) then
+			ACTION_CODES_TO_SNAP[GLOBAL.ACTIONS[action].code] = function() return ACTIONS_TO_SNAP[action]() end
+		end
+	end
+	local _SendRPCToServer = GLOBAL.SendRPCToServer
+	function GLOBAL.SendRPCToServer(code, action_code, x, z, ...)
+		if code == GLOBAL.RPC.RightClick -- We don't need ControllerActionButtonDeploy because it grabs the placer's location
+		and ACTION_CODES_TO_SNAP[action_code] and ACTION_CODES_TO_SNAP[action_code]()
+		and CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			local ThePlayer = GLOBAL.ThePlayer
+			local activeitem = ThePlayer and ThePlayer.replica
+							and ThePlayer.replica.inventory
+							and ThePlayer.replica.inventory.classified
+							and ThePlayer.replica.inventory.classified:GetActiveItem()
+			if not activeitem or not (
+				   activeitem:HasTag("wallbuilder")
+				or activeitem:HasTag("fencebuilder")
+				or activeitem:HasTag("gatebuilder")
+				or activeitem:HasTag("groundtile")
+				) then
+				x,_,z = Snap(Vector3(x, 0, z)):Get()
+			end
+		end
+		_SendRPCToServer(code, action_code, x, z, ...)
+	end
+end
+
+--[[ Menu/Option Systems ]]--
+
+-- We want to make sure that chatting, or being in menus, etc, doesn't toggle
+local function GetActiveScreenName()
+	local screen = GLOBAL.TheFrontEnd:GetActiveScreen()
+	return screen and screen.name or ""
+end
+local function IsDefaultScreen()
+	return GetActiveScreenName():find("HUD") and GetPlayer() and GetPlayer().components.playercontroller:IsEnabled()
+end
+local function IsScoreboardScreen()
+	return GetActiveScreenName():find("PlayerStatusScreen") ~= nil
+end
+
+local COLOR_PRESETS = {
+	redgreen			= {bad = "red",				good = "green"},
+	redblue				= {bad = "red",				good = "blue"},
+	blackwhite			= {bad = "black",			good = "white"},
+	blackwhiteoutline	= {bad = "blackoutline",	good = "whiteoutline"},
+}
+local COLOR_PRESET_LOOKUP = {}
+local color_type_ordering = {"GOOD", "BAD", "GOODTILE", "BADTILE", "GOODPLACER", "BADPLACER"}
+for color_preset_name, color_preset in pairs(COLOR_PRESETS) do
+	local preset_comparison_string = ""
+	for _, color_type in ipairs(color_type_ordering) do
+		local color_option = color_type:match("^GOOD") and "good" or "bad"
+		preset_comparison_string = preset_comparison_string .. ResolveColor(color_type, color_preset[color_option])
+	end
+	COLOR_PRESET_LOOKUP[preset_comparison_string] = color_preset_name
+end
+local function get_preset_comparison_string()
+	local preset_comparison_string = ""
+	for _, color_type in ipairs(color_type_ordering) do
+		local color = COLORS[color_type]
+		preset_comparison_string = preset_comparison_string .. (COLOR_OPTION_LOOKUP[color] or color)
+	end
+	return preset_comparison_string
+end
+local IsKey = {}
+local ignore_key = false
+local function set_ignore() ignore_key = true end
+local function PushOptionsScreen()
+	if not SHOWMENU then
+		CTRL = not CTRL
+		return
+	end
+	local screen = GeometricOptionsScreen(modname, COLOR_OPTIONS, OUTLINED_OPTIONS)
+	screen.IsOptionsMenuKey = IsKey.OptionsMenu
+	screen.callbacks.save = function()
+		local _print = GLOBAL.print
+		GLOBAL.print = function() end --janky, but KnownModIndex functions kinda spam the logs
+		local config = GLOBAL.KnownModIndex:LoadModConfigurationOptions(modname, true)
+		local settings = {}
+		local namelookup = {} --makes it more resilient if I shift the order of options
+		for i,v in ipairs(config) do
+			namelookup[v.name] = i
+			table.insert(settings, {name = v.name, label = v.label, options = v.options, default = v.default, saved = v.saved})
+		end
+		settings[namelookup.CTRL].saved = CTRL
+		settings[namelookup.GEOMETRY].saved = SAVED_GEOMETRY_NAME
+		settings[namelookup.BUILDGRID].saved = BUILDGRID
+		settings[namelookup.HIDEPLACER].saved = HIDEPLACER
+		settings[namelookup.HIDECURSOR].saved = HIDECURSORQUANTITY and 1 or HIDECURSOR
+		settings[namelookup.SMARTSPACING].saved = SMARTSPACING
+		for color_type, color_option in pairs(COLORS) do
+			settings[namelookup[color_type .. "COLOR"]].saved = COLOR_OPTION_LOOKUP[color_option] or color_option
+		end
+		for action, enabled in pairs(ACTION_ENABLED) do
+			settings[namelookup["ACTION_"..action]].saved = enabled
+		end
+		settings[namelookup.TIMEBUDGET].saved = timebudget_percent
+		settings[namelookup.SMALLGRIDSIZE].saved = GRID_SIZES.SMALL
+		settings[namelookup.MEDGRIDSIZE].saved = GRID_SIZES.MED
+		settings[namelookup.BIGGRIDSIZE].saved = GRID_SIZES.BIG
+		--Note: don't need to include options that aren't in the menu,
+		-- because they're already in there from the options load above
+		GLOBAL.KnownModIndex:SaveConfigurationOptions(function() end, modname, settings, true)
+		GLOBAL.print = _print --restore print functionality!
+	end
+	screen.callbacks.geometry = function(geometry)
+		GRID_DIRTY = true
+		GEOMETRY_DIRTY = true
+		SAVED_LAST_GEOMETRY_NAME = SAVED_GEOMETRY_NAME
+		SAVED_GEOMETRY_NAME = geometry
+	end
+	for name,button in pairs(screen.geometry_buttons) do
+		if name:upper() == SAVED_GEOMETRY_NAME then
+			if DST then button:Select() else button:Disable() end
+		else
+			if DST then button:Unselect() else button:Enable() end
+		end
+	end
+	screen.callbacks.color = SetColor
+	local function update_color_spinners_buttons()
+		for color_type, color_option in pairs(COLORS) do
+			local color_name = COLOR_OPTION_LOOKUP[color_option] or color_option
+			screen.color_spinners[color_type]:SetSelected(color_name)
+		end
+		for _, button in pairs(screen.color_buttons) do
+			if DST then button:Unselect() else button:Enable() end
+		end
+		local preset = COLOR_PRESET_LOOKUP[get_preset_comparison_string()]
+		if preset then
+			if DST then screen.color_buttons[preset]:Select() else screen.color_buttons[preset]:Disable() end
+		end
+	end
+	update_color_spinners_buttons()
+	screen.callbacks.color_update = update_color_spinners_buttons
+	if CTRL then screen.toggle_button.onclick() end
+	screen.callbacks.toggle = function(toggle) CTRL = not toggle end
+	if not BUILDGRID then screen.grid_button.onclick() end
+	screen.callbacks.grid = function(toggle)
+		GRID_DIRTY = true
+		BUILDGRID = toggle == 1
+	end
+	if HIDEPLACER then screen.placer_button.onclick() end
+	screen.callbacks.placer = function(toggle) HIDEPLACER = toggle == 0 end
+	if HIDECURSOR then screen.cursor_button.onclick() end
+	if HIDECURSORQUANTITY then screen.cursor_button.onclick() end
+	screen.callbacks.cursor = function(toggle)
+		HIDECURSOR = toggle ~= 2
+		HIDECURSORQUANTITY = toggle == 0
+	end
+	if not SMARTSPACING then screen.smart_spacing_button.onclick() end
+	screen.callbacks.smart_spacing = function()
+		SMARTSPACING = not SMARTSPACING
+		GRID_DIRTY = true
+		GEOMETRY_DIRTY = true
+	end
+	if screen.till_grid_button then
+		if not ACTION_ENABLED.TILL then screen.till_grid_button.onclick() end
+		screen.callbacks.till_grid = function()
+			SetGridForRmbAction("TILL", not ACTION_ENABLED.TILL)
+		end
+	end
+	screen.refresh:SetSelected(timebudget_percent)
+	screen.callbacks.refresh = SetTimeBudget
+	screen.smallgrid:SetSelected(GRID_SIZES.SMALL)
+	screen.medgrid:SetSelected(GRID_SIZES.MED)
+	screen.biggrid:SetSelected(GRID_SIZES.BIG)
+	screen.callbacks.gridsize = SetGridSize
+	screen.callbacks.ignore = set_ignore
+	GLOBAL.TheFrontEnd:PushScreen(screen)
+end
+
+-- Keyboard controls
+local function SwapGeometry()
+	GRID_DIRTY = true
+	GEOMETRY_DIRTY = true
+	local _SAVED_GEOMETRY_NAME = SAVED_GEOMETRY_NAME
+	SAVED_GEOMETRY_NAME = SAVED_LAST_GEOMETRY_NAME
+	SAVED_LAST_GEOMETRY_NAME = _SAVED_GEOMETRY_NAME
+end
+IsKey.OptionsMenu = ModSettings.AddControl(
+	modname,
+	"KEYBOARDTOGGLEKEY",
+	"Options Menu",
+	"B",
+	function()
+		if IsDefaultScreen() then
+			if ignore_key then
+				ignore_key = false
+			else
+				PushOptionsScreen()				
+			end
+		end
+	end,
+	false
+)
+ModSettings.AddControl(
+	modname,
+	"GEOMETRYTOGGLEKEY",
+	"Toggle Geometry",
+	"V",
+	function()
+		if IsDefaultScreen() then
+			SwapGeometry()
+		end
+	end,
+	false
+)
+ModSettings.AddControl(
+	modname,
+	"SNAPGRIDKEY",
+	"Snap Grid",
+	"",
+	function ()
+		if IsDefaultScreen() then
+			SnapGrid()
+		end
+	end,
+	false
+)
+
+-- Controller controls
+-- This is pressing the right stick in
+-- CONTROL_MENU_MISC_3 is the same thing as CONTROL_OPEN_DEBUG_MENU
+-- CONTROL_MENU_MISC_4 is the right stick click
+local function IsOptionsMenuBound()
+	return not IsKey.OptionsMenu()
+end
+local controller_control = DST and
+	GLOBAL.CONTROL_MENU_MISC_3 or
+	GLOBAL.CONTROL_OPEN_DEBUG_MENU
+local controller_control_handler = DST and
+	function(down)
+		-- In DST, only let them do it on the scoreboard screen
+		if IsOptionsMenuBound() and not down and IsScoreboardScreen() then
+			local ss = GLOBAL.TheFrontEnd.screenstack
+			ss[#ss]:ClearFocus()
+			PushOptionsScreen()
+		end
+	end or function(down)
+		-- In single-player, let them do it on the main screen
+		if IsOptionsMenuBound() and not down and IsDefaultScreen() then
+			PushOptionsScreen()
+		end
+	end
+TheInput:AddControlHandler(controller_control, controller_control_handler)
+
+if DST then
+	local PlayerStatusScreen = require("screens/playerstatusscreen")
+	local PlayerStatusScreen_GetHelpText = PlayerStatusScreen.GetHelpText
+	function PlayerStatusScreen:GetHelpText(...)
+		local control_string = SHOWMENU and " Geometric Placement Options  " or " Toggle Geometric Placement  "
+		return TheInput:GetLocalizedControl(TheInput:GetControllerID(), GLOBAL.CONTROL_MENU_MISC_3)
+			.. control_string .. PlayerStatusScreen_GetHelpText(self, ...)
+	end
+	-- This is only necessary because they added a thing to filter out CONTROL_OPEN_DEBUG_MENU on this screen,
+	-- but CONTROL_OPEN_DEBUG_MENU happens to be the same value as CONTROL_MENU_MISC_3
+	local PlayerStatusScreen_OnControl = PlayerStatusScreen.OnControl
+	function PlayerStatusScreen:OnControl(control, down, ...)
+		if control == controller_control and not down then
+			return false
+		end
+		return PlayerStatusScreen_OnControl(self, control, down, ...)
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:placer
+end
+AddComponentPostInit("placer", PlacerPostInit)
+
+--[[ Builder Component ]]--
+-- For DST
+local function BuilderReplicaPostConstruct(self)
+	local OldCanBuildAtPoint = self.CanBuildAtPoint
+	local function NewCanBuildAtPoint(self, pt, recipe, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldCanBuildAtPoint(self, pt, recipe, ...)
+	end
+	self.CanBuildAtPoint = NewCanBuildAtPoint
+	local OldMakeRecipeAtPoint = self.MakeRecipeAtPoint
+	local function NewMakeRecipeAtPoint(self, recipe, pt, ...)
+		if CTRL == TheInput:IsKeyDown(KEY_CTRL) then
+			pt = Snap(pt)
+		end
+		return OldMakeRecipeAtPoint(self, recipe, pt, ...)
+	end
+	self.MakeRecipeAtPoint = NewMakeRecipeAtPoint
+end
+
+```
+

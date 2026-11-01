@@ -5979,8 +5979,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 08:49:18",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1310278195",
+      "name": "Rin Satsuki",
+      "author": "Norfeder & Red-White",
+      "version": "1.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:53:19",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2952056226",
+      "name": "食物属性标签",
+      "author": "alks, gregdwilson Anydong汉化",
+      "version": "1.61.h.0.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 08:53:19",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3678114053",
+      "name": "Geometric Placement 几何放置",
+      "author": "rezecib",
+      "version": "3.2.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 08:53:19",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3680323787",
+      "name": "晓美焰 时停修复 & DLC扩展补丁 v2.5",
+      "author": "我觉得8行,",
+      "version": "2.5.21",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:53:19",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:49:18"
+  "lastUpdated": "2026-11-01 08:53:19"
 }
