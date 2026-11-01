@@ -7302,8 +7302,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 12:07:31",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2521851770",
+      "name": "Glassic API",
+      "author": "未知",
+      "version": "4.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:16:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2992358212",
+      "name": "Colorful Souls",
+      "author": "Niko",
+      "version": "1.4.6",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:16:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3221877550",
+      "name": "Mod 3221877550",
+      "author": "Leonidas IV",
+      "version": "1.0.2.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:16:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3598084704",
+      "name": "超级填海叉",
+      "author": "时温",
+      "version": "1.0.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:16:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 12:07:31"
+  "lastUpdated": "2026-11-01 12:16:29"
 }

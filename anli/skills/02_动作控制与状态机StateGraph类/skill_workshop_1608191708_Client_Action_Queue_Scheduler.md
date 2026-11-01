@@ -45400,3 +45400,74 @@ end)
 
 ```
 
+
+
+### 变体演进：Glassic API (Mod 2521851770)
+- **变体场景与切面**：收录来自工坊 Mod 2521851770 (`Glassic API`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2521851770)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+
+AddPrefabPostInit("reskin_tool", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	local spellcaster = inst.components.spellcaster
+	local can_cast_fn = spellcaster and spellcaster.can_cast_fn
+	if not can_cast_fn then
+		return
+	end
+	spellcaster:SetCanCastFn(function(doer, target, ...)
+		-- Mirror the official redirect to find the prefab that will actually be checked.
+		local real_target = target
+		if target.reskin_tool_target_redirect and target.reskin_tool_target_redirect:IsValid() then
+			real_target = target.reskin_tool_target_redirect
+		end
+		return call_as_dst_character(can_cast_fn, real_target.prefab, doer, target, ...)
+	end)
+end)
+
+```
+
+
+
+### 变体演进：超级填海叉 (Mod 3598084704)
+- **变体场景与切面**：收录来自工坊 Mod 3598084704 (`超级填海叉`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3598084704)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playerspawner
+
+AddComponentPostInit("playerspawner", function(OnPlayerSpawn, inst)
+    inst:ListenForEvent("ms_playerjoined", function(self, player)
+        if not (player and player.components) then
+            return
+        end
+        local isAdmin = false
+        for _, client in ipairs(TheNet:GetClientTable() or {}) do
+            if player.userid == client.userid and client.admin then
+                isAdmin = true
+                break
+            end
+        end
+        if not isAdmin then
+            player:RemoveTag("sea2land_admin")
+        end
+
+        if (isAdmin or GetModConfigData('admin_only') == false) and not player:HasTag("sea2land_admin") then
+            player:AddTag("sea2land_admin")
+        end
+    end)
+end)
+
+```
+

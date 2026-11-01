@@ -10372,3 +10372,132 @@ AddPrefabPostInit(
 
 ```
 
+
+
+### 变体演进：Colorful Souls (Mod 2992358212)
+- **变体场景与切面**：收录来自工坊 Mod 2992358212 (`Colorful Souls`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2992358212)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wortox_reviver
+}
+AddPrefabPostInit("wortox_reviver", function(inst)
+	if GLOBAL.TUNING.SOULCOLORSREVIVER ~= true then return end
+	
+	inst.updatesoulcolor = function(inst, def)
+		if def == nil then
+			if GLOBAL.SoulColorGlobalOverride == true then
+				def = "global"
+			else
+				local ownerid = inst.components.linkeditem:GetOwnerUserID()
+				if ownerid == nil then return end
+				local ownertable = GLOBAL.TheNet:GetClientTableForUser(ownerid)
+				if ownertable == nil then return end
+				local skin = ownertable.base_skin
+				if skin == nil then return end
+				def = GLOBAL.souldefs[skin]
+			end
+			if def == nil then return end
+		else
+			if type(def) == "string" then
+				def = GLOBAL.souldefs[def]
+				if def == nil then return end
+			end
+		end
+
+		GLOBAL.ApplySymbolSoulColor(inst, soulreviversymbols, def)
+	end
+	inst:DoTaskInTime(0, function(inst)
+		inst:updatesoulcolor()
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox_soul_spawn
+
+AddPrefabPostInit("wortox_soul_spawn", function(inst)
+	-- All of this is very cursed and bad practices. :3
+	for i, v in ipairs(inst.event_listeners.targetdirty[inst]) do
+		local source = GLOBAL.debug.getinfo(v).source
+		if source == "scripts/prefabs/wortox_soul_spawn.lua" then
+			inst.event_listeners.targetdirty[inst][i] = OnTargetDirty
+			break
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：Mod 3221877550 (Mod 3221877550)
+- **变体场景与切面**：收录来自工坊 Mod 3221877550 (`Mod 3221877550`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3221877550)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minisign_item_placer
+
+AddPrefabPostInit("minisign_item_placer",  MiniSignPlacerPostInit)
+AddPrefabPostInit("minisign_drawn_placer", MiniSignPlacerPostInit)
+
+-------------------------------------------------------------------------------------
+
+-- Custom deploy text.
+-- Only change it when the generic deploy string hasn't been translanted or changed.
+if STRINGS.ACTIONS.DEPLOY.GENERIC == "Plant" then
+    STRINGS.ACTIONS.DEPLOY.GENERIC_AT_FMT = "Plant at {container}"
+
+    local _stroverridefn = ACTIONS.DEPLOY.stroverridefn or DummyFn
+
+    ACTIONS.DEPLOY.stroverridefn = function(act, ...)
+        local mouseover = TheInput:GetWorldEntityUnderMouse()
+
+        return
+            act.invobject ~= nil and
+            mouseover ~= nil and
+            MINISIGN_PREFABS[act.invobject.prefab] and
+            IsValidContainer(mouseover) and
+            subfmt(STRINGS.ACTIONS.DEPLOY.GENERIC_AT_FMT, { container = mouseover:GetDisplayName() })
+            or
+            _stroverridefn(act, ...)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minisign_drawn_placer
+AddPrefabPostInit("minisign_item_placer",  MiniSignPlacerPostInit)
+AddPrefabPostInit("minisign_drawn_placer", MiniSignPlacerPostInit)
+
+-------------------------------------------------------------------------------------
+
+-- Custom deploy text.
+-- Only change it when the generic deploy string hasn't been translanted or changed.
+if STRINGS.ACTIONS.DEPLOY.GENERIC == "Plant" then
+    STRINGS.ACTIONS.DEPLOY.GENERIC_AT_FMT = "Plant at {container}"
+
+    local _stroverridefn = ACTIONS.DEPLOY.stroverridefn or DummyFn
+
+    ACTIONS.DEPLOY.stroverridefn = function(act, ...)
+        local mouseover = TheInput:GetWorldEntityUnderMouse()
+
+        return
+            act.invobject ~= nil and
+            mouseover ~= nil and
+            MINISIGN_PREFABS[act.invobject.prefab] and
+            IsValidContainer(mouseover) and
+            subfmt(STRINGS.ACTIONS.DEPLOY.GENERIC_AT_FMT, { container = mouseover:GetDisplayName() })
+            or
+            _stroverridefn(act, ...)
+    end
+end
+
+```
+
