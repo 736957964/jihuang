@@ -7810,3 +7810,29 @@
 [2026-11-01 16:40:25] 母本变体展示已达上限 (10)，增量归约记录至总账本
 [2026-11-01 16:40:25] Reducer: 成功将 Mod 3005687457 (空弦) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 16:40:25] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:40:33] Git 自动提交并推送成功！
+[2026-11-01 16:40:33] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 16:40:33] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 16:41:06] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['881455419', '2187086142', '3475521527', '3643249762', '2955912123', '1392778117']
+[2026-11-01 16:41:06] SteamCMD 下载 881455419 ...
+[2026-11-01 16:41:06] SteamCMD 下载 2187086142 ...
+[2026-11-01 16:41:06] SteamCMD 下载 3643249762 ...
+[2026-11-01 16:41:06] SteamCMD 下载 2955912123 ...
+[2026-11-01 16:41:06] SteamCMD 下载 3475521527 ...
+[2026-11-01 16:41:06] SteamCMD 下载 1392778117 ...
+[2026-11-01 16:41:20] Worker [881455419] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 16:41:27] Worker [2187086142] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 16:41:42] Worker [3643249762] 成功解析入库暂存区 -> KEYBOARDTOGGLEKEY (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 16:42:08] Worker [2955912123] 成功解析入库暂存区 -> Steamed Collection (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 16:42:19] Worker [3475521527] 过滤拦截:  (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 16:43:10] Worker [1392778117] 成功解析入库暂存区 -> Title (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 16:43:10] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 16:43:10] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-01 16:43:10] Reducer: 成功将 Mod 1392778117 (Title) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:43:10] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:43:10] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-01 16:43:10] Reducer: 成功将 Mod 2955912123 (Steamed Collection) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:43:10] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:43:10] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-01 16:43:10] Reducer: 成功将 Mod 3643249762 (KEYBOARDTOGGLEKEY) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 16:43:10] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
