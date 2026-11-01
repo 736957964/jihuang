@@ -8400,8 +8400,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 15:37:05",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2928652892",
+      "name": "Base Projection (基地投影)",
+      "author": "NoMu，冰冰羊，THEDOG",
+      "version": "2.0.6.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 15:47:10",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2986194136",
+      "name": "set_language",
+      "author": "Peng et al.",
+      "version": "26.09.19",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 15:47:10",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3397947442",
+      "name": "迷子的永恒之旅",
+      "author": "千早爱音",
+      "version": "0.8.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 15:47:11",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3455480519",
+      "name": "拯救Wendy技能树",
+      "author": "澈先生",
+      "version": "3.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 15:47:11",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 15:37:05"
+  "lastUpdated": "2026-11-01 15:47:11"
 }

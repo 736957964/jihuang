@@ -12474,3 +12474,77 @@ end)
 
 ```
 
+
+
+### 变体演进：Base Projection (基地投影) (Mod 2928652892)
+- **变体场景与切面**：收录来自工坊 Mod 2928652892 (`Base Projection (基地投影)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2928652892)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+local mouse_controls = { [CONTROL_PRIMARY] = false, [CONTROL_SECONDARY] = true }
+AddComponentPostInit('playercontroller', function(PlayerController, inst)
+    if inst ~= ThePlayer then
+        return
+    end
+
+    local oldOnControl = PlayerController.OnControl
+    PlayerController.OnControl = function(self, control, down)
+        if IsBSPJRecordEnable() or (IsBSPJPlayEnable() and (not GLOBAL.IsBSPJPlayHelperReady() or (oldIsKeyDown(TheInput, GLOBAL['KEY_' .. BSPJ.DATA.AUTO_WORK]) and anchor_pos ~= nil))) then
+            if control == CONTROL_PRIMARY or control == CONTROL_SECONDARY then
+                return
+            end
+        end
+        local mouse_control = mouse_controls[control]
+        if down and auto_thread and IsDefaultScreen() and (interrupt_controls[control] or mouse_control ~= nil and not TheInput:GetHUDEntityUnderMouse()) then
+            kill_auto_thread()
+        end
+        return oldOnControl(self, control, down)
+    end
+
+    local oldOnUpdate = PlayerController.OnUpdate
+    PlayerController.OnUpdate = function(self, ...)
+        OnCenterUpdate()
+        OnUpdateAnchorPos()
+        return oldOnUpdate(self, ...)
+    end
+
+    local oldDoAction = PlayerController.DoAction
+    PlayerController.DoAction = function(self, buffaction, ...)
+        if buffaction and buffaction.action and buffaction.pos and IsBuildPlanning() and self.ismastersim then
+            if buffaction.action == ACTIONS.DROP or buffaction.action == ACTIONS.DEPLOY then
+                local pos = buffaction:GetActionPoint()
+                PlanningAtPos(buffaction.action == ACTIONS.DROP and 'drop' or 'deploy', pos.x, pos.z)
+                return
+            end
+        end
+        return oldDoAction(self, buffaction, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:highlight
+
+AddComponentPostInit("highlight", function(Highlight, inst)
+    local oldHighlight = Highlight.Highlight
+    Highlight.Highlight = function(self, ...)
+        if GLOBAL.IsBSPJRecordHelperReady() and GLOBAL.BASE_RECORD_HELPER.anchors[inst] then
+            return
+        end
+        oldHighlight(self, ...)
+    end
+    local oldUnHighlight = Highlight.UnHighlight
+    Highlight.UnHighlight = function(self)
+        if GLOBAL.IsBSPJRecordHelperReady() and GLOBAL.BASE_RECORD_HELPER.anchors[inst] then
+            return
+        end
+        oldUnHighlight(self)
+    end
+end)
+
+```
+

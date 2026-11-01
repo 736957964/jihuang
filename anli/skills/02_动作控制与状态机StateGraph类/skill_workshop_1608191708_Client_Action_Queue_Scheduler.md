@@ -65419,3 +65419,311 @@ end
 
 ```
 
+
+
+### 变体演进：set_language (Mod 2986194136)
+- **变体场景与切面**：收录来自工坊 Mod 2986194136 (`set_language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2986194136)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+	local old_Equip = self.Equip
+	function self:Equip(item, ...)
+		local prevslot = self:GetItemSlot(item)
+		if IsIronlord(self.inst) and not item:HasTag("heavy") then  -- Can't EQUIP when using Artifact
+			if not prevslot then self:GiveItem(item) end
+			return
+		end
+		return old_Equip(self, item, ...)
+	end
+
+	local old_DropItem = self.DropItem
+	function self:DropItem(item, ...)
+		if not (item and item.components.inventoryitem) then return end
+
+		local owner = item.components.inventoryitem:GetGrandOwner()
+		if IsIronlord(owner) and item.prefab == "living_artifact" and  -- Can't DROP activated Artifact
+			item.components.ironmachine and item.components.ironmachine:IsOn() then
+			return
+		end
+		return old_DropItem(self, item, ...)
+	end
+
+	function self:DropEquipped(keepBackpack)
+		for k, v in pairs(self.equipslots) do
+			if not (keepBackpack and v:HasTag("backpack")) and k ~= "beard" then  -- Wilson's beard_sack
+				self:DropItem(v, true, true)
+			end
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+
+AddComponentPostInit("locomotor", function(self)
+	local old_GetSpeedMultiplier = self.GetSpeedMultiplier
+
+	local function ServerGetSpeedMultiplier(self)
+		local mult = old_GetSpeedMultiplier(self)
+		if IsIronlord(self.inst) then
+			local is_mighty = self.inst:HasTag("mightiness_mighty")  -- Prevent double speedup for Wolfgang(mighty)
+			local item = self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
+			if item and item:HasTag("heavy") and not is_mighty then
+				local item_speed_mult = item.components.equippable:GetWalkSpeedMult()
+				mult = mult / item_speed_mult
+			end
+		end
+		return mult
+	end
+
+	local function ClientGetSpeedMultiplier(self)
+		local mult = old_GetSpeedMultiplier(self)
+		if IsIronlord(self.inst) then
+			local is_mighty = self.inst:HasTag("mightiness_mighty")  -- Prevent double speedup for Wolfgang(mighty)
+			local item = self.inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
+			if item and item:HasTag("heavy") and not is_mighty then
+				local item_speed_mult = item.replica.inventoryitem:GetWalkSpeedMult()
+				mult = mult / item_speed_mult
+			end
+		end
+		return mult
+	end
+
+	if GLOBAL.TheWorld.ismastersim then
+		self.GetSpeedMultiplier = ServerGetSpeedMultiplier
+	else
+		self.GetSpeedMultiplier = ClientGetSpeedMultiplier
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:cursable
+
+AddComponentPostInit("cursable", function(self)
+	function self:RemoveMonkeyCurse(dropitems)
+		local curse = "MONKEY"
+		local tag = "monkey_token"
+
+		while true do
+			local item = self.inst.components.inventory:FindItem(function(v) return v:HasTag(tag) end)
+			if not item then break end
+
+			self.inst.components.inventory:ConsumeByName(item.prefab, 1)
+			if dropitems then
+				local newcurse = SpawnPrefab(item.prefab)
+				newcurse.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
+				newcurse.components.inventoryitem:OnDropped(true)
+			end
+		end
+
+		self.curses[curse] = nil
+
+		self.inst.monkeyfeet = nil
+		self.inst.monkeyhands = nil
+		self.inst.monkeytail = nil
+		self.inst.components.skinner:ClearMonkeyCurse()
+		self.inst:RemoveTag("MONKEY_CURSE_1")
+		self.inst:RemoveTag("MONKEY_CURSE_2")
+		self.inst:RemoveTag("MONKEY_CURSE_3")
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:projectile
+
+AddComponentPostInit("projectile", function(self)
+	function self:ArtifactThrow(target, targetpos, attacker)
+		self.start = self.inst:GetPosition()
+		self.dest = target and target:GetPosition() or targetpos
+		self.attacker = attacker
+		self.artifacttarget = (target and not target:HasTag("NOBLOCK")) and target or nil
+
+		self:RotateToTarget(self.dest)
+		self.inst.Physics:SetMotorVel(self.speed, 0, 0)
+		self.inst:StartUpdatingComponent(self)
+		self.inst:AddTag("activeprojectile")
+	end
+
+	local old_OnUpdate = self.OnUpdate
+	function self:OnUpdate(dt)
+		if self.artifacttarget and self.artifacttarget:IsValid() and not self.artifacttarget:IsInLimbo() then
+			-- For targets that won't collide
+			local pos = self.inst:GetPosition()
+			local targetpos = self.artifacttarget:GetPosition()
+			local range = self.artifacttarget:GetPhysicsRadius(0)+self.hitdist
+			if GLOBAL.distsq(pos, targetpos) < range*range then
+				self.inst.collide(self.inst, self.artifacttarget)
+			end
+		end
+		old_OnUpdate(self, dt)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:grogginess
+
+AddComponentPostInit("grogginess", function(self)
+	local old_AddGrogginess = self.AddGrogginess
+	function self:AddGrogginess(...)
+		if IsIronlord(self.inst) then return end
+		old_AddGrogginess(self, ...)
+	end
+end)
+
+```
+
+
+
+### 变体演进：迷子的永恒之旅 (Mod 3397947442)
+- **变体场景与切面**：收录来自工坊 Mod 3397947442 (`迷子的永恒之旅`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3397947442)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    local old_ATTACK = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action, ...)
+        local weapon = inst.components.combat:GetWeapon()
+        return get_attack_sg(weapon) or old_ATTACK(inst, action, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+end)
+AddStategraphPostInit("wilson_client", function(sg)
+    local old_ATTACK = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action, ...)
+        local weapon = inst.replica.combat:GetWeapon()
+        return get_attack_sg(weapon) or old_ATTACK(inst, action, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:foodaffinity
+-- 官方 foodaffinity 只会从官方 spicedfoods 表中查找调味料理的基础 prefab。
+AddComponentPostInit("foodaffinity", function(self)
+    local oldGetFoodBasePrefab = self.GetFoodBasePrefab
+
+    function self:GetFoodBasePrefab(food)
+        return food.food_basename or oldGetFoodBasePrefab(self, food)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wagpunkbits_kit
+    end
+    AddPrefabPostInit("wagpunkbits_kit", function(inst) -- 自动修理机
+        if inst.components.mygo_board_item_upgrade == nil then
+            inst:AddComponent("mygo_board_item_upgrade")
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inspectable
+}
+AddComponentPostInit("inspectable", function(self)
+    local oldGetDescription = self.GetDescription
+    function self:GetDescription(viewer)
+        if viewer:HasTag("mygo") and not viewer:HasTag("playerghost") and not self.inst:HasTag("broken") then
+            for i, sound_data in ipairs(sounds_table) do
+                local character, item, sound = sound_data[1], sound_data[2], sound_data[3]
+                if viewer:HasTag(character) then
+                    if self.inst.prefab == item then
+                        Utils.MygoTalk(viewer, "talk", sound)
+                        break
+                    end
+                end
+            end
+            for i, sound_data in ipairs(records_sounds_table) do
+                local character, item, sound = sound_data[1], sound_data[2], sound_data[3]
+                if viewer:HasTag(character) then
+                    for base_name, data in pairs(records_data) do
+                        if self.inst.prefab == data[item] then
+                            Utils.MygoTalk(viewer, "talk", sound)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+        return oldGetDescription(self, viewer)
+    end
+end)
+
+```
+
+
+
+### 变体演进：拯救Wendy技能树 (Mod 3455480519)
+- **变体场景与切面**：收录来自工坊 Mod 3455480519 (`拯救Wendy技能树`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3455480519)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:elixir_container
+
+AddPrefabPostInit("elixir_container", function(inst)
+	inst:AddTag("fridge")
+	if inst.components.container then
+		inst.components.container.restrictedtag = nil
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory",function(self)
+	local old_DropEverything =  self.DropEverything
+	function self:DropEverything(ondeath, keepequip,...)
+		if ondeath and self.inst.components.attuner and self.inst.components.attuner:HasAttunement("gravestoneresurrector") then
+			return false
+		end
+		return old_DropEverything(self,ondeath, keepequip,...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:avengingghost
+end)
+AddComponentPostInit("avengingghost",function(self)
+    function self:ShouldAvenge()
+        return false
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:flower_evil
+end
+AddPrefabPostInit("flower_evil", function(inst)
+	if inst.components.pickable then
+		inst.components.pickable.onpickedfn = onpickedfn
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moondial
+end
+AddPrefabPostInit("moondial",function(inst)
+	if inst.components.ghostgestalter then
+		inst.components.ghostgestalter.domutatefn = domutatefn
+	end
+end)
+
+```
+
