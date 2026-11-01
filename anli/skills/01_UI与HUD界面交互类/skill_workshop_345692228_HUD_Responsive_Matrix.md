@@ -626,3 +626,26 @@ end)
 
 ```
 
+
+
+### 变体演进：Auto-Unequip (Mod 3381334962)
+- **变体场景与切面**：收录来自工坊 Mod 3381334962 (`Auto-Unequip`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3381334962)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:inventoryitem_classified
+
+AddPrefabPostInit('inventoryitem_classified', function (inst)
+	if not G.TheNet:IsDedicated() then
+		inst:DoTaskInTime(0, function ()
+			PostInit(inst)
+		end)
+	end
+end)
+
+```
+

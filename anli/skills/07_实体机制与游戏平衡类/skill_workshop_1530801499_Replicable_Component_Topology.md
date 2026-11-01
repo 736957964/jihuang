@@ -10289,3 +10289,86 @@ end)
 
 ```
 
+
+
+### 变体演进：水中木视野优化(Better Oceantree Visibility) (Mod 3724154699)
+- **变体场景与切面**：收录来自工坊 Mod 3724154699 (`水中木视野优化(Better Oceantree Visibility)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3724154699)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:oceantree_pillar_roots
+
+AddPrefabPostInit(
+    "oceantree_pillar_roots",
+    function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            inst:AddTag("MOD_OCEANTREE_ROOT")
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:oceantree_pillar_ripples
+
+AddPrefabPostInit(
+    "oceantree_pillar_ripples",
+    function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            inst:AddTag("MOD_OCEANTREE_RIPPLE")
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:oceantree_pillar
+
+AddPrefabPostInit(
+    "oceantree_pillar",
+    function(inst)
+
+        if not GLOBAL.TheWorld.ismastersim then
+
+            inst:DoTaskInTime(
+                0,
+                function()
+
+                    SetupDistanceFade(inst)
+
+                    -- 记录上一帧的状态，只在状态改变时更新标签
+                    inst._last_noclick = false
+
+                    if TRUNK_FADE > 0 then
+                        RefreshRootRippleCache(inst)
+                        inst:DoPeriodicTask(1, RefreshRootRippleCache)
+                    end
+
+                    inst:DoPeriodicTask(
+                        0.05,
+                        function()
+                            if TRUNK_FADE > 0 then
+                                local alpha = GetDistanceFadeAlpha(inst)
+                                local transparent = alpha < 1
+
+                                if transparent ~= inst._last_noclick then
+                                    if transparent then
+                                        inst:AddTag("NOCLICK")
+                                    else
+                                        inst:RemoveTag("NOCLICK")
+                                    end
+                                    inst._last_noclick = transparent
+                                end
+
+                                SyncRootRippleAlpha(inst, alpha)
+                            end
+                        end
+                    )
+
+                end
+            )
+        end
+    end
+
+```
+

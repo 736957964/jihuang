@@ -44831,3 +44831,572 @@ end)
 
 ```
 
+
+
+### 变体演进：澄闪 (Mod 2834150453)
+- **变体场景与切面**：收录来自工坊 Mod 2834150453 (`澄闪`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2834150453)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+-----------------------------------------------------------------------------------
+AddPrefabPostInit("world", function(inst)
+	if inst.ismastersim then
+		inst["goldenglow_xin_mao"] = inst:DoTaskInTime(3, function()
+			local mao = TheSim:FindFirstEntityWithTag("goldenglow_xin_mao")
+			if mao == nil then
+				local ents = Ents
+				local b = true
+				for k, v in pairs(ents) do
+					if v.prefab == "goldenglow_xin_mao" then
+						b = false
+					end
+				end
+				if b then
+					for k, v in pairs(ents) do
+						-- if v.prefab == "multiplayer_portal" then
+						if v.prefab == "statueglommer" then
+							local zb = v:GetPosition()
+							zb.x = zb.x + math.random(3, 6) * math.random(-1, 1)
+							zb.z = zb.z + math.random(3, 6) * math.random(-1, 1)
+							-- SpawnPrefab("goldenglow_xin_mao").Transform:SetPosition(zb:Get())
+							-- SpawnPrefab("goldenglow_xin_maomao").Transform:SetPosition(zb:Get())
+							break
+						end
+					end
+				end
+			end
+		end)
+	end
+end)
+-----------------------------------------------------------------------------------
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+	local frograin = upvaluehelper.GetWorldHandle(inst,"israining","components/frograin")
+	if  frograin then
+		local GetSpawnPoint = upvaluehelper.Get(frograin,"GetSpawnPoint")	
+		if GetSpawnPoint ~= nil then
+			local old = GetSpawnPoint
+			local function newGetSpawnPoint(pt)
+				if checkz(pt.z) then
+					return nil
+				end
+				return old(pt)
+			end
+			upvaluehelper.Set(frograin,"GetSpawnPoint",newGetSpawnPoint)
+		end		
+	end
+
+	local wildfires = upvaluehelper.GetEventHandle(TheWorld,"ms_lightwildfireforplayer","components/wildfires")
+	if  wildfires then
+		local LightFireForPlayer = upvaluehelper.Get(wildfires,"LightFireForPlayer")	
+		if LightFireForPlayer ~= nil then
+			local old = LightFireForPlayer
+			local function NewLightFireForPlayer(player, rescheduleFn)
+				if player ~= nil then
+					local x, y, z = player.Transform:GetWorldPosition()
+					if checkz(z) then
+						return
+					end
+					local x1, y1 = TheWorld.Map:GetTileCoordsAtPoint(x,0,z)
+				end
+				old(player, rescheduleFn)
+			end
+			upvaluehelper.Set(wildfires,"LightFireForPlayer",NewLightFireForPlayer)
+		end	
+	end	
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:telestaff
+--限制传送法杖
+AddPrefabPostInit("telestaff", function(inst)
+	if inst.components.spellcaster then
+		local old = inst.components.spellcaster.CastSpell
+		inst.components.spellcaster.CastSpell = function(self,target, pos)
+			local caster = inst.components.inventoryitem.owner or target
+			if caster then
+				local x,y,z = caster.Transform:GetWorldPosition()
+				if checkz(z) then
+					if caster and caster.components.talker then
+						caster.components.talker:Say(STRINGS.NOHOUSEPURPLESTAFF)
+					end
+					return false
+				end
+			end
+			return old(self,target, pos)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:townportaltalisman
+--使用砂石传送到外面 解除视野锁定
+AddPrefabPostInit("townportaltalisman", function(inst)
+	if inst.components.teleporter then
+		local old = inst.components.teleporter.onActivate
+		inst.components.teleporter.onActivate = function(aaa, doer)
+			if old ~= nil then old(aaa, doer) end
+			if doer and  doer:HasTag("player") then
+				if	doer._ingghouse ~= nil  and doer._ingghouse:value() ==  true then
+					doer._ingghouse:set(false)
+				end
+				if	doer._inggcamea ~= nil  and doer._inggcamea:value() ==  true then
+					doer._inggcamea:set(false)
+				end
+				if doer.components.playercontroller ~= nil then
+					doer.components.playercontroller:EnableMapControls(true)
+				end
+			end
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+	local oldEnableMapControls = self.EnableMapControls
+	function self:EnableMapControls(val)
+		if self.ismastersim  and val then
+			if self.inst._inggcamea ~= nil and self.inst._inggcamea:value() ==  true then
+				return
+			end
+		end
+		oldEnableMapControls(self,val)
+	end
+end)
+
+```
+
+
+
+### 变体演进：witch (Mod 3371315960)
+- **变体场景与切面**：收录来自工坊 Mod 3371315960 (`witch`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3371315960)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:locomotor
+AddComponentPostInit("locomotor", function(self)
+	local OldSetMotorSpeed = self.SetMotorSpeed
+	self.isFly = false --在执行broom_flying脚本的fly函数时会设置为true
+    --[[self.SetMotorSpeed = function(self,speed,...)--注：这是生物通用的！
+    if self.strafedir then
+        SetMotorVelRelToStrafeDir(self.inst, speed, self.inst.Transform:GetRotation(), self.strafedir)
+    else
+            self.inst.Physics:SetMotorVel(speed, 1.1*(self.Aerial-self.inst:GetPosition().y), 0)
+    end       
+    	                                                                  
+ end]]
+ local oldrunforward = self.RunForward
+ self.RunForward = function(self,direct,...)
+    oldrunforward(self,direct,...)
+    if self.inst.replica.broom_flying and self.inst.replica.broom_flying:Getisfly() then
+        local x,y,z = self.inst.Physics:GetMotorVel()
+        self.inst.Physics:SetMotorVel(x, 5*(self.inst.replica.broom_flying:GetHeight()-self.inst:GetPosition().y), z)
+    end--算高度速度的时候 ， 不能在locomotor这里设置新的变量（即不能在外面算好再到这里用），要在这里调用其它组件的值（应该是要用网络变量）然后在这里算好,才能正常使用。
+    
+end
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:broom_flying
+local broom_sound_option = GetModConfigData("broom_sound")
+AddComponentPostInit("broom_flying",function (self)--起飞时开始放特效音效
+    local old_broom_fly = self.Fly
+    function self:Fly()
+        old_broom_fly(self)
+    self.inst.broom_sounding = false
+
+    if broom_sound_option then
+        self.inst.broom_sound = self.inst:DoPeriodicTask(0.33 , function ()--播放音效
+
+            local playerSpeedx,playerSpeedy,playerSpeedz = self.inst.Physics:GetMotorVel()
+            local isMoving = math.abs(playerSpeedx) >= 0.1 --or math.abs(playerSpeedy) >= 0.1
+    
+            if isMoving then
+                if self.inst.broom_sounding == false then
+                    self.inst.SoundEmitter:PlaySound("broom_sound6/broom_sound/broom_sound","broom_sound") 
+                    self.inst.SoundEmitter:SetVolume("broom_sound",0.2)
+                    self.inst.broom_sounding = true
+                end
+            else 
+                self.inst.SoundEmitter:KillSound("broom_sound")
+                self.inst.broom_sounding = false
+            end
+    
+            end)
+    end
+
+if starfx == 1 then
+    self.inst.starfxSpawner = self.inst:DoPeriodicTask(0.10 , function ()
+        local playerSpeedx,playerSpeedy,playerSpeedz = self.inst.Physics:GetMotorVel()
+        local isMoving = math.abs(playerSpeedx) >= 0.1
+        if not isMoving then
+            return
+        end
+        local colored_star = SpawnPrefab("colored_star")
+        local color_gradation_star = SpawnPrefab("color_gradation_star")
+        local star_bloom = SpawnPrefab("star_bloom")
+        --随机旋转动画
+        local randomAnim = tostring(math.random(1,4))
+        colored_star.AnimState:PlayAnimation("colored_star"..randomAnim,true)
+        color_gradation_star.AnimState:PlayAnimation("color_gradation_star"..randomAnim,true)
+        --随机生命周期
+        local lifeTime = math.random(5,10)/10
+        colored_star.lifeTime = lifeTime
+        color_gradation_star.lifeTime = lifeTime
+        star_bloom.lifeTime = lifeTime
+        --随机初始位置
+        local playerPos = self.inst:GetPosition()
+        local playerRot = self.inst.Transform:GetRotation() * DEGREES--这个是弧度(这个角度是从横轴(x轴?)正方向順时针方向算的角度，相当邪门)(如果SetPosition是x正逆时针的话)
+        local reverseRot = math.rad(360)-playerRot+math.rad(180) --所以正确的 角色朝向的反方向 是这个才对(SetPosition标准)
+        local x,y,z = playerPos.x + math.cos(reverseRot) , playerPos.y , playerPos.z + math.sin(reverseRot)
+        local starPosX,starPosY,starPosZ = randomPosTriangle(x,y,z,2,3,reverseRot)
+        colored_star.Transform:SetPosition(starPosX,starPosY+1,starPosZ)
+        color_gradation_star.Transform:SetPosition(starPosX,starPosY+1,starPosZ)
+        star_bloom.Transform:SetPosition(starPosX,starPosY+1,starPosZ)
+        --随机初始速度大小和方向
+        local speedRot = math.random(reverseRot/DEGREES-60 , reverseRot/DEGREES+60)--角度
+        local speed = math.random(2 , 6)
+        local randomYSpeed = math.random(0,30)/10
+        colored_star.Physics:SetMotorVel(speed * math.cos(math.rad(speedRot)), randomYSpeed , speed * math.sin(math.rad(speedRot)))
+        color_gradation_star.Physics:SetMotorVel(speed * math.cos(math.rad(speedRot)), randomYSpeed , speed * math.sin(math.rad(speedRot)))
+        star_bloom.Physics:SetMotorVel(speed * math.cos(math.rad(speedRot)), randomYSpeed , speed * math.sin(math.rad(speedRot)))
+        --随机初始大小
+        local starSize = math.random(10 , 14)/10
+        colored_star.Transform:SetScale(starSize,starSize,starSize)
+        color_gradation_star.Transform:SetScale(starSize,starSize,starSize)
+        star_bloom.Transform:SetScale(starSize,starSize,starSize)
+        --随机初始朝向(已禁用)
+        --local startStarRot = math.random(15 , 75)--角度
+        --colored_star.Transform:SetRotation(startStarRot)--SetRot用的是角度,用弧度/DEGREES就是角度(注意!用这个会改变轴的方向!所以干脆做在动画里面算了。)
+    end)
+end
+        
+if firefx == 1 then
+    self.inst.firefxSpawner = self.inst:DoPeriodicTask(0.025,function ()--火焰特效
+        if self.inst.AnimState:IsCurrentAnimation("broom_fly_talk") then
+            return
+        end
+        local firefx = SpawnPrefab("broom_fire")
+        --随机初始朝向
+        local fireStartRot = math.random(-180,180)
+        firefx.Transform:SetRotation(fireStartRot)
+        --随机初始大小
+        local fireStartScale = math.random(10 , 15)/10
+        firefx.Transform:SetScale(fireStartScale,fireStartScale,fireStartScale)
+        --初始位置和速度
+        local playerPos = self.inst:GetPosition()
+        local playerRot = self.inst.Transform:GetRotation() * DEGREES--这个是弧度(这个角度是从横轴(x轴?)正方向順时针方向算的角度，相当邪门)(如果SetPos是x正逆时针的话)
+        local reverseRot = math.rad(360)-playerRot+math.rad(180) --所以正确的 角色朝向的反方向 是这个才对(SetPosition标准)
+        local x,y,z = playerPos.x + 1.3*math.cos(reverseRot) , playerPos.y+0.2 , playerPos.z + 1.3*math.sin(reverseRot)
+        firefx.Transform:SetPosition(x,y,z)
+        local playerSpeedx,playerSpeedy,playerSpeedz = self.inst.Physics:GetMotorVel()
+        local isMoving = math.abs(playerSpeedx) >= 0.1
+        firefx.Physics:SetMotorVel((isMoving and 5 or 3) * math.cos(reverseRot+math.rad(fireStartRot)),1,(isMoving and 5 or 3) * math.sin(reverseRot+math.rad(fireStartRot)))
+    end)
+end
+
+end
+        
+
+    local old_broom_land = self.Land
+    function self:Land()
+        old_broom_land(self)
+        if self.inst.starfxSpawner ~= nil then
+            self.inst.starfxSpawner:Cancel()
+            self.inst.starfxSpawner = nil
+        end
+        if self.inst.firefxSpawner ~= nil then
+            self.inst.firefxSpawner:Cancel()
+            self.inst.firefxSpawner = nil
+        end
+        if self.inst.broom_sound ~= nil then
+            self.inst.broom_sound:Cancel()
+            self.inst.broom_sound = nil
+            self.inst.SoundEmitter:KillSound("broom_sound")
+            self.inst.broom_sounding = false
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(self)
+    local run = self.states.run
+    if run then
+        local old_enter = run.onenter
+        function run.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+            if inst.components.broom_flying then
+				if inst.components.broom_flying.isfly then
+                    inst.AnimState:PlayAnimation("broom_fly", true)
+					inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength() + 0.01)
+                    inst.sg:AddStateTag("noslip") 
+                    inst.sg.statemem.normal = false
+                    inst.sg.statemem.careful = false
+                    inst.sg.statemem.sandstorm = false
+                    inst.sg.statemem.groggy = false
+                    inst.sg.statemem.channelcast = false
+                    inst.sg.statemem.heavy = false
+                    inst.sg.statemem.heavy_fast = false
+                    inst.sg.statemem.goose = false
+                    inst.sg.statemem.moose = false
+                    inst.sg.statemem.moosegroggy = false
+                    inst.sg.statemem.goosegroggy = false
+                    inst.sg.statemem.flying = true
+				end
+            end
+        end
+        local oldtimeline = run.timeline
+        if oldtimeline then
+            local newtimeline1 = 
+            TimeEvent(39 * FRAMES, function(inst)--TimeEvent是一个Class，而Class是个表
+                    if inst.sg.statemem.flying then
+                        for k, v in pairs(inst.components.inventory.equipslots) do
+                            if v.foleysound ~= nil then
+                                inst.SoundEmitter:PlaySound(v.foleysound, nil, nil, true)
+                            end
+                        end
+                    end
+                end)
+            local newtimeline2 =
+                TimeEvent(79 * FRAMES, function(inst)
+                    if inst.sg.statemem.flying then
+                        for k, v in pairs(inst.components.inventory.equipslots) do
+                            if v.foleysound ~= nil then
+                                inst.SoundEmitter:PlaySound(v.foleysound, nil, nil, true)
+                            end
+                        end
+                    end
+                end)
+            table.insert(run.timeline,newtimeline1)--各状态图里的timeline是一个大表里面装的全是小表
+            table.insert(run.timeline,newtimeline2)
+        end
+    end
+
+    local run_start = self.states.run_start
+    if run_start then
+        local old_enter = run_start.onenter
+        function run_start.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+            if inst.components.broom_flying then
+				if inst.components.broom_flying.isfly then
+                        inst.AnimState:PlayAnimation("broom_fly", true)
+                    inst.sg:AddStateTag("noslip")
+				end
+            end
+        end
+    end
+
+    local run_stop = self.states.run_stop
+    if run_stop then
+        local old_enter = run_stop.onenter
+        function run_stop.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+			if inst.components.broom_flying then
+				if inst.components.broom_flying.isfly then
+                        inst.AnimState:PlayAnimation("broom_fly", true)
+                    inst.sg:AddStateTag("noslip")
+				end
+            end
+        end
+    end
+	
+	local old_idle = self.states.idle
+    if old_idle then
+        local old_idle_enter = old_idle.onenter
+        function old_idle.onenter(inst, ...)
+            if old_idle_enter then
+                old_idle_enter(inst, ...)
+            end
+			if inst.components.broom_flying then
+				if inst.components.broom_flying.isfly then
+                        inst.AnimState:PlayAnimation("broom_fly", true)
+                    inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength() + 0.1)
+				end
+            end
+        end
+
+        local old_idle_timeout = old_idle.ontimeout
+        self.states.idle.ontimeout = function (inst,...)
+            if inst.components.broom_flying and inst.components.broom_flying.isfly or 
+            (inst.replica.broom_flying and inst.replica.broom_flying:Getisfly())
+            then
+                inst.sg:GoToState("idle")
+            else
+                if old_idle_timeout then
+                    old_idle_timeout(inst,...)
+                end
+            end
+            
+        end
+    end
+
+    local funnyidle = self.states.funnyidle
+    if funnyidle then
+        local old_enter = funnyidle.onenter
+        function funnyidle.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+            if inst.components.broom_flying then
+				if inst.components.broom_flying.isfly then
+                        inst.AnimState:PlayAnimation("broom_fly", true)
+				end
+            end
+        end
+    end
+
+        local talk = self.states.talk
+    if talk then
+        local old_enter = talk.onenter
+        function talk.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+            if inst.components.broom_flying then
+			if inst.components.broom_flying.isfly then
+                    inst.AnimState:PlayAnimation("broom_fly_talk", true)
+            end
+            end
+        end
+    end
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(self)
+    local run = self.states.run
+    if run then
+        local old_enter = run.onenter
+        function run.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+            if inst.replica.inventory and inst.replica.inventory:EquipHasTag("broom_isfly") then
+                    inst.AnimState:PlayAnimation("broom_fly", true)
+				inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength() + 0.01)
+                inst.sg:AddStateTag("noslip")
+            end
+        end
+    end
+
+    local run_start = self.states.run_start
+    if run_start then
+        local old_enter = run_start.onenter
+        function run_start.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+			if inst.replica.inventory and inst.replica.inventory:EquipHasTag("broom_isfly") then
+                    inst.AnimState:PlayAnimation("broom_fly", true)
+                inst.sg:AddStateTag("noslip")
+            end
+        end
+    end
+
+    local run_stop = self.states.run_stop
+    if run_stop then
+        local old_enter = run_stop.onenter
+        function run_stop.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+			if inst.replica.inventory and inst.replica.inventory:EquipHasTag("broom_isfly") then
+
+                    inst.AnimState:PlayAnimation("broom_fly", true)
+                inst.sg:AddStateTag("noslip")
+            end
+        end
+    end
+	
+	local old_idle = self.states.idle
+    if old_idle then
+        local old_idle_enter = old_idle.onenter
+        function old_idle.onenter(inst, ...)
+            if old_idle_enter then
+                old_idle_enter(inst, ...)
+            end
+			if inst.replica.inventory and inst.replica.inventory:EquipHasTag("broom_isfly") then
+
+                    inst.AnimState:PlayAnimation("broom_fly", true)
+                inst.sg:SetTimeout(30000)
+            end
+        end
+    end
+
+    local funnyidle = self.states.funnyidle
+    if funnyidle then
+        local old_enter = funnyidle.onenter
+        function funnyidle.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+			if inst.replica.inventory and inst.replica.inventory:EquipHasTag("broom_isfly") then
+            inst.AnimState:PlayAnimation("broom_fly", true)
+            end
+        end
+    end
+
+        local talk = self.states.talk
+    if talk then
+        local old_enter = talk.onenter
+        function talk.onenter(inst, ...)
+            if old_enter then
+                old_enter(inst, ...)
+            end
+			if inst.replica.inventory and inst.replica.inventory:EquipHasTag("broom_isfly") then
+            inst.AnimState:PlayAnimation("broom_fly_talk", true)
+
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller" ,function(self)
+local playercontroller_OnControl = self.OnControl
+local button = GetModConfigData("fly_button_controller")
+function self:OnControl(control, down)
+    playercontroller_OnControl(self, control, down)
+    if not self.inst.flyingcooldown and (self.inst.replica.inventory:EquipHasTag("witch_broom") or self.inst.replica.inventory:EquipHasTag("witch_broom_upgraded"))and not self.inst.replica.inventory:EquipHasTag("broom_isfly") 
+    and not self.inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS):HasTag("fueldepleted") and control == GLOBAL[button] and self:IsEnabled() then
+        SendModRPCToServer(MOD_RPC["Broomfly"]["controller_fly"])                                                                  --↑检测有没有在写木牌、制作栏是否开启、施法菜单是否开启
+        self.inst.flyingcooldown = true
+        self.inst:DoTaskInTime(1, function()
+            self.inst.flyingcooldown = false
+        end)
+     end
+end
+end)
+
+```
+

@@ -7266,8 +7266,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 11:59:43",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2834150453",
+      "name": "澄闪",
+      "author": "风早Zanoku&六花",
+      "version": "1.5.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:07:30",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3371315960",
+      "name": "witch",
+      "author": "乌鸦头头",
+      "version": "1.01",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:07:30",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3381334962",
+      "name": "Auto-Unequip",
+      "author": "HiIk",
+      "version": "v1.3.0",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 12:07:31",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3724154699",
+      "name": "水中木视野优化(Better Oceantree Visibility)",
+      "author": "小鱼饭馆",
+      "version": "1.2.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:07:31",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 11:59:43"
+  "lastUpdated": "2026-11-01 12:07:31"
 }
