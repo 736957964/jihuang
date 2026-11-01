@@ -38717,3 +38717,164 @@ end)
 
 ```
 
+
+
+### 变体演进：艾雅法拉 (Mod 2978292229)
+- **变体场景与切面**：收录来自工坊 Mod 2978292229 (`艾雅法拉`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2978292229)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", SGWilsonPostInit)
+AddStategraphPostInit("wilson", function(sg)
+	if sg.events and sg.events.attacked then --技能期间防打断
+		local old_attacked = sg.events.attacked.fn
+		sg.events.attacked.fn = function(inst, data)
+			if (inst.sg and inst.sg:HasStateTag("nointerrupt") and inst.sg:HasStateTag("eyjafjalla_volcano")) then
+                return
+            end
+            return old_attacked(inst, data)
+        end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+end)
+AddStategraphPostInit("wilson_client", SGWilsonClientPostInit)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+AddPrefabPostInit("reskin_tool", function(inst)
+    if not TheWorld.ismastersim then
+         return inst
+    end
+
+    if inst.components.spellcaster.spell then  
+
+        local can_cast_fn_old = inst.components.spellcaster.can_cast_fn
+        inst.components.spellcaster:SetCanCastFn(function(doer, target, pos, ...)
+            if target ~= nil and target.components.eyjafjallaskinner then
+                return true
+            end
+
+            if can_cast_fn_old ~= nil then
+                return can_cast_fn_old(doer, target, pos, ...)
+            end
+        end)
+
+        local spell_old = inst.components.spellcaster.spell
+        inst.components.spellcaster:SetSpellFn(function(tool, target, pos, ...)
+            if target ~= nil and target.components.eyjafjallaskinner then
+                local fx = SpawnPrefab("explode_reskin")
+                fx.Transform:SetScale(1, 1, 1)
+                local fx_pos_x, fx_pos_y, fx_pos_z = target.Transform:GetWorldPosition()
+                fx.Transform:SetPosition(fx_pos_x, fx_pos_y, fx_pos_z)
+                target.components.eyjafjallaskinner:ChangeSkin()
+                return true
+            end
+            if spell_old ~= nil then
+                return spell_old(tool, target, pos, ...)
+            end
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+end)
+AddComponentPostInit("builder", function(self)
+    local old_BufferBuild = self.BufferBuild
+    self.BufferBuild = function(self, recname)
+        if recname ~= "eyjafjalla_station" or c_countprefabs("eyjafjalla_station", true) == 0 or self.freebuildmode then
+            return old_BufferBuild(self, recname)
+        end
+        if self.inst.components.talker ~= nil then
+            self.inst.components.talker:Say("只能建造一个制造站哦")
+        end
+        return 
+    end
+end)
+
+```
+
+
+
+### 变体演进：Writhe (Mod 867126591)
+- **变体场景与切面**：收录来自工坊 Mod 867126591 (`Writhe`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 867126591)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:batwing
+	
+ AddPrefabPostInit("batwing", function(inst)
+ if not inst.components.fuel then
+	inst:AddComponent("fuel")
+	inst.components.fuel.fueltype = FUELTYPE.BAT
+	inst.components.fuel.fuelvalue = TUNING.LARGE_FUEL
+	end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:writhetool_1
+then
+    AddPrefabPostInit("writhetool_1", function(inst)
+ if inst.components.tool then
+   inst.components.tool:SetAction(ACTIONS.HACK)
+   if inst.components.finiteuses then
+     inst.components.finiteuses:SetConsumption(ACTIONS.HACK, 1.5)
+	 end
+	 end
+ end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:writhetool_2
+ end)
+  AddPrefabPostInit("writhetool_2", function(inst)
+ if inst.components.tool then
+   inst.components.tool:SetAction(ACTIONS.HACK)
+   if inst.components.finiteuses then
+     inst.components.finiteuses:SetConsumption(ACTIONS.HACK, 1.25)
+	 end
+	 end
+ end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_vortex_cloak_number
+
+AddPrefabPostInit(
+    "armor_vortex_cloak_number",
+    function(inst)
+        if not GLOBAL.TheWorld.ismastersim
+        then
+            return
+        end
+        local GetDapperness_old = inst.components.equippable.GetDapperness
+        inst.components.equippable.GetDapperness = function(self, owner, ...)
+            local original_dapperness = GetDapperness_old(self, owner, ...)
+            if owner.prefab=="writhe"
+            then
+                return original_dapperness - inst.components.equippable.dapperness + 0.02
+            end
+            return original_dapperness
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nightmarefuel
+
+AddPrefabPostInit("nightmarefuel", function(inst)
+inst:AddComponent("rechargeable") --new
+end)
+
+```
+

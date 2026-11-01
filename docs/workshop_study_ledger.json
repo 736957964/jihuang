@@ -6690,8 +6690,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 10:32:06",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2978292229",
+      "name": "艾雅法拉",
+      "author": "MDX",
+      "version": "1.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:35:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3091801418",
+      "name": "扫描地图",
+      "author": "萌萌的新",
+      "version": "1.1.26",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 10:35:32",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3750536829",
+      "name": "Mod 3750536829",
+      "author": "冰冰羊",
+      "version": "2026-10-25",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 10:35:32",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3761111244",
+      "name": "晨昏线 · Terminus Light",
+      "author": "󰀒",
+      "version": "0.3.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 10:35:32",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "867126591",
+      "name": "Writhe",
+      "author": "M. Tiddles, port by _Zero",
+      "version": "1.96",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:35:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 10:32:06"
+  "lastUpdated": "2026-11-01 10:35:32"
 }

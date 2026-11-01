@@ -3781,3 +3781,151 @@ end)
 
 ```
 
+
+
+### 变体演进：扫描地图 (Mod 3091801418)
+- **变体场景与切面**：收录来自工坊 Mod 3091801418 (`扫描地图`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3091801418)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+end
+AddPrefabPostInit("world", function(world)
+    local a = true
+    world:ListenForEvent("playeractivated", function()
+        if a then
+            mainf()
+            a = false
+        else
+            mainf(true)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:areaaware
+	--查询地图节点
+	AddComponentPostInit("areaaware", function(self, inst)
+		local oldUpdatePosition = self.UpdatePosition
+		function self:UpdatePosition(x, y, z, ...)
+			if self.inst.should_print_node_id then
+				local px, py, pz = self.inst.Transform:GetWorldPosition()
+				local a = GLOBAL.TheWorld.Map:GetNodeIdAtPoint(px, py, pz)
+				print("GetNodeIdAtPoint:", a, a and GLOBAL.TheWorld.topology.ids[a])
+				local node, node_index = GLOBAL.TheWorld.Map:FindVisualNodeAtPoint(px, py, pz)
+				print("FindVisualNodeAtPoint:", node, node_index)
+			end
+			return oldUpdatePosition(self, x, y, z, ...)
+		end
+	end)
+
+```
+
+
+
+### 变体演进：Mod 3750536829 (Mod 3750536829)
+- **变体场景与切面**：收录来自工坊 Mod 3750536829 (`Mod 3750536829`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3750536829)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(world)
+    local a = true
+    world:ListenForEvent("playeractivated", function(self, data)
+        if a then
+            a = false
+            for fn in pairs(allplayerfn_once) do
+                fn(self, data)
+            end
+        end
+        for fn in pairs(allplayerfn) do
+            fn(self, data)
+        end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：晨昏线 · Terminus Light (Mod 3761111244)
+- **变体场景与切面**：收录来自工坊 Mod 3761111244 (`晨昏线 · Terminus Light`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3761111244)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+-- 扫帚换肤时同步影子皮肤
+AddPrefabPostInit("reskin_tool", function(inst)
+    if not TheWorld.ismastersim then return end
+    -- 洞穴模式无影子，无需换肤同步
+    if TheWorld:HasTag("cave") then return end
+
+    local spellcaster = inst.components.spellcaster
+    if not spellcaster then return end
+
+    local old_cast = spellcaster.CastSpell
+    spellcaster.CastSpell = function(self, target, pos, caster)
+        if old_cast then
+            old_cast(self, target, pos, caster)
+        end
+
+        local sync_target = target or caster
+        if sync_target and sync_target:IsValid() and sync_target._shadow and sync_target._shadow:IsValid() then
+            local cached_skin = inst._cached_reskinname and inst._cached_reskinname[sync_target.prefab]
+            if cached_skin then
+                inst:DoTaskInTime(0.05, function()
+                    if sync_target:IsValid() and sync_target._shadow and sync_target._shadow:IsValid() then
+                        TheSim:ReskinEntity(sync_target._shadow.GUID, sync_target._shadow.skinname, cached_skin, nil, caster and caster.userid or "")
+                        local recorder = sync_target.components.skinsetterrecorder
+                        if recorder then
+                            recorder.userid = caster and caster.userid or ""
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- 持久化：保存/加载 ShadowToggleList（hook TheWorld 的 OnSave/OnLoad）
+AddPrefabPostInit("world", function(inst)
+    if not TheWorld.ismastersim then return end
+
+    local _OnSave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        if _OnSave then _OnSave(inst, data) end
+        if not data then return end
+        data.terminus_shadow_toggle = {}
+        for prefab, v in pairs(ShadowToggleList) do
+            data.terminus_shadow_toggle[prefab] = v
+        end
+    end
+
+    local _OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data)
+        if _OnLoad then _OnLoad(inst, data) end
+        if data and data.terminus_shadow_toggle then
+            for prefab, v in pairs(data.terminus_shadow_toggle) do
+                ShadowToggleList[prefab] = v
+            end
+        end
+    end
+end)
+
+```
+
