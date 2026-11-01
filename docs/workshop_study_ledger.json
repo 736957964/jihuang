@@ -8580,8 +8580,44 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 16:16:10",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "1853828038",
+      "name": "Insanity Begone",
+      "author": "Leon",
+      "version": "1.16.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 16:24:57",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2794741028",
+      "name": "储物衣柜 & Storage Wardrobe",
+      "author": "冷逸修, Jerry",
+      "version": "1.9",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 16:24:57",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3049588674",
+      "name": "language",
+      "author": "莫赋断肠诗",
+      "version": "1.4.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:24:57",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3766742709",
+      "name": "TAILS: The glider",
+      "author": "Mr.Tier",
+      "version": "1.0.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:24:57",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 16:16:10"
+  "lastUpdated": "2026-11-01 16:24:57"
 }

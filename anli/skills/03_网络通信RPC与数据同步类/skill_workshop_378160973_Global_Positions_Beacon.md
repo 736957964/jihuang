@@ -1,41 +1,41 @@
 # 饥荒一线工坊深度研读 Skill：伴生网络信标（Classified Entity）与跨视距同步架构
-`
+```
 - **工坊 ID**：378160973 (`Global Positions`)
 - **领域分类**：联机网络同步机制、Classified 伴生轻量实体设计、远距离跨视距雷达穿透、团队迷雾序列化互通
 - **研读基准**：Steam 创意工坊在线原版源码
-`
+```
 ---
-`
+```
 ## 一、核心实现原理与架构全貌
-`
+```
 饥荒联机版的实体系统具有严格的**网络休眠与视距裁剪机制**：离开玩家视距范围的实体不会向客机同步坐标。若要制作诸如“全图指示器、队友雷达、跨屏求救标记、甚至载具追踪”，最佳解法就是模仿官方与 `Global Positions` 采用的 **伴生微型信标（Classified Proxy Entity）**。
-`
+```
 ---
-`
+```
 ## 二、标准化生产级代码范式 (可直接移植)
-`
-```lua
+```
+```
 -- ==============================================================================
 -- 范式 1：轻量伴生网络信标预制体定义 (scripts/prefabs/my_beacon_classified.lua)
 -- ==============================================================================
-`
+```
 local function fn()
     local inst = CreateEntity()
-`
+```
     inst.entity:AddTransform()
     inst.entity:AddNetwork()
     inst.entity:Hide() -- 视觉隐藏，仅作网络数据桥梁
-`
+```
     inst:AddTag("CLASSIFIED")
     inst.entity:SetCanSleep(false) -- 核心：常驻全图不休眠
-`
+```
     -- 网络变量 (NetVars) 定义
     inst.host_guid = net_entity(inst.GUID, "host_entity")
     inst.beacon_type = net_string(inst.GUID, "beacon_type")
     inst.is_active = net_bool(inst.GUID, "is_active", "activedirty")
-`
+```
     inst.entity:SetPristine()
-`
+```
     -- 客户端逻辑
     if not TheWorld.ismastersim then
         inst:ListenForEvent("activedirty", function()
@@ -46,45 +46,45 @@ local function fn()
         end)
         return inst
     end
-`
+```
     inst.persists = false -- 不持久化到硬盘，由宿主动态派生
     return inst
 end
-`
+```
 return Prefab("my_beacon_classified", fn)
-`
+```
 -- ==============================================================================
 -- 范式 2：宿主实体服务端伴生与坐标同步组件 (scripts/components/network_beacon.lua)
 -- ==============================================================================
-`
+```
 local NetworkBeacon = Class(function(self, inst)
     self.inst = inst
     self.classified = nil
-`
+```
     if TheWorld.ismastersim then
         self.inst:DoTaskInTime(0, function() self:SpawnClassified() end)
     end
 end)
-`
+```
 function NetworkBeacon:SpawnClassified()
     if self.classified ~= nil then return end
-`
+```
     local c = SpawnPrefab("my_beacon_classified")
     c.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
     c.host_guid:set(self.inst)
     c.beacon_type:set(self.inst.prefab)
     c.is_active:set(true)
-`
+```
     -- 坐标跟随绑定
     self.inst:DoPeriodicTask(0.1, function()
         if self.inst:IsValid() and c:IsValid() then
             c.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
         end
     end)
-`
+```
     self.classified = c
 end
-`
+```
 function NetworkBeacon:OnRemoveFromEntity()
     if self.classified and self.classified:IsValid() then
         self.classified.is_active:set(false)
@@ -92,24 +92,24 @@ function NetworkBeacon:OnRemoveFromEntity()
         self.classified = nil
     end
 end
-`
+```
 return NetworkBeacon
 ```
-`
+```
 ---
-`
+```
 ## 三、避坑与生产安全准则
-`
+```
 1. **`persists = false` 是信标必须铁律**：
    - 伴生微型信标一旦漏写 `persists = false`，服务器保存世界时会把成百上千个脱离宿主的僵尸信标写入世界文件，导致读档后坐标错乱甚至坏档！
 2. **伴随跟随频度（Throttle）**：
    - 不必在 `OnUpdate` 每帧（1/60s）同步一次信标坐标，使用 `DoPeriodicTask(0.1)`（每秒 10 次）甚至 `0.2` 秒同步一次坐标，客户端自身的插值系统（Transform Smoothing）即可呈现极其丝滑的平移轨迹，带宽节省 85% 以上。
-`
-`
+```
+```
 ## 五、进阶拓扑演进与变体分支
-`
-`
-`
+```
+```
+```
 ### 变体演进：Mod 2281925291 (Mod 2281925291)
 - **变体场景与切面**：收录来自工坊 Mod 2281925291 (Mod 2281925291) 的生产级切面。
 - **核心切面代码**：
@@ -133,9 +133,12 @@ env.AddComponentPostInit("inventory", function(self)
 		return _SetActiveItem(self, item, ...)
 	end
 end)
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：[PTP]Shop OnLine (Mod 2958856329)
 - **变体场景与切面**：收录来自工坊 Mod 2958856329 ([PTP]Shop OnLine) 的生产级切面。
 - **核心切面代码**：
@@ -145,9 +148,12 @@ end)
 -- ============================================================================
 local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：Phonograph Tweaked (Mod 2988233681)
 - **变体场景与切面**：收录来自工坊 Mod 2988233681 (Phonograph Tweaked) 的生产级切面。
 - **核心切面代码**：
@@ -156,7 +162,7 @@ local GLOBAL = GLOBAL
 -- 生产级架构复刻切面范式 (提取自 Mod 2988233681)
 -- ============================================================================
 local GLOBAL = GLOBAL
-`
+```
 AddPrefabPostInit("phonograph", function(inst)
     inst.record_song = _G.net_string(inst.GUID, "phonograph.song", "phonographsongdirty")
     inst.record_playing = _G.net_bool(inst.GUID, "phonograph.playing", "phonographplayingdirty")
@@ -344,7 +350,7 @@ AddPrefabPostInit("world", function(inst)
         inst.components.inventoryitem.canbepickedup = true
     end
     UpvalueHacker.SetUpvalue(_G.Prefabs.phonograph.fn, StopPlayingRecord, "StopPlayingRecord")
-`
+```
     local FARM_PLANT_TAGS = {"tendable_farmplant"}
     local function song_update(inst)
         local ix, iy, iz = inst.Transform:GetWorldPosition()
@@ -385,7 +391,7 @@ AddPrefabPostInit("world", function(inst)
         inst.components.inventoryitem.canbepickedup = false
     end
     UpvalueHacker.SetUpvalue(_G.Prefabs.phonograph.fn, TryToPlayRecord, "TryToPlayRecord")
-`
+```
     local function OnGetItemFromPlayer(inst, giver, item)
         inst:DropRecord()
         inst.components.inventory:GiveItem(item)
@@ -421,9 +427,12 @@ AddPrefabPostInit("world", function(inst)
     end
     UpvalueHacker.SetUpvalue(_G.Prefabs.wood_table_round.fn, OnDecorTaken, "OnDecorTaken")
 end)
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：小合集SS (Mod 3120638435)
 - **变体场景与切面**：收录来自工坊 Mod 3120638435 (小合集SS) 的生产级切面。
 - **核心切面代码**：
@@ -432,11 +441,14 @@ end)
 -- 生产级架构复刻切面范式 (提取自 Mod 3120638435)
 -- ============================================================================
 local GLOBAL = GLOBAL
-`
+```
 AddPrefabPostInit("forest_network", function(inst) inst:AddComponent("globalpositions") end)
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：全球定位RR (Mod 3163922068)
 - **变体场景与切面**：收录来自工坊 Mod 3163922068 (全球定位RR) 的生产级切面。
 - **核心切面代码**：
@@ -461,9 +473,12 @@ local GLOBAL = GLOBAL
         -- You will have to make this icon if it doesn't exist (see other minimap icon mods)
         GLOBAL._GLOBALPOSITIONS_MAP_ICONS.some_mod_prefab = "some_mod_prefab.tex"
     end)
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：Mod 3689239824 (Mod 3689239824)
 - **变体场景与切面**：收录来自工坊 Mod 3689239824 (Mod 3689239824) 的生产级切面。
 - **核心切面代码**：
@@ -483,9 +498,12 @@ AddPrefabPostInit("world", function(inst)
 		end)
 	end)
 end)
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：快捷物品栏 Quick Bar (Mod 3787501714)
 - **变体场景与切面**：收录来自工坊 Mod 3787501714 (快捷物品栏 Quick Bar) 的生产级切面。
 - **核心切面代码**：
@@ -495,9 +513,12 @@ end)
 -- ============================================================================
 local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：Fan Skins Collection (Mod 3827608591)
 - **变体场景与切面**：收录来自工坊 Mod 3827608591 (Fan Skins Collection) 的生产级切面。
 - **核心切面代码**：
@@ -512,9 +533,12 @@ end
 ------------ Mime skins. ------------
 -------------------------------------
 local function ToggleMimeBehaviour(inst)
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：No More Cave Bug (Mod 3828908041)
 - **变体场景与切面**：收录来自工坊 Mod 3828908041 (No More Cave Bug) 的生产级切面。
 - **核心切面代码**：
@@ -541,14 +565,17 @@ AddComponentPostInit("playerspawner", function(self, inst)
         end)
     end
 end)
+```
+```
+```
+
 `
-`
-`
+
 ### 变体演进：Nice Utils (Mod 3753657277)
 - **变体场景与切面**：收录来自工坊 Mod 3753657277 (`Nice Utils`) 的生产级切面。
 - **核心切面代码**：
 `lua
-```lua
+```
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3753657277)
 -- ============================================================================
@@ -643,7 +670,10 @@ else
     _G.TUNING.HEATROCK_NUMUSES = (_G.TUNING.HEATROCK_NUMUSES or 8) * heatrock_durability_mult
 end
 ```
-`
+```
 > 💡 注：本黄金母本已在底层总账本中累计归约收敛 78 个同类工坊模组的生产级演进分支，此处精选保留最具代表性的前 10 个拓扑切面以确保文档秒开流畅。
+```
+```
+
 `
-`
+
