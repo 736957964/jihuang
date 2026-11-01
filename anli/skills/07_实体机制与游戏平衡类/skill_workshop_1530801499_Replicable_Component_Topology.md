@@ -7493,3 +7493,48 @@ end)
 
 ```
 
+
+
+### 变体演进：phonograph_carry_play (Mod 3480789291)
+- **变体场景与切面**：收录来自工坊 Mod 3480789291 (`phonograph_carry_play`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3480789291)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:phonograph
+
+AddPrefabPostInit("phonograph", function(inst)
+    if not TheWorld.ismastersim then return inst end
+
+    inst.TurnOffMachine = function() end --为什么科雷设计成播放64秒就停止了？
+
+    --[[
+
+    if PHONOGRAPH_CARRY_PLAY then
+        local Oldonputininventoryfn = inst.components.inventoryitem.onputininventoryfn
+        inst.components.inventoryitem.onputininventoryfn = function(inst, owner, ...)
+            local song = inst:GetRecordSong()
+            if song
+                and inst.components.machine and inst.components.machine:IsOn()
+                and owner and owner.SoundEmitter
+            then
+                ClearPlayerTag(owner)
+
+                owner._minecraft_phonograph = inst
+                owner.SoundEmitter:PlaySound(song, "minecraft_ragtime")
+                owner:ListenForEvent("itemlose", OnLosePhonograph)
+            end
+
+            return Oldonputininventoryfn and Oldonputininventoryfn(inst, owner, ...)
+        end
+
+        inst:ListenForEvent("onremove", onremove)
+    end
+    ]]
+end)
+
+```
+

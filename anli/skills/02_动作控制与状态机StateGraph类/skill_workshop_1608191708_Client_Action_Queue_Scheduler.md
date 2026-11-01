@@ -31891,3 +31891,81 @@ end
 
 ```
 
+
+
+### 变体演进：伍迪变身皮肤美化（客户端版） (Mod 3793923385)
+- **变体场景与切面**：收录来自工坊 Mod 3793923385 (`伍迪变身皮肤美化（客户端版）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3793923385)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:woodie
+end
+AddPrefabPostInit("woodie", WatchWoodieBuild)
+
+local feathers = {
+  "weregoose_feathers1",
+  "weregoose_feathers2",
+  "weregoose_feathers3",
+  "weregoose_transform_fx"
+}
+local feathers_cache = {}
+for i, v in ipairs(feathers) do feathers_cache[v] = true end
+
+local function DeriveSkinSuffix(w)
+  local build = w.AnimState and w.AnimState:GetBuild()
+  if build then
+    local v = string.match(build, "^weregoose_(%w+)$")
+    if v and v ~= "build" and v ~= "fx" then return v end
+  end
+  return w._cc_humanskin
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+      else
+        AddPrefabPostInit("world", function(inst)
+          inst:ListenForEvent("ms_playerspawn", utils._playeroninit)
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:skeleton_player
+local function InitSkeletonPlayerPostInit()
+  AddPrefabPostInit("skeleton_player", function(inst)
+    if not TheWorld.ismastersim then
+      return
+    end
+
+    local old_on_save = inst.OnSave
+    inst.OnSave = function(skel, data)
+      if old_on_save ~= nil then
+        old_on_save(skel, data)
+      end
+      if data ~= nil and skel._woodie_wereform ~= nil
+        and WEREFORM_SKELETONS[skel._woodie_wereform] ~= nil then
+        data.woodie_wereform = skel._woodie_wereform
+        data.woodie_skeleton_animnum = skel._woodie_skeleton_animnum
+      end
+    end
+
+    local old_on_load = inst.OnLoad
+    inst.OnLoad = function(skel, data)
+      if old_on_load ~= nil then
+        old_on_load(skel, data)
+      end
+      if data ~= nil and data.woodie_wereform ~= nil and data.woodie_skeleton_animnum ~= nil then
+        local cfg = WEREFORM_SKELETONS[data.woodie_wereform]
+        if cfg ~= nil then
+          skel._woodie_wereform = data.woodie_wereform
+          skel._woodie_skeleton_animnum = data.woodie_skeleton_animnum
+          ApplyWereformSkeletonAppearance(skel, cfg, data.woodie_skeleton_animnum)
+        end
+      end
+    end
+  end)
+
+```
+
