@@ -12417,3 +12417,60 @@ end)
 
 ```
 
+
+
+### 变体演进：克莱恩猫猫头替换影怪 (Mod 3742036118)
+- **变体场景与切面**：收录来自工坊 Mod 3742036118 (`克莱恩猫猫头替换影怪`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3742036118)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:ruinsnightmare_horn_attack
+
+AddPrefabPostInit("ruinsnightmare_horn_attack", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    if inst.SetUp ~= nil then
+        local old_SetUp = inst.SetUp
+
+        inst.SetUp = function(inst, owner, target, other)
+            old_SetUp(inst, owner, target, other)
+            OverrideHornSymbol(inst, IsRuinsNightmareRed(owner))
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruinsnightmare
+
+AddPrefabPostInit("ruinsnightmare", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    local old_onriftchanged = inst._onriftchanged
+
+    if old_onriftchanged ~= nil then
+        inst:RemoveEventCallback("ms_riftaddedtopool", old_onriftchanged, TheWorld)
+        inst:RemoveEventCallback("ms_riftremovedfrompool", old_onriftchanged, TheWorld)
+    end
+
+    inst._onriftchanged = function(world)
+        if old_onriftchanged ~= nil then
+            old_onriftchanged(world)
+        end
+
+        ApplyRuinsNightmareStateBuild(inst)
+    end
+
+    inst:ListenForEvent("ms_riftaddedtopool", inst._onriftchanged, TheWorld)
+    inst:ListenForEvent("ms_riftremovedfrompool", inst._onriftchanged, TheWorld)
+
+    inst._onriftchanged(TheWorld)
+end)
+
+```
+

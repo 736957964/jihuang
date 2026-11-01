@@ -64352,3 +64352,849 @@ end)
 
 ```
 
+
+
+### 变体演进：Venti (Mod 2671801578)
+- **变体场景与切面**：收录来自工坊 Mod 2671801578 (`Venti`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2671801578)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:critter_kitten
+AddPrefabPostInit("critter_kitten", function(inst)
+	inst:AddTag("cat")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:catcoon
+
+AddPrefabPostInit("catcoon", function(inst)
+	inst:AddTag("cat")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:weapon
+
+AddComponentPostInit("weapon", function(self)
+	self.onprojectile = nil
+
+	function self:SetOnProjectile(fn)
+		self.onprojectile = fn
+	end
+
+	local old_LaunchProjectile = self.LaunchProjectile
+	function self:LaunchProjectile(attacker, target)
+		if not self.inst:HasTag("genshin_projectile") then
+			old_LaunchProjectile(self, attacker, target)
+			return
+		end
+
+		if self.projectile ~= nil then
+			if self.onprojectilelaunch ~= nil then
+				self.onprojectilelaunch(self.inst, attacker, target)
+			end
+
+			local proj = SpawnPrefab(self.projectile)
+			if proj ~= nil then
+				proj.components.weapon.damage = self.damage
+
+				if self.onprojectile ~= nil then
+					self.onprojectile(self.inst, attacker, target, proj)
+				end
+
+				if proj.components.projectile ~= nil then
+					if self.projectile_offset ~= nil then
+						local x, y, z = attacker.Transform:GetWorldPosition()
+
+						local dir = (target:GetPosition() - Vector3(x, y, z)):Normalize()
+						dir = dir * self.projectile_offset
+
+						proj.Transform:SetPosition(x + dir.x, y, z + dir.z)
+					else
+						proj.Transform:SetPosition(attacker.Transform:GetWorldPosition())
+					end
+					proj.components.projectile:Throw(self.inst, target, attacker)
+					if self.inst.projectiledelay ~= nil then
+						proj.components.projectile:DelayVisibility(self.inst.projectiledelay)
+					end
+					if attacker ~= nil then
+						attacker:PushEvent("onprojectilelaunched")
+					end
+				elseif proj.components.complexprojectile ~= nil then
+					proj.Transform:SetPosition(attacker.Transform:GetWorldPosition())
+					proj.components.complexprojectile:Launch(target:GetPosition(), attacker, self.inst)
+				end
+			end
+
+			if self.onprojectilelaunched ~= nil then
+				self.onprojectilelaunched(self.inst, attacker, target)
+			end
+		end
+	end
+end)
+
+AddComponentPostInit("projectile", function(self)
+	self.aftergethit = nil
+
+	function self:SetAfterGetHitFn(fn)
+		self.aftergethit = fn
+	end
+
+	local old_Hit = self.Hit
+	function self:Hit(target)
+		if not self.inst:HasTag("genshin_projectile") then
+			old_Hit(self, target)
+			return
+		end
+
+		local attacker = self.owner
+		local weapon = self.inst
+
+		if self.delayowner ~= nil then
+			self.inst:RemoveEventCallback("onremove", self._ondelaycancel, self.delayowner)
+			self.inst:RemoveEventCallback("newstate", self._ondelaycancel, self.delayowner)
+			self.delayowner = nil
+		end
+
+		self:Stop()
+		self.inst.Physics:Stop()
+
+		if attacker.components.combat == nil and attacker.components.weapon ~= nil and attacker.components.inventoryitem ~= nil then
+			weapon = (self.has_damage_set and weapon.components.weapon ~= nil) and weapon or attacker
+			attacker = attacker.components.inventoryitem.owner
+		end
+
+		if self.onprehit ~= nil then
+			self.onprehit(self.inst, attacker, target)
+		end
+		if attacker ~= nil and attacker.components.combat ~= nil then
+			if attacker.components.combat.ignorehitrange then
+				attacker.components.combat:DoAttack(target, weapon, self.inst, self.stimuli)
+			else
+				attacker.components.combat.ignorehitrange = true
+				attacker.components.combat:DoAttack(target, weapon, self.inst, self.stimuli)
+				attacker.components.combat.ignorehitrange = false
+			end
+		end
+		if self.onhit ~= nil then
+			self.onhit(self.inst, attacker, target)
+		end
+		if self.aftergethit ~= nil then
+			self.aftergethit(self.inst, attacker, target)
+		end
+	end
+end)
+
+AddComponentPostInit("complexprojectile", function(self)
+	self.aftergethitfn = nil
+
+	function self:SetAfterGetHitFn(fn)
+		self.aftergethitfn = fn
+	end
+
+	local old_Hit = self.Hit
+	function self:Hit(target)
+		if not self.inst:HasTag("genshin_projectile") then
+			old_Hit(self, target)
+			return
+		end
+
+		self.inst:RemoveTag("activeprojectile")
+		self.inst:StopUpdatingComponent(self)
+
+		self.inst.Physics:SetMotorVel(0, 0, 0)
+		self.inst.Physics:Stop()
+		self.velocity.x, self.velocity.y, self.velocity.z = 0, 0, 0
+
+		if self.onhitfn ~= nil then
+			self.onhitfn(self.inst, self.attacker, target)
+			if attacker ~= nil then
+				attacker:PushEvent("onprojectilehit")
+			end
+		end
+		if self.aftergethitfn ~= nil then
+			self.aftergethitfn(self.inst, self.attacker, target)
+		end
+	end
+end)
+
+AddComponentPostInit("inventory", function(self)
+	self.shields = {}
+
+	function self:ShieldAbsorb(damage, element)
+		for k, v in pairs(self.shields) do
+			if v.components.genshinshield ~= nil then
+				v.components.genshinshield:TakeDamage(damage, element)
+				damage = 0
+			end
+		end
+		return damage
+	end
+end)
+
+AddComponentPostInit("combat", function(self)
+	local old_GetAttacked = self.GetAttacked
+	function self:GetAttacked(attacker, damage, weapon, stimuli)
+		if self.inst.components.inventory ~= nil then
+			damage = self.inst.components.inventory:ShieldAbsorb(damage, stimuli)
+		end
+		old_GetAttacked(self, attacker, damage, weapon, stimuli)
+	end
+end)
+
+AddComponentPostInit("health", function(self)
+	local old_DoFireDamage = self.DoFireDamage
+	function self:DoFireDamage(amount, doer, instant)
+		if self.inst.components.inventory ~= nil then
+			amount = self.inst.components.inventory:ShieldAbsorb(amount, "pyro")
+		end
+		old_DoFireDamage(self, amount, doer, instant)
+	end
+end)
+
+if KnownModIndex:IsModEnabled("workshop-2578151314") then
+	TUNING.GENSHIN_ATTRIBUTES = true
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:projectile
+
+AddComponentPostInit("projectile", function(self)
+	self.aftergethit = nil
+
+	function self:SetAfterGetHitFn(fn)
+		self.aftergethit = fn
+	end
+
+	local old_Hit = self.Hit
+	function self:Hit(target)
+		if not self.inst:HasTag("genshin_projectile") then
+			old_Hit(self, target)
+			return
+		end
+
+		local attacker = self.owner
+		local weapon = self.inst
+
+		if self.delayowner ~= nil then
+			self.inst:RemoveEventCallback("onremove", self._ondelaycancel, self.delayowner)
+			self.inst:RemoveEventCallback("newstate", self._ondelaycancel, self.delayowner)
+			self.delayowner = nil
+		end
+
+		self:Stop()
+		self.inst.Physics:Stop()
+
+		if attacker.components.combat == nil and attacker.components.weapon ~= nil and attacker.components.inventoryitem ~= nil then
+			weapon = (self.has_damage_set and weapon.components.weapon ~= nil) and weapon or attacker
+			attacker = attacker.components.inventoryitem.owner
+		end
+
+		if self.onprehit ~= nil then
+			self.onprehit(self.inst, attacker, target)
+		end
+		if attacker ~= nil and attacker.components.combat ~= nil then
+			if attacker.components.combat.ignorehitrange then
+				attacker.components.combat:DoAttack(target, weapon, self.inst, self.stimuli)
+			else
+				attacker.components.combat.ignorehitrange = true
+				attacker.components.combat:DoAttack(target, weapon, self.inst, self.stimuli)
+				attacker.components.combat.ignorehitrange = false
+			end
+		end
+		if self.onhit ~= nil then
+			self.onhit(self.inst, attacker, target)
+		end
+		if self.aftergethit ~= nil then
+			self.aftergethit(self.inst, attacker, target)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:complexprojectile
+
+AddComponentPostInit("complexprojectile", function(self)
+	self.aftergethitfn = nil
+
+	function self:SetAfterGetHitFn(fn)
+		self.aftergethitfn = fn
+	end
+
+	local old_Hit = self.Hit
+	function self:Hit(target)
+		if not self.inst:HasTag("genshin_projectile") then
+			old_Hit(self, target)
+			return
+		end
+
+		self.inst:RemoveTag("activeprojectile")
+		self.inst:StopUpdatingComponent(self)
+
+		self.inst.Physics:SetMotorVel(0, 0, 0)
+		self.inst.Physics:Stop()
+		self.velocity.x, self.velocity.y, self.velocity.z = 0, 0, 0
+
+		if self.onhitfn ~= nil then
+			self.onhitfn(self.inst, self.attacker, target)
+			if attacker ~= nil then
+				attacker:PushEvent("onprojectilehit")
+			end
+		end
+		if self.aftergethitfn ~= nil then
+			self.aftergethitfn(self.inst, self.attacker, target)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：language (Mod 3060420588)
+- **变体场景与切面**：收录来自工坊 Mod 3060420588 (`language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3060420588)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+end)
+AddPrefabPostInit("world", function(inst)
+    if GLOBAL.Prefabs.woodie and GLOBAL.Prefabs.woodie.fn then
+        local _SetWereActions = debug_get(GLOBAL.Prefabs.woodie.fn, "SetWereActions")
+        if _SetWereActions then
+            local new_SetWereActions = function(inst, mode)
+                _SetWereActions(inst, mode)
+
+                if not IsWereMode(mode) and inst.components.playeractionpicker ~= nil then
+                    inst.components.playeractionpicker.pointspecialactionsfn = function(inst, pos, useitem, right)
+                        if right and useitem == nil and CanBlinkTo(pos) and inst.CanSoulhop and inst:CanSoulhop() then
+                            return {ACTIONS.BLINK}
+                        end
+                        return {}
+                    end
+                end
+            end
+            debug_set(GLOBAL.Prefabs.woodie.fn, "SetWereActions", new_SetWereActions)
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：霍霍 (Mod 3348667263)
+- **变体场景与切面**：收录来自工坊 Mod 3348667263 (`霍霍`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3348667263)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:eater
+
+AddComponentPostInit(
+    "eater",
+    function(self)
+        self.SetCanEatNightItem = function()
+            table.insert(self.preferseating, FOODTYPE.NIGHTMAREFUEL)
+            table.insert(self.caneat, FOODTYPE.NIGHTMAREFUEL)
+            self.inst:AddTag("nightmarefuel_eater")
+        end
+
+        self.OverMissionAndHuohuo = function()
+            --table.remove(self.preferseating, FOODTYPE.NIGHTMAREFUEL)
+            --table.remove(self.caneat, FOODTYPE.NIGHTMAREFUEL)
+            self.inst:RemoveTag("nightmarefuel_eater")
+        end
+
+        self.SetCanEatHuohuoItem1 = function()
+            table.insert(self.preferseating, FOODTYPE.HUOHUOFOOD1)
+            table.insert(self.caneat, FOODTYPE.HUOHUOFOOD1)
+            self.inst:AddTag("huohuofood1_eater")
+        end
+
+        self.SetCanEatHuohuoItem2 = function()
+            table.insert(self.preferseating, FOODTYPE.HUOHUOFOOD2)
+            table.insert(self.caneat, FOODTYPE.HEART)
+            self.inst:AddTag("huohuofood2_eater")
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:temperature
+AddComponentPostInit(
+    "temperature",
+    function(self)
+        local OnUpdate = self.OnUpdate
+        self.OnUpdate = function(self, dt, applyhealthdelta)
+            if self.inst:HasTag("huohuo_buff") then
+                return false
+            end
+
+            return OnUpdate(self, dt, applyhealthdelta)
+        end
+
+        local DoDelta = self.DoDelta
+        self.DoDelta = function(self, delta)
+            if TheWorld.state.issummer and self.inst.components.inventory:HasItemWithTag("huohuo_badge_1", 1) then
+                delta = delta * 0.5
+            end
+
+            return DoDelta(self, delta)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:freezable
+
+AddComponentPostInit(
+    "freezable",
+    function(self)
+        local AddColdness = self.AddColdness
+        self.AddColdness = function(self, coldness, freezetime, nofreeze)
+            if self.inst:HasTag("huohuo_buff") then
+                return false
+            end
+
+            return AddColdness(self, coldness, freezetime, nofreeze)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:moisture
+
+AddComponentPostInit(
+    "moisture",
+    function(self)
+        local DoDelta = self.DoDelta
+        self.DoDelta = function(self, num, no_announce)
+            if self.inst:HasTag("huohuo_buff") then
+                return false
+            end
+
+            return DoDelta(self, num, no_announce)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:sanityaura
+
+AddComponentPostInit(
+    "sanityaura",
+    function(self)
+        local GetAura = self.GetAura
+        self.GetAura = function(self, observer)
+            local DoDelta = GetAura(self, observer)
+            if observer.components.inventory then
+                if observer.components.inventory:HasItemWithTag("huohuo_badge_1", 1) then
+                    DoDelta = DoDelta * 0.5
+                elseif observer.components.inventory:HasItemWithTag("huohuo_badge_2", 1) then
+                    DoDelta = 0
+                    --elseif observer.components.inventory:HasItemWithTag("huohuo_badge_3") and self.inst:HasTag("shadow") then
+                    --DoDelta = 0
+                end
+            end
+
+            return DoDelta
+        end
+    end)
+
+
+--受致命伤不会死亡
+local function Update(inst, isday)
+    if isday then
+        local self = inst.components.combat
+        self.immunedeath_huohuo = 0
+    end
+end
+
+AddComponentPostInit(
+    "health",
+    function(self)
+        local oldfn = self.DoDelta
+        self.DoDelta = function(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+            local old_health = self.currenthealth + amount
+            if old_health <= 0 then
+                if self.inst:HasTag("player") and self.inst:HasTag("nodead") and self.inst.components.combat and self.inst.components.combat.huohuo_godmode and amount < 0 then
+                    self.currenthealth = 50
+                    amount = 0
+                end
+            end
+
+            return oldfn(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+        end
+    end)
+
+AddComponentPostInit(
+    "combat",
+    function(self)
+        local old_attacked = self.GetAttacked
+        self.immunedeath_huohuo = 0
+        self.huohuo_godmode = false
+
+        self.GetAttacked = function(self, attacker, damage, weapon, stimuli, spdamage)
+            if self.inst:HasTag("player") and self.inst:HasTag("nodead") then
+                local old_health = self.inst.components.health.currenthealth
+                local max_health = self.inst.components.health:GetMaxWithPenalty()
+                local min_health = math.min(self.inst.components.health.minhealth or 0, max_health)
+
+                if damage >= old_health and self.immunedeath_huohuo < 2 then
+                    if not self.huohuo_godmode then
+                        self.immunedeath_huohuo = self.immunedeath_huohuo + 1
+                        self.inst.components.health:SetPercent(0.5)
+                        self.inst.components.health:SetInvincible(true)
+                        self.huohuo_godmode = true
+                        self.inst:DoTaskInTime(0.5, function()
+                            self.huohuo_godmode = false
+                            self.inst.components.health:SetInvincible(false)
+                            self.inst:RemoveTag("nodead")
+                        end)
+                    end
+                end
+            end
+
+            if self.huohuo_godmode then
+                damage = 0
+            end
+
+            return old_attacked(self, attacker, damage, weapon, stimuli, spdamage)
+        end
+
+        self.inst:WatchWorldState("isday", Update)
+
+        local oldfn = self.OnRemoveFromEntity --可能不太好 可以去掉，暂时看看效果
+        self.OnRemoveFromEntity = function(self)
+            self.inst:StopWatchingWorldState("isday", Update)
+            if oldfn ~= nil then
+                return oldfn(self)
+            end
+        end
+    end)
+
+AddComponentPostInit(
+    "inspectable",
+    function(self)
+        local oldgetdescription = self.GetDescription
+        self.GetDescription = function(self, viewer)
+            if viewer and viewer:HasTag("huohuo") then
+                -- 如果查看者就是当前实体，直接返回
+                if self.inst == viewer then
+                    return
+                    -- 如果实体无法被查看（例如，目标在视野外），则返回特定的提示信息
+                elseif not CanEntitySeeTarget(viewer, self.inst) then
+                    -- 如果目标实体有拥有者且该拥有者是口袋维度容器，并且容器是由当前查看者打开的，允许查看
+                    local owner = self.inst.components.inventoryitem ~= nil and self.inst.components.inventoryitem.owner or
+                        nil
+                    if not (owner ~= nil and
+                            owner:HasTag("pocketdimension_container") and
+                            owner.components.container ~= nil and
+                            owner.components.container:IsOpenedBy(viewer)
+                        ) then
+                        -- 否则返回"太暗看不清楚"提示
+                        return GetString(viewer, "DESCRIBE_TOODARK")
+                    end
+                end
+
+                -- 定义描述、过滤上下文和作者
+                local desc, key, filter_context, author
+                if self.getspecialdescription ~= nil then
+                    -- 如果有特殊描述函数，则调用它，可能需要额外处理（例如玩家骨架）
+                    desc, filter_context, author = self.getspecialdescription(self.inst, viewer)
+                elseif self.descriptionfn ~= nil then
+                    -- 如果有描述函数，则调用它
+                    desc = self.descriptionfn(self.inst, viewer)
+                else
+                    -- 否则返回默认描述
+                    desc = self.description
+                end
+
+                -- 如果描述为 nil 或查看者是幽灵/哑巴，强制调用描述函数
+                if desc == nil or viewer:HasTag("playerghost") or viewer:HasTag("mime") then
+                    desc, key = NewsGetDescriptionFortheTest(viewer, self.inst, self:GetStatus(viewer))
+                    return desc, key
+                    -- 如果实体正在冒烟，返回冒烟描述
+                elseif self.inst.components.burnable ~= nil and self.inst.components.burnable:IsSmoldering() then
+                    return GetString(viewer, "DESCRIBE_SMOLDERING")
+                end
+
+                -- 返回描述文本、过滤上下文和作者
+                return desc, key, filter_context, author
+            end
+            return oldgetdescription(self, viewer)
+        end
+    end)
+
+-- 辅助函数：检查物品是否符合条件
+local function CheckItem(item, target_prefab, tag)
+    return (target_prefab and item.prefab == target_prefab) or (tag and item:HasTag(tag))
+end
+
+-- 查找玩家物品栏、装备以及身上容器中的指定prefab或标签的物品
+local function FindItemInPlayer(inst, target_prefab, tag)
+    -- 检查玩家是否有效
+    if not inst then
+        return nil
+    end
+
+    -- 检查背包中的物品
+    if inst.components.inventory then
+        -- 遍历物品栏
+        for _, item in pairs(inst.components.inventory.itemslots) do
+            if CheckItem(item, target_prefab, tag) then
+                return item
+            end
+        end
+
+        -- 遍历装备槽
+        for _, slot in pairs(inst.components.inventory.equipslots) do
+            if CheckItem(slot, target_prefab, tag) then
+                return slot
+            end
+        end
+    end
+
+    -- 检查玩家身上的容器物品
+    for _, slot in pairs(inst.components.inventory.equipslots) do
+        -- 如果该装备物品具有容器组件，检查其内部物品
+        if slot and slot.components.container then
+            for _, item in pairs(slot.components.container.slots) do
+                if CheckItem(item, target_prefab, tag) then
+                    return item
+                end
+            end
+        end
+    end
+
+    -- 如果没有找到符合条件的物品，返回nil
+    return nil
+end
+
+-- 定义一个函数来处理台词
+local function HandleHuohuoScript(script, pet)
+    if script then
+        script = string.gsub(script, "^" .. STRINGS.HUOHUO_LANGUAGE.FIRST, "")
+        script = string.gsub(script, "^" .. STRINGS.HUOHUO_LANGUAGE.LAST, "")
+    end
+
+    -- 如果有宠物并且宠物不在limbo状态，宠物跟着说话
+    if pet and not pet:IsInLimbo() then
+        pet.components.talker:Say(script)
+    else
+        -- 否则尝试找物品并让物品代替说话
+        local item = FindItemInPlayer(inst, "huohuo_lingfu", "huohuo_lingfu")
+        if item then
+            item.components.talker:Say(script)
+        end
+    end
+end
+
+AddComponentPostInit(
+    "talker",
+    function(self)
+        -- 保存原始的 Say 函数
+        local oldsay = self.Say
+
+        -- 重写 Say 函数
+        self.Say = function(self, script, time, noanim, force, nobroadcast, colour, text_filter_context)
+            if self.inst:HasTag("huohuo") then
+                if script == STRINGS.CHARACTERS.HUOHUO.ANNOUNCE_HUNGRY and self.inst.huohuo_buff then
+                    return
+                elseif script == STRINGS.CHARACTERS.GENERIC.DESCRIBE.TERRARIUM.GENERIC then
+                    script = "TERRORBEAK"
+                end
+
+                -- 保存原始的 script，用于后续获取宠物台词
+                local random_index_other
+                local original_script = script
+                -- 处理人物的台词
+                local character_script = STRINGS.HUOHUO[script]
+                if character_script then
+                    -- 如果是人物的台词，处理人物台词
+                    if type(character_script) == "table" and #character_script > 0 then
+                        -- 随机选择一条台词
+                        local random_index = math.random(#character_script)
+                        random_index_other = random_index
+                        script = character_script[random_index]
+                    else
+                        -- 如果只有一条台词
+                        script = character_script
+                    end
+                end
+
+                -- 获取宠物台词
+                local pet_script_table = STRINGS.HUOHUO_PET[original_script]
+                if pet_script_table then
+                    -- 如果有宠物台词，处理宠物说话
+                    local pet = self.inst.components.huohuo_data and self.inst.components.huohuo_data.pet
+                    if type(pet_script_table) == "table" and #pet_script_table > 0 then
+                        local random_index = math.random(#pet_script_table)
+                        local pet_script = pet_script_table[random_index_other]
+                        -- 处理宠物说话
+                        HandleHuohuoScript(pet_script, pet)
+                    elseif type(pet_script_table) == "string" then
+                        -- 只有一条宠物台词
+                        HandleHuohuoScript(pet_script_table, pet)
+                    end
+                end
+
+                -- 如果需要对 script 进行过滤（检查是否包含特定字节标记）
+                if script and type(script) == "string" then
+                    -- 如果包含 STRINGS.HUOHUO_LANGUAGE.FIRST 的标记，则移除它
+                    script = string.gsub(script, "^" .. STRINGS.HUOHUO_LANGUAGE.FIRST, "")
+                    -- 如果包含 STRINGS.HUOHUO_LANGUAGE.LAST 的标记，则移除它
+                    script = string.gsub(script, "^" .. STRINGS.HUOHUO_LANGUAGE.LAST, "")
+                end
+            end
+
+            -- 调用原始 Say 函数，传递所有参数
+            return oldsay(self, script, time, noanim, force, nobroadcast, colour, text_filter_context)
+        end
+    end
+)
+
+```
+
+
+
+### 变体演进：sherii_healthmax (Mod 3618095249)
+- **变体场景与切面**：收录来自工坊 Mod 3618095249 (`sherii_healthmax`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3618095249)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:equippable
+AddComponentPostInit(
+    'equippable',
+    function(self)
+        local oldGetWalkSpeedMult = self.GetWalkSpeedMult
+        function self:GetWalkSpeedMult(...)
+            local speed = oldGetWalkSpeedMult(self, ...)
+            local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner
+            if owner and owner:HasTag('sherii') and speed < 1 then
+                speed = 1
+            end
+            return speed
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:weapon
+
+AddComponentPostInit(
+    'weapon',
+    function(weapon)
+        local OldGetDamage = weapon.GetDamage
+        weapon.GetDamage = function(self, attacker, ...)
+            local dmg, spdmg = OldGetDamage(self, attacker, ...)
+            -- 魔女化位面伤害+20
+            if
+                attacker and attacker:HasTag('sherii') and attacker.components.sheriialter and
+                    attacker.components.sheriialter.mode == 2
+             then
+                if spdmg then
+                    spdmg.planar = (spdmg.planar or 0) + 20
+                end
+            end
+
+            return dmg, spdmg
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:hunter
+
+AddComponentPostInit(
+    'hunter',
+    function(hunter)
+        local oldOnDirtInvestigated = hunter.OnDirtInvestigated
+        hunter.OnDirtInvestigated = function(self, pt, doer, ...)
+            if doer and doer.components.inventory and doer.components.inventory:EquipHasTag('sherii_magnifyingglass') then
+                if doer._fasttask then
+                    doer._fasttask:Cancel()
+                    doer._fasttask = nil
+                end
+                if doer.components.locomotor then
+                    doer.components.locomotor:SetExternalSpeedMultiplier(doer, 'sherii_magnifyingglass', 1.25)
+                    doer._fasttask =
+                        doer:DoTaskInTime(
+                        10,
+                        function()
+                            doer.components.locomotor:RemoveExternalSpeedMultiplier(doer, 'sherii_magnifyingglass')
+                        end
+                    )
+                end
+                if doer.components.sanity then
+                    doer.components.sanity:DoDelta(5)
+                    if doer:HasTag('sherii') then
+                        if doer.components.sheriialter then
+                            doer.components.sheriialter:DoDelta(-1, 1)
+                        end
+                        doer.SoundEmitter:PlaySound('Sherii/Sherii/2', nil, 1)
+                    end
+                end
+            end
+            return oldOnDirtInvestigated(self, pt, doer, ...)
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruins_cavein_obstacle
+if TheNet:GetIsServer() then
+    AddPrefabPostInit(
+        'ruins_cavein_obstacle',
+        function(inst)
+            if inst and inst.components.workable then
+                inst:ListenForEvent(
+                    'worked',
+                    function()
+                        inst:AddTag('sherii_cantpickup')
+                    end
+                )
+            end
+        end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit(
+    'wilson',
+    function(sg)
+        if sg.states then
+            local death = sg.states.death
+            local pillow = sg.states.attack_pillow_pre
+            if death then
+                local oldonenter = death.onenter
+                death.onenter = function(inst, ...)
+                    if inst and inst.components.sheriialter and inst.components.sheriialter.mode == 2 then
+                        local fx = SpawnPrefab('sherii_lavaarena_player_teleport')
+                        fx.entity:SetParent(inst.entity)
+                    end
+                    return oldonenter(inst, ...)
+                end
+            end
+            if pillow then
+                local oldonenter = pillow.onenter
+                pillow.onenter = function(inst, ...)
+                    if inst and inst:HasTag('sherii') then
+                        inst.SoundEmitter:PlaySound('Sherii/Sherii/1', nil, 1)
+                    end
+                    return oldonenter(inst, ...)
+                end
+            end
+        end
+    end
+
+```
+
