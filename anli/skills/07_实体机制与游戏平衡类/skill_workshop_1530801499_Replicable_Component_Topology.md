@@ -12197,3 +12197,120 @@ end)
 
 ```
 
+
+
+### 变体演进：Geometric Drop (Mod 2431691504)
+- **变体场景与切面**：收录来自工坊 Mod 2431691504 (`Geometric Drop`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2431691504)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    ThePlayer = GLOBAL.ThePlayer
+    TheWorld = GLOBAL.TheWorld
+    InitializePlacers()
+
+    local PlayerControllerGetLeftMouseAction = self.GetLeftMouseAction
+    local active_item, force_inspecting, mouse_target
+    local drop_action = BufferedAction(ThePlayer, nil, ACTIONS.DROP)
+    self.GetLeftMouseAction = function(self)
+        local act = PlayerControllerGetLeftMouseAction(self)
+        if force_inspecting then return act end
+        if not act and active_item and mouse_target then
+            act = drop_action
+        end
+        self.LMBaction = act
+        return self.LMBaction
+    end
+
+    local function DoModifiedLeftClickAction(act)
+        if act.action == ACTIONS.DROP then
+            DropActiveItemOnGrid(TheInput:GetWorldPosition(), active_item)
+            return true
+        end
+        return false
+    end
+
+    local PlayerControllerOnLeftClick = self.OnLeftClick
+    self.OnLeftClick = function(self, down)
+        if not down or TheInput:GetHUDEntityUnderMouse() or self:IsAOETargeting() or self.placer_recipe then
+            return PlayerControllerOnLeftClick(self, down)
+        end
+        local act = self:GetLeftMouseAction()
+        if act then
+            if DoModifiedLeftClickAction(act) then return end
+        end
+        PlayerControllerOnLeftClick(self, down)
+    end
+
+    local PlayerControllerOnUpdate = self.OnUpdate
+    local function InGame()
+        return ThePlayer and ThePlayer.HUD and not ThePlayer.HUD:HasInputFocus()
+    end
+    self.OnUpdate = function(self, dt)
+        if ThePlayer ~= nil then
+            local next_active_item = ThePlayer.replica.inventory:GetActiveItem()
+            force_inspecting = TheInput:IsControlPressed(CONTROL_FORCE_INSPECT)
+            mouse_target = TheInput:GetWorldEntityUnderMouse()
+            if not active_item and next_active_item and placersEnabled then
+                dropper:ShowPlacers()
+            elseif active_item and not next_active_item and placersVisible then
+                dropper:HidePlacers()
+            end
+            active_item = next_active_item
+
+            if InGame() then
+                dropper:UpdatePlacers()
+            end
+        end
+
+        return PlayerControllerOnUpdate(self, dt)
+    end
+
+end)
+
+local function DropItemFromSlot(slot, item, single_item)
+    print("geodrop: DropItemFromSlot")
+    local inventory = ThePlayer.replica.inventory
+    local inventoryitem = item.replica.inventoryitem
+    if not single_item and not inventory:GetActiveItem() and inventoryitem:CanGoInContainer() and not inventoryitem:CanOnlyGoInPocket() then
+        if slot.equipslot then
+            inventory:TakeActiveItemFromEquipSlot(slot.equipslot)
+        elseif slot.num then
+            slot.container:TakeActiveItemFromAllOfSlot(slot.num)
+        end
+        DropActiveItemOnGrid(ThePlayer:GetPosition(), item)
+    else
+        print("geodrop: DropItemFromInvTile")
+        inventory:DropItemFromInvTile(item, single_item)
+    end
+end
+
+local function InvSlotPostInit(self)
+    local InvSlotOnControl = self.OnControl
+    self.OnControl = function(self, control, down)
+        -- Right Click
+        local right_click = control == CONTROL_SECONDARY
+        if right_click and down then
+            local single_item = TheInput:IsControlPressed(CONTROL_FORCE_STACK)
+            local force_trade_pressed = TheInput:IsControlPressed(CONTROL_FORCE_TRADE)
+
+            if self.tile and force_trade_pressed then
+                DropItemFromSlot(self, self.tile.item, single_item)
+                return true
+            end
+        end
+        return InvSlotOnControl(self, control, down)
+    end
+end
+
+AddClassPostConstruct("widgets/invslot", InvSlotPostInit)
+AddClassPostConstruct("widgets/equipslot", InvSlotPostInit)
+
+```
+

@@ -5542,3 +5542,47 @@ end)
 
 ```
 
+
+
+### 变体演进：forest_preset (Mod 2987796038)
+- **变体场景与切面**：收录来自工坊 Mod 2987796038 (`forest_preset`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2987796038)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:retrofitcavemap_anr
+if GLOBAL.KnownModIndex:IsModEnabled("workshop-3193922031")  then
+    AddComponentPostInit("retrofitcavemap_anr", function(self)
+        local old_onpostinit = self.OnPostInit
+        function self:OnPostInit(...)
+            local TheWorld = GLOBAL.TheWorld
+            if TheWorld ~= nil and TheWorld.topology and TheWorld.topology.nodes then
+                local has_maze_entrance = false
+                local has_maze_grotto = false
+                
+                for i, node in ipairs(TheWorld.topology.nodes) do
+                    if node.tags then
+                        if table.contains(node.tags, "UMMazeEntranceGrotto") then
+                            has_maze_entrance = true
+                        end
+                        if table.contains(node.tags, "UMMazeGrotto") then
+                            has_maze_grotto = true
+                        end
+                    end
+                end
+                
+                if not has_maze_entrance or not has_maze_grotto then
+                    print("Smaller World compatibility: Skipping retrofitcavemap_anr due to missing maze nodes")
+                    return
+                end
+            end
+            
+            return old_onpostinit(self, ...)
+        end
+    end)
+
+```
+

@@ -62985,3 +62985,93 @@ end
 
 ```
 
+
+
+### 变体演进：山海秘藏--最新版 (Mod 3046680574)
+- **变体场景与切面**：收录来自工坊 Mod 3046680574 (`山海秘藏--最新版`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3046680574)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:fsm_love_chest_item
+end
+AddPrefabPostInit("fsm_love_chest_item", AddIrreplaceableTag)
+
+AddClassPostConstruct("components/container_replica", function(self)
+    local old_RemoveOpener = self.RemoveOpener
+    if old_RemoveOpener then
+        function self:RemoveOpener(opener)
+            if opener == nil or not opener:IsValid() then
+                return
+            end
+            return old_RemoveOpener(self, opener)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:fsm_hundun
+
+AddPrefabPostInit("fsm_hundun", function(inst)
+    print("[DEBUG] fsm_hundun prefab loaded!")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:wateryprotection
+
+AddComponentPostInit("wateryprotection", function(WateryProtection)
+    local oldSpreadProtectionAtPoint = WateryProtection.SpreadProtectionAtPoint
+    function WateryProtection:SpreadProtectionAtPoint(x, y, z, dist, noextinguish)
+        local ents = TheSim:FindEntities(x, y, z, dist or self.protection_dist or 4, nil, self.ignoretags)
+        for i, v in ipairs(ents) do
+            if v.components.fsm_takecare then
+                v.components.fsm_takecare:DoCareAction("water")
+            end
+        end
+        oldSpreadProtectionAtPoint(self, x, y, z, dist, noextinguish)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+---------------------------------------------------------------------------------------------------
+AddStategraphPostInit("wilson", function(sg)
+    local idle = sg.states["idle"]
+    local old_idle_onenter = idle.onenter
+    idle.onenter = function(inst, data, ...)
+        if inst.AnimState:IsCurrentAnimation("fsm_baitang_fup") or
+            inst.AnimState:IsCurrentAnimation("fsm_baitang_fdown") or
+            inst.AnimState:IsCurrentAnimation("fsm_baitang_fside")
+        then
+            return
+        end
+        return old_idle_onenter(inst, data, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:turf_taixulslandblackbrick_ground
+
+AddPrefabPostInit(
+    "turf_taixulslandblackbrick_ground",
+    function(inst)
+        if not TheWorld.ismastersim then
+            return
+        end       
+        if inst.components.inventoryitem== nil then
+            inst:AddComponent("inventoryitem")
+            inst:AddComponent("inspectable")
+        end 
+        inst.components.inventoryitem.imagename = "turf_taixulslandblackbrick_ground"
+        inst.components.inventoryitem.atlasname = "images/inventoryimages/turf_taixulslandblackbrick_ground.xml"
+
+        STRINGS.NAMES[string.upper("turf_taixulslandblackbrick_ground")] = "太虚岛青砖地皮"
+        STRINGS.CHARACTERS.GENERIC.DESCRIBE[string.upper("turf_taixulslandblackbrick_ground")] = "斑驳的青砖地皮，看起来有些脏乱，不过看起来是刚从地下挖出来的，应该还可以继续使用。"
+
+    end)
+
+```
+
