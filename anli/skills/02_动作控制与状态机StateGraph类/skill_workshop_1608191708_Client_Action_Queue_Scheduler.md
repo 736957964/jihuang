@@ -65243,3 +65243,179 @@ AddStategraphPostInit(
 
 ```
 
+
+
+### 变体演进：Whisky (Mod 2858309592)
+- **变体场景与切面**：收录来自工坊 Mod 2858309592 (`Whisky`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2858309592)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:mushtree_tall_webbed
+
+AddPrefabPostInit("mushtree_tall_webbed", function(inst)
+
+	local function CanShave(inst, shaver, shaving_implement)
+		return shaver:HasTag("whiskywife") and not inst.components.burnable:IsBurning() and not inst:HasTag("stump")
+	end
+
+	local function OnShaved(inst, shaver, shaving_implement)				
+		inst.shaving = true		
+		
+		if inst.SoundEmitter ~= nil then			
+			inst.SoundEmitter:PlaySound("dontstarve/cave/mushtree_tall_shrink")
+		end
+
+		local spawnfx = SpawnPrefab("splash_spiderweb")
+		spawnfx.Transform:SetPosition(inst.Transform:GetWorldPosition())
+		spawnfx.Transform:SetScale(2,2,2)
+		if math.random() < .5 then
+			shaver.components.talker:Say("Um... i'm sorry if you didn't like us, mushy...")
+		else
+			shaver.components.talker:Say("Mushy needs some alone time...")
+		end
+
+		inst:DoTaskInTime(0, function()
+			inst.upgradedtree = SpawnPrefab("mushtree_tall")
+			inst.upgradedtree.Transform:SetPosition(inst.Transform:GetWorldPosition())
+            local den = GetClosestInstWithTag("spiderden", inst.upgradedtree, 3)
+            if den then 
+				--den:PushEvent("creepactivate", { target = worker })
+				den:Remove() 
+			end
+			
+			inst:Remove()
+		end)		
+	end
+		
+	
+	if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+	
+	inst:AddComponent("shaveable")
+	inst.components.shaveable:SetPrize("silk", TUNING.MUSHYSHAVE_REWARD)
+	inst.components.shaveable.can_shave_test = CanShave
+	inst.components.shaveable.on_shaved = OnShaved
+		
+	
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mushtree_tall
+
+AddPrefabPostInit("mushtree_tall", function(inst)
+
+    local function OnUpgrade(inst, upgrade_doer)
+        inst.AnimState:PlayAnimation("cough")
+        
+        
+            inst:DoTaskInTime(0.375, function()
+                local spawnfx = SpawnPrefab("splash_spiderweb")
+                spawnfx.Transform:SetPosition(inst.Transform:GetWorldPosition())
+                spawnfx.Transform:SetScale(2,2,2)
+				if math.random() < .5 then
+					upgrade_doer.components.talker:Say("This mushy... is important..!")
+                else
+					upgrade_doer.components.talker:Say("Y-You look prettier now..!")
+                end
+
+            end)
+        
+        
+            inst:DoTaskInTime(0.75, function()
+                local den = SpawnPrefab("dropperweb")
+                local x,y,z = inst.Transform:GetWorldPosition()
+
+                inst.upgradedtree = SpawnPrefab("mushtree_tall_webbed")
+                inst.upgradedtree.Transform:SetPosition(inst.Transform:GetWorldPosition())
+                den.Transform:SetPosition(x + 2,y,z)
+                
+                inst:Remove()
+            end)
+        end
+
+
+	local CanUpgradeTree = function(inst)
+		return not inst:HasTag("stump")
+	end
+
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+	
+    inst:AddComponent("upgradeable")
+    inst.components.upgradeable.upgradetype = UPGRADETYPES.WHISKYSPIDER
+    inst.components.upgradeable.onupgradefn = OnUpgrade
+    inst.components.upgradeable:SetCanUpgradeFn(CanUpgradeTree)
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:fireflies
+
+AddPrefabPostInit("fireflies", function(inst)
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")        
+    end
+
+    local e = inst.components.edible
+    e.foodtype = "WHISKYINSECT"
+    e.healthvalue = 10
+    e.hungervalue = 20
+    e.sanityvalue = -5
+    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lavae_cocoon
+
+AddPrefabPostInit("lavae_cocoon", function(inst)
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")        
+    end
+
+    local e = inst.components.edible
+    e.foodtype = "WHISKYINSECT"
+    e.healthvalue = 100
+    e.hungervalue = 200
+    e.sanityvalue = 100
+    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:icestaff
+
+AddPrefabPostInit("icestaff", ModifyStaffDamage)
+AddPrefabPostInit("firestaff", ModifyStaffDamage)
+
+
+
+local function ModifyCarrotHunger(inst)
+
+	inst.components.edible:SetOnEatenFn(function(inst, eater)
+		if eater ~= nil and eater.prefab == "wildcard" then
+			inst.components.edible.hungervalue = 2
+		end
+	end)
+ 
+end
+
+```
+
