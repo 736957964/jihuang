@@ -1,38 +1,26 @@
 # 饥荒一线工坊深度研读 Skill：主客双端复制组件（Replicable Component）与全服拓扑网络架构
-```
 - **工坊 ID**：1530801499 (`Fast Travel GUI`)
 - **领域分类**：网络复制组件规范（AddReplicableComponent）、全服拓扑自维护池（Global Topology Registry）、危险状态逃逸防御、距离-季节动态开销模型
 - **研读基准**：Steam 创意工坊在线原版源码
-```
 ---
-```
 ## 一、核心实现原理与架构全貌
-```
 在开发需要跨端同步状态（如自定义交互信标、传送门、载具停靠点）的复杂网络 MOD 时：
 1. **主客双端复制体系**：通过 `AddReplicableComponent("mycomponent")`，让客机自动装配 `mycomponent_replica`；
 2. **拓扑注册中心**：用模块全局表 `ALL_NODES` 维护实体拓扑，实体生成时入网，被拆除时退网；
 3. **服务端权威安全防护**：ModRPC 接收客户端请求时，必须由 MasterSim 重新执行近距离及战斗脱战断言。
-```
 ---
-```
 ## 二、标准化生产级代码范式 (可直接移植)
-```
-```
 -- ==============================================================================
 -- 范式 1：服务端权威拓扑管理组件 (scripts/components/network_node.lua)
 -- ==============================================================================
-```
 local ALL_NODES = {}
-```
 local NetworkNode = Class(function(self, inst)
     self.inst = inst
     self.node_name = "Default Node"
     self.is_active = true
-```
     -- 1. 自动注册入全服拓扑网
     table.insert(ALL_NODES, self)
 end)
-```
 --- 销毁退网生命周期守卫 (防内存泄漏与幽灵节点)
 function NetworkNode:OnRemoveFromEntity()
     for i, v in ipairs(ALL_NODES) do
@@ -42,28 +30,22 @@ function NetworkNode:OnRemoveFromEntity()
         end
     end
 end
-```
 --- 危险逃逸断言检测 (防战斗作弊)
 function NetworkNode:CanTravelNow(player)
     if not player or not player:IsValid() then return false end
-```
     -- 检测是否着火
     if player.components.burnable and player.components.burnable:IsBurning() then
         return false, "BURNING"
     end
-```
     -- 检测附近仇恨敌人
     local danger = GLOBAL.FindEntity(player, 12, function(target)
         return target.components.combat and target.components.combat.target == player
     end, { "_combat" }, { "INLIMBO", "player" })
-```
     if danger ~= nil then
         return false, "IN_COMBAT"
     end
-```
     return true
 end
-```
 --- 获取当前可达有效节点列表
 function NetworkNode:GetValidDestinations(player)
     local results = {}
@@ -74,16 +56,12 @@ function NetworkNode:GetValidDestinations(player)
     end
     return results
 end
-```
 return NetworkNode
-```
 -- ==============================================================================
 -- 范式 2：双端网络注册与 ModRPC 安全校验 (modmain.lua)
 -- ==============================================================================
-```
 -- 1. 注册主客端复制组件
 AddReplicableComponent("network_node")
-```
 -- 2. 实体切面挂载
 AddPrefabPostInit("homesign", function(inst)
     inst:AddTag("_network_node")
@@ -92,17 +70,13 @@ AddPrefabPostInit("homesign", function(inst)
         inst:AddComponent("network_node")
     end
 end)
-```
 -- 3. 服务端安全校验 RPC 通道
 AddModRPCHandler("NetworkNodeMod", "TeleportTo", function(player, src_inst, target_inst)
     if not player or not player:IsValid() or not src_inst or not target_inst then return end
-```
     -- 安全校验 1：玩家是否在源节点交互范围内 (防全图隔空发包作弊)
     if player:GetDistanceSqToInst(src_inst) > 16 then return end
-```
     local node = src_inst.components.network_node
     if not node then return end
-```
     -- 安全校验 2：战斗与危险防逃逸
     local can_travel, reason = node:CanTravelNow(player)
     if not can_travel then
@@ -111,7 +85,6 @@ AddModRPCHandler("NetworkNodeMod", "TeleportTo", function(player, src_inst, targ
         end
         return
     end
-```
     -- 校验通过：执行权威位移并扣除开销
     if player.Physics then
         player.Physics:Teleport(target_inst.Transform:GetWorldPosition())
@@ -119,26 +92,17 @@ AddModRPCHandler("NetworkNodeMod", "TeleportTo", function(player, src_inst, targ
         player.Transform:SetPosition(target_inst.Transform:GetWorldPosition())
     end
 end)
-```
-```
 ---
-```
 ## 三、避坑与生产安全准则
-```
 1. **`OnRemoveFromEntity` 注销守卫不可或缺**：
    - 只要实体被玩家砸毁、被火烧毁、或被大脚踩烂，若没有在 `OnRemoveFromEntity` 中从全局表中将其引用清除，Lua 的 GC（垃圾回收器）就永远无法释放该实体，造成极其严重的堆内存泄漏。
 2. **`Physics:Teleport` 与坐标直接赋值的分流**：
    - 传送具有物理刚体（Physics）的角色或生物时，必须调用 `inst.Physics:Teleport(x, y, z)`，严禁直接调用 `Transform:SetPosition`。直接改坐标会导致物理碰撞体残留在原地，引发隐形碰撞空气墙 bug。
-```
-```
 ## 五、进阶拓扑演进与变体分支
-```
-```
-```
 ### 变体演进：lan (Mod 3052540872)
 - **变体场景与切面**：收录来自工坊 Mod 3052540872 (lan) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3052540872)
 -- ============================================================================
@@ -733,13 +697,11 @@ local GLOBAL = GLOBAL
 			if TUNING.XGDUSE > 0 then staff.components.finiteuses:Use(10) end
 			if caster ~= nil and caster.components.sanity ~= nil then
 				caster.components.sanity:DoDelta(-5)
-
-```
-
+`
 ### 变体演进：明日方舟唱片 (Mod 3379258656)
 - **变体场景与切面**：收录来自工坊 Mod 3379258656 (明日方舟唱片) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3379258656)
 -- ============================================================================
@@ -765,13 +727,11 @@ AddPrefabPostInit("phonograph", function(inst)
         inst:ListenForEvent("onremove", onremove)
     end
 end)
-
-```
-
+`
 ### 变体演进：改变玩家出生位置 (Mod 3518921307)
 - **变体场景与切面**：收录来自工坊 Mod 3518921307 (改变玩家出生位置) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3518921307)
 -- ============================================================================
@@ -780,13 +740,11 @@ AddPrefabPostInit("multiplayer_portal_moonrock_constr",kepohuai)
 AddPrefabPostInit("multiplayer_portal_moonrock",kepohuai)	
 AddPrefabPostInit("multiplayer_portal",kepohuai)	
 AddPrefabPostInit("spawnpoint_master",CanDigInit)
-
-```
-
+`
 ### 变体演进：kramel的华语经典唱片 (Mod 3586130971)
 - **变体场景与切面**：收录来自工坊 Mod 3586130971 (kramel的华语经典唱片) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3586130971)
 -- ============================================================================
@@ -812,13 +770,11 @@ AddPrefabPostInit("phonograph", function(inst)
         inst:ListenForEvent("onremove", onremove)
     end
 end)
-
-```
-
+`
 ### 变体演进：自定义沃拓克斯 / Customize Wortox (Mod 3627955500)
 - **变体场景与切面**：收录来自工坊 Mod 3627955500 (自定义沃拓克斯 / Customize Wortox) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3627955500)
 -- ============================================================================
@@ -840,13 +796,11 @@ local GLOBAL = GLOBAL
             end
             inst.starting_inventory = items
         end)
-
-```
-
+`
 ### 变体演进：HOWLS唱片 (Mod 3716634921)
 - **变体场景与切面**：收录来自工坊 Mod 3716634921 (HOWLS唱片) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3716634921)
 -- ============================================================================
@@ -872,13 +826,11 @@ AddPrefabPostInit("phonograph", function(inst)
         inst:ListenForEvent("onremove", onremove)
     end
 end)
-
-```
-
+`
 ### 变体演进：大霜鲨更多交易次数 (Mod 3771598087)
 - **变体场景与切面**：收录来自工坊 Mod 3771598087 (大霜鲨更多交易次数) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3771598087)
 -- ============================================================================
@@ -925,13 +877,11 @@ AddPrefabPostInit("sharkboi", function(inst)
         end
     end
 end)
-
-```
-
+`
 ### 变体演进：Mod 3808236333 (Mod 3808236333)
 - **变体场景与切面**：收录来自工坊 Mod 3808236333 (Mod 3808236333) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3808236333)
 -- ============================================================================
@@ -949,13 +899,11 @@ AddPrefabPostInit("queen_torch", function(inst)
         inst.components.channelcastable:SetOnStopChannelingFn(OnStopChanneling)
     end
     -- 武器攻击回调
-
-```
-
+`
 ### 变体演进：智能矿工帽 Smart Miner Hat (Mod 3813163216)
 - **变体场景与切面**：收录来自工坊 Mod 3813163216 (智能矿工帽 Smart Miner Hat) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3813163216)
 -- ============================================================================
@@ -971,14 +919,12 @@ AddPrefabPostInit("minerhat", function(inst)
     if equippable == nil or fueled == nil or invitem == nil then
         return
     end
+`
     ------------------------------------------------------------------
-
-```
-
 ### 变体演进：Geometric Drop (fixed) (Mod 3813858106)
 - **变体场景与切面**：收录来自工坊 Mod 3813858106 (Geometric Drop (fixed)) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3813858106)
 -- ============================================================================
@@ -998,6 +944,4 @@ AddComponentPostInit("playercontroller", function(self)
         end
         self.LMBaction = act
 > 💡 注：本黄金母本已在底层总账本中累计归约收敛 152 个同类工坊模组的生产级演进分支，此处精选保留最具代表性的前 10 个拓扑切面以确保文档秒开流畅。
-
-```
-
+`

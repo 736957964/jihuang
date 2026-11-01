@@ -1,64 +1,45 @@
 # 饥荒一线工坊深度研读 Skill：HUD 矩阵反缩放自适应与视口输入隔离机制
-```
 - **工坊 ID**：345692228 (`Minimap HUD`)
 - **领域分类**：客户端 UI 工程、HUD 矩阵逆缩放坐标系对齐、窗口动态重排、摄像机与输入冲突隔离
 - **研读基准**：Steam 创意工坊在线原版源码
-```
 ---
-```
 ## 一、核心实现原理与架构全貌
-```
 在开发饥荒联机版的悬浮窗口、状态栏或雷达时，开发者常面临：
 1. 玩家调整了游戏系统设置中的 **HUD 缩放比例**，导致控件溢出屏幕边缘；
 2. 玩家**拖动窗口边框**或在全屏/无边框窗口间切换，UI 错位；
 3. 鼠标悬停在 UI 上滚动滚轮，误触发游戏视角拉近拉远。
-```
-`Minimap HUD` 提炼了一套纯数学且极其轻量的防御框架。
-```
 ---
-```
 ## 二、标准化生产级代码范式 (可直接移植)
-```
-```lua
 -- ==============================================================================
 -- 范式：自适应 HUD 挂载与输入隔离容器 (scripts/widgets/responsive_hud_container.`lua)
 -- ==============================================================================
-```
 local Widget = require "widgets/widget"
-```
 local ResponsiveContainer = Class(Widget, function(self, owner)
     Widget._ctor(self, "ResponsiveContainer")
     self.owner = owner
     self.camera_lock = false
 end)
-```
 -- 1. 矩阵逆缩放贴边算法 (支持九宫格锚定)
 function ResponsiveContainer:Reposition(controls, align_x, align_y, margin_x, margin_y)
     local hudscale = controls.top_root:GetScale()
     local screenw_full, screenh_full = GLOBAL.TheSim:GetScreenSize()
-```
     -- 反向求出真实逻辑视口坐标
     local screenw = screenw_full / hudscale.x
     local screenh = screenh_full / hudscale.y
-```
     local target_x = 0
     local target_y = 0
-```
     if align_x == "right" then
         target_x = (screenw * 0.5) - margin_x
     elseif align_x == "left" then
         target_x = -(screenw * 0.5) + margin_x
     end
-```
     if align_y == "top" then
         target_y = (screenh * 0.5) - margin_y
     elseif align_y == "bottom" then
         target_y = -(screenh * 0.5) + margin_y
     end
-```
     self:SetPosition(target_x, target_y, 0)
 end
-```
 -- 2. 鼠标滚轮焦点与摄像机缩放阻断
 function ResponsiveContainer:OnGainFocus()
     ResponsiveContainer._base.OnGainFocus(self)
@@ -67,7 +48,6 @@ function ResponsiveContainer:OnGainFocus()
         GLOBAL.TheCamera:SetControllable(false)
     end
 end
-```
 function ResponsiveContainer:OnLoseFocus()
     ResponsiveContainer._base.OnLoseFocus(self)
     if self.camera_lock and GLOBAL.TheCamera then
@@ -75,7 +55,6 @@ function ResponsiveContainer:OnLoseFocus()
         self.camera_lock = false
     end
 end
-```
 -- 3. 消费滚轮与控制事件，防止穿透到底层世界
 function ResponsiveContainer:OnControl(control, down)
     if ResponsiveContainer._base.OnControl(self, control, down) then return true end
@@ -85,28 +64,18 @@ function ResponsiveContainer:OnControl(control, down)
     end
     return false
 end
-```
 return ResponsiveContainer
-```
-```
 ---
-```
 ## 三、避坑与生产安全准则
-```
 1. **`OnLoseFocus` 必须兜底防漏**：
    - 如果用户在悬停该 UI 的瞬间按下了 ESC 键切出菜单，或者切回桌面，可能会跳过 `OnLoseFocus`。建议在控件的 `Kill` 和 `Hide` 方法中，同样加入对 `TheCamera:SetControllable(true)` 的安全恢复调用，防止玩家摄像机被永久锁死。
 2. **`controls.OnUpdate` 增量轻量比较**：
    - 监听窗口分辨率变化时，切忌每帧去调用复杂的布局计算。只在 `w ~= last_w or h ~= last_h` 时才触发一次 `Reposition`。
-```
-```
 ## 五、进阶拓扑演进与变体分支
-```
-```
-```
 ### 变体演进：Mod 2880540712 (Mod 2880540712)
 - **变体场景与切面**：收录来自工坊 Mod 2880540712 (`Mod 2880540712`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2880540712)
 -- ============================================================================
@@ -134,13 +103,11 @@ AddComponentPostInit("inventory", function(self,inst)
         return original_Equip(self, item, old_to_active, no_animation)
     end
 end)
-
-```
-
+`
 ### 变体演进：Quick Pick (Mod 2923790645)
 - **变体场景与切面**：收录来自工坊 Mod 2923790645 (`Quick Pick`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2923790645)
 -- ============================================================================
@@ -243,13 +210,11 @@ AddPrefabPostInit("lichen", pick)
 AddPrefabPostInit("seaweed_planted", pick)
 AddPrefabPostInit("limpetrock", pick)
 AddPrefabPostInit("grass_water", pick)
-
-```
-
+`
 ### 变体演进：Full Build Refund (Mod 3820010792)
 - **变体场景与切面**：收录来自工坊 Mod 3820010792 (`Full Build Refund`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3820010792)
 -- ============================================================================
@@ -321,13 +286,11 @@ AddComponentPostInit("builder", function(self)
         end
     end
 end)
-
-```
-
+`
 ### 变体演进：Auto-Equip Light (Mod 3465643011)
 - **变体场景与切面**：收录来自工坊 Mod 3465643011 (`Auto-Equip Light`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3465643011)
 -- ============================================================================
@@ -338,13 +301,11 @@ AddComponentPostInit("playercontroller", function(self)
         self.inst:AddComponent("lightauto")
     end
 end)
-
-```
-
+`
 ### 变体演进：猪人房重建 (Pig House Rebuild) (Mod 3804423239)
 - **变体场景与切面**：收录来自工坊 Mod 3804423239 (`猪人房重建 (Pig House Rebuild)`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3804423239)
 -- ============================================================================
@@ -382,6 +343,7 @@ local GLOBAL = GLOBAL
           → 2 木板 + 5 胡萝卜 + 2 兔人尾巴
       所以"重建出来的房子"关掉 lootdropper.droprecipeloot 就能堵住无限刷材料
       （兔人房尤其要看住：兔人尾巴本身是盖兔人房的材料）。
+`
 ----------------------------------------------------------------------]]
 PrefabFiles = {
     "rebuildsite",      -- scripts/prefabs/rebuildsite.`lua（mods.`lua:696 会自动补 "prefabs/"）
@@ -447,13 +409,10 @@ AddPrefabPostInit("scorchedground", function(inst)
         wrap(inst)
     end
 end)
-
-```
-
 ### 变体演进：Quicker Beefalo Domestication (Mod 2833026884)
 - **变体场景与切面**：收录来自工坊 Mod 2833026884 (`Quicker Beefalo Domestication`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2833026884)
 -- ============================================================================
@@ -473,13 +432,11 @@ if GetModConfigData("domestication_nopoop") then
             end)
         end
     end)
-
-```
-
+`
 ### 变体演进：HEADER (Mod 3590081957)
 - **变体场景与切面**：收录来自工坊 Mod 3590081957 (`HEADER`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3590081957)
 -- ============================================================================
@@ -518,13 +475,11 @@ AddPrefabPostInit("vault_teleporter", function(inst)
 	waymarks[inst] = true
 	inst:ListenForEvent("onremove", onremove)
 end)
-
-```
-
+`
 ### 变体演进：人物hud限制解除器 (Mod 3100347966)
 - **变体场景与切面**：收录来自工坊 Mod 3100347966 (`人物hud限制解除器`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3100347966)
 -- ============================================================================
@@ -577,13 +532,11 @@ AddClassPostConstruct("screens/mapscreen", function(self)
         return result
     end
 end)
-
-```
-
+`
 ### 变体演进：Auto-Unequip (Mod 3381334962)
 - **变体场景与切面**：收录来自工坊 Mod 3381334962 (`Auto-Unequip`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3381334962)
 -- ============================================================================
@@ -596,13 +549,11 @@ AddPrefabPostInit('inventoryitem_classified', function (inst)
 		end)
 	end
 end)
-
-```
-
+`
 ### 变体演进：Auto-Unequip on 1-20% (2026 Update) (Mod 2706972372)
 - **变体场景与切面**：收录来自工坊 Mod 2706972372 (`Auto-Unequip on 1-20% (2026 Update)`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2706972372)
 -- ============================================================================
@@ -631,13 +582,11 @@ AddPrefabPostInit(
             )
         end
     end
-
-```
-
+`
 ### 变体演进：[Gorge] Victorian HUD (Mod 1583765151)
 - **变体场景与切面**：收录来自工坊 Mod 1583765151 (`[Gorge] Victorian HUD`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 1583765151)
 -- ============================================================================
@@ -656,13 +605,11 @@ AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
 end)
-
-```
-
+`
 ### 变体演进：[DST] Roseate HUD (Mod 2250176974)
 - **变体场景与切面**：收录来自工坊 Mod 2250176974 (`[DST] Roseate HUD`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2250176974)
 -- ============================================================================
@@ -681,13 +628,11 @@ AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
 end)
-
-```
-
+`
 ### 变体演进：Craft Pot (Mod 2677590844)
 - **变体场景与切面**：收录来自工坊 Mod 2677590844 (`Craft Pot`) 的生产级切面。
 - **核心切面代码**：
-```lua
+`lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2677590844)
 -- ============================================================================
@@ -701,6 +646,4 @@ local GLOBAL = GLOBAL
         end
       end)
     end)
-
-```
-
+`

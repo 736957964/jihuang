@@ -189,26 +189,28 @@ def analyze_mod_source(root):
                 hooks[key] = hooks.get(key, 0) + 1
                 if key not in snippets:
                     ln = text[:m.start()].count("\n")
-                    # 动态提取完整函数块：铁律严格自闭环（严禁任何截断，直到匹配到最外层 end 为止）
+                    # 动态提取完整函数块：严格作用域闭环（过滤注释行干扰，严格跟踪 function/then/do 与 end 闭合）
                     end_ln = min(len(lines), ln + 1)
                     scope = 0
                     found_start = False
-                    for idx in range(ln, min(len(lines), ln + 600)):
+                    for idx in range(ln, min(len(lines), ln + 800)):
                         line_str = lines[idx]
-                        if "function" in line_str:
-                            scope += line_str.count("function")
+                        clean_line = re.sub(r"--.*", "", line_str)
+                        fn_count = len(re.findall(r"\bfunction\b", clean_line))
+                        if fn_count > 0:
+                            scope += fn_count
                             found_start = True
-                        if re.search(r"\b(then|do)\b", line_str):
-                            scope += 1
-                        if re.search(r"\bend\b", line_str):
-                            scope -= 1
-                            if found_start and scope <= 0:
-                                end_ln = idx + 1
-                                break
+                        scope += len(re.findall(r"\b(then|do|repeat)\b", clean_line))
+                        scope -= len(re.findall(r"\bend\b", clean_line))
+                        if found_start and scope <= 0:
+                            end_ln = idx + 1
+                            break
                         end_ln = idx + 1
-                    extracted = lines[max(0, ln - 1):end_ln]
-                    # 强校验：如果提取完仍未闭合，直接追加闭合注释防护，严禁半截代码输出
-                    snippets[key] = "\n".join(extracted)
+                    extracted = lines[max(0, ln):end_ln]
+                    # 强校验：严禁残缺碎代码入库
+                    code_joined = "\n".join(extracted).strip()
+                    if found_start and scope <= 0 and len(code_joined.splitlines()) >= 3:
+                        snippets[key] = code_joined
     return {
         "lua_files": sorted(lua_files),
         "total_lines": total_lines,
@@ -533,6 +535,7 @@ def run_daemon_24h():
         return
     log("【规范自检】已成功读取并加载《饥荒工坊研读与流水线维护规范.md》！")
 
+    last_git_push_time = time.time()  # 1 小时 Git 提交节流计时器
     while True:
         try:
             queue_data = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
@@ -570,7 +573,11 @@ def run_daemon_24h():
             # Worker 7 归约
             reduced = reducer_summarize_and_evolve()
             if reduced:
-                git_push_auto()
+                # 老爹铁令：Git 提交推送过于频繁，严格控制为 1 小时 (3600 秒) 集中提交推送一次
+                now_t = time.time()
+                if now_t - last_git_push_time >= 3600:
+                    git_push_auto()
+                    last_git_push_time = now_t
                 notify_owner_batch(reduced)
             
             log("【批次结算】：本批归约出 %d 篇母本，休眠 30 秒进入下一批次..." % len(reduced))
