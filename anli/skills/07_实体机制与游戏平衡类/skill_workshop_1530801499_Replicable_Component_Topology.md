@@ -11618,3 +11618,30 @@ AddModCharacter("matikanefukukitaru", "FEMALE")
 
 ```
 
+
+
+### 变体演进：基础运行库 (Mod 3750329397)
+- **变体场景与切面**：收录来自工坊 Mod 3750329397 (`基础运行库`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3750329397)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+local a = true
+AddComponentPostInit("playercontroller", function(self, player)
+	if a then
+		a = false
+		for fn, v in pairs(allplayerfn_once) do
+			fn(self, player)
+		end
+	end
+	for fn, v in pairs(allplayerfn) do
+		fn(self, player)
+	end
+end)]]
+
+```
+
