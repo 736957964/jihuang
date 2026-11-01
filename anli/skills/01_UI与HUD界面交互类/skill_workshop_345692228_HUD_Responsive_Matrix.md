@@ -562,3 +562,67 @@ end)
 
 ```
 
+
+
+### 变体演进：人物hud限制解除器 (Mod 3100347966)
+- **变体场景与切面**：收录来自工坊 Mod 3100347966 (`人物hud限制解除器`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3100347966)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+})
+AddComponentPostInit("playercontroller", function(self, inst)
+    if inst ~= ThePlayer then return end
+    local oldenable = self.IsEnabled
+    function self:IsEnabled()
+        --mmdx_print(self.inst.HUD)
+        if ThePlayer and ThePlayer.prefab == 'wathom' and ThePlayer:HasTag('attack') then
+            return oldenable(self)
+        elseif TheFrontEnd and TheFrontEnd.textProcessorWidget then
+            return oldenable(self)
+        else
+            return true
+        end
+    end
+
+    local old1 = self.DoCameraControl
+    function self:DoCameraControl()
+        local isenabled, ishudblocking = oldenable(self)
+        if not isenabled and not ishudblocking then
+            return
+        end
+        return old1(self)
+    end
+
+    local OldOnControl = self.OnControl
+    function self:OnControl(control, down)
+        if self:IsEnabled() and not oldenable(self) and down and control >= GLOBAL.CONTROL_INV_1 and control <= GLOBAL.CONTROL_INV_10 then
+            local inventory = GLOBAL.ThePlayer.replica.inventory
+            if inventory ~= nil then
+                local hot_key_num = control - GLOBAL.CONTROL_INV_1 + 1
+                local new_item = inventory:GetItemInSlot(hot_key_num)
+                inventory:UseItemFromInvTile(new_item)
+            end
+        end
+        --print(control, down)
+        return OldOnControl(self, control, down)
+    end
+end)
+--地图移动
+AddClassPostConstruct("screens/mapscreen", function(self)
+    local oldupdate = self.OnUpdate
+    self.OnUpdate = function(self, dt)
+        local olddeadzone = TUNING.CONTROLLER_DEADZONE_RADIUS
+        TUNING.CONTROLLER_DEADZONE_RADIUS = 100
+        local result = oldupdate(self, dt)
+        TUNING.CONTROLLER_DEADZONE_RADIUS = olddeadzone
+        return result
+    end
+end)
+
+```
+

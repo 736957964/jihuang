@@ -7586,3 +7586,139 @@ end)
 
 ```
 
+
+
+### 变体演进：Title (Mod 3473582283)
+- **变体场景与切面**：收录来自工坊 Mod 3473582283 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3473582283)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skilltreeupdater
+--if GLOBAL.KnownModIndex:IsModEnabled("workshop-1909182187") == true then--删掉这一句可以兼容自用勋章，这里为了不报错--这个本地居然没有，害惨我力
+AddComponentPostInit("skilltreeupdater", extraskillcheck)
+--[[AddPlayerPostInit(function(inst) 
+	if inst.components.skilltreeupdater == nil then
+		inst:AddComponent("skilltreeupdater")
+	end
+	local oldisactivated = inst.components.skilltreeupdater.IsActivated
+	inst.components.skilltreeupdater.IsActivated = function(_self,_skill)
+		if oldisactivated(_self,_skill) ~= true 
+		then
+		--print("brandnew")
+			for i,v in pairs(skillmedaltab) do
+				if checkcertificate(_self.inst,v.tag) == true
+				and SKILLTREE_DEFS[v.skill][_skill] ~= nil
+				then
+					--print("step2")
+					return true
+				end
+			end
+			return false	
+		else
+			return oldisactivated(_self,_skill)
+		end
+	end
+end)]]--
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:handy_certificate
+------------------
+AddPrefabPostInit("handy_certificate",function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	local oldonequip = inst.components.equippable.onequipfn
+	inst.components.equippable.onequipfn = function(_inst,_owner,_from_ground)
+		oldonequip(_inst,_owner,_from_ground)
+		AddMedalComponent(_owner,"inspectaclesparticipant")--好用咱就用
+		AddMedalComponent(_owner,"roseinspectableuser")
+		AddMedalTag(_owner,"portableengineer")
+		AddMedalTag(_owner,"inspectacleshatuser")
+	end
+	local oldonunequip = inst.components.equippable.onunequipfn
+	inst.components.equippable.onunequipfn = function(_inst,_owner)
+		oldonunequip(_inst,_owner)
+		RemoveMedalComponent(_owner,"inspectaclesparticipant")
+		RemoveMedalComponent(_owner,"roseinspectableuser")
+		RemoveMedalTag(_owner,"portableengineer")
+		RemoveMedalTag(_owner,"inspectacleshatuser")
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:merm_certificate
+end)
+AddPrefabPostInit("merm_certificate",function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	local oldonequip = inst.components.equippable.onequipfn
+	inst.components.equippable.onequipfn = function(_inst,_owner,_from_ground)
+		oldonequip(_inst,_owner,_from_ground)
+		AddMedalTag(_owner,"merm_medal")
+		AddMedalTag(_owner,SPELLTYPES.SHADOW_SWAMP_BOMB.."_spelluser")
+		AddMedalTag(_owner,SPELLTYPES.LUNAR_SWAMP_BOMB.."_spelluser")
+	end
+	local oldonunequip = inst.components.equippable.onunequipfn
+	inst.components.equippable.onunequipfn = function(_inst,_owner)
+		oldonunequip(_inst,_owner)
+		RemoveMedalTag(_owner,"merm_medal")
+		RemoveMedalTag(_owner,SPELLTYPES.SHADOW_SWAMP_BOMB.."_spelluser")
+		RemoveMedalTag(_owner,SPELLTYPES.LUNAR_SWAMP_BOMB.."_spelluser")
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:valkyrie_certificate
+end)
+AddPrefabPostInit("valkyrie_certificate",function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	local oldonequip = inst.components.equippable.onequipfn
+	inst.components.equippable.onequipfn = function(_inst,_owner,_from_ground)
+		oldonequip(_inst,_owner,_from_ground)
+		AddMedalTag(_owner,"spear_lightning_upgradeuser")--好用咱就用,歌谱用不了，就不管了
+		AddMedalTag(_owner,"wathgrithrshielduser")
+		AddMedalTag(_owner,"valkyrie_medal")
+		if _owner.prefab ~= "wathgrithr" then
+			_owner.IsValidVictim = IsValidVictim
+		end
+	end
+	local oldonunequip = inst.components.equippable.onunequipfn
+	inst.components.equippable.onunequipfn = function(_inst,_owner)
+		oldonunequip(_inst,_owner)
+		RemoveMedalTag(_owner,"spear_lightning_upgradeuser")
+		RemoveMedalTag(_owner,"wathgrithrshielduser")
+		RemoveMedalTag(_owner,"valkyrie_medal")
+		if _owner.prefab ~= "wathgrithr" then
+			_owner.IsValidVictim = nil
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:childlike_certificate
+end)
+AddPrefabPostInit("childlike_certificate",function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	local oldonequip = inst.components.equippable.onequipfn
+	inst.components.equippable.onequipfn = function(_inst,_owner,_from_ground)
+		oldonequip(_inst,_owner,_from_ground)
+		AddMedalTag(_owner,"slingshotammocontaineruser")--好用咱就用
+	end
+	local oldonunequip = inst.components.equippable.onunequipfn
+	inst.components.equippable.onunequipfn = function(_inst,_owner)
+		oldonunequip(_inst,_owner)
+		RemoveMedalTag(_owner,"slingshotammocontaineruser")
+	end
+end)
+
+```
+

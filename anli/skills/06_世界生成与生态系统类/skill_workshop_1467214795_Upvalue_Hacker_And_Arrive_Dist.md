@@ -3991,3 +3991,121 @@ end
 
 ```
 
+
+
+### 变体演进：󰀕 永不妥协全汉化 - 测试版专供 (Mod 3597225156)
+- **变体场景与切面**：收录来自工坊 Mod 3597225156 (`󰀕 永不妥协全汉化 - 测试版专供`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3597225156)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    STRINGS.CHARACTER_DESCRIPTIONS.willow = STRINGS.CHARACTER_DESCRIPTIONS.willow .. "\n󰀕能在冬季点燃东西"
+    if TUNING.DSTU and TUNING.DSTU.BERNIE_BUFF then
+        STRINGS.CHARACTER_DESCRIPTIONS.willow = STRINGS.CHARACTER_DESCRIPTIONS.willow .. "\n󰀕拥抱伯尼可以使梦魇远离"
+    end
+    if TUNING.DSTU and TUNING.DSTU.WXLESS then
+        STRINGS.CHARACTER_DESCRIPTIONS.wx78 = STRINGS.CHARACTER_DESCRIPTIONS.wx78 ..
+        "\n󰀕电路板的耐久和电力值会随着时间慢慢衰减\n󰀕更多插槽以容纳电路板；只要有一格电力值，所有电路板都会运作\n󰀕睡觉和进食可以回复电力值"
+    end
+    if TUNING.DSTU and TUNING.DSTU.WX78_CONFIG then
+        STRINGS.CHARACTER_DESCRIPTIONS.wx78 = STRINGS.CHARACTER_DESCRIPTIONS.wx78 .. "\n󰀕系统不能通过闪电修复"
+    end
+    if TUNING.DSTU and TUNING.DSTU.WICKERNERF then
+        STRINGS.CHARACTER_DESCRIPTIONS.wickerbottom = STRINGS.CHARACTER_DESCRIPTIONS.wickerbottom ..
+            "\n󰀕阅读需要脑力"
+    end
+    STRINGS.CHARACTER_DESCRIPTIONS.wes = STRINGS.CHARACTER_DESCRIPTIONS.wes .. "\n󰀕扩大内心对话" --"\n󰀕企鸥们喜欢哑剧"
+    STRINGS.CHARACTER_DESCRIPTIONS.waxwell = STRINGS.CHARACTER_DESCRIPTIONS.waxwell .. "\n󰀕可以制作一本旧暗影秘典以召唤旧日的暗影傀儡与暗影装备"
+    if TUNING.DSTU and TUNING.DSTU.WOLFGANG_HUNGERMIGHTY then
+        STRINGS.CHARACTER_DESCRIPTIONS.wolfgang = "*吃饱之后长得更强大\n*吃得饱饱、头脑清醒时可以使用更强大的力量\n*害怕怪兽和黑暗\n*喜欢炫耀自己的力量"
+    end
+    if TUNING.DSTU and TUNING.DSTU.WARLY_FOOD_TASTE then
+        STRINGS.CHARACTER_DESCRIPTIONS.warly = STRINGS.CHARACTER_DESCRIPTIONS.warly ..
+            "\n󰀕额外吸收食物中的营养，更不喜欢吃同类食物"
+    end
+    if TUNING.DSTU and TUNING.DSTU.WARLY_BUTCHER then
+        STRINGS.CHARACTER_DESCRIPTIONS.warly = STRINGS.CHARACTER_DESCRIPTIONS.warly ..
+            "\n󰀕一位专业屠夫"
+    end
+    if TUNING.DSTU and TUNING.DSTU.WINONA_WORKER then
+        STRINGS.CHARACTER_DESCRIPTIONS.winona = STRINGS.CHARACTER_DESCRIPTIONS.winona .. "\n󰀕干活更快，干饭更多"
+    end
+    if TUNING.DSTU and TUNING.DSTU.WORTOX then
+        STRINGS.CHARACTER_DESCRIPTIONS.wortox = STRINGS.CHARACTER_DESCRIPTIONS.wortox ..
+        "\n󰀕灵魂治疗缓慢恢复生命值，且回复量减少\n󰀕部分弱小的生物没有灵魂"
+    end
+    --[[if GetModConfigData("wigfrid") then
+    STRINGS.CHARACTER_DESCRIPTIONS.wathgrithr = STRINGS.CHARACTER_DESCRIPTIONS.wathgrithr .. "\n󰀕攻击时的恢复效果变弱"
+end]]
+    if TUNING.DSTU and TUNING.DSTU.WORMWOOD_CONFIG_FIRE then
+        STRINGS.CHARACTER_DESCRIPTIONS.wormwood = STRINGS.CHARACTER_DESCRIPTIONS.wormwood .. "\n󰀕极其易燃"
+    end
+
+
+    --Reign Of Runts 侏儒的统治
+    if GLOBAL.KnownModIndex:IsModEnabled("workshop-2010472942") then
+        STRINGS.CHARACTER_DESCRIPTIONS.wragonfly = STRINGS.CHARACTER_DESCRIPTIONS.wragonfly .. "\n󰀕在夏季浓烟里呼吸畅通"
+        STRINGS.CHARACTER_DESCRIPTIONS.weerclops = STRINGS.CHARACTER_DESCRIPTIONS.weerclops .. "\n󰀕不会被暴风雪减速\n󰀕适应大雪天气"
+    end
+    --SCP-049, the Plague Doctor
+    if GLOBAL.KnownModIndex:IsModEnabled("workshop-1847716441") then
+        STRINGS.CHARACTER_DESCRIPTIONS.plaguedoctor = STRINGS.CHARACTER_DESCRIPTIONS.plaguedoctor .. "\n󰀕面具抵抗浓烟侵害"
+    end
+    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wathom
+-- 跳劈哥 wathom汉化
+AddPrefabPostInit("wathom", function(inst)
+    inst:DoTaskInTime(0, function ()
+        modimport("init/init_strings/init_descriptions/wathom")
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winky
+-- 老鼠人 winky汉化
+AddPrefabPostInit("winky", function(inst)
+    inst:DoTaskInTime(0, function()
+        modimport("init/init_strings/init_descriptions/winky")
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wixie
+-- 弹弓妹 wixie汉化
+AddPrefabPostInit("wixie", function(inst)
+    GLOBAL.STRINGS.ACTIONS.WIXIE_SLINGSHOT = "射击"
+    GLOBAL.STRINGS.ACTIONS.WIXIE_TAUNT = "嘲讽!"
+
+    inst:DoTaskInTime(0, function ()
+        modimport("wixie_postinit/wixie_strings")
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:webbedcreature
+}
+AddPrefabPostInit("webbedcreature", function(inst)
+    inst:DoTaskInTime(1,function()
+        if inst.components.named and inst.components.named.name then
+            local original_name = inst.components.named.name
+            -- print("original_name:", original_name)
+            -- 查找映射表，存在对应翻译则替换
+            local translated_name = webbedcreatures_names[original_name]
+            if translated_name then
+                inst.components.named:SetName(translated_name)
+            end
+        end     
+    end)
+end)
+
+```
+

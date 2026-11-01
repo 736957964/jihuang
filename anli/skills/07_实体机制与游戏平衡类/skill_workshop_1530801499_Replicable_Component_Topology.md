@@ -9427,3 +9427,78 @@ end)
 
 ```
 
+
+
+### 变体演进：Bestest Spell Casting! (Mod 3620997298)
+- **变体场景与切面**：收录来自工坊 Mod 3620997298 (`Bestest Spell Casting!`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3620997298)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:slingshot2ex
+
+AddPrefabPostInit("slingshot2ex", function(inst)
+	local aoetargeting = inst.components.aoetargeting
+	if aoetargeting then
+		local oldfn = aoetargeting.StartTargeting
+		aoetargeting.StartTargeting = function(...)
+			if TheModConfig.insta_alt_shot then InstaShot(inst) else oldfn(...) end
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winona_remote
+-- Remove background from Winona's command wheel --------------------------------------------------------------------
+AddPrefabPostInit("winona_remote", function(inst)
+	inst.components.spellbook:SetBgData()
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:focalpoint
+AddComponentPostInit("focalpoint", function(self)
+	local oldfn = self.StartFocusSource
+	self.StartFocusSource = function(self, source, id, target, minrange, maxrange, priority, updater, ...)
+		if source and source._remi_nofocus or target and target._remi_nofocus then return end
+		oldfn(self, source, id, target, minrange, maxrange, priority, updater, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:spellbook
+AddComponentPostInit("spellbook", function(self)
+	local oldselectfn = self.SelectSpell
+	self.SelectSpell = function(self, id)
+		if not self.items then return false end
+		return oldselectfn(self, id)
+	end
+
+	local oldfn = self.OpenSpellBook
+	self.OpenSpellBook = function(self, user)
+		if self.inst.bsc_updatespells then self.inst:bsc_updatespells() end
+		--
+		_G.ThePlayer.HUD.controls.spellwheel:SetPosition(0, 0)
+		return oldfn(self, user)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:spellbookcooldowns
+AddComponentPostInit("spellbookcooldowns", function(inst)
+	local oldregisterfn = inst.RegisterSpellbookCooldown
+	inst.RegisterSpellbookCooldown = function(self, cd)
+		local cdtimer = self.inst and self.inst.components.remibsc_cooldowntimer
+		if cdtimer and cdtimer.enabled then
+			self.inst.components.remibsc_cooldowntimer:OnCast(cd)
+		end
+		TheMod.last_cast_time = GetTime()
+
+		oldregisterfn(self, cd)
+	end
+end)
+
+```
+

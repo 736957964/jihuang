@@ -7059,8 +7059,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 11:26:36",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3100347966",
+      "name": "人物hud限制解除器",
+      "author": "littledro,萌萌的新",
+      "version": "1.1.9",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 11:28:51",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3473582283",
+      "name": "Title",
+      "author": "Lilith & 木头",
+      "version": "2.0.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 11:28:51",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3597225156",
+      "name": "󰀕 永不妥协全汉化 - 测试版专供",
+      "author": "郎溪小杰哥、不堪白昼、不笑猫、去码头整点薯条",
+      "version": "20260926.1",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 11:28:51",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3620997298",
+      "name": "Bestest Spell Casting!",
+      "author": "Remi",
+      "version": "2.1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 11:28:51",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 11:26:36"
+  "lastUpdated": "2026-11-01 11:28:51"
 }
