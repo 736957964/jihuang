@@ -29391,3 +29391,102 @@ end)
 
 ```
 
+
+
+### 变体演进：Orsino, The Polaris (Mod 3745939498)
+- **变体场景与切面**：收录来自工坊 Mod 3745939498 (`Orsino, The Polaris`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3745939498)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wortox
+
+AddPrefabPostInit("wortox", function(inst)
+    inst:AddTag("orsino_wreath_wearer")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:purebrilliance
+
+AddPrefabPostInit("purebrilliance", function(inst)
+    inst:AddTag("edible_" .. FOODTYPE.ORSINO_UPGRADE)
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")
+    end
+
+    inst.components.edible.foodtype = FOODTYPE.ORSINO_UPGRADE
+    inst.components.edible.healthvalue = 100
+    inst.components.edible.hungervalue = 300
+    inst.components.edible.sanityvalue = 200
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonglass_charged
+
+AddPrefabPostInit("moonglass_charged", function(inst)
+    inst:AddTag("edible_" .. FOODTYPE.ORSINO_UPGRADE)
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")
+    end
+
+    inst.components.edible.foodtype = FOODTYPE.ORSINO_UPGRADE
+    inst.components.edible.healthvalue = 50
+    inst.components.edible.hungervalue = 120
+    inst.components.edible.sanityvalue = 50
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonrocknugget
+
+AddPrefabPostInit("moonrocknugget", function(inst)
+    inst:AddTag("edible_" .. FOODTYPE.ORSINO_UPGRADE)
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")
+    end
+
+    inst.components.edible.foodtype = FOODTYPE.ORSINO_UPGRADE
+    inst.components.edible.healthvalue = 10
+    inst.components.edible.hungervalue = 30
+    inst.components.edible.sanityvalue = 5
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonglass
+
+AddPrefabPostInit("moonglass", function(inst)
+    inst:AddTag("edible_" .. FOODTYPE.ORSINO_UPGRADE)
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.edible == nil then
+        inst:AddComponent("edible")
+    end
+
+    inst.components.edible.foodtype = FOODTYPE.ORSINO_UPGRADE
+    inst.components.edible.healthvalue = 30
+    inst.components.edible.hungervalue = 80
+    inst.components.edible.sanityvalue = 20
+end)
+
+```
+

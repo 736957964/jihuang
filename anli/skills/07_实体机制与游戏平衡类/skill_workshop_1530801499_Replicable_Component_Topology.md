@@ -7298,3 +7298,30 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：Bone Armor Cooldown Visualization (Mod 2954239602)
+- **变体场景与切面**：收录来自工坊 Mod 2954239602 (`Bone Armor Cooldown Visualization`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2954239602)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:armorskeleton
+
+AddPrefabPostInit("armorskeleton",function(self)
+    self.trackpercent = 100
+	CreateRechargeTimer(self)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:inventoryitem_classified
+
+AddPrefabPostInit("inventoryitem_classified", function(inst)
+    inst:DoTaskInTime(0, function() ApplyCooldown(inst) end)
+end)
+
+```
+

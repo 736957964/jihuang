@@ -509,3 +509,56 @@ if GetModConfigData("domestication_nopoop") then
 
 ```
 
+
+
+### 变体演进：HEADER (Mod 3590081957)
+- **变体场景与切面**：收录来自工坊 Mod 3590081957 (`HEADER`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3590081957)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:vault_portal_fx
+
+AddPrefabPostInit("vault_portal_fx", function(inst)
+	if not (TheMod.navigator and TheMod.navigator:IsActivated()) then return end
+	--
+	inst:DoTaskInTime(0, function(inst)
+		TheMod.navigator:OnPortalFX(inst)
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- Expect rooms upon right clicking a teleporter
+AddComponentPostInit("playercontroller", function(self)
+	local oldrightfn = self.OnRightClick
+	function self:OnRightClick(down)
+		if down and TheMod.navigator then
+			local act = self:GetRightMouseAction()
+			local target = TheInput:GetWorldEntityUnderMouse()
+
+			if act and act.action == ACTIONS.STARTCHANNELING and target and target:HasTag("virtualroomteleporter") and TheMod.navigator:IsActivated() then
+				TheMod.navigator:ExpectRoom(target.destination_room) 
+			end
+		end
+		return oldrightfn(self, down)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:vault_teleporter
+
+AddPrefabPostInit("vault_teleporter", function(inst) 
+	TheMod.do_areacheck = true -- activates area checks
+	--
+	inst.CreateStarTrail = CreateStarTrail
+	inst.StopStarTrail = StopStarTrail
+	waymarks[inst] = true
+	inst:ListenForEvent("onremove", onremove)
+end)
+
+```
+

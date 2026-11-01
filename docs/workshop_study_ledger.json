@@ -5889,8 +5889,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 08:33:32",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2954239602",
+      "name": "Bone Armor Cooldown Visualization",
+      "author": "splorange",
+      "version": "1.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 08:36:21",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3590081957",
+      "name": "HEADER",
+      "author": "Remi",
+      "version": "0.6.1b",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 08:36:21",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3745939498",
+      "name": "Orsino, The Polaris",
+      "author": "Orsino Polaris aka. Matsurishiroii",
+      "version": "1.2.14",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:36:21",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:33:32"
+  "lastUpdated": "2026-11-01 08:36:21"
 }
