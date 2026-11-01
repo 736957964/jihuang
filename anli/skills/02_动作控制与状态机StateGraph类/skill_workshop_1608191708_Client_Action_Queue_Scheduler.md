@@ -39033,3 +39033,2595 @@ end)
 
 ```
 
+
+
+### 变体演进：language (Mod 3512728067)
+- **变体场景与切面**：收录来自工坊 Mod 3512728067 (`language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3512728067)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    inst:AddComponent("krieg_saveinfo")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", Makeitem)
+AddStategraphPostInit("wilson_client", Makeitem)
+
+
+local krieg_ui = require("widgets/krieg_ui")
+local krieg_skill_ui = require("widgets/krieg_skill_ui") 
+local krieg_skill_time = require("widgets/krieg_skill_time")
+
+local function AddFeiChuanUi(self)
+    self.inst:DoTaskInTime(0, function()
+    if self.owner and self.owner:HasTag("krieg") then
+    self.krieg_ui = self.bottom_root:AddChild(krieg_ui(self.owner))
+    self.krieg_skill_ui = self.bottom_root:AddChild(krieg_skill_ui(self.owner))
+    self.krieg_skill_time = self.bottom_root:AddChild(krieg_skill_time(self.owner))
+
+    self.krieg_skill_ui:SetHAnchor(0)
+    self.krieg_skill_ui:SetVAnchor(0)
+    self.krieg_skill_ui:SetPosition(-340, -360, 0)
+    self.krieg_skill_ui:SetScaleMode(SCALEMODE_PROPORTIONAL)
+
+    self.krieg_skill_time:SetHAnchor(0)
+    self.krieg_skill_time:SetVAnchor(1)
+    self.krieg_skill_time:SetPosition(0, -100, 0)
+    self.krieg_skill_time:SetScaleMode(SCALEMODE_PROPORTIONAL)    
+    end
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", Makeitem)
+AddStategraphPostInit("wilson_client", Makeitem)
+
+
+local krieg_ui = require("widgets/krieg_ui")
+local krieg_skill_ui = require("widgets/krieg_skill_ui") 
+local krieg_skill_time = require("widgets/krieg_skill_time")
+
+local function AddFeiChuanUi(self)
+    self.inst:DoTaskInTime(0, function()
+    if self.owner and self.owner:HasTag("krieg") then
+    self.krieg_ui = self.bottom_root:AddChild(krieg_ui(self.owner))
+    self.krieg_skill_ui = self.bottom_root:AddChild(krieg_skill_ui(self.owner))
+    self.krieg_skill_time = self.bottom_root:AddChild(krieg_skill_time(self.owner))
+
+    self.krieg_skill_ui:SetHAnchor(0)
+    self.krieg_skill_ui:SetVAnchor(0)
+    self.krieg_skill_ui:SetPosition(-340, -360, 0)
+    self.krieg_skill_ui:SetScaleMode(SCALEMODE_PROPORTIONAL)
+
+    self.krieg_skill_time:SetHAnchor(0)
+    self.krieg_skill_time:SetVAnchor(1)
+    self.krieg_skill_time:SetPosition(0, -100, 0)
+    self.krieg_skill_time:SetScaleMode(SCALEMODE_PROPORTIONAL)    
+    end
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krieg
+
+AddPrefabPostInit("krieg", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    inst.components.inventory.ApplyDamage  = function(self, damage, attacker, weapon, spdamage, ...)
+        return damage, spdamage
+    end 
+
+    local _getAttacked = inst.components.combat.GetAttacked
+    inst.components.combat.GetAttacked = function(self, attacker, damage, weapon, stimuli, spdamage, ...)
+        if inst.sg:HasStateTag("krieg_trans") then
+            return
+        end    
+        local abs = 0.6
+        if inst:HasTag("is_were") and inst.skill1[1] > 0 then --
+        abs = abs + (inst.skill1[1] * 0.02)
+        end
+
+        if inst.kr_fire_time and inst.kr_fire_time > 0 and inst.krieg_fake_fire and inst.krieg_fake_fire:IsValid() and inst.skill3[2] > 0 then
+        abs = abs + (inst.skill3[2] * 0.02)
+        end
+
+        if inst:HasTag("is_wereRRR") then
+        abs = abs + 0.1
+        end    
+
+        if attacker and attacker == inst then
+        abs = 0
+        AddKrVision(inst)    
+        end
+
+        --print(abs)    
+
+        if abs > 0 then
+        damage = damage - (damage * abs)
+        end
+        return _getAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)  
+    end
+
+    local _getHealth = inst.components.health.DoDelta 
+    inst.components.health.DoDelta = function(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
+        if inst.sg:HasStateTag("krieg_trans") and amount < 0 then
+            return
+        end 
+
+        if (self.currenthealth + amount) <= 0 and (inst.use_bomb_task or inst.skill2[1] > 0) and (cause == nil or cause ~= "bomb_kill") then  --amount < 0 and
+            if inst.use_bomb_task == nil and inst.skill2[1] > 0 then
+                inst:UseBomb(true)
+            end    
+            amount = 0
+            self.currenthealth = 1
+        end
+
+        return _getHealth(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...) 
+    end 
+
+    inst.components.cursable.ApplyCurse = function(s, it, cur,...)
+    if it and it:AddTag("applied_curse") then
+        it:RemoveTag("applied_curse")
+    end
+    if it.components.curseditem then
+        it.components.curseditem.target = nil
+    end
+    if it.findplayertask then
+        it.findplayertask:Cancel()
+        it.findplayertask = nil
+    end
+    end 
+
+    local OldAddColdness = inst.components.freezable.AddColdness
+    inst.components.freezable.AddColdness = function(self, coldness, freezetime, nofreeze, ...)
+        if OnUseBomb(inst) or inst.sg:HasStateTag("krieg_trans") then
+            coldness = -100
+        end  
+        return OldAddColdness(self, coldness, freezetime, nofreeze, ...)
+    end
+
+    local OldAddGrogginess = inst.components.grogginess.AddGrogginess --ThePlayer.components.grogginess:AddGrogginess(-10, 10)
+    inst.components.grogginess.AddGrogginess = function(self, grogginess, knockoutduration, ...)  --ThePlayer.components.grogginess:SubtractGrogginess(10)
+        if OnUseBomb(inst) or inst.sg:HasStateTag("krieg_trans") then
+            self:SubtractGrogginess(30)
+            return
+        end  
+        return OldAddGrogginess(self, grogginess, knockoutduration, ...)
+    end
+
+    local OldStick = inst.components.pinnable.Stick
+    inst.components.pinnable.Stick = function(self, goo_build, splashfxlist, ...)
+        if OnUseBomb(inst) or inst.sg:HasStateTag("krieg_trans") then
+            return
+        end  
+        return OldStick(self, goo_build, splashfxlist, ...)
+    end
+
+    inst:ListenForEvent("pinned", function(inst)
+        if OnUseBomb(inst) or inst.sg:HasStateTag("krieg_trans") then
+        inst.components.pinnable:Unstick() 
+        end
+    end)
+
+    inst:DoPeriodicTask(0.05, DropTarget) 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadow_rook
+
+AddPrefabPostInit("shadow_rook", function(inst)
+    inst:AddTag("epic")
+end)    
+
+```
+
+
+
+### 变体演进：异界冒险 (Mod 3655519312)
+- **变体场景与切面**：收录来自工坊 Mod 3655519312 (`异界冒险`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3655519312)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:langtun
+
+AddPrefabPostInit("langtun", InstallLangtunManaBuilder)
+AddPrefabPostInit("huyan", InstallLangtunManaBuilder)
+AddPrefabPostInit("derfei", InstallLangtunManaBuilder)
+
+TUNING.LANGTUN_SETUPARMORNODURABILITY = GetModConfigData("setuparmornodurability")
+TUNING.LANGTUN_SETTAUNTTASK = GetModConfigData("settaunttask")
+TUNING.LANGTUN_CHARACTER_SOUNDS = GetModConfigData("langtun_character_sounds") or "langtun"
+TUNING.LANGTUN_WEAPON_SKIN_SOUNDS = GetModConfigData("langtun_weapon_skin_sounds")
+TUNING.HUYAN_CHARACTER_SOUNDS = GetModConfigData("huyan_character_sounds") or "huyan"
+TUNING.LANGTUN_HUYAN_STAFF_SKIN_SOUNDS = GetModConfigData("huyan_staff_skin_sounds")
+TUNING.LANGTUN_HUYAN_SECONDARY_WEAPON_TEMPERATURE = GetModConfigData("secondary_weapon_temperature") == true
+TUNING.DERFEI_CHARACTER_SOUNDS = GetModConfigData("derfei_character_sounds") or "derfei"
+TUNING.DERFEI_RECALL_KEY = GetModConfigData("derfei_recall_key") or KEY_R
+TUNING.DERFEI_UI_BG = GetModConfigData("derfei_backpack_ui")
+
+PrefabFiles = {
+	"langtun", --人物代码文件
+	--"langtun_none", --人物皮肤
+	"langtun_weapon",
+	"langtun_weapon_plus",
+	"langtun_weapon_eggplant_waterdrop",
+	"langtun_bedroll",
+	"langtun_shovel",
+	"langtun_map",
+	"langtun_portablefirepit",
+
+	"huyan",
+	"huyan_staff_base",
+	"huyan_homingbullet",
+	"huyan_staff",
+	"huyan_staff_plus",
+	"huyan_tail_slot",
+
+	"derfei",
+	"derfei_sword",
+	"derfei_sword_plus",
+	"derfei_backpack",
+	"derfei_spacecrack",
+	"derfei_telestone",
+	"langtun_medals",
+
+	"langtun_magic_items",
+	"langtun_magic_station",
+	"langtun_skillpaper",
+	"langtun_magic_fx",
+	"langtun_laser",
+	"langtun_gemflower",
+	"langtun_npc_soumei",
+}
+
+Assets = {
+	-- 角色选择界面头像
+	Asset("IMAGE", "images/saveslot_portraits/langtun.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/langtun.xml"),
+
+	-- 大肖像
+	Asset("IMAGE", "bigportraits/langtun.tex"),
+	Asset("ATLAS", "bigportraits/langtun.xml"),
+	Asset("IMAGE", "bigportraits/langtun_none.tex"),
+	Asset("ATLAS", "bigportraits/langtun_none.xml"),
+
+	-- 小地图图标
+	Asset("IMAGE", "images/map_icons/langtun.tex"),
+	Asset("ATLAS", "images/map_icons/langtun.xml"),
+
+	-- 头像相关
+	Asset("IMAGE", "images/avatars/avatar_langtun.tex"),
+	Asset("ATLAS", "images/avatars/avatar_langtun.xml"),
+
+	Asset("IMAGE", "images/avatars/avatar_ghost_langtun.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_langtun.xml"),
+
+	Asset("IMAGE", "images/avatars/self_inspect_langtun.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_langtun.xml"),
+
+	-- 名字相关
+	Asset("IMAGE", "images/names_langtun.tex"),
+	Asset("ATLAS", "images/names_langtun.xml"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_bedroll.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_bedroll.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_portablefirepit_item.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_portablefirepit_item.tex"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_shovel.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_shovel.tex"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_mana.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_mana.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_station.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_station.tex"),
+
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_3.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_3.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_2.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_2.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_1.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_1.xml"),
+	Asset("IMAGE", "images/inventoryimages/huyan_staff_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/huyan_staff_skin.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_ice_maker_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_ice_maker_skin.xml"),
+
+	Asset("ANIM", "anim/derfei_telestone.zip"),
+	Asset("ANIM", "anim/ui_derfei_backpack_5x6.zip"),
+	Asset("ANIM", "anim/ui_derfei_backpack_simplified_5x6.zip"),
+	Asset("ANIM", "anim/ui_langtun_medal_sack_1x2.zip"),
+	Asset("ATLAS", "images/inventoryimages/derfei_telestone.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_telestone.tex"),
+	Asset("ANIM", "anim/langtun_medals.zip"),
+	Asset("ANIM", "anim/langtun_medal_casting.zip"),
+	Asset("ANIM", "anim/langtun_medal_mana.zip"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_courage.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_courage.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_casting.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_casting.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_mana.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_mana.tex"),
+	Asset("IMAGE", "images/hud/langtun_common/langtun_medal_sack.tex"),
+	Asset("ATLAS", "images/hud/langtun_common/langtun_medal_sack.xml"),
+
+	--虎咽相关
+    Asset("IMAGE", "images/avatars/avatar_huyan.tex"),
+	Asset("ATLAS", "images/avatars/avatar_huyan.xml"),
+	Asset("IMAGE", "images/avatars/avatar_ghost_huyan.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_huyan.xml"),
+	Asset("IMAGE", "images/avatars/self_inspect_huyan.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_huyan.xml"),
+    Asset("IMAGE", "images/names_huyan.tex"),
+    Asset("ATLAS", "images/names_huyan.xml"),
+    Asset("IMAGE", "images/map_icons/huyan.tex"),
+	Asset("ATLAS", "images/map_icons/huyan.xml"),
+    Asset("IMAGE", "images/saveslot_portraits/huyan.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/huyan.xml"),
+	Asset("IMAGE", "bigportraits/huyan.tex"),
+	Asset("ATLAS", "bigportraits/huyan.xml"),
+	Asset("IMAGE", "bigportraits/huyan_none.tex"),
+	Asset("ATLAS", "bigportraits/huyan_none.xml"),
+	Asset("IMAGE", "images/hud/huyan/equipslot_tail.tex"),
+	Asset("ATLAS", "images/hud/huyan/equipslot_tail.xml"),
+
+	--德尔菲相关
+	Asset("IMAGE", "images/saveslot_portraits/derfei.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/derfei.xml"),
+	Asset("IMAGE", "bigportraits/derfei.tex"),
+	Asset("ATLAS", "bigportraits/derfei.xml"),
+	Asset("IMAGE", "images/map_icons/derfei.tex"),
+	Asset("ATLAS", "images/map_icons/derfei.xml"),
+	Asset("IMAGE", "images/avatars/avatar_derfei.tex"),
+	Asset("ATLAS", "images/avatars/avatar_derfei.xml"),
+	Asset("IMAGE", "images/avatars/avatar_ghost_derfei.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_derfei.xml"),
+	Asset("IMAGE", "images/avatars/self_inspect_derfei.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_derfei.xml"),
+	Asset("IMAGE", "images/names_derfei.tex"),
+	Asset("ATLAS", "images/names_derfei.xml"),
+	Asset("IMAGE", "images/hud/derfei/stability.tex"),
+	Asset("ATLAS", "images/hud/derfei/stability.xml"),
+	Asset("IMAGE", "images/hud/derfei/status_cover.tex"),
+	Asset("ATLAS", "images/hud/derfei/status_cover.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_sword.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_sword.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_sword_plus.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_sword_plus.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_backpack.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_backpack.xml"),
+	Asset("IMAGE", "images/map_icons/derfei_backpack.tex"),
+	Asset("ATLAS", "images/map_icons/derfei_backpack.xml"),
+	Asset("IMAGE", "images/map_icons/derfei_telestone.tex"),
+	Asset("ATLAS", "images/map_icons/derfei_telestone.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_weapon_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_weapon_skin.xml"),
+	Asset("ANIM", "anim/derfei_weapon_skin.zip"),
+	Asset("ANIM", "anim/langtun_gemflower.zip"),
+	Asset("ATLAS", "images/inventoryimages/langtun_gemflower_seedbag.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_gemflower_seedbag.tex"),
+
+	Asset("IMAGE", "images/map_icons/langtun_magic_stone.tex"),
+	Asset("ATLAS", "images/map_icons/langtun_magic_stone.xml"),
+	Asset("IMAGE", "images/map_icons/langtun_magic_station.tex"),
+	Asset("ATLAS", "images/map_icons/langtun_magic_station.xml"),
+
+	--langtun/langtun/
+	--茄子剑专属音效触发条件与冷却：
+	--eggplant_atk 装备时攻击 8秒触发一次
+	--eggplant_attacked 装备时被攻击 8秒触发一次
+	--eggplant_death 装备时死亡
+	--eggplant_equip 装备到装备栏时
+	--eggplant_killed 装备时击杀生物 8秒触发一次
+	Asset("SOUNDPACKAGE" , "sound/langtun.fev" ),
+	Asset("SOUND", "sound/langtun.fsb"),
+
+	--huyan/huyan/
+	--staff_killed
+	--staff_equip
+	--staff_death
+	--staff_cast
+	Asset("SOUNDPACKAGE" , "sound/huyan.fev" ),
+	Asset("SOUND", "sound/huyan.fsb"),
+
+	--德尔菲音效
+	--derfei/derfei/
+	Asset("SOUNDPACKAGE" , "sound/derfei.fev" ),
+	Asset("SOUND", "sound/derfei.fsb"),
+
+	--NPC白犬王音效
+	Asset("SOUNDPACKAGE" , "sound/soumei.fev" ),
+	Asset("SOUND", "sound/soumei.fsb"),
+
+	--介绍书相关↓
+
+	--打开图标
+	Asset("IMAGE", "images/hud/langtun_introbook/icon.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/icon.xml"),
+	--空白背景
+	Asset("IMAGE", "images/hud/langtun_introbook/book/bg/page_blank.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/bg/page_blank.xml"),
+
+	--角色介绍
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/langtun_introbook_characters.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/langtun_introbook_characters.xml"),
+
+	--左右箭头
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/arrows/left.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/arrows/left.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/arrows/right.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/arrows/right.xml"),
+	--角色头像
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/derfei.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/derfei.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/huyan.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/huyan.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/langtun.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/langtun.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/linquan.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/linquan.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/suanni.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/suanni.xml"),
+	--见闻
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/exp.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/exp.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/gallery_banner_hd.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/gallery_banner_hd.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/gallery_langtun_hd.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/gallery_langtun_hd.xml"),
+	--物品
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/items/items.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/items/items.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/items/skillpaper/skillpaper_p1.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/items/skillpaper/skillpaper_p1.xml"),
+}
+modimport("scripts/langtun_strings")
+
+GLOBAL.SoraAPI = env
+modimport("scripts/tools/skinapi")
+
+modimport("scripts/actions/langtun_dig")
+modimport("scripts/actions/langtun_dodge")
+modimport("scripts/actions/langtun_skills")
+modimport("scripts/actions/langtun_gemflower")
+modimport("scripts/stategraphs/langtun_stategraph")
+modimport("scripts/derfei_actions")
+modimport("scripts/util/langtun_pirate")
+modimport("scripts/langtun_manabadge")
+modimport("scripts/derfei_stability_ui")
+modimport("scripts/langtun_introbook")
+modimport("scripts/langtun_hooks")
+modimport("scripts/langtun_animspeed")
+modimport("scripts/langtun_containers")
+modimport("scripts/huyan_tail")
+modimport("scripts/langtun_medals")
+modimport("scripts/langtun_recipes")
+modimport("scripts/langtun_npc_soumei")
+modimport("scripts/langtun_soumei_crafting")
+
+RemapSoundEvent( "huyan/huyan/eye_rub_vo", "huyan/huyan/emote" )
+--RemapSoundEvent( "langtun/langtun/eye_rub_vo", "langtun/langtun/emote" )
+
+--PREFAB_SKINS["langtun"] = { --修复人物大图显示
+--	"langtun_none",
+--}
+
+--增加小地图图标
+AddMinimapAtlas("images/map_icons/langtun.xml")
+AddMinimapAtlas("images/map_icons/huyan.xml")
+AddMinimapAtlas("images/map_icons/derfei.xml")
+AddMinimapAtlas("images/map_icons/derfei_backpack.xml")
+AddMinimapAtlas("images/map_icons/derfei_telestone.xml")
+AddMinimapAtlas("images/map_icons/langtun_magic_stone.xml")
+AddMinimapAtlas("images/map_icons/langtun_magic_station.xml")
+
+--增加人物到mod人物列表的里面 性别为男性（MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL）
+AddModCharacter("langtun", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+AddModCharacter("huyan", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+AddModCharacter("derfei", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+
+-- 选人界面人物三维显示
+TUNING.LANGTUN_HEALTH = 250
+TUNING.LANGTUN_HUNGER = 250
+TUNING.LANGTUN_SANITY = 150
+TUNING.HUYAN_HEALTH = 200
+TUNING.HUYAN_HUNGER = 250
+TUNING.HUYAN_SANITY = 100
+TUNING.HUYAN_MANA = 100
+TUNING.DERFEI_STABILITY = 175
+TUNING.DERFEI_HUNGER = 200
+TUNING.DERFEI_SANITY = 150
+TUNING.DERFEI_MANA = 100
+
+-- 选人界面初始物品显示
+for _, starting_items in pairs(TUNING.GAMEMODE_STARTING_ITEMS) do
+	starting_items.LANGTUN = { "spear", "armorwood" }
+	starting_items.HUYAN = { "huyan_staff_base", "portablecookpot_item" }
+	starting_items.DERFEI = { "langtun_potion_mana", "langtun_potion_mana", "derfei_telestone" }
+end
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["langtun_weapon"] = {
+    atlas = "images/inventoryimages/langtun_weapon.xml",
+    image = "langtun_weapon.tex"
+}
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["huyan_staff_base"] = {
+	atlas = "images/inventoryimages/huyan_staff_base.xml",
+	image = "huyan_staff_base.tex",
+}
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["langtun_potion_mana"] = {
+	atlas = "images/inventoryimages/langtun_potion_mana.xml",
+	image = "langtun_potion_mana.tex",
+}
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:huyan
+AddPrefabPostInit("langtun", InstallLangtunManaBuilder)
+AddPrefabPostInit("huyan", InstallLangtunManaBuilder)
+AddPrefabPostInit("derfei", InstallLangtunManaBuilder)
+
+TUNING.LANGTUN_SETUPARMORNODURABILITY = GetModConfigData("setuparmornodurability")
+TUNING.LANGTUN_SETTAUNTTASK = GetModConfigData("settaunttask")
+TUNING.LANGTUN_CHARACTER_SOUNDS = GetModConfigData("langtun_character_sounds") or "langtun"
+TUNING.LANGTUN_WEAPON_SKIN_SOUNDS = GetModConfigData("langtun_weapon_skin_sounds")
+TUNING.HUYAN_CHARACTER_SOUNDS = GetModConfigData("huyan_character_sounds") or "huyan"
+TUNING.LANGTUN_HUYAN_STAFF_SKIN_SOUNDS = GetModConfigData("huyan_staff_skin_sounds")
+TUNING.LANGTUN_HUYAN_SECONDARY_WEAPON_TEMPERATURE = GetModConfigData("secondary_weapon_temperature") == true
+TUNING.DERFEI_CHARACTER_SOUNDS = GetModConfigData("derfei_character_sounds") or "derfei"
+TUNING.DERFEI_RECALL_KEY = GetModConfigData("derfei_recall_key") or KEY_R
+TUNING.DERFEI_UI_BG = GetModConfigData("derfei_backpack_ui")
+
+PrefabFiles = {
+	"langtun", --人物代码文件
+	--"langtun_none", --人物皮肤
+	"langtun_weapon",
+	"langtun_weapon_plus",
+	"langtun_weapon_eggplant_waterdrop",
+	"langtun_bedroll",
+	"langtun_shovel",
+	"langtun_map",
+	"langtun_portablefirepit",
+
+	"huyan",
+	"huyan_staff_base",
+	"huyan_homingbullet",
+	"huyan_staff",
+	"huyan_staff_plus",
+	"huyan_tail_slot",
+
+	"derfei",
+	"derfei_sword",
+	"derfei_sword_plus",
+	"derfei_backpack",
+	"derfei_spacecrack",
+	"derfei_telestone",
+	"langtun_medals",
+
+	"langtun_magic_items",
+	"langtun_magic_station",
+	"langtun_skillpaper",
+	"langtun_magic_fx",
+	"langtun_laser",
+	"langtun_gemflower",
+	"langtun_npc_soumei",
+}
+
+Assets = {
+	-- 角色选择界面头像
+	Asset("IMAGE", "images/saveslot_portraits/langtun.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/langtun.xml"),
+
+	-- 大肖像
+	Asset("IMAGE", "bigportraits/langtun.tex"),
+	Asset("ATLAS", "bigportraits/langtun.xml"),
+	Asset("IMAGE", "bigportraits/langtun_none.tex"),
+	Asset("ATLAS", "bigportraits/langtun_none.xml"),
+
+	-- 小地图图标
+	Asset("IMAGE", "images/map_icons/langtun.tex"),
+	Asset("ATLAS", "images/map_icons/langtun.xml"),
+
+	-- 头像相关
+	Asset("IMAGE", "images/avatars/avatar_langtun.tex"),
+	Asset("ATLAS", "images/avatars/avatar_langtun.xml"),
+
+	Asset("IMAGE", "images/avatars/avatar_ghost_langtun.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_langtun.xml"),
+
+	Asset("IMAGE", "images/avatars/self_inspect_langtun.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_langtun.xml"),
+
+	-- 名字相关
+	Asset("IMAGE", "images/names_langtun.tex"),
+	Asset("ATLAS", "images/names_langtun.xml"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_bedroll.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_bedroll.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_portablefirepit_item.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_portablefirepit_item.tex"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_shovel.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_shovel.tex"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_mana.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_mana.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_station.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_station.tex"),
+
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_3.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_3.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_2.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_2.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_1.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_1.xml"),
+	Asset("IMAGE", "images/inventoryimages/huyan_staff_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/huyan_staff_skin.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_ice_maker_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_ice_maker_skin.xml"),
+
+	Asset("ANIM", "anim/derfei_telestone.zip"),
+	Asset("ANIM", "anim/ui_derfei_backpack_5x6.zip"),
+	Asset("ANIM", "anim/ui_derfei_backpack_simplified_5x6.zip"),
+	Asset("ANIM", "anim/ui_langtun_medal_sack_1x2.zip"),
+	Asset("ATLAS", "images/inventoryimages/derfei_telestone.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_telestone.tex"),
+	Asset("ANIM", "anim/langtun_medals.zip"),
+	Asset("ANIM", "anim/langtun_medal_casting.zip"),
+	Asset("ANIM", "anim/langtun_medal_mana.zip"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_courage.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_courage.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_casting.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_casting.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_mana.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_mana.tex"),
+	Asset("IMAGE", "images/hud/langtun_common/langtun_medal_sack.tex"),
+	Asset("ATLAS", "images/hud/langtun_common/langtun_medal_sack.xml"),
+
+	--虎咽相关
+    Asset("IMAGE", "images/avatars/avatar_huyan.tex"),
+	Asset("ATLAS", "images/avatars/avatar_huyan.xml"),
+	Asset("IMAGE", "images/avatars/avatar_ghost_huyan.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_huyan.xml"),
+	Asset("IMAGE", "images/avatars/self_inspect_huyan.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_huyan.xml"),
+    Asset("IMAGE", "images/names_huyan.tex"),
+    Asset("ATLAS", "images/names_huyan.xml"),
+    Asset("IMAGE", "images/map_icons/huyan.tex"),
+	Asset("ATLAS", "images/map_icons/huyan.xml"),
+    Asset("IMAGE", "images/saveslot_portraits/huyan.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/huyan.xml"),
+	Asset("IMAGE", "bigportraits/huyan.tex"),
+	Asset("ATLAS", "bigportraits/huyan.xml"),
+	Asset("IMAGE", "bigportraits/huyan_none.tex"),
+	Asset("ATLAS", "bigportraits/huyan_none.xml"),
+	Asset("IMAGE", "images/hud/huyan/equipslot_tail.tex"),
+	Asset("ATLAS", "images/hud/huyan/equipslot_tail.xml"),
+
+	--德尔菲相关
+	Asset("IMAGE", "images/saveslot_portraits/derfei.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/derfei.xml"),
+	Asset("IMAGE", "bigportraits/derfei.tex"),
+	Asset("ATLAS", "bigportraits/derfei.xml"),
+	Asset("IMAGE", "images/map_icons/derfei.tex"),
+	Asset("ATLAS", "images/map_icons/derfei.xml"),
+	Asset("IMAGE", "images/avatars/avatar_derfei.tex"),
+	Asset("ATLAS", "images/avatars/avatar_derfei.xml"),
+	Asset("IMAGE", "images/avatars/avatar_ghost_derfei.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_derfei.xml"),
+	Asset("IMAGE", "images/avatars/self_inspect_derfei.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_derfei.xml"),
+	Asset("IMAGE", "images/names_derfei.tex"),
+	Asset("ATLAS", "images/names_derfei.xml"),
+	Asset("IMAGE", "images/hud/derfei/stability.tex"),
+	Asset("ATLAS", "images/hud/derfei/stability.xml"),
+	Asset("IMAGE", "images/hud/derfei/status_cover.tex"),
+	Asset("ATLAS", "images/hud/derfei/status_cover.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_sword.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_sword.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_sword_plus.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_sword_plus.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_backpack.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_backpack.xml"),
+	Asset("IMAGE", "images/map_icons/derfei_backpack.tex"),
+	Asset("ATLAS", "images/map_icons/derfei_backpack.xml"),
+	Asset("IMAGE", "images/map_icons/derfei_telestone.tex"),
+	Asset("ATLAS", "images/map_icons/derfei_telestone.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_weapon_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_weapon_skin.xml"),
+	Asset("ANIM", "anim/derfei_weapon_skin.zip"),
+	Asset("ANIM", "anim/langtun_gemflower.zip"),
+	Asset("ATLAS", "images/inventoryimages/langtun_gemflower_seedbag.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_gemflower_seedbag.tex"),
+
+	Asset("IMAGE", "images/map_icons/langtun_magic_stone.tex"),
+	Asset("ATLAS", "images/map_icons/langtun_magic_stone.xml"),
+	Asset("IMAGE", "images/map_icons/langtun_magic_station.tex"),
+	Asset("ATLAS", "images/map_icons/langtun_magic_station.xml"),
+
+	--langtun/langtun/
+	--茄子剑专属音效触发条件与冷却：
+	--eggplant_atk 装备时攻击 8秒触发一次
+	--eggplant_attacked 装备时被攻击 8秒触发一次
+	--eggplant_death 装备时死亡
+	--eggplant_equip 装备到装备栏时
+	--eggplant_killed 装备时击杀生物 8秒触发一次
+	Asset("SOUNDPACKAGE" , "sound/langtun.fev" ),
+	Asset("SOUND", "sound/langtun.fsb"),
+
+	--huyan/huyan/
+	--staff_killed
+	--staff_equip
+	--staff_death
+	--staff_cast
+	Asset("SOUNDPACKAGE" , "sound/huyan.fev" ),
+	Asset("SOUND", "sound/huyan.fsb"),
+
+	--德尔菲音效
+	--derfei/derfei/
+	Asset("SOUNDPACKAGE" , "sound/derfei.fev" ),
+	Asset("SOUND", "sound/derfei.fsb"),
+
+	--NPC白犬王音效
+	Asset("SOUNDPACKAGE" , "sound/soumei.fev" ),
+	Asset("SOUND", "sound/soumei.fsb"),
+
+	--介绍书相关↓
+
+	--打开图标
+	Asset("IMAGE", "images/hud/langtun_introbook/icon.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/icon.xml"),
+	--空白背景
+	Asset("IMAGE", "images/hud/langtun_introbook/book/bg/page_blank.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/bg/page_blank.xml"),
+
+	--角色介绍
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/langtun_introbook_characters.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/langtun_introbook_characters.xml"),
+
+	--左右箭头
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/arrows/left.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/arrows/left.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/arrows/right.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/arrows/right.xml"),
+	--角色头像
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/derfei.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/derfei.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/huyan.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/huyan.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/langtun.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/langtun.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/linquan.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/linquan.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/suanni.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/suanni.xml"),
+	--见闻
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/exp.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/exp.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/gallery_banner_hd.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/gallery_banner_hd.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/gallery_langtun_hd.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/gallery_langtun_hd.xml"),
+	--物品
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/items/items.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/items/items.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/items/skillpaper/skillpaper_p1.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/items/skillpaper/skillpaper_p1.xml"),
+}
+modimport("scripts/langtun_strings")
+
+GLOBAL.SoraAPI = env
+modimport("scripts/tools/skinapi")
+
+modimport("scripts/actions/langtun_dig")
+modimport("scripts/actions/langtun_dodge")
+modimport("scripts/actions/langtun_skills")
+modimport("scripts/actions/langtun_gemflower")
+modimport("scripts/stategraphs/langtun_stategraph")
+modimport("scripts/derfei_actions")
+modimport("scripts/util/langtun_pirate")
+modimport("scripts/langtun_manabadge")
+modimport("scripts/derfei_stability_ui")
+modimport("scripts/langtun_introbook")
+modimport("scripts/langtun_hooks")
+modimport("scripts/langtun_animspeed")
+modimport("scripts/langtun_containers")
+modimport("scripts/huyan_tail")
+modimport("scripts/langtun_medals")
+modimport("scripts/langtun_recipes")
+modimport("scripts/langtun_npc_soumei")
+modimport("scripts/langtun_soumei_crafting")
+
+RemapSoundEvent( "huyan/huyan/eye_rub_vo", "huyan/huyan/emote" )
+--RemapSoundEvent( "langtun/langtun/eye_rub_vo", "langtun/langtun/emote" )
+
+--PREFAB_SKINS["langtun"] = { --修复人物大图显示
+--	"langtun_none",
+--}
+
+--增加小地图图标
+AddMinimapAtlas("images/map_icons/langtun.xml")
+AddMinimapAtlas("images/map_icons/huyan.xml")
+AddMinimapAtlas("images/map_icons/derfei.xml")
+AddMinimapAtlas("images/map_icons/derfei_backpack.xml")
+AddMinimapAtlas("images/map_icons/derfei_telestone.xml")
+AddMinimapAtlas("images/map_icons/langtun_magic_stone.xml")
+AddMinimapAtlas("images/map_icons/langtun_magic_station.xml")
+
+--增加人物到mod人物列表的里面 性别为男性（MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL）
+AddModCharacter("langtun", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+AddModCharacter("huyan", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+AddModCharacter("derfei", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+
+-- 选人界面人物三维显示
+TUNING.LANGTUN_HEALTH = 250
+TUNING.LANGTUN_HUNGER = 250
+TUNING.LANGTUN_SANITY = 150
+TUNING.HUYAN_HEALTH = 200
+TUNING.HUYAN_HUNGER = 250
+TUNING.HUYAN_SANITY = 100
+TUNING.HUYAN_MANA = 100
+TUNING.DERFEI_STABILITY = 175
+TUNING.DERFEI_HUNGER = 200
+TUNING.DERFEI_SANITY = 150
+TUNING.DERFEI_MANA = 100
+
+-- 选人界面初始物品显示
+for _, starting_items in pairs(TUNING.GAMEMODE_STARTING_ITEMS) do
+	starting_items.LANGTUN = { "spear", "armorwood" }
+	starting_items.HUYAN = { "huyan_staff_base", "portablecookpot_item" }
+	starting_items.DERFEI = { "langtun_potion_mana", "langtun_potion_mana", "derfei_telestone" }
+end
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["langtun_weapon"] = {
+    atlas = "images/inventoryimages/langtun_weapon.xml",
+    image = "langtun_weapon.tex"
+}
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["huyan_staff_base"] = {
+	atlas = "images/inventoryimages/huyan_staff_base.xml",
+	image = "huyan_staff_base.tex",
+}
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["langtun_potion_mana"] = {
+	atlas = "images/inventoryimages/langtun_potion_mana.xml",
+	image = "langtun_potion_mana.tex",
+}
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:derfei
+AddPrefabPostInit("huyan", InstallLangtunManaBuilder)
+AddPrefabPostInit("derfei", InstallLangtunManaBuilder)
+
+TUNING.LANGTUN_SETUPARMORNODURABILITY = GetModConfigData("setuparmornodurability")
+TUNING.LANGTUN_SETTAUNTTASK = GetModConfigData("settaunttask")
+TUNING.LANGTUN_CHARACTER_SOUNDS = GetModConfigData("langtun_character_sounds") or "langtun"
+TUNING.LANGTUN_WEAPON_SKIN_SOUNDS = GetModConfigData("langtun_weapon_skin_sounds")
+TUNING.HUYAN_CHARACTER_SOUNDS = GetModConfigData("huyan_character_sounds") or "huyan"
+TUNING.LANGTUN_HUYAN_STAFF_SKIN_SOUNDS = GetModConfigData("huyan_staff_skin_sounds")
+TUNING.LANGTUN_HUYAN_SECONDARY_WEAPON_TEMPERATURE = GetModConfigData("secondary_weapon_temperature") == true
+TUNING.DERFEI_CHARACTER_SOUNDS = GetModConfigData("derfei_character_sounds") or "derfei"
+TUNING.DERFEI_RECALL_KEY = GetModConfigData("derfei_recall_key") or KEY_R
+TUNING.DERFEI_UI_BG = GetModConfigData("derfei_backpack_ui")
+
+PrefabFiles = {
+	"langtun", --人物代码文件
+	--"langtun_none", --人物皮肤
+	"langtun_weapon",
+	"langtun_weapon_plus",
+	"langtun_weapon_eggplant_waterdrop",
+	"langtun_bedroll",
+	"langtun_shovel",
+	"langtun_map",
+	"langtun_portablefirepit",
+
+	"huyan",
+	"huyan_staff_base",
+	"huyan_homingbullet",
+	"huyan_staff",
+	"huyan_staff_plus",
+	"huyan_tail_slot",
+
+	"derfei",
+	"derfei_sword",
+	"derfei_sword_plus",
+	"derfei_backpack",
+	"derfei_spacecrack",
+	"derfei_telestone",
+	"langtun_medals",
+
+	"langtun_magic_items",
+	"langtun_magic_station",
+	"langtun_skillpaper",
+	"langtun_magic_fx",
+	"langtun_laser",
+	"langtun_gemflower",
+	"langtun_npc_soumei",
+}
+
+Assets = {
+	-- 角色选择界面头像
+	Asset("IMAGE", "images/saveslot_portraits/langtun.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/langtun.xml"),
+
+	-- 大肖像
+	Asset("IMAGE", "bigportraits/langtun.tex"),
+	Asset("ATLAS", "bigportraits/langtun.xml"),
+	Asset("IMAGE", "bigportraits/langtun_none.tex"),
+	Asset("ATLAS", "bigportraits/langtun_none.xml"),
+
+	-- 小地图图标
+	Asset("IMAGE", "images/map_icons/langtun.tex"),
+	Asset("ATLAS", "images/map_icons/langtun.xml"),
+
+	-- 头像相关
+	Asset("IMAGE", "images/avatars/avatar_langtun.tex"),
+	Asset("ATLAS", "images/avatars/avatar_langtun.xml"),
+
+	Asset("IMAGE", "images/avatars/avatar_ghost_langtun.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_langtun.xml"),
+
+	Asset("IMAGE", "images/avatars/self_inspect_langtun.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_langtun.xml"),
+
+	-- 名字相关
+	Asset("IMAGE", "images/names_langtun.tex"),
+	Asset("ATLAS", "images/names_langtun.xml"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_bedroll.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_bedroll.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_portablefirepit_item.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_portablefirepit_item.tex"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_shovel.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_shovel.tex"),
+
+	Asset("ATLAS", "images/inventoryimages/langtun_mana.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_mana.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_station.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_station.tex"),
+
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_3.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_3.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_2.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_2.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_magic_book_skin_1.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_magic_book_skin_1.xml"),
+	Asset("IMAGE", "images/inventoryimages/huyan_staff_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/huyan_staff_skin.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_ice_maker_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_ice_maker_skin.xml"),
+
+	Asset("ANIM", "anim/derfei_telestone.zip"),
+	Asset("ANIM", "anim/ui_derfei_backpack_5x6.zip"),
+	Asset("ANIM", "anim/ui_derfei_backpack_simplified_5x6.zip"),
+	Asset("ANIM", "anim/ui_langtun_medal_sack_1x2.zip"),
+	Asset("ATLAS", "images/inventoryimages/derfei_telestone.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_telestone.tex"),
+	Asset("ANIM", "anim/langtun_medals.zip"),
+	Asset("ANIM", "anim/langtun_medal_casting.zip"),
+	Asset("ANIM", "anim/langtun_medal_mana.zip"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_courage.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_courage.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_casting.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_casting.tex"),
+	Asset("ATLAS", "images/inventoryimages/langtun_medal_mana.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_medal_mana.tex"),
+	Asset("IMAGE", "images/hud/langtun_common/langtun_medal_sack.tex"),
+	Asset("ATLAS", "images/hud/langtun_common/langtun_medal_sack.xml"),
+
+	--虎咽相关
+    Asset("IMAGE", "images/avatars/avatar_huyan.tex"),
+	Asset("ATLAS", "images/avatars/avatar_huyan.xml"),
+	Asset("IMAGE", "images/avatars/avatar_ghost_huyan.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_huyan.xml"),
+	Asset("IMAGE", "images/avatars/self_inspect_huyan.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_huyan.xml"),
+    Asset("IMAGE", "images/names_huyan.tex"),
+    Asset("ATLAS", "images/names_huyan.xml"),
+    Asset("IMAGE", "images/map_icons/huyan.tex"),
+	Asset("ATLAS", "images/map_icons/huyan.xml"),
+    Asset("IMAGE", "images/saveslot_portraits/huyan.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/huyan.xml"),
+	Asset("IMAGE", "bigportraits/huyan.tex"),
+	Asset("ATLAS", "bigportraits/huyan.xml"),
+	Asset("IMAGE", "bigportraits/huyan_none.tex"),
+	Asset("ATLAS", "bigportraits/huyan_none.xml"),
+	Asset("IMAGE", "images/hud/huyan/equipslot_tail.tex"),
+	Asset("ATLAS", "images/hud/huyan/equipslot_tail.xml"),
+
+	--德尔菲相关
+	Asset("IMAGE", "images/saveslot_portraits/derfei.tex"),
+	Asset("ATLAS", "images/saveslot_portraits/derfei.xml"),
+	Asset("IMAGE", "bigportraits/derfei.tex"),
+	Asset("ATLAS", "bigportraits/derfei.xml"),
+	Asset("IMAGE", "images/map_icons/derfei.tex"),
+	Asset("ATLAS", "images/map_icons/derfei.xml"),
+	Asset("IMAGE", "images/avatars/avatar_derfei.tex"),
+	Asset("ATLAS", "images/avatars/avatar_derfei.xml"),
+	Asset("IMAGE", "images/avatars/avatar_ghost_derfei.tex"),
+	Asset("ATLAS", "images/avatars/avatar_ghost_derfei.xml"),
+	Asset("IMAGE", "images/avatars/self_inspect_derfei.tex"),
+	Asset("ATLAS", "images/avatars/self_inspect_derfei.xml"),
+	Asset("IMAGE", "images/names_derfei.tex"),
+	Asset("ATLAS", "images/names_derfei.xml"),
+	Asset("IMAGE", "images/hud/derfei/stability.tex"),
+	Asset("ATLAS", "images/hud/derfei/stability.xml"),
+	Asset("IMAGE", "images/hud/derfei/status_cover.tex"),
+	Asset("ATLAS", "images/hud/derfei/status_cover.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_sword.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_sword.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_sword_plus.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_sword_plus.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_backpack.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_backpack.xml"),
+	Asset("IMAGE", "images/map_icons/derfei_backpack.tex"),
+	Asset("ATLAS", "images/map_icons/derfei_backpack.xml"),
+	Asset("IMAGE", "images/map_icons/derfei_telestone.tex"),
+	Asset("ATLAS", "images/map_icons/derfei_telestone.xml"),
+	Asset("IMAGE", "images/inventoryimages/derfei_weapon_skin.tex"),
+	Asset("ATLAS", "images/inventoryimages/derfei_weapon_skin.xml"),
+	Asset("ANIM", "anim/derfei_weapon_skin.zip"),
+	Asset("ANIM", "anim/langtun_gemflower.zip"),
+	Asset("ATLAS", "images/inventoryimages/langtun_gemflower_seedbag.xml"),
+	Asset("IMAGE", "images/inventoryimages/langtun_gemflower_seedbag.tex"),
+
+	Asset("IMAGE", "images/map_icons/langtun_magic_stone.tex"),
+	Asset("ATLAS", "images/map_icons/langtun_magic_stone.xml"),
+	Asset("IMAGE", "images/map_icons/langtun_magic_station.tex"),
+	Asset("ATLAS", "images/map_icons/langtun_magic_station.xml"),
+
+	--langtun/langtun/
+	--茄子剑专属音效触发条件与冷却：
+	--eggplant_atk 装备时攻击 8秒触发一次
+	--eggplant_attacked 装备时被攻击 8秒触发一次
+	--eggplant_death 装备时死亡
+	--eggplant_equip 装备到装备栏时
+	--eggplant_killed 装备时击杀生物 8秒触发一次
+	Asset("SOUNDPACKAGE" , "sound/langtun.fev" ),
+	Asset("SOUND", "sound/langtun.fsb"),
+
+	--huyan/huyan/
+	--staff_killed
+	--staff_equip
+	--staff_death
+	--staff_cast
+	Asset("SOUNDPACKAGE" , "sound/huyan.fev" ),
+	Asset("SOUND", "sound/huyan.fsb"),
+
+	--德尔菲音效
+	--derfei/derfei/
+	Asset("SOUNDPACKAGE" , "sound/derfei.fev" ),
+	Asset("SOUND", "sound/derfei.fsb"),
+
+	--NPC白犬王音效
+	Asset("SOUNDPACKAGE" , "sound/soumei.fev" ),
+	Asset("SOUND", "sound/soumei.fsb"),
+
+	--介绍书相关↓
+
+	--打开图标
+	Asset("IMAGE", "images/hud/langtun_introbook/icon.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/icon.xml"),
+	--空白背景
+	Asset("IMAGE", "images/hud/langtun_introbook/book/bg/page_blank.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/bg/page_blank.xml"),
+
+	--角色介绍
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/langtun_introbook_characters.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/langtun_introbook_characters.xml"),
+
+	--左右箭头
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/arrows/left.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/arrows/left.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/arrows/right.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/arrows/right.xml"),
+	--角色头像
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/derfei.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/derfei.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/huyan.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/huyan.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/langtun.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/langtun.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/linquan.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/linquan.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/buttons/charactericons/suanni.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/buttons/charactericons/suanni.xml"),
+	--见闻
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/exp.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/exp.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/gallery_banner_hd.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/gallery_banner_hd.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/exp/gallery_langtun_hd.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/exp/gallery_langtun_hd.xml"),
+	--物品
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/items/items.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/items/items.xml"),
+	Asset("IMAGE", "images/hud/langtun_introbook/book/intro/items/skillpaper/skillpaper_p1.tex"),
+	Asset("ATLAS", "images/hud/langtun_introbook/book/intro/items/skillpaper/skillpaper_p1.xml"),
+}
+modimport("scripts/langtun_strings")
+
+GLOBAL.SoraAPI = env
+modimport("scripts/tools/skinapi")
+
+modimport("scripts/actions/langtun_dig")
+modimport("scripts/actions/langtun_dodge")
+modimport("scripts/actions/langtun_skills")
+modimport("scripts/actions/langtun_gemflower")
+modimport("scripts/stategraphs/langtun_stategraph")
+modimport("scripts/derfei_actions")
+modimport("scripts/util/langtun_pirate")
+modimport("scripts/langtun_manabadge")
+modimport("scripts/derfei_stability_ui")
+modimport("scripts/langtun_introbook")
+modimport("scripts/langtun_hooks")
+modimport("scripts/langtun_animspeed")
+modimport("scripts/langtun_containers")
+modimport("scripts/huyan_tail")
+modimport("scripts/langtun_medals")
+modimport("scripts/langtun_recipes")
+modimport("scripts/langtun_npc_soumei")
+modimport("scripts/langtun_soumei_crafting")
+
+RemapSoundEvent( "huyan/huyan/eye_rub_vo", "huyan/huyan/emote" )
+--RemapSoundEvent( "langtun/langtun/eye_rub_vo", "langtun/langtun/emote" )
+
+--PREFAB_SKINS["langtun"] = { --修复人物大图显示
+--	"langtun_none",
+--}
+
+--增加小地图图标
+AddMinimapAtlas("images/map_icons/langtun.xml")
+AddMinimapAtlas("images/map_icons/huyan.xml")
+AddMinimapAtlas("images/map_icons/derfei.xml")
+AddMinimapAtlas("images/map_icons/derfei_backpack.xml")
+AddMinimapAtlas("images/map_icons/derfei_telestone.xml")
+AddMinimapAtlas("images/map_icons/langtun_magic_stone.xml")
+AddMinimapAtlas("images/map_icons/langtun_magic_station.xml")
+
+--增加人物到mod人物列表的里面 性别为男性（MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL）
+AddModCharacter("langtun", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+AddModCharacter("huyan", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+AddModCharacter("derfei", "MALE", {
+	{
+		type = "ghost_skin",
+		anim_bank = "ghost",
+		idle_anim = "idle",
+		scale = 0.75,
+		offset = { 0, -25 },
+	},
+})
+
+-- 选人界面人物三维显示
+TUNING.LANGTUN_HEALTH = 250
+TUNING.LANGTUN_HUNGER = 250
+TUNING.LANGTUN_SANITY = 150
+TUNING.HUYAN_HEALTH = 200
+TUNING.HUYAN_HUNGER = 250
+TUNING.HUYAN_SANITY = 100
+TUNING.HUYAN_MANA = 100
+TUNING.DERFEI_STABILITY = 175
+TUNING.DERFEI_HUNGER = 200
+TUNING.DERFEI_SANITY = 150
+TUNING.DERFEI_MANA = 100
+
+-- 选人界面初始物品显示
+for _, starting_items in pairs(TUNING.GAMEMODE_STARTING_ITEMS) do
+	starting_items.LANGTUN = { "spear", "armorwood" }
+	starting_items.HUYAN = { "huyan_staff_base", "portablecookpot_item" }
+	starting_items.DERFEI = { "langtun_potion_mana", "langtun_potion_mana", "derfei_telestone" }
+end
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["langtun_weapon"] = {
+    atlas = "images/inventoryimages/langtun_weapon.xml",
+    image = "langtun_weapon.tex"
+}
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["huyan_staff_base"] = {
+	atlas = "images/inventoryimages/huyan_staff_base.xml",
+	image = "huyan_staff_base.tex",
+}
+TUNING.STARTING_ITEM_IMAGE_OVERRIDE["langtun_potion_mana"] = {
+	atlas = "images/inventoryimages/langtun_potion_mana.xml",
+	image = "langtun_potion_mana.tex",
+}
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst.derfei_teleport_cooldown = net_float(
+        inst.GUID,
+        "derfei_teleport_cooldown",
+        "derfei_teleport_cooldown_dirty"
+    )
+    inst.derfei_skill_rambler_active = net_bool(
+        inst.GUID,
+        "derfei_skill_rambler_active",
+        "derfei_skill_rambler_active_dirty"
+    )
+    inst.derfei_skill_handler_active = net_bool(
+        inst.GUID,
+        "derfei_skill_handler_active",
+        "derfei_skill_handler_active_dirty"
+    )
+    inst.derfei_bound_telestone = net_entity(
+        inst.GUID,
+        "derfei_bound_telestone",
+        "derfei_bound_telestone_dirty"
+    )
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+-- their normal priority.
+AddComponentPostInit("playeractionpicker", function(self)
+    if self._derfei_ground_teleport_wrapper ~= nil then
+        return
+    end
+
+    local old_get_right_click_actions = self.GetRightClickActions
+    local wrapper = function(picker, position, target, spellbook, ...)
+        local actions = old_get_right_click_actions(picker, position, target, spellbook, ...)
+        -- Vanilla normally returns a table, but keep the hook safe for other
+        -- component patches that intentionally return nil to defer handling.
+        actions = actions or {}
+        local teleport = GetGroundTeleportAction(picker.inst, position, target)
+        if teleport ~= nil then
+            local only_ignorable = #actions > 0
+            for _, action in ipairs(actions) do
+                if not IsGroundTeleportIgnorableAction(action.action) then
+                    only_ignorable = false
+                    break
+                end
+            end
+
+            if #actions == 0 or only_ignorable then
+                return { teleport }
+            end
+        end
+        return actions
+    end
+
+    self._derfei_ground_teleport_wrapper = wrapper
+    self.GetRightClickActions = wrapper
+end)
+
+```
+
+
+
+### 变体演进：Language (Mod 3668914451)
+- **变体场景与切面**：收录来自工坊 Mod 3668914451 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3668914451)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:moonrock_wheel
+if TUNING.ASWTRIGGER == 0 then
+	AddPrefabPostInit("moonrock_wheel",SetupCommandWheel)
+elseif TUNING.ASWTRIGGER == 1 then
+	AddPlayerPostInit(SetupCommandWheel)
+	--AddPlayerPostInit(SetupMountedCommandWheel)
+elseif TUNING.ASWTRIGGER == 2 then
+	AddPrefabPostInit("moonrockidol",SetupCommandWheel)
+elseif TUNING.ASWTRIGGER == 3 then
+	AddPrefabPostInit("lunar_seed",SetupCommandWheel)
+end
+local function giveitem(inst)
+	local num = 1
+	if inst.components.allskillwheelhandler ~= nil then
+		num = inst.components.allskillwheelhandler.stocksize
+	end
+	for i = 1,num,1 do
+		local item = nil
+		if TUNING.ASWTRIGGER == 0 and TUNING.ASWCONSUME == 0 then
+			item = SpawnPrefab("moonrock_wheel")
+		elseif TUNING.ASWTRIGGER == 2
+		then
+			item = SpawnPrefab("moonrockidol")
+		elseif TUNING.ASWTRIGGER == 3
+		then
+			item = SpawnPrefab("lunar_seed")
+		end
+		if item ~= nil then
+			item.Transform:SetPosition(inst.Transform:GetWorldPosition())
+		end
+	end
+	if inst and inst.woby and inst.woby.components and inst.woby.components.container then
+		inst.woby.components.container:DropEverything()
+	end
+end
+-------------------blink for wortox
+--------------------------------------------------------------------------
+local function IsSoul(item)
+    return item.prefab == "wortox_soul"
+end
+
+local function IsSoulJar(item)
+    return item.prefab == "wortox_souljar"
+end
+local function PutSoulOnCooldown(item, cooldowntime, overridepercent)
+    if not IsSoul(item) then
+        return
+    end
+
+    if item.components.rechargeable ~= nil then
+        item.components.rechargeable:Discharge(cooldowntime)
+        if overridepercent then
+            item.components.rechargeable:SetPercent(overridepercent)
+        end
+    else
+        item:AddTag("nosouljar")
+    end
+end
+
+local function RemoveSoulCooldown(item)
+    if not IsSoul(item) then
+        return
+    end
+
+    if item.components.rechargeable ~= nil then
+        item.components.rechargeable:SetPercent(1)
+    else
+        item:RemoveTag("nosouljar")
+    end
+end
+local function GetStackSize(item)
+    return item.components.stackable ~= nil and item.components.stackable:StackSize() or 1
+end
+
+local function CheckSoulsRemoved(inst)
+    inst._checksoulstask = nil
+    if inst.wortox_needstreeinit then
+        -- Reschedule.
+        inst._checksoulstask = inst:DoTaskInTime(0, CheckSoulsRemoved)
+        return
+    end
+    if count == 0 then
+        inst:FinishPortalHop()
+    end
+    
+
+end
+
+local function CheckSoulsRemovedAfterAnim(inst, anim)
+    if inst.AnimState:IsCurrentAnimation(anim) then
+        inst._checksoulstask = inst:DoTaskInTime(inst.AnimState:GetCurrentAnimationLength() - inst.AnimState:GetCurrentAnimationTime() + 2 * FRAMES, CheckSoulsRemoved)
+    else
+        CheckSoulsRemoved(inst)
+    end
+end
+
+local function SortByStackSize(l, r)
+    return GetStackSize(l) < GetStackSize(r)
+end
+local function GetSouls(inst)
+    local souls = inst.components.inventory:FindItems(IsSoul)
+    local count = 0
+    for i, v in ipairs(souls) do
+        count = count + GetStackSize(v)
+    end
+    return souls, count
+end
+--------------------------------------------
+local function OnSoulHop(inst)
+    if inst._checksoulstask ~= nil then
+        inst._checksoulstask:Cancel()
+    end
+    inst._checksoulstask = inst:DoTaskInTime(.5, CheckSoulsRemovedAfterAnim, "wortox_portal_jumpout")
+end
+
+local function SetNetvar(inst)
+    if inst.player_classified ~= nil then
+        assert(inst._freesoulhop_counter >= 0 and inst._freesoulhop_counter <= 7, "Player _freesoulhop_counter out of range: "..tostring(inst._freesoulhop_counter))
+        inst.player_classified.freesoulhops:set(inst._freesoulhop_counter)
+    end
+end
+
+local function ClearSoulhopCounter(inst)
+    inst._freesoulhop_counter = 0
+    inst._soulhop_cost = 0
+    SetNetvar(inst)
+end
+
+local function FinishPortalHop(inst)
+    if inst.finishportalhoptask ~= nil then
+        inst.finishportalhoptask:Cancel()
+        inst.finishportalhoptask = nil
+        inst.finishportalhoptaskmaxtime = nil
+    end
+    if inst._freesoulhop_counter > 0 then
+        if inst.components.inventory ~= nil then
+            inst.components.inventory:ConsumeByName("wortox_soul", math.max(math.ceil(inst._soulhop_cost), 1))
+        end
+        ClearSoulhopCounter(inst)
+    end
+    inst:RemoveDebuff("wortox_soulecho_buff")
+    --inst:DoCheckSoulsAdded()
+end
+
+local function GetHopsPerSoul(inst)
+    local soulsperhop = TUNING.WORTOX_FREEHOP_HOPSPERSOUL
+    local skilltreeupdater = inst.components.skilltreeupdater
+    if skilltreeupdater and skilltreeupdater:IsActivated("wortox_liftedspirits_3") then
+        soulsperhop = soulsperhop + TUNING.SKILLS.WORTOX.WORTOX_FREEHOP_HOPSPERSOUL_ADD
+    end
+    return soulsperhop
+end
+
+local function GetSoulEchoCooldownTime(inst)
+    local cooldowntime = TUNING.WORTOX_FREEHOP_TIMELIMIT
+    local skilltreeupdater = inst.components.skilltreeupdater
+    if skilltreeupdater and skilltreeupdater:IsActivated("wortox_liftedspirits_2") then
+        cooldowntime = cooldowntime * TUNING.SKILLS.WORTOX.WORTOX_FREEHOP_TIMELIMIT_MULT
+    end
+    return cooldowntime
+end
+
+local function TryToPortalHop(inst, souls, consumeall)
+    local invcmp = inst.components.inventory
+    if invcmp == nil then
+        return false
+    end
+
+    souls = souls or 1
+    local _, soulscount = inst:GetSouls()
+    if soulscount < souls then
+        return false
+    end
+
+    inst._freesoulhop_counter = inst._freesoulhop_counter + souls
+    inst._soulhop_cost = inst._soulhop_cost + souls
+
+    if not consumeall and inst._freesoulhop_counter < inst:GetHopsPerSoul() then
+        inst._soulhop_cost = inst._soulhop_cost - souls -- Make it free.
+        local cooldowntime = inst:GetSoulEchoCooldownTime()
+        local skilltreeupdater = inst.components.skilltreeupdater
+        if skilltreeupdater and skilltreeupdater:IsActivated("wortox_liftedspirits_1") then
+            inst:AddDebuff("wortox_soulecho_buff", "wortox_soulecho_buff", {duration = cooldowntime,})
+        end
+        invcmp:ForEachItem(PutSoulOnCooldown, cooldowntime)
+        if inst.finishportalhoptask ~= nil then
+            inst.finishportalhoptask:Cancel()
+            inst.finishportalhoptask = nil
+            inst.finishportalhoptaskmaxtime = nil
+        end
+        inst.finishportalhoptask = inst:DoTaskInTime(cooldowntime, inst.FinishPortalHop)
+        inst.finishportalhoptaskmaxtime = cooldowntime
+    else
+        invcmp:ForEachItem(RemoveSoulCooldown)
+        inst:FinishPortalHop()
+    end
+    SetNetvar(inst)
+
+    return true
+end
+local function OnFreesoulhopsChanged(inst, data)
+    inst._freesoulhop_counter = data and data.current or 0
+end
+----------------------------------------------------------------------
+local function IsNotBlocked(pt)
+    return TheWorld.Map:IsPassableAtPoint(pt:Get()) and not TheWorld.Map:IsGroundTargetBlocked(pt)
+end
+local function CanBlinkTo(inst, pt)
+    local x, y, z = inst.Transform:GetWorldPosition()
+    return IsNotBlocked(pt) and IsTeleportingPermittedFromPointToPoint(x, y, z, pt.x, pt.y, pt.z) -- NOTES(JBK): Keep in sync with blinkstaff. [BATELE]
+end
+
+local function CanBlinkFromWithMap(inst, pt)
+    local x, y, z = inst.Transform:GetWorldPosition()
+    return IsTeleportingPermittedFromPointToPoint(x, y, z, pt.x, pt.y, pt.z)
+end
+
+local function ReticuleTargetFn(inst)
+    return ControllerReticle_Blink_GetPosition(inst, IsNotBlocked)
+end
+
+local function CanSoulhop(inst, souls)
+    if inst:HasTag("soulstealer") and inst.replica.inventory:Has("wortox_soul", souls or 1) then
+        local rider = inst.replica.rider
+        if rider == nil or not rider:IsRiding() then
+            return true
+        end
+    end
+    return false
+end
+local EMPTY_TABLE = {}
+local function GetDoubleClickActions(inst, pos, dir, target)
+	--Assumes we can only ride our own woby!
+	if not inst.components.skilltreeupdater:IsActivated("walter_woby_dash") then
+		return EMPTY_TABLE
+	end
+	local rider = inst.replica.rider
+	local mount = rider and rider:GetMount() or nil
+	if mount and mount:HasTag("woby") then
+		local pos2
+		if dir then
+			pos2 = inst:GetPosition()
+			pos2.x = pos2.x + dir.x * 10
+			pos2.y = 0
+			pos2.z = pos2.z + dir.z * 10
+		elseif target then
+			pos2 = target:GetPosition()
+			pos2.y = 0
+		end
+		return { ACTIONS.DASH }, pos2
+	end
+	return EMPTY_TABLE
+end
+local function HasWhistleAction(inst)
+	if inst.woby_commands_classified then
+		if inst.woby_commands_classified:IsOutForDelivery() then
+			--Going to dest, or putting items into boxes
+			--Command wheel is blocked, so no range on recall action
+			return true
+		end
+		local woby = inst.woby_commands_classified:GetWoby()
+		if TheWorld.ismastersim then
+			if woby and not (inst.HUD and not woby:IsInLimbo() and woby:IsNear(inst, 16)) then
+				return true
+			end
+		elseif inst.HUD and (woby == nil or woby:HasTag("INLIMBO") or not woby:IsNear(inst, 16)) then
+			return true
+		end
+	end
+	return false
+end
+
+local function GetPointSpecialActions(inst, pos, useitem, right)
+    if right and useitem == nil then
+	-----------------wilson
+		if useitem == nil then
+			local inventory = inst.replica.inventory
+			if inventory ~= nil then
+				useitem = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+			end
+		end
+		if useitem and
+			useitem.prefab == "torch" and
+			inst.components.skilltreeupdater:IsActivated("wilson_torch_7") and
+			useitem:HasTag("special_action_toss")
+		then
+			return { ACTIONS.TOSS }
+		end
+		------------------------winona
+		if useitem == nil then
+			local inventory = inst.replica.inventory
+			if inventory ~= nil then
+				useitem = inventory:GetEquippedItem(EQUIPSLOTS.HEAD)
+			end
+		end
+		if useitem and
+			useitem.prefab == "roseglasseshat" and
+			useitem:HasTag("closeinspector")
+		then
+			--match ReticuleTargetFn
+			if usereticulepos then
+				local pos2 = Vector3()
+				for r = 2.5, 1, -.25 do
+					pos2.x, pos2.y, pos2.z = inst.entity:LocalToWorldSpace(r, 0, 0)
+					if CLOSEINSPECTORUTIL.IsValidPos(inst, pos2) then
+						return { ACTIONS.LOOKAT }, pos2
+					end
+				end
+			end
+
+			--default
+			if CLOSEINSPECTORUTIL.IsValidPos(inst, pos) then
+				return { ACTIONS.LOOKAT }
+			end
+		end
+		----------woby
+		if right and
+		useitem == nil and
+		inst.components.playercontroller and
+		inst.components.playercontroller.isclientcontrollerattached and
+		HasWhistleAction(inst)
+		then
+			return { ACTIONS.WHISTLE }
+		end
+		-------------------------wortox
+        local canblink
+        if inst.checkingmapactions then
+            canblink = inst:CanBlinkFromWithMap(inst.checkingmapactions_pos or inst:GetPosition())
+        else
+            canblink = inst:CanBlinkTo(pos)
+        end
+        if canblink and inst.CanSoulhop and inst:CanSoulhop() then
+            return { ACTIONS.BLINK }
+        end
+		---------------------------wx78
+		local actions = {}
+		if right and useitem == nil then
+			if inst.checkingmapactions then
+				if inst.components.skilltreeupdater then
+					if inst.components.skilltreeupdater:IsActivated("wx78_remotebodyswap") then
+						table.insert(actions, ACTIONS.SWAPBODIES_MAP)
+					end
+					if inst.components.skilltreeupdater:IsActivated("wx78_scoutdrone_1") then
+						table.insert(actions, ACTIONS.MAPSCOUTSELECT_MAP)
+					end
+				end
+			else
+				if inst.components.playercontroller ~= nil and inst.components.playercontroller.isclientcontrollerattached then
+					if inst.CollectUpgradeModuleActions then
+						inst:CollectUpgradeModuleActions(actions)
+					end
+				end
+			end
+		end
+		return actions
+    end
+    return {}
+end
+
+local function OnSetOwner(inst)
+    if inst.components.playeractionpicker ~= nil then
+		--if inst.components.playeractionpicker.pointspecialactionsfn == nil then
+			inst.components.playeractionpicker.pointspecialactionsfn = GetPointSpecialActions
+		--end
+		--if inst.components.playeractionpicker.doubleclickactionsfn == nil then
+			inst.components.playeractionpicker.doubleclickactionsfn = GetDoubleClickActions
+		--end
+    end
+	--if TheWorld.ismastersim then
+    --    inst.wx78_classified.Network:SetClassifiedTarget(inst)
+    --end
+end
+local function wxOnSetOwner(inst)
+	if TheWorld.ismastersim then
+        inst.wx78_classified.Network:SetClassifiedTarget(inst)
+    end
+end
+--------------------------------------------------------------------------ridewheel
+
+
+--------------------------------------------------------------------------
+--Mounted command wheel
+
+local ICON_SCALE = 0.6
+local ICON_RADIUS = 60
+local SPELLBOOK_RADIUS = 120
+local SPELLBOOK_FOCUS_RADIUS = SPELLBOOK_RADIUS-- + 2
+
+local function wobyDoSpellAction(inst)
+	local inventory = ThePlayer.replica and ThePlayer.replica.inventory
+	if inventory then
+		inventory:CastSpellBookFromInv(inst)
+	end
+end
+
+local BLANK_SPELL =
+{
+	label = "",
+	bank = "spell_icons_woby",
+	build = "spell_icons_woby",
+	anims =
+	{
+		disabled = { anim = "empty" },
+	},
+	widget_scale = ICON_SCALE,
+	checkenabled = function() return false end,
+	noselect = true,
+}
+
+local SPACER_SPELL = shallowcopy(BLANK_SPELL)
+SPACER_SPELL.spacer = true
+local WobyCommon = require("prefabs/wobycommon")
+local SPELLS_RIGHT =
+{
+	{
+		label = STRINGS.ACTIONS.DISMOUNT,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.ACTIONS.DISMOUNT)
+			inst.components.spellbook:SetSpellAction(ACTIONS.DISMOUNT)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = wobyDoSpellAction,
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "dismount" },
+			focus = { anim = "dismount_focus" },
+			down = { anim = "dismount_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.SetupMouseOver,
+		default_focus = true,
+	},
+	{
+		label = STRINGS.ACTIONS.RUMMAGE.GENERIC,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.ACTIONS.RUMMAGE.GENERIC)
+			inst.components.spellbook:SetSpellAction(ACTIONS.RUMMAGE)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = wobyDoSpellAction,
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "opencontainer" },
+			focus = { anim = "opencontainer_focus" },
+			down = { anim = "opencontainer_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.SetupMouseOver,
+	},
+	BLANK_SPELL,
+	{
+		label = STRINGS.WOBY_COMMANDS.SHRINK,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.WOBY_COMMANDS.SHRINK)
+			inst.components.spellbook:SetSpellAction(nil)
+			inst.components.spellbook.closeonexecute = true
+		end,
+		execute = WobyCommon.MakeWobyCommand(WobyCommon.COMMANDS.SHRINK),
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "forcetransform" },
+			focus = { anim = "forcetransform_focus" },
+			down = { anim = "forcetransform_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.SetupMouseOver,
+	},
+}
+
+local SPELLS_LEFT =
+{
+	{
+		label = STRINGS.WOBY_COMMANDS.SPRINTING,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.WOBY_COMMANDS.SPRINTING)
+			inst.components.spellbook:SetSpellAction(nil)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = WobyCommon.MakeWobyCommand(WobyCommon.COMMANDS.SPRINTING),
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "sprinting" },
+			focus = { anim = "sprinting_focus" },
+			down = { anim = "sprinting_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.MakeAutocastToggle("sprinting"),
+		skill = "walter_woby_sprint",
+	},
+	{
+		label = STRINGS.WOBY_COMMANDS.SHADOWDASH,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.WOBY_COMMANDS.SHADOWDASH)
+			inst.components.spellbook:SetSpellAction(nil)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = WobyCommon.MakeWobyCommand(WobyCommon.COMMANDS.SHADOWDASH),
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "shadowdash" },
+			focus = { anim = "shadowdash_focus" },
+			down = { anim = "shadowdash_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.MakeAutocastToggle("shadowdash"),
+		skill = "walter_woby_shadow",
+	},
+}
+
+local SPELLBOOK_WBG =
+{
+	bank = "spell_icons_woby",
+	build = "spell_icons_woby",
+	anim = "bg",
+	widget_scale = ICON_SCALE,
+}
+
+local function RefreshSpells(inst)
+	--local skilltreeupdater = inst.components.skilltreeupdater
+	local j = 1
+
+	inst._spells[1] = SPACER_SPELL
+	j = j + 1
+
+	for i, v in ipairs(SPELLS_RIGHT) do
+		--if v.skill == nil or skilltreeupdater:IsActivated(v.skill) then
+			inst._spells[j] = v
+		--else
+			--inst._spells[j] = BLANK_SPELL
+		--end
+		j = j + 1
+	end
+
+	for i = j, 5 do
+		inst._spells[j] = BLANK_SPELL
+		j = j + 1
+	end
+
+	inst._spells[j] = SPACER_SPELL
+	j = j + 1
+
+	for i, v in ipairs(SPELLS_LEFT) do
+		--if v.skill == nil or skilltreeupdater:IsActivated(v.skill) then
+			inst._spells[j] = v
+			j = j + 1
+		--end
+	end
+
+	if j <= 10 then
+		local shift = 11 - j
+		for i = j - 1, 7, -1 do
+			inst._spells[i + shift] = inst._spells[i]
+		end
+		for i = 7, 7 + shift - 1 do
+			inst._spells[i] = BLANK_SPELL
+		end
+	end
+end
+
+local function EnableMountedCommands(inst, enable)
+	if enable then
+		inst.components.spellbook:SetItems(inst._spells)
+		inst.components.spellbook:SetBgData(SPELLBOOK_WBG)
+		inst:AddTag("onridewoby")
+	else
+		if inst.HUD and inst.HUD:GetCurrentOpenSpellBook() == inst then
+			inst.HUD:CloseSpellWheel()
+		end
+		if TUNING.ASWTRIGGER == 1 
+		and not (inst.replica.rider and inst.replica.rider:IsRiding())
+		then
+			inst.components.spellbook:SetItems(SPELLS)
+			inst.components.spellbook:SetBgData(SPELLBOOK_BG)
+		else
+			inst.components.spellbook:SetItems(EMPTY_TABLE)
+		end
+		inst:RemoveTag("onridewoby")
+	end
+end
+
+local function DoUpdateMountCommandsTask(inst)
+	inst._updatemountcommandstask = nil
+	local rider = inst.replica.rider
+	local mount = rider and rider:GetMount() or nil
+	EnableMountedCommands(inst, mount ~= nil and mount:HasTag("woby"))
+end
+
+local function OnIsRiding_Client(inst)
+	--V2C: mount is classified whereas isriding is not, so they will not sync at the same time
+	if inst._updatemountcommandstask then
+		inst._updatemountcommandstask:Cancel()
+		inst._updatemountcommandstask = nil
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonrockidol
+elseif TUNING.ASWTRIGGER == 2 then
+	AddPrefabPostInit("moonrockidol",SetupCommandWheel)
+elseif TUNING.ASWTRIGGER == 3 then
+	AddPrefabPostInit("lunar_seed",SetupCommandWheel)
+end
+local function giveitem(inst)
+	local num = 1
+	if inst.components.allskillwheelhandler ~= nil then
+		num = inst.components.allskillwheelhandler.stocksize
+	end
+	for i = 1,num,1 do
+		local item = nil
+		if TUNING.ASWTRIGGER == 0 and TUNING.ASWCONSUME == 0 then
+			item = SpawnPrefab("moonrock_wheel")
+		elseif TUNING.ASWTRIGGER == 2
+		then
+			item = SpawnPrefab("moonrockidol")
+		elseif TUNING.ASWTRIGGER == 3
+		then
+			item = SpawnPrefab("lunar_seed")
+		end
+		if item ~= nil then
+			item.Transform:SetPosition(inst.Transform:GetWorldPosition())
+		end
+	end
+	if inst and inst.woby and inst.woby.components and inst.woby.components.container then
+		inst.woby.components.container:DropEverything()
+	end
+end
+-------------------blink for wortox
+--------------------------------------------------------------------------
+local function IsSoul(item)
+    return item.prefab == "wortox_soul"
+end
+
+local function IsSoulJar(item)
+    return item.prefab == "wortox_souljar"
+end
+local function PutSoulOnCooldown(item, cooldowntime, overridepercent)
+    if not IsSoul(item) then
+        return
+    end
+
+    if item.components.rechargeable ~= nil then
+        item.components.rechargeable:Discharge(cooldowntime)
+        if overridepercent then
+            item.components.rechargeable:SetPercent(overridepercent)
+        end
+    else
+        item:AddTag("nosouljar")
+    end
+end
+
+local function RemoveSoulCooldown(item)
+    if not IsSoul(item) then
+        return
+    end
+
+    if item.components.rechargeable ~= nil then
+        item.components.rechargeable:SetPercent(1)
+    else
+        item:RemoveTag("nosouljar")
+    end
+end
+local function GetStackSize(item)
+    return item.components.stackable ~= nil and item.components.stackable:StackSize() or 1
+end
+
+local function CheckSoulsRemoved(inst)
+    inst._checksoulstask = nil
+    if inst.wortox_needstreeinit then
+        -- Reschedule.
+        inst._checksoulstask = inst:DoTaskInTime(0, CheckSoulsRemoved)
+        return
+    end
+    if count == 0 then
+        inst:FinishPortalHop()
+    end
+    
+
+end
+
+local function CheckSoulsRemovedAfterAnim(inst, anim)
+    if inst.AnimState:IsCurrentAnimation(anim) then
+        inst._checksoulstask = inst:DoTaskInTime(inst.AnimState:GetCurrentAnimationLength() - inst.AnimState:GetCurrentAnimationTime() + 2 * FRAMES, CheckSoulsRemoved)
+    else
+        CheckSoulsRemoved(inst)
+    end
+end
+
+local function SortByStackSize(l, r)
+    return GetStackSize(l) < GetStackSize(r)
+end
+local function GetSouls(inst)
+    local souls = inst.components.inventory:FindItems(IsSoul)
+    local count = 0
+    for i, v in ipairs(souls) do
+        count = count + GetStackSize(v)
+    end
+    return souls, count
+end
+--------------------------------------------
+local function OnSoulHop(inst)
+    if inst._checksoulstask ~= nil then
+        inst._checksoulstask:Cancel()
+    end
+    inst._checksoulstask = inst:DoTaskInTime(.5, CheckSoulsRemovedAfterAnim, "wortox_portal_jumpout")
+end
+
+local function SetNetvar(inst)
+    if inst.player_classified ~= nil then
+        assert(inst._freesoulhop_counter >= 0 and inst._freesoulhop_counter <= 7, "Player _freesoulhop_counter out of range: "..tostring(inst._freesoulhop_counter))
+        inst.player_classified.freesoulhops:set(inst._freesoulhop_counter)
+    end
+end
+
+local function ClearSoulhopCounter(inst)
+    inst._freesoulhop_counter = 0
+    inst._soulhop_cost = 0
+    SetNetvar(inst)
+end
+
+local function FinishPortalHop(inst)
+    if inst.finishportalhoptask ~= nil then
+        inst.finishportalhoptask:Cancel()
+        inst.finishportalhoptask = nil
+        inst.finishportalhoptaskmaxtime = nil
+    end
+    if inst._freesoulhop_counter > 0 then
+        if inst.components.inventory ~= nil then
+            inst.components.inventory:ConsumeByName("wortox_soul", math.max(math.ceil(inst._soulhop_cost), 1))
+        end
+        ClearSoulhopCounter(inst)
+    end
+    inst:RemoveDebuff("wortox_soulecho_buff")
+    --inst:DoCheckSoulsAdded()
+end
+
+local function GetHopsPerSoul(inst)
+    local soulsperhop = TUNING.WORTOX_FREEHOP_HOPSPERSOUL
+    local skilltreeupdater = inst.components.skilltreeupdater
+    if skilltreeupdater and skilltreeupdater:IsActivated("wortox_liftedspirits_3") then
+        soulsperhop = soulsperhop + TUNING.SKILLS.WORTOX.WORTOX_FREEHOP_HOPSPERSOUL_ADD
+    end
+    return soulsperhop
+end
+
+local function GetSoulEchoCooldownTime(inst)
+    local cooldowntime = TUNING.WORTOX_FREEHOP_TIMELIMIT
+    local skilltreeupdater = inst.components.skilltreeupdater
+    if skilltreeupdater and skilltreeupdater:IsActivated("wortox_liftedspirits_2") then
+        cooldowntime = cooldowntime * TUNING.SKILLS.WORTOX.WORTOX_FREEHOP_TIMELIMIT_MULT
+    end
+    return cooldowntime
+end
+
+local function TryToPortalHop(inst, souls, consumeall)
+    local invcmp = inst.components.inventory
+    if invcmp == nil then
+        return false
+    end
+
+    souls = souls or 1
+    local _, soulscount = inst:GetSouls()
+    if soulscount < souls then
+        return false
+    end
+
+    inst._freesoulhop_counter = inst._freesoulhop_counter + souls
+    inst._soulhop_cost = inst._soulhop_cost + souls
+
+    if not consumeall and inst._freesoulhop_counter < inst:GetHopsPerSoul() then
+        inst._soulhop_cost = inst._soulhop_cost - souls -- Make it free.
+        local cooldowntime = inst:GetSoulEchoCooldownTime()
+        local skilltreeupdater = inst.components.skilltreeupdater
+        if skilltreeupdater and skilltreeupdater:IsActivated("wortox_liftedspirits_1") then
+            inst:AddDebuff("wortox_soulecho_buff", "wortox_soulecho_buff", {duration = cooldowntime,})
+        end
+        invcmp:ForEachItem(PutSoulOnCooldown, cooldowntime)
+        if inst.finishportalhoptask ~= nil then
+            inst.finishportalhoptask:Cancel()
+            inst.finishportalhoptask = nil
+            inst.finishportalhoptaskmaxtime = nil
+        end
+        inst.finishportalhoptask = inst:DoTaskInTime(cooldowntime, inst.FinishPortalHop)
+        inst.finishportalhoptaskmaxtime = cooldowntime
+    else
+        invcmp:ForEachItem(RemoveSoulCooldown)
+        inst:FinishPortalHop()
+    end
+    SetNetvar(inst)
+
+    return true
+end
+local function OnFreesoulhopsChanged(inst, data)
+    inst._freesoulhop_counter = data and data.current or 0
+end
+----------------------------------------------------------------------
+local function IsNotBlocked(pt)
+    return TheWorld.Map:IsPassableAtPoint(pt:Get()) and not TheWorld.Map:IsGroundTargetBlocked(pt)
+end
+local function CanBlinkTo(inst, pt)
+    local x, y, z = inst.Transform:GetWorldPosition()
+    return IsNotBlocked(pt) and IsTeleportingPermittedFromPointToPoint(x, y, z, pt.x, pt.y, pt.z) -- NOTES(JBK): Keep in sync with blinkstaff. [BATELE]
+end
+
+local function CanBlinkFromWithMap(inst, pt)
+    local x, y, z = inst.Transform:GetWorldPosition()
+    return IsTeleportingPermittedFromPointToPoint(x, y, z, pt.x, pt.y, pt.z)
+end
+
+local function ReticuleTargetFn(inst)
+    return ControllerReticle_Blink_GetPosition(inst, IsNotBlocked)
+end
+
+local function CanSoulhop(inst, souls)
+    if inst:HasTag("soulstealer") and inst.replica.inventory:Has("wortox_soul", souls or 1) then
+        local rider = inst.replica.rider
+        if rider == nil or not rider:IsRiding() then
+            return true
+        end
+    end
+    return false
+end
+local EMPTY_TABLE = {}
+local function GetDoubleClickActions(inst, pos, dir, target)
+	--Assumes we can only ride our own woby!
+	if not inst.components.skilltreeupdater:IsActivated("walter_woby_dash") then
+		return EMPTY_TABLE
+	end
+	local rider = inst.replica.rider
+	local mount = rider and rider:GetMount() or nil
+	if mount and mount:HasTag("woby") then
+		local pos2
+		if dir then
+			pos2 = inst:GetPosition()
+			pos2.x = pos2.x + dir.x * 10
+			pos2.y = 0
+			pos2.z = pos2.z + dir.z * 10
+		elseif target then
+			pos2 = target:GetPosition()
+			pos2.y = 0
+		end
+		return { ACTIONS.DASH }, pos2
+	end
+	return EMPTY_TABLE
+end
+local function HasWhistleAction(inst)
+	if inst.woby_commands_classified then
+		if inst.woby_commands_classified:IsOutForDelivery() then
+			--Going to dest, or putting items into boxes
+			--Command wheel is blocked, so no range on recall action
+			return true
+		end
+		local woby = inst.woby_commands_classified:GetWoby()
+		if TheWorld.ismastersim then
+			if woby and not (inst.HUD and not woby:IsInLimbo() and woby:IsNear(inst, 16)) then
+				return true
+			end
+		elseif inst.HUD and (woby == nil or woby:HasTag("INLIMBO") or not woby:IsNear(inst, 16)) then
+			return true
+		end
+	end
+	return false
+end
+
+local function GetPointSpecialActions(inst, pos, useitem, right)
+    if right and useitem == nil then
+	-----------------wilson
+		if useitem == nil then
+			local inventory = inst.replica.inventory
+			if inventory ~= nil then
+				useitem = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+			end
+		end
+		if useitem and
+			useitem.prefab == "torch" and
+			inst.components.skilltreeupdater:IsActivated("wilson_torch_7") and
+			useitem:HasTag("special_action_toss")
+		then
+			return { ACTIONS.TOSS }
+		end
+		------------------------winona
+		if useitem == nil then
+			local inventory = inst.replica.inventory
+			if inventory ~= nil then
+				useitem = inventory:GetEquippedItem(EQUIPSLOTS.HEAD)
+			end
+		end
+		if useitem and
+			useitem.prefab == "roseglasseshat" and
+			useitem:HasTag("closeinspector")
+		then
+			--match ReticuleTargetFn
+			if usereticulepos then
+				local pos2 = Vector3()
+				for r = 2.5, 1, -.25 do
+					pos2.x, pos2.y, pos2.z = inst.entity:LocalToWorldSpace(r, 0, 0)
+					if CLOSEINSPECTORUTIL.IsValidPos(inst, pos2) then
+						return { ACTIONS.LOOKAT }, pos2
+					end
+				end
+			end
+
+			--default
+			if CLOSEINSPECTORUTIL.IsValidPos(inst, pos) then
+				return { ACTIONS.LOOKAT }
+			end
+		end
+		----------woby
+		if right and
+		useitem == nil and
+		inst.components.playercontroller and
+		inst.components.playercontroller.isclientcontrollerattached and
+		HasWhistleAction(inst)
+		then
+			return { ACTIONS.WHISTLE }
+		end
+		-------------------------wortox
+        local canblink
+        if inst.checkingmapactions then
+            canblink = inst:CanBlinkFromWithMap(inst.checkingmapactions_pos or inst:GetPosition())
+        else
+            canblink = inst:CanBlinkTo(pos)
+        end
+        if canblink and inst.CanSoulhop and inst:CanSoulhop() then
+            return { ACTIONS.BLINK }
+        end
+		---------------------------wx78
+		local actions = {}
+		if right and useitem == nil then
+			if inst.checkingmapactions then
+				if inst.components.skilltreeupdater then
+					if inst.components.skilltreeupdater:IsActivated("wx78_remotebodyswap") then
+						table.insert(actions, ACTIONS.SWAPBODIES_MAP)
+					end
+					if inst.components.skilltreeupdater:IsActivated("wx78_scoutdrone_1") then
+						table.insert(actions, ACTIONS.MAPSCOUTSELECT_MAP)
+					end
+				end
+			else
+				if inst.components.playercontroller ~= nil and inst.components.playercontroller.isclientcontrollerattached then
+					if inst.CollectUpgradeModuleActions then
+						inst:CollectUpgradeModuleActions(actions)
+					end
+				end
+			end
+		end
+		return actions
+    end
+    return {}
+end
+
+local function OnSetOwner(inst)
+    if inst.components.playeractionpicker ~= nil then
+		--if inst.components.playeractionpicker.pointspecialactionsfn == nil then
+			inst.components.playeractionpicker.pointspecialactionsfn = GetPointSpecialActions
+		--end
+		--if inst.components.playeractionpicker.doubleclickactionsfn == nil then
+			inst.components.playeractionpicker.doubleclickactionsfn = GetDoubleClickActions
+		--end
+    end
+	--if TheWorld.ismastersim then
+    --    inst.wx78_classified.Network:SetClassifiedTarget(inst)
+    --end
+end
+local function wxOnSetOwner(inst)
+	if TheWorld.ismastersim then
+        inst.wx78_classified.Network:SetClassifiedTarget(inst)
+    end
+end
+--------------------------------------------------------------------------ridewheel
+
+
+--------------------------------------------------------------------------
+--Mounted command wheel
+
+local ICON_SCALE = 0.6
+local ICON_RADIUS = 60
+local SPELLBOOK_RADIUS = 120
+local SPELLBOOK_FOCUS_RADIUS = SPELLBOOK_RADIUS-- + 2
+
+local function wobyDoSpellAction(inst)
+	local inventory = ThePlayer.replica and ThePlayer.replica.inventory
+	if inventory then
+		inventory:CastSpellBookFromInv(inst)
+	end
+end
+
+local BLANK_SPELL =
+{
+	label = "",
+	bank = "spell_icons_woby",
+	build = "spell_icons_woby",
+	anims =
+	{
+		disabled = { anim = "empty" },
+	},
+	widget_scale = ICON_SCALE,
+	checkenabled = function() return false end,
+	noselect = true,
+}
+
+local SPACER_SPELL = shallowcopy(BLANK_SPELL)
+SPACER_SPELL.spacer = true
+local WobyCommon = require("prefabs/wobycommon")
+local SPELLS_RIGHT =
+{
+	{
+		label = STRINGS.ACTIONS.DISMOUNT,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.ACTIONS.DISMOUNT)
+			inst.components.spellbook:SetSpellAction(ACTIONS.DISMOUNT)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = wobyDoSpellAction,
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "dismount" },
+			focus = { anim = "dismount_focus" },
+			down = { anim = "dismount_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.SetupMouseOver,
+		default_focus = true,
+	},
+	{
+		label = STRINGS.ACTIONS.RUMMAGE.GENERIC,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.ACTIONS.RUMMAGE.GENERIC)
+			inst.components.spellbook:SetSpellAction(ACTIONS.RUMMAGE)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = wobyDoSpellAction,
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "opencontainer" },
+			focus = { anim = "opencontainer_focus" },
+			down = { anim = "opencontainer_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.SetupMouseOver,
+	},
+	BLANK_SPELL,
+	{
+		label = STRINGS.WOBY_COMMANDS.SHRINK,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.WOBY_COMMANDS.SHRINK)
+			inst.components.spellbook:SetSpellAction(nil)
+			inst.components.spellbook.closeonexecute = true
+		end,
+		execute = WobyCommon.MakeWobyCommand(WobyCommon.COMMANDS.SHRINK),
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "forcetransform" },
+			focus = { anim = "forcetransform_focus" },
+			down = { anim = "forcetransform_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.SetupMouseOver,
+	},
+}
+
+local SPELLS_LEFT =
+{
+	{
+		label = STRINGS.WOBY_COMMANDS.SPRINTING,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.WOBY_COMMANDS.SPRINTING)
+			inst.components.spellbook:SetSpellAction(nil)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = WobyCommon.MakeWobyCommand(WobyCommon.COMMANDS.SPRINTING),
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "sprinting" },
+			focus = { anim = "sprinting_focus" },
+			down = { anim = "sprinting_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.MakeAutocastToggle("sprinting"),
+		skill = "walter_woby_sprint",
+	},
+	{
+		label = STRINGS.WOBY_COMMANDS.SHADOWDASH,
+		onselect = function(inst)
+			inst.components.spellbook:SetSpellName(STRINGS.WOBY_COMMANDS.SHADOWDASH)
+			inst.components.spellbook:SetSpellAction(nil)
+			inst.components.spellbook.closeonexecute = false
+		end,
+		execute = WobyCommon.MakeWobyCommand(WobyCommon.COMMANDS.SHADOWDASH),
+		bank = "spell_icons_woby",
+		build = "spell_icons_woby",
+		anims =
+		{
+			idle = { anim = "shadowdash" },
+			focus = { anim = "shadowdash_focus" },
+			down = { anim = "shadowdash_pressed" },
+		},
+		widget_scale = ICON_SCALE,
+		postinit = WobyCommon.MakeAutocastToggle("shadowdash"),
+		skill = "walter_woby_shadow",
+	},
+}
+
+local SPELLBOOK_WBG =
+{
+	bank = "spell_icons_woby",
+	build = "spell_icons_woby",
+	anim = "bg",
+	widget_scale = ICON_SCALE,
+}
+
+local function RefreshSpells(inst)
+	--local skilltreeupdater = inst.components.skilltreeupdater
+	local j = 1
+
+	inst._spells[1] = SPACER_SPELL
+	j = j + 1
+
+	for i, v in ipairs(SPELLS_RIGHT) do
+		--if v.skill == nil or skilltreeupdater:IsActivated(v.skill) then
+			inst._spells[j] = v
+		--else
+			--inst._spells[j] = BLANK_SPELL
+		--end
+		j = j + 1
+	end
+
+	for i = j, 5 do
+		inst._spells[j] = BLANK_SPELL
+		j = j + 1
+	end
+
+	inst._spells[j] = SPACER_SPELL
+	j = j + 1
+
+	for i, v in ipairs(SPELLS_LEFT) do
+		--if v.skill == nil or skilltreeupdater:IsActivated(v.skill) then
+			inst._spells[j] = v
+			j = j + 1
+		--end
+	end
+
+	if j <= 10 then
+		local shift = 11 - j
+		for i = j - 1, 7, -1 do
+			inst._spells[i + shift] = inst._spells[i]
+		end
+		for i = 7, 7 + shift - 1 do
+			inst._spells[i] = BLANK_SPELL
+		end
+	end
+end
+
+local function EnableMountedCommands(inst, enable)
+	if enable then
+		inst.components.spellbook:SetItems(inst._spells)
+		inst.components.spellbook:SetBgData(SPELLBOOK_WBG)
+		inst:AddTag("onridewoby")
+	else
+		if inst.HUD and inst.HUD:GetCurrentOpenSpellBook() == inst then
+			inst.HUD:CloseSpellWheel()
+		end
+		if TUNING.ASWTRIGGER == 1 
+		and not (inst.replica.rider and inst.replica.rider:IsRiding())
+		then
+			inst.components.spellbook:SetItems(SPELLS)
+			inst.components.spellbook:SetBgData(SPELLBOOK_BG)
+		else
+			inst.components.spellbook:SetItems(EMPTY_TABLE)
+		end
+		inst:RemoveTag("onridewoby")
+	end
+end
+
+local function DoUpdateMountCommandsTask(inst)
+	inst._updatemountcommandstask = nil
+	local rider = inst.replica.rider
+	local mount = rider and rider:GetMount() or nil
+	EnableMountedCommands(inst, mount ~= nil and mount:HasTag("woby"))
+end
+
+local function OnIsRiding_Client(inst)
+	--V2C: mount is classified whereas isriding is not, so they will not sync at the same time
+	if inst._updatemountcommandstask then
+		inst._updatemountcommandstask:Cancel()
+		inst._updatemountcommandstask = nil
+	end
+	if inst.replica.rider:IsRiding() then
+		inst._updatemountcommandstask = inst:DoStaticTaskInTime(0, DoUpdateMountCommandsTask)
+	else
+		EnableMountedCommands(inst, false)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lunar_seed
+elseif TUNING.ASWTRIGGER == 3 then
+	AddPrefabPostInit("lunar_seed",SetupCommandWheel)
+end
+local function giveitem(inst)
+	local num = 1
+	if inst.components.allskillwheelhandler ~= nil then
+		num = inst.components.allskillwheelhandler.stocksize
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:skilltreeupdater
+end)
+AddComponentPostInit("skilltreeupdater", extraskillcheck)
+local function OnSpawnPet(inst, pet)
+    if pet.prefab == "wormwood_lightflier" then
+        inst:RecalculateLightFlierPattern()
+        inst:RecalculateLightFlierLight()
+    end
+
+    if pet.prefab == "wormwood_fruitdragon" then
+        inst:RecalculateDragonHealth()
+    end
+
+    --if inst._OnSpawnPet ~= nil then
+    --    inst:_OnSpawnPet(pet)
+    --end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wormwood
+end
+AddPrefabPostInit("wormwood",rewormwood)
+-----------------------------------
+AddMinimapAtlas("images/map_icons/moonrock_wheel.xml")
+---------------tag
+-----标签数量增加，从繁华海棠佬那里抄的
+local function nilfn() end
+
+```
+

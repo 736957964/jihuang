@@ -6771,8 +6771,44 @@
       "category": "06_世界生成与生态系统类",
       "studied_at": "2026-11-01 10:39:31",
       "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3371734654",
+      "name": "堆肥桶自动填充",
+      "author": "未知",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 10:46:54",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3512728067",
+      "name": "language",
+      "author": "割草机，老张，凌子，sgurrui",
+      "version": "1.2.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:46:54",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3655519312",
+      "name": "异界冒险",
+      "author": "狼吞灰",
+      "version": "3.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:46:54",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3668914451",
+      "name": "Language",
+      "author": "Lilith",
+      "version": "1.2.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:46:54",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 10:39:31"
+  "lastUpdated": "2026-11-01 10:46:54"
 }

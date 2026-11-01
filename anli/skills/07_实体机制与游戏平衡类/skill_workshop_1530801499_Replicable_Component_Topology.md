@@ -8627,3 +8627,53 @@ AddPrefabPostInit("heatrock", new_heatrock_fn)
 
 ```
 
+
+
+### 变体演进：堆肥桶自动填充 (Mod 3371734654)
+- **变体场景与切面**：收录来自工坊 Mod 3371734654 (`堆肥桶自动填充`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3371734654)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:forcecompostable
+
+AddComponentPostInit("forcecompostable", function (ForceCompostable)
+    local self = ForceCompostable
+    self.inst:AddTag("forcecompostable")
+
+    function ForceCompostable:OnRemoveFromEntity()
+        self.inst:RemoveTag("forcecompostable")
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:compostingbin
+
+AddPrefabPostInit("compostingbin", function (inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    inst:AddComponent("container")
+    inst.components.container:WidgetSetup("compostingbin")
+    inst.components.container.onopenfn = OnOpen
+    inst.components.container.onclosefn = OnClose
+    inst.components.container.skipclosesnd = true
+    inst.components.container.skipopensnd = true
+
+    if inst.components.compostingbin then
+        local onfinishcycle = inst.components.compostingbin.finishcyclefn
+        if onfinishcycle ~= nil then
+            inst.components.compostingbin.finishcyclefn = function (inst, ... )
+                TryAddCompostable(inst)
+                return onfinishcycle(inst, ... )
+            end
+        end
+    end
+end)
+
+```
+
