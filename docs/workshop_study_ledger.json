@@ -7374,8 +7374,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 12:21:41",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3117846930",
+      "name": "Language",
+      "author": "Lilith",
+      "version": "0.2.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:23:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3732704679",
+      "name": "露西皮肤美化",
+      "author": "FULAIDI1",
+      "version": "20260515",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:23:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3755384410",
+      "name": "余烬不熄：薇洛强化",
+      "author": "伏辰乄",
+      "version": "0.7.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:23:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3805034726",
+      "name": "双手装备 · Swap Object Other",
+      "author": "萌萌的新",
+      "version": "0.2.38",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:23:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 12:21:41"
+  "lastUpdated": "2026-11-01 12:23:48"
 }

@@ -45718,3 +45718,1962 @@ end
 
 ```
 
+
+
+### 变体演进：Language (Mod 3117846930)
+- **变体场景与切面**：收录来自工坊 Mod 3117846930 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3117846930)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:cave
+--[[
+AddPrefabPostInit("cave",function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.overlord_magicspaceinventory
+		then
+			inst:AddComponent("overlord_magicspaceinventory")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world",function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.overlord_magicspaceinventory
+		then
+			inst:AddComponent("overlord_magicspaceinventory")
+		end
+	end
+end)]]--
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", ModifyCastHandler)
+AddStategraphPostInit("wilson_client", ModifyCastHandler)
+
+local function OnRemoveCleanupTargetFX(inst)
+    if inst.sg.statemem.targetfx.KillFX ~= nil then
+        inst.sg.statemem.targetfx:RemoveEventCallback("onremove", OnRemoveCleanupTargetFX, inst)
+        inst.sg.statemem.targetfx:KillFX()
+    else
+        inst.sg.statemem.targetfx:Remove()
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", ModifyCastHandler)
+AddStategraphPostInit("wilson_client", ModifyCastHandler)
+
+local function OnRemoveCleanupTargetFX(inst)
+    if inst.sg.statemem.targetfx.KillFX ~= nil then
+        inst.sg.statemem.targetfx:RemoveEventCallback("onremove", OnRemoveCleanupTargetFX, inst)
+        inst.sg.statemem.targetfx:KillFX()
+    else
+        inst.sg.statemem.targetfx:Remove()
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+end
+AddComponentPostInit("playercontroller", playercontroller)
+
+```
+
+
+
+### 变体演进：露西皮肤美化 (Mod 3732704679)
+- **变体场景与切面**：收录来自工坊 Mod 3732704679 (`露西皮肤美化`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3732704679)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+      else
+        AddPrefabPostInit("world", function(inst)
+          inst:ListenForEvent("ms_playerspawn", utils._playeroninit)
+        end)
+
+```
+
+
+
+### 变体演进：余烬不熄：薇洛强化 (Mod 3755384410)
+- **变体场景与切面**：收录来自工坊 Mod 3755384410 (`余烬不熄：薇洛强化`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3755384410)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:emberlight
+-- remove the heat propagator that ignites nearby flammable world objects.
+if CFG.FIREBALL_SAFE then AddPrefabPostInit("emberlight", function(inst)
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim and inst.components.propagator ~= nil then
+        inst:RemoveComponent("propagator")
+    end
+end) end
+
+--------------------------------------------------------------------------
+-- Skill tree: configurable Willow points and both allegiances.
+
+local SkillTreeData = require("skilltreedata")
+local skilltreedefs = require("prefabs/skilltree_defs")
+
+if CFG.SKILL_POINTS and not SkillTreeData._et_willow_patched then
+    SkillTreeData._et_willow_patched = true
+
+    local OldGetAvailableSkillPoints = SkillTreeData.GetAvailableSkillPoints
+    function SkillTreeData:GetAvailableSkillPoints(characterprefab)
+        if characterprefab == "willow" then
+            -- This path is queried by the skill UI before profile data has
+            -- necessarily created activatedskills.  Keep the client preview,
+            -- skill purchase check and old-save recovery on the same cap.
+            local allskills = self.activatedskills or {}
+            local activated = allskills[characterprefab]
+            return math.max(0, SKILL_POINT_LIMIT - (activated ~= nil and _G.table.count(activated) or 0))
+        end
+        return OldGetAvailableSkillPoints(self, characterprefab)
+    end
+
+    local OldValidateCharacterData = SkillTreeData.ValidateCharacterData
+    function SkillTreeData:ValidateCharacterData(characterprefab, activatedskills, skillxp)
+        if characterprefab == "willow" then
+            if activatedskills == nil or skillxp == nil or skillxp < 0
+                or _G.table.count(activatedskills) > SKILL_POINT_LIMIT then
+                return false
+            end
+            local defs = skilltreedefs.SKILLTREE_DEFS.willow
+            if defs == nil then
+                return false
+            end
+            for skillname in pairs(activatedskills) do
+                local def = defs[skillname]
+                if def == nil or def.lock_open ~= nil then
+                    return false
+                end
+            end
+
+            -- Keep Klei's dependency validation (must_have_one_of/all_of) and
+            -- any validation another mod installed before us.  Only replace
+            -- the XP-derived point cap for this call, since Willow's extra
+            -- points intentionally exceed the vanilla 15-point XP table.
+            local previous = _G.rawget(self, "GetPointsForSkillXP")
+            self.GetPointsForSkillXP = function() return SKILL_POINT_LIMIT end
+            local ok, result = _G.pcall(OldValidateCharacterData, self, characterprefab, activatedskills, skillxp)
+            self.GetPointsForSkillXP = previous
+            if not ok then
+                _G.error(result)
+            end
+            return result
+        end
+        return OldValidateCharacterData(self, characterprefab, activatedskills, skillxp)
+    end
+end
+
+local willowdefs = skilltreedefs.SKILLTREE_DEFS.willow
+if CFG.ETERNAL_HEART and willowdefs ~= nil and willowdefs.willow_fire_frenzy ~= nil then
+    -- Skill-tree definitions cache their localized strings when the module is
+    -- loaded, which may happen before modmain changes STRINGS. Replace the
+    -- cached values as well so both new and existing worlds show the new name.
+    willowdefs.willow_fire_frenzy.title = "永燃之心"
+    willowdefs.willow_fire_frenzy.desc =
+        string.format(
+            "消耗%d余烬和%d理智进入永燃状态；再次释放可主动关闭。",
+            ETERNAL_HEART_START_EMBERS,
+            ETERNAL_HEART_START_SANITY)
+end
+if CFG.DUAL_ALIGNMENT and willowdefs ~= nil then
+    -- Preserve boss progression, remove only the opposite-allegiance exclusion.
+    if willowdefs.willow_allegiance_lock_1 ~= nil then
+        willowdefs.willow_allegiance_lock_1.lock_open = function(prefabname, activatedskills, readonly)
+            if readonly then
+                return "question"
+            end
+            return _G.TheGenericKV:GetKV("fuelweaver_killed") == "1"
+        end
+    end
+    if willowdefs.willow_allegiance_lock_4 ~= nil then
+        willowdefs.willow_allegiance_lock_4.lock_open = function(prefabname, activatedskills, readonly)
+            if readonly then
+                return "question"
+            end
+            return _G.TheGenericKV:GetKV("celestialchampion_killed") == "1"
+        end
+    end
+end
+
+--------------------------------------------------------------------------
+-- Ember inventory integration using a real one-slot container.
+
+local function GetReservoirCount(inst)
+    if inst == nil or inst.prefab ~= "willow" then
+        return 0
+    end
+    if inst.components ~= nil and inst.components.et_ember_storage ~= nil then
+        return inst.components.et_ember_storage:GetCount()
+    end
+    return 0
+end
+
+local Inventory = require("components/inventory")
+local ET_NOOP_EMBER_REMOVAL = { Remove = function() end }
+if not Inventory._et_ember_has_patched then
+    Inventory._et_ember_has_patched = true
+    local OldGiveItem = Inventory.GiveItem
+    function Inventory:GiveItem(item, slot, ...)
+        if CFG.EMBER_STORAGE and slot == nil and self.inst.prefab == "willow"
+            and item ~= nil and item.prefab == "willow_ember" then
+            local storage = self.inst.components.et_ember_storage
+            if storage ~= nil and storage:GiveItem(item) then
+                return true
+            end
+        end
+        return OldGiveItem(self, item, slot, ...)
+    end
+
+    local OldHas = Inventory.Has
+    function Inventory:Has(prefab, amount, checkallcontainers)
+        if CFG.EMBER_STORAGE and prefab == "willow_ember" and self.inst.prefab == "willow" then
+            local _, pocketcount = OldHas(self, prefab, amount, checkallcontainers)
+            local count = GetReservoirCount(self.inst) + (pocketcount or 0)
+            return count >= amount, count
+        end
+        return OldHas(self, prefab, amount, checkallcontainers)
+    end
+
+    local OldRemoveItem = Inventory.RemoveItem
+    function Inventory:RemoveItem(item, ...)
+        if CFG.EMBER_STORAGE and self.inst._et_consume_slot_embers_only
+            and item ~= nil and item.prefab == "willow_ember"
+            then
+            -- Vanilla's private Willow consumer immediately calls :Remove()
+            -- on this return value. A no-op removal object safely suppresses
+            -- that first pass; ConsumeEmbers performs the real dedicated-first
+            -- deduction after the spell succeeds.
+            return ET_NOOP_EMBER_REMOVAL
+        end
+        return OldRemoveItem(self, item, ...)
+    end
+end
+
+local Stackable = require("components/stackable")
+if CFG.EMBER_STORAGE and not Stackable._et_slot_cast_patched then
+    Stackable._et_slot_cast_patched = true
+    local OldSetStackSize = Stackable.SetStackSize
+    function Stackable:SetStackSize(size)
+        local item = self.inst
+        local inventoryitem = item.components.inventoryitem
+        local owner = inventoryitem ~= nil and inventoryitem:GetGrandOwner() or nil
+        if owner ~= nil and owner._et_consume_slot_embers_only
+            and item.prefab == "willow_ember" then
+            return self.stacksize
+        end
+        return OldSetStackSize(self, size)
+    end
+end
+
+local InventoryReplica = require("components/inventory_replica")
+if not InventoryReplica._et_ember_has_patched then
+    InventoryReplica._et_ember_has_patched = true
+    local OldHas = InventoryReplica.Has
+    function InventoryReplica:Has(prefab, amount, checkallcontainers)
+        if CFG.EMBER_STORAGE and prefab == "willow_ember" and self.inst.prefab == "willow" then
+            local _, pocketcount = OldHas(self, prefab, amount, checkallcontainers)
+            local classified = self.inst._et_ember_classified
+            local pouch = classified ~= nil and classified._pouch:value() or nil
+            local slotitem = pouch ~= nil and pouch.replica.container ~= nil
+                and pouch.replica.container:GetItemInSlot(1) or nil
+            local stored = slotitem ~= nil and slotitem.replica.stackable ~= nil
+                and slotitem.replica.stackable:StackSize() or (slotitem ~= nil and 1 or 0)
+            local count = stored + (pocketcount or 0)
+            return count >= amount, count
+        end
+        return OldHas(self, prefab, amount, checkallcontainers)
+    end
+
+end
+
+local function GetEmberStorage(inst)
+    return inst ~= nil and inst.components ~= nil and inst.components.et_ember_storage or nil
+end
+
+local function HasEmbers(inst, amount)
+    amount = math.max(0, amount or 0)
+    local storage = GetEmberStorage(inst)
+    local stored = storage ~= nil and storage:GetCount() or 0
+    if stored >= amount then
+        return true
+    end
+    local inventory = inst ~= nil and inst.components.inventory or nil
+    return inventory ~= nil and inventory:Has("willow_ember", amount - stored) or false
+end
+
+local function ConsumeEmbers(inst, amount)
+    local storage = GetEmberStorage(inst)
+    local count = storage ~= nil and storage:GetCount() or 0
+    local fromstorage = math.min(count, amount)
+    if fromstorage > 0 then storage:Consume(fromstorage) end
+    local left = amount - fromstorage
+    if left > 0 and inst.components.inventory ~= nil then
+        inst.components.inventory:ConsumeByName("willow_ember", left)
+    end
+end
+
+local SPELL_COST_BY_ANIM =
+{
+    fire_throw = TUNING.WILLOW_EMBER_THROW,
+    fire_burst = TUNING.WILLOW_EMBER_BURST,
+    fire_ball = TUNING.WILLOW_EMBER_BALL,
+    fire_frenzy = TUNING.WILLOW_EMBER_FRENZY,
+    lunar_fire = TUNING.WILLOW_EMBER_LUNAR,
+    shadow_fire = TUNING.WILLOW_EMBER_SHADOW,
+}
+local SPELL_PREF_KEY_BY_ANIM = {
+    fire_burst="cost_burst", fire_ball="cost_ball",
+    lunar_fire="cost_lunar", shadow_fire="cost_shadow",
+}
+
+local function GetPersonalPreference(inst, key, default)
+    local prefs = inst ~= nil and inst.components ~= nil and inst.components.et_willow_preferences or nil
+    if prefs ~= nil then return prefs:Get(key, default) end
+    local values = inst ~= nil and inst._et_personal_prefs or nil
+    local value = values ~= nil and values[key] or nil
+    return value == nil and default or value
+end
+
+local function GetSpellOwner(item)
+    if item ~= nil and item.components ~= nil and item.components.inventoryitem ~= nil then
+        local owner = item.components.inventoryitem:GetGrandOwner()
+        if owner ~= nil and owner.prefab == "willow" then return owner end
+    end
+    return _G.ThePlayer ~= nil and _G.ThePlayer.prefab == "willow" and _G.ThePlayer or nil
+end
+
+local BERNIE_COMMAND_LABELS =
+{
+    follow = "伯尼：跟随",
+    guard = "伯尼：守卫",
+    taunt = "伯尼：嘲讽",
+    hold = "伯尼：停战",
+    recall = "伯尼：召回",
+    soothe = "伯尼：安抚",
+}
+
+local function ForEachOwnedBernie(doer, fn)
+    if doer == nil or doer.bigbernies == nil then
+        return 0
+    end
+    local count = 0
+    for bernie in pairs(doer.bigbernies) do
+        if bernie ~= nil and bernie:IsValid()
+            and (bernie.bernieleader == doer or bernie._et_willow_owner == doer) then
+            count = count + 1
+            fn(bernie)
+        end
+    end
+    return count
+end
+
+local function ExecuteBernieCommand(doer, command, pos)
+    if doer == nil or doer.prefab ~= "willow" then
+        return false
+    end
+    local count = ForEachOwnedBernie(doer, function(bernie)
+        if bernie.components.et_bernie_orders ~= nil then
+            if command == "soothe" then
+                local activatable = bernie.components.activatable
+                if activatable ~= nil then
+                    if activatable.DoActivate ~= nil then
+                        activatable:DoActivate(doer)
+                    elseif activatable.Activate ~= nil then
+                        activatable:Activate(doer)
+                    end
+                end
+            else
+                bernie.components.et_bernie_orders:SetOrder(command, doer, pos or doer:GetPosition())
+            end
+        end
+    end)
+    if count <= 0 then
+        return false
+    end
+    if doer.components.talker ~= nil then
+        doer.components.talker:Say(BERNIE_COMMAND_LABELS[command] or "伯尼！")
+    end
+    return true
+end
+
+local function StartBernieGuardTargeting(inst)
+    local player = _G.ThePlayer
+    local playercontroller = player ~= nil and player.components.playercontroller or nil
+    if playercontroller ~= nil then
+        playercontroller:StartAOETargetingUsing(inst)
+    end
+end
+
+local function MakeBernieCommandItem(template, command)
+    local item = {}
+    if template ~= nil then
+        for k, v in pairs(template) do
+            item[k] = v
+        end
+    end
+    item._et_bernie_command = command
+    item.label = BERNIE_COMMAND_LABELS[command] or command
+    local use_theme_icons = VisualAssets.ready and CFG.VISUAL_SPELL_ICONS
+    if use_theme_icons then
+        item.bank = "et_bernie_command_icons"
+        item.build = "et_bernie_command_icons"
+        item.anims =
+        {
+            idle = { anim = command },
+            focus = { anim = command .. "_focus", loop = true },
+            down = { anim = command .. "_pressed" },
+        }
+    else
+        item.bank = item.bank or "spell_icons_willow"
+        item.build = item.build or "spell_icons_willow"
+        item.anims = item.anims or
+        {
+            idle = { anim = "fire_frenzy" },
+            focus = { anim = "fire_frenzy_focus", loop = true },
+            down = { anim = "fire_frenzy_pressed" },
+        }
+    end
+    -- Command art is authored at 128 px, close to the native Willow spell
+    -- symbols, so it deliberately uses the vanilla Willow wheel scale.
+    if use_theme_icons then
+        item.widget_scale = .48
+    else
+        item.widget_scale = item.widget_scale or .48
+    end
+    item.onselect = function(inst)
+        local spellbook = inst.components.spellbook
+        local aoetargeting = inst.components.aoetargeting
+        local aoespell = inst.components.aoespell
+        if spellbook ~= nil then
+            spellbook:SetSpellName(item.label)
+            spellbook:SetSpellAction(nil)
+        end
+
+        if command == "guard" and aoetargeting ~= nil then
+            inst.components.aoetargeting:SetDeployRadius(0)
+            inst.components.aoetargeting:SetAllowWater(true)
+            inst.components.aoetargeting.reticule.reticuleprefab = "reticuleaoe"
+            inst.components.aoetargeting.reticule.pingprefab = "reticuleaoeping"
+            inst.components.aoetargeting.reticule.mousetargetfn = nil
+            inst.components.aoetargeting.reticule.targetfn = nil
+            inst.components.aoetargeting.reticule.updatepositionfn = nil
+            if _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+                aoetargeting:SetTargetFX(nil)
+                aoespell:SetSpellFn(function(_, doer, pos)
+                    return ExecuteBernieCommand(doer, command, pos)
+                end)
+                spellbook:SetSpellFn(nil)
+            end
+        elseif _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+            -- Follow Wendy's native companion-command pattern: commands that
+            -- do not need a world position use SpellBook:CastSpell directly.
+            -- This avoids opening an AOE reticule for every Bernie order and
+            -- keeps mouse/controller execution on the vanilla network path.
+            if aoespell ~= nil then
+                aoespell:SetSpellFn(nil)
+            end
+            if spellbook ~= nil then
+                spellbook:SetSpellFn(function(_, doer)
+                    return ExecuteBernieCommand(doer, command)
+                end)
+            end
+        end
+    end
+    if command == "guard" then
+        item.execute = StartBernieGuardTargeting
+    else
+        item.execute = function(inst)
+            local player = _G.ThePlayer
+            if player ~= nil and player.replica.inventory ~= nil then
+                player.replica.inventory:CastSpellBookFromInv(inst)
+            end
+        end
+    end
+    return item
+end
+
+local function AppendBernieCommandItems(items)
+    if not CFG.BERNIE_COMMANDS or items == nil then
+        return items
+    end
+    local out = {}
+    local template = nil
+    for _, item in ipairs(items) do
+        if item._et_bernie_command == nil then
+            out[#out + 1] = item
+            template = template or item
+        end
+    end
+    for _, command in ipairs({ "follow", "guard", "taunt", "hold", "recall", "soothe" }) do
+        out[#out + 1] = MakeBernieCommandItem(template, command)
+    end
+    return out
+end
+
+local function WrapSpellItem(item)
+    if item == nil or item._et_wrapped or item._et_bernie_command ~= nil
+        or item.anims == nil or item.anims.idle == nil then
+        return
+    end
+    local basecost = SPELL_COST_BY_ANIM[item.anims.idle.anim]
+    if basecost == nil then
+        return
+    end
+    item._et_wrapped = true
+    if VisualAssets.ready and CFG.VISUAL_SPELL_ICONS
+        and GetPersonalPreference(GetSpellOwner(item), "visual_icons", true) then
+        -- Preserve every vanilla animation name and callback.  The themed
+        -- bank contains matching idle/focus/pressed/disabled/cooldown names,
+        -- so this is a visual-only substitution.
+        item.bank = "et_willow_spell_icons"
+        item.build = "et_willow_spell_icons"
+        item.widget_scale = .48
+        -- The command wheel may request these states even when the vanilla
+        -- spell definition did not provide an explicit animation mapping.
+        -- Keep every themed icon on its own matching animation instead of
+        -- falling back to the missing generic "cooldown" animation.
+        local idleanim = item.anims.idle.anim
+        item.anims.disabled = item.anims.disabled or { anim = idleanim .. "_disabled" }
+        item.anims.cooldown = item.anims.cooldown or { anim = idleanim .. "_cooldown" }
+    end
+    if CFG.ETERNAL_HEART and item.anims.idle.anim == "fire_frenzy" then
+        -- Willow's spell item also caches its label at module load time.
+        item.label = string.format(
+            "永燃之心（%d余烬、%d理智）",
+            ETERNAL_HEART_START_EMBERS,
+            ETERNAL_HEART_START_SANITY)
+    end
+    local oldonselect = item.onselect
+    item.onselect = function(inst, ...)
+        local prefkey = SPELL_PREF_KEY_BY_ANIM[item.anims.idle.anim]
+        local cost = prefkey ~= nil and GetPersonalPreference(GetSpellOwner(inst), prefkey, basecost) or basecost
+        inst._et_selected_spell_cost = cost
+        inst._et_selecting_spell_anim = item.anims.idle.anim
+        local result = oldonselect ~= nil and oldonselect(inst, ...) or nil
+        if CFG.ETERNAL_HEART and item.anims.idle.anim == "fire_frenzy"
+            and inst.components.spellbook ~= nil then
+            -- CASTAOE's right-click prompt reads SpellBook:GetSpellName().
+            -- Set it after the vanilla callback so cached vanilla text cannot
+            -- overwrite the Eternal Heart action name.
+            inst.components.spellbook:SetSpellName("永燃之心")
+        end
+        inst._et_selecting_spell_anim = nil
+        return result
+    end
+end
+
+local function EternalHeartSpellFn(item, doer, pos)
+    local heart = doer ~= nil and doer.components.et_eternal_heart or nil
+    if heart == nil then
+        return false
+    end
+
+    -- Casting the same spell while active is the controller-compatible toggle
+    -- off action. It intentionally has no additional resource cost.
+    if heart:IsActive() then
+        heart:Stop("manual")
+        return true
+    end
+
+    local startcost = GetPersonalPreference(doer, "eternal_start", ETERNAL_HEART_START_EMBERS)
+    if not HasEmbers(doer, startcost) then
+        return false, "NOT_ENOUGH_EMBERS"
+    end
+    local sanitycost = GetPersonalPreference(doer, "eternal_sanity", ETERNAL_HEART_START_SANITY)
+    if doer.components.sanity == nil or doer.components.sanity.current < sanitycost then
+        return false, "LOW_SANITY"
+    end
+
+    ConsumeEmbers(doer, startcost)
+    doer.components.sanity:DoDelta(-sanitycost)
+    heart:Start()
+    local drain = heart:GetDrainSettings()
+    if doer.components.talker ~= nil then
+        doer.components.talker:Say(string.format(
+            "永燃消耗：启动%d；前%d秒每秒%d，之后每秒%d。",
+            startcost,
+            drain.phase1time,
+            drain.phase1drain,
+            drain.phase2drain))
+    end
+    return true
+end
+
+-- willow_ember post-init is registered before the attraction implementation
+-- below. Forward-declare it so Lua captures the local instead of resolving an
+-- undeclared global when an existing pouch restores its real ember item.
+local QueueEmberAttraction
+
+AddPrefabPostInit("willow_ember", function(inst)
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim and inst.components.inventoryitem ~= nil then
+        local inventoryitem = inst.components.inventoryitem
+        local OldOnDropped = inventoryitem.OnDropped
+        inventoryitem.OnDropped = function(self, ...)
+            local owner = self:GetGrandOwner()
+            if owner ~= nil and owner.prefab == "willow" then
+                EmberRouting.MarkDropped(inst, owner, V.EMBER_TRANSFER_GRACE_TIME, GetTime())
+            end
+            return OldOnDropped(self, ...)
+        end
+
+        local stackable = inst.components.stackable
+        if stackable ~= nil then
+            local OldOnDeStack = stackable.ondestack
+            stackable:SetOnDeStack(function(newitem, olditem)
+                EmberRouting.CopyState(olditem, newitem)
+                if OldOnDeStack ~= nil then
+                    OldOnDeStack(newitem, olditem)
+                end
+            end)
+        end
+
+        local OldOnDroppedFn = inst.components.inventoryitem.ondroppedfn
+        inst.components.inventoryitem:SetOnDroppedFn(function(item, ...)
+            item:RemoveTag("et_reservoir_hold")
+            if OldOnDroppedFn ~= nil then
+                return OldOnDroppedFn(item, ...)
+            end
+        end)
+    end
+
+    local spellbook = inst.components.spellbook
+    if spellbook ~= nil then
+        local OldSetItems = spellbook.SetItems
+        function spellbook:SetItems(items)
+            items = AppendBernieCommandItems(items)
+            if items ~= nil then
+                for _, item in ipairs(items) do
+                    WrapSpellItem(item)
+                end
+            end
+            return OldSetItems(self, items)
+        end
+        -- Do not write the prefab's initial empty BASESPELLS back here.
+        -- Vanilla updatespells() will provide the authoritative skill-filtered
+        -- list once ownership is resolved; our wrapper then appends commands.
+    end
+
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim and inst.components.aoespell ~= nil then
+        local aoespell = inst.components.aoespell
+        local OldSetSpellFn = aoespell.SetSpellFn
+        function aoespell:SetSpellFn(fn)
+            local selectedanim = inst._et_selecting_spell_anim
+            if CFG.ETERNAL_HEART and selectedanim == "fire_frenzy" then
+                OldSetSpellFn(self, EternalHeartSpellFn)
+            elseif fn ~= nil and CFG.EMBER_STORAGE then
+                OldSetSpellFn(self, function(item, doer, pos)
+                    local cost = item._et_selected_spell_cost or 0
+                    if cost > 0 and not HasEmbers(doer, cost) then
+                        return false, "NOT_ENOUGH_EMBERS"
+                    end
+                    doer._et_consume_slot_embers_only = true
+                    local success, reason = fn(item, doer, pos)
+                    doer._et_consume_slot_embers_only = nil
+                    if success and cost > 0 then
+                        ConsumeEmbers(doer, cost)
+                    end
+                    return success, reason
+                end)
+            else
+                OldSetSpellFn(self, fn)
+            end
+        end
+    end
+
+    if CFG.EMBER_ATTRACTION and _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+        QueueEmberAttraction(inst, .35)
+        -- A held ember cancels its attraction task. Re-arm it whenever the
+        -- real item is manually dropped again.
+        inst:ListenForEvent("ondropped", function(item)
+            QueueEmberAttraction(item, .1)
+        end)
+    end
+
+end)
+
+--------------------------------------------------------------------------
+-- HUD special ember slot.
+
+AddClassPostConstruct("widgets/inventorybar", function(self)
+    if not CFG.EMBER_STORAGE then
+        return
+    end
+    local EmberSlot = require("widgets/etemberslot")
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:willow_ember
+
+AddPrefabPostInit("willow_ember", function(inst)
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim and inst.components.inventoryitem ~= nil then
+        local inventoryitem = inst.components.inventoryitem
+        local OldOnDropped = inventoryitem.OnDropped
+        inventoryitem.OnDropped = function(self, ...)
+            local owner = self:GetGrandOwner()
+            if owner ~= nil and owner.prefab == "willow" then
+                EmberRouting.MarkDropped(inst, owner, V.EMBER_TRANSFER_GRACE_TIME, GetTime())
+            end
+            return OldOnDropped(self, ...)
+        end
+
+        local stackable = inst.components.stackable
+        if stackable ~= nil then
+            local OldOnDeStack = stackable.ondestack
+            stackable:SetOnDeStack(function(newitem, olditem)
+                EmberRouting.CopyState(olditem, newitem)
+                if OldOnDeStack ~= nil then
+                    OldOnDeStack(newitem, olditem)
+                end
+            end)
+        end
+
+        local OldOnDroppedFn = inst.components.inventoryitem.ondroppedfn
+        inst.components.inventoryitem:SetOnDroppedFn(function(item, ...)
+            item:RemoveTag("et_reservoir_hold")
+            if OldOnDroppedFn ~= nil then
+                return OldOnDroppedFn(item, ...)
+            end
+        end)
+    end
+
+    local spellbook = inst.components.spellbook
+    if spellbook ~= nil then
+        local OldSetItems = spellbook.SetItems
+        function spellbook:SetItems(items)
+            items = AppendBernieCommandItems(items)
+            if items ~= nil then
+                for _, item in ipairs(items) do
+                    WrapSpellItem(item)
+                end
+            end
+            return OldSetItems(self, items)
+        end
+        -- Do not write the prefab's initial empty BASESPELLS back here.
+        -- Vanilla updatespells() will provide the authoritative skill-filtered
+        -- list once ownership is resolved; our wrapper then appends commands.
+    end
+
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim and inst.components.aoespell ~= nil then
+        local aoespell = inst.components.aoespell
+        local OldSetSpellFn = aoespell.SetSpellFn
+        function aoespell:SetSpellFn(fn)
+            local selectedanim = inst._et_selecting_spell_anim
+            if CFG.ETERNAL_HEART and selectedanim == "fire_frenzy" then
+                OldSetSpellFn(self, EternalHeartSpellFn)
+            elseif fn ~= nil and CFG.EMBER_STORAGE then
+                OldSetSpellFn(self, function(item, doer, pos)
+                    local cost = item._et_selected_spell_cost or 0
+                    if cost > 0 and not HasEmbers(doer, cost) then
+                        return false, "NOT_ENOUGH_EMBERS"
+                    end
+                    doer._et_consume_slot_embers_only = true
+                    local success, reason = fn(item, doer, pos)
+                    doer._et_consume_slot_embers_only = nil
+                    if success and cost > 0 then
+                        ConsumeEmbers(doer, cost)
+                    end
+                    return success, reason
+                end)
+            else
+                OldSetSpellFn(self, fn)
+            end
+        end
+    end
+
+    if CFG.EMBER_ATTRACTION and _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+        QueueEmberAttraction(inst, .35)
+        -- A held ember cancels its attraction task. Re-arm it whenever the
+        -- real item is manually dropped again.
+        inst:ListenForEvent("ondropped", function(item)
+            QueueEmberAttraction(item, .1)
+        end)
+    end
+
+end)
+
+--------------------------------------------------------------------------
+-- HUD special ember slot.
+
+AddClassPostConstruct("widgets/inventorybar", function(self)
+    if not CFG.EMBER_STORAGE then
+        return
+    end
+    local EmberSlot = require("widgets/etemberslot")
+
+    local function GetEmberSlotOffset(invbar)
+        if invbar ~= nil and invbar.inv ~= nil and invbar.inv[1] ~= nil and invbar.inv[2] ~= nil then
+            local p1 = invbar.inv[1]:GetPosition()
+            local p2 = invbar.inv[2]:GetPosition()
+            local spacing = math.abs(p2.x - p1.x)
+            if spacing > 0 then
+                return spacing
+            end
+        end
+        return 82
+    end
+
+    local function HasExtendedInventoryLayout(invbar)
+        -- Compatibility guard for inventory overhaul mods (e.g. 45-slot packs):
+        -- when they add extra rows/slots, injecting our custom list navigation
+        -- can interfere with their own layout math and focus routing.
+        return invbar ~= nil and invbar.inv ~= nil and #invbar.inv > 15
+    end
+
+    local function AttachSlot(invbar)
+        if invbar.owner == nil or invbar.owner.prefab ~= "willow" or invbar.toprow == nil or invbar.inv[1] == nil then
+            return false
+        end
+        local classified = invbar.owner._et_ember_classified
+        local pouch = classified ~= nil and classified:IsValid() and classified._pouch:value() or nil
+        local container = pouch ~= nil and pouch.replica.container or nil
+        if container == nil then return false end
+        local function RefreshEmberSlot()
+            if invbar.et_ember_slot ~= nil and invbar.et_ember_slot.inst:IsValid() then
+                invbar.et_ember_slot:RefreshTile()
+            end
+        end
+        if invbar.et_ember_slot ~= nil and invbar.et_ember_slot.inst:IsValid() then
+            invbar.et_ember_slot:RefreshTile()
+            local pos = invbar.inv[1]:GetPosition()
+            invbar.et_ember_slot:SetPosition(pos.x - GetEmberSlotOffset(invbar), pos.y, pos.z)
+            return true
+        end
+        -- Inventory slots use coordinates local to `toprow`. Attaching this
+        -- slot to inventorybar root with a toprow-local position can place it
+        -- off-screen on different HUD scales/layouts. Keep it on the same
+        -- coordinate parent as slot 1 while excluding it from invbar.inv.
+        invbar.et_ember_slot = invbar.toprow:AddChild(EmberSlot(
+            invbar.owner,
+            container,
+            VisualAssets.ready and CFG.VISUAL_EMBERS))
+        invbar.et_ember_slot.top_align_tip = invbar.inv[1].top_align_tip
+        invbar.et_ember_list = HasExtendedInventoryLayout(invbar)
+            and nil
+            or { invbar.et_ember_slot }
+        local pos = invbar.inv[1]:GetPosition()
+        invbar.et_ember_slot:SetPosition(pos.x - GetEmberSlotOffset(invbar), pos.y, pos.z)
+        invbar.inst:ListenForEvent("itemget", RefreshEmberSlot, pouch)
+        invbar.inst:ListenForEvent("itemlose", RefreshEmberSlot, pouch)
+        invbar.inst:ListenForEvent("refresh", RefreshEmberSlot, pouch)
+        invbar.inst:ListenForEvent("refreshinventory", RefreshEmberSlot, invbar.owner)
+        invbar.inst:ListenForEvent("itemget", RefreshEmberSlot, invbar.owner)
+        invbar.inst:ListenForEvent("itemlose", RefreshEmberSlot, invbar.owner)
+        invbar.inst:ListenForEvent("et_preferences_dirty", RefreshEmberSlot, invbar.owner)
+
+        -- Existing saves can deliver the container's initial itemget before
+        -- this HUD widget is constructed. Recheck across the first second so
+        -- a pre-filled pouch is visible without requiring a click.
+        for _, delay in ipairs({ 0, .1, .35, 1 }) do
+            invbar.inst:DoTaskInTime(delay, function()
+                if invbar.et_ember_slot ~= nil and invbar.et_ember_slot.inst:IsValid() then
+                    invbar.et_ember_slot:RefreshTile()
+                end
+            end)
+        end
+        return true
+    end
+
+    local function StopAttachRetry(invbar)
+        if invbar._et_ember_attach_task ~= nil then
+            invbar._et_ember_attach_task:Cancel()
+            invbar._et_ember_attach_task = nil
+        end
+    end
+
+    local function TryAttachSlot(invbar)
+        if AttachSlot(invbar) then
+            StopAttachRetry(invbar)
+            return true
+        end
+        return false
+    end
+
+    -- Include the native ember slot in directional controller navigation.
+    -- From inventory slot 1, LEFT selects it; RIGHT returns to slot 1.
+    local OldGetInventoryLists = self.GetInventoryLists
+    self.GetInventoryLists = function(invbar, same_container_only)
+        local lists = OldGetInventoryLists(invbar, same_container_only)
+        if HasExtendedInventoryLayout(invbar) then
+            return lists
+        end
+        local special = invbar.et_ember_list
+        if special == nil or special[1] == nil or not special[1].inst:IsValid() then
+            return lists
+        end
+
+        if not same_container_only
+            or invbar.current_list == invbar.inv
+            or invbar.current_list == invbar.equip
+            or invbar.current_list == special then
+            if invbar.current_list == special then
+                table.insert(lists, invbar.inv)
+            else
+                table.insert(lists, special)
+            end
+        end
+        return lists
+    end
+
+    local OldRebuild = self.Rebuild
+    self.Rebuild = function(invbar, ...)
+        local result = OldRebuild(invbar, ...)
+        TryAttachSlot(invbar)
+        return result
+    end
+
+    if self.toprow ~= nil then
+        TryAttachSlot(self)
+    end
+    self.inst:ListenForEvent("et_ember_pouch_dirty", function() TryAttachSlot(self) end, self.owner)
+
+    -- Do not rely solely on a single classified dirty event: on slow
+    -- frontend-owned servers it can fire before inventorybar exists. Poll at
+    -- low frequency until the native container replica becomes available.
+    if self.et_ember_slot == nil and self._et_ember_attach_task == nil then
+        local attempts = 0
+        self._et_ember_attach_task = self.inst:DoPeriodicTask(.25, function()
+            attempts = attempts + 1
+            if TryAttachSlot(self) or attempts >= 240 then
+                StopAttachRetry(self)
+            end
+        end)
+    end
+end)
+
+--------------------------------------------------------------------------
+-- Damage attribution and one-second Lunar Fire ticks.
+
+local Combat = require("components/combat")
+local SPELL_KILL_CREDIT_WINDOW = 2
+local function MarkWillowSpellSource(target, willow)
+    target._et_ember_spell_source = willow
+    target._et_ember_spell_source_until = GetTime() + SPELL_KILL_CREDIT_WINDOW
+    if target._et_ember_spell_source_task ~= nil then
+        target._et_ember_spell_source_task:Cancel()
+    end
+    target._et_ember_spell_source_task = target:DoTaskInTime(SPELL_KILL_CREDIT_WINDOW, function(victim)
+        victim._et_ember_spell_source = nil
+        victim._et_ember_spell_source_until = nil
+        victim._et_ember_spell_source_task = nil
+    end)
+end
+
+local function GetFreshSpellSource(victim)
+    if victim ~= nil and victim._et_ember_spell_source_until ~= nil
+        and GetTime() <= victim._et_ember_spell_source_until then
+        return EmberRouting.ResolveWillow(victim._et_ember_spell_source)
+    end
+    return nil
+end
+
+local function ApplyEternalShadowFear(target, willow)
+    local heart = willow ~= nil and willow.components.et_eternal_heart or nil
+    if not CFG.ETERNAL_SHADOW_FEAR or heart == nil or not heart:IsActive()
+        or target == nil or not target:IsValid()
+        or target:HasAnyTag("epic", "player", "companion", "INLIMBO", "notarget")
+        or target.components.health == nil or target.components.health:IsDead()
+        or target.components.combat == nil
+        or willow.components.combat ~= nil and willow.components.combat:IsAlly(target) then
+        return
+    end
+    target.components.health:DoFireDamage(0, willow, false)
+    target:PushEvent("epicscare", {
+        scarer = willow,
+        duration = EternalSetting(willow, "ETERNAL_HEART_SHADOW_FEAR_DURATION", 3),
+    })
+end
+
+local function ApplyEternalBurn(target, owner, source)
+    if not CFG.ETERNAL_HEART or not CFG.ETERNAL_BURN
+        or target == nil
+        or not target:IsValid()
+        or target:HasAnyTag("player", "playerghost", "companion", "INLIMBO", "notarget")
+        or target.components.health == nil
+        or target.components.health:IsDead()
+        or target.components.combat == nil
+        or owner == nil
+        or owner.components.et_eternal_heart == nil
+        or not owner.components.et_eternal_heart:IsActive()
+        or owner.components.combat ~= nil and owner.components.combat:IsAlly(target) then
+        return
+    end
+    if target.components.et_eternal_burn == nil then
+        target:AddComponent("et_eternal_burn")
+    end
+    target.components.et_eternal_burn:Start(owner, source)
+end
+
+local function ResolveEternalHeartOwner(source, doer)
+    local candidate = doer ~= nil and doer.prefab == "willow" and doer
+        or source ~= nil and source.prefab == "willow" and source
+        or source ~= nil and source.prefab == "bernie_big" and source.bernieleader
+        or nil
+    return candidate ~= nil
+        and candidate.components.et_eternal_heart ~= nil
+        and candidate.components.et_eternal_heart:IsActive()
+        and candidate
+        or nil
+end
+
+local Burnable = require("components/burnable")
+if CFG.ETERNAL_HEART and not Burnable._et_eternal_heart_patched then
+    Burnable._et_eternal_heart_patched = true
+    local OldIgnite = Burnable.Ignite
+    local OldExtinguish = Burnable.Extinguish
+    local OldLongUpdate = Burnable.LongUpdate
+
+    function Burnable:Ignite(immediate, source, doer)
+        local result = OldIgnite(self, immediate, source, doer)
+        local owner = ResolveEternalHeartOwner(source, doer)
+        if owner ~= nil then
+            ApplyEternalBurn(self.inst, owner, source or owner)
+        end
+        return result
+    end
+
+    function Burnable:Extinguish(...)
+        local eternal = self.inst.components.et_eternal_burn
+        if eternal ~= nil and eternal:IsOwnerActive() then
+            return
+        end
+        return OldExtinguish(self, ...)
+    end
+
+    function Burnable:LongUpdate(dt)
+        local eternal = self.inst.components.et_eternal_burn
+        if eternal ~= nil and eternal:IsOwnerActive() then
+            self:ExtendBurning()
+            return
+        end
+        return OldLongUpdate(self, dt)
+    end
+end
+
+if not Combat._et_willow_spell_patched then
+    Combat._et_willow_spell_patched = true
+    local OldDoAttack = Combat.DoAttack
+    function Combat:DoAttack(target, weapon, projectile, stimuli, instancemult, instrangeoverride, instpos)
+        local eternalshadowfear = CFG.ETERNAL_SHADOW_FEAR
+            and self.inst.prefab == "willow"
+            and target ~= nil and weapon ~= nil
+            and weapon:HasTag("willow_shadow_flame")
+            and self:CanHitTarget(target, weapon)
+        if (CFG.SPELL_KILL_EMBERS or CFG.LUNAR_FIRE_DAMAGE) and self.inst.prefab == "willow" and target ~= nil and weapon ~= nil then
+            if weapon.prefab == "flamethrower_fx" or weapon:HasTag("willow_shadow_flame") then
+                MarkWillowSpellSource(target, self.inst)
+                target._embersource = self.inst
+            end
+            if CFG.LUNAR_FIRE_DAMAGE and weapon.prefab == "flamethrower_fx" then
+                target._et_lunar_hit_times = target._et_lunar_hit_times or {}
+                local last = target._et_lunar_hit_times[self.inst.GUID]
+                local now = GetTime()
+                if last ~= nil and now - last < 1 then
+                    return false
+                end
+                target._et_lunar_hit_times[self.inst.GUID] = now
+                if CFG.ETERNAL_HEART and CFG.ETERNAL_LUNAR_COLD
+                    and self.inst.components.et_eternal_heart ~= nil
+                    and self.inst.components.et_eternal_heart:IsActive()
+                    and target.components.freezable ~= nil then
+                    target.components.freezable:AddColdness(EternalSetting(self.inst, "ETERNAL_HEART_LUNAR_COLDNESS", 1))
+                end
+            end
+        end
+        local result = OldDoAttack(self, target, weapon, projectile, stimuli, instancemult, instrangeoverride, instpos)
+        -- Burnable:Ignite is the normal Eternal Burn entry point. Targets with
+        -- no burnable component never reach that hook, so attach the same
+        -- owner-scoped fallback after a confirmed Willow spell hit instead.
+        -- Do not run this for ordinary attacks or for burnable targets: their
+        -- native ignition path remains authoritative.
+        if result ~= false and CFG.ETERNAL_HEART and CFG.ETERNAL_BURN
+            and target ~= nil and target.components.burnable == nil
+            and weapon ~= nil
+            and (weapon.prefab == "flamethrower_fx" or weapon:HasTag("willow_shadow_flame")) then
+            local owner = ResolveEternalHeartOwner(self.inst, self.inst)
+            if owner ~= nil then
+                ApplyEternalBurn(target, owner, weapon)
+            end
+        end
+        if eternalshadowfear and result ~= false then
+            ApplyEternalShadowFear(target, self.inst)
+        end
+        return result
+    end
+end
+
+AddPrefabPostInit("willow_shadow_flame", function(inst)
+    if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+    if CFG.SHADOW_FIRE_DAMAGE and inst.components.weapon ~= nil then
+        inst.components.weapon:SetDamage(SHADOW_FIRE_DAMAGE)
+    end
+    if CFG.SHADOW_FIRE_DAMAGE and inst.components.planardamage ~= nil then
+        inst.components.planardamage:SetBaseDamage(SHADOW_FIRE_PLANAR_DAMAGE)
+    end
+    if CFG.ETERNAL_HEART and inst.settarget ~= nil then
+        local OldSetTarget = inst.settarget
+        inst.settarget = function(flame, target, life, source)
+            local result = OldSetTarget(flame, target, life, source)
+            local heart = source ~= nil and source.components.et_eternal_heart or nil
+            if heart ~= nil and heart:IsActive() then
+                heart:RegisterShadowFlame(flame)
+            end
+            return result
+        end
+    end
+end)
+
+--------------------------------------------------------------------------
+-- Ember quantities, spell kills, and automatic attraction.
+
+local embercommon = require("prefabs/willow_ember_common")
+if CFG.EMBER_DROPS then
+    embercommon.GetNumEmbers = function(victim)
+        return (victim:HasTag("epic") and math.random(EMBER_DROP_BOSS_MIN, EMBER_DROP_BOSS_MAX))
+            or (victim:HasTag("largecreature") and EMBER_DROP_LARGE)
+            or EMBER_DROP_NORMAL
+    end
+end
+
+if CFG.SPELL_KILL_EMBERS or CFG.EMBER_ATTRACTION then
+embercommon.SpawnEmberAt = function(x, y, z, victim, marksource)
+    local ember = SpawnPrefab("willow_ember")
+    if ember == nil then
+        return
+    end
+    if marksource then
+        ember._embersource = victim ~= nil and victim._embersource or nil
+    end
+    if victim ~= nil then
+        local owner = GetFreshSpellSource(victim)
+            or EmberRouting.ResolveWillow(victim._embersource)
+        EmberRouting.MarkPriority(ember, owner, V.EMBER_KILL_PRIORITY_TIME, GetTime())
+    end
+    ember.Transform:SetPosition(x, y, z)
+end
+end
+
+local EMBER_CREATURE_TAGS = { "animal", "character", "largecreature", "monster", "smallcreature" }
+
+local StartEmberAttraction
+local function GetAttractionRange(player)
+    return GetPersonalPreference(player, "absorb_range", EMBER_ABSORB_RANGE)
+end
+local function SelectAttractionOwner(ember, now)
+    local candidates = {}
+    for _, player in ipairs(AllPlayers) do
+        local range = GetAttractionRange(player)
+        if GetPersonalPreference(player, "auto_absorb", CFG.EMBER_ATTRACTION)
+            and ember:GetDistanceSqToInst(player) <= range * range then
+            candidates[#candidates + 1] = player
+        end
+    end
+    return EmberRouting.SelectOwner(ember, candidates, now, EMBER_ABSORB_RANGE)
+end
+QueueEmberAttraction = function(inst, delay)
+    if not inst:IsValid() or inst._et_attract_task ~= nil or inst._et_attract_retry_task ~= nil then
+        return
+    end
+    inst._et_attract_retry_task = inst:DoTaskInTime(delay or .5, function(item)
+        item._et_attract_retry_task = nil
+        StartEmberAttraction(item)
+    end)
+end
+
+StartEmberAttraction = function(inst)
+    if not inst:IsValid() then
+        return
+    end
+    if inst._et_attract_task ~= nil then
+        return
+    end
+    if inst.components.inventoryitem ~= nil and inst.components.inventoryitem:IsHeld() then
+        return
+    end
+
+    local owner = SelectAttractionOwner(inst, GetTime())
+    if owner == nil then
+        QueueEmberAttraction(inst, .25)
+        return
+    end
+
+    local nextretarget = 0
+    inst._et_attract_task = inst:DoPeriodicTask(.05, function()
+        if not inst:IsValid() then
+            return
+        end
+        if inst.components.inventoryitem ~= nil and inst.components.inventoryitem:IsHeld() then
+            inst._et_attract_task:Cancel()
+            inst._et_attract_task = nil
+            return
+        end
+
+        local now = GetTime()
+        if now >= nextretarget or not EmberRouting.IsEligible(owner)
+            or not GetPersonalPreference(owner, "auto_absorb", CFG.EMBER_ATTRACTION) then
+            owner = SelectAttractionOwner(inst, now)
+            nextretarget = now + .2
+            if owner == nil then
+                inst._et_attract_task:Cancel()
+                inst._et_attract_task = nil
+                QueueEmberAttraction(inst, .25)
+                return
+            end
+        end
+
+        local x, y, z = inst.Transform:GetWorldPosition()
+        local ox, oy, oz = owner.Transform:GetWorldPosition()
+        local dx, dz = ox - x, oz - z
+        local dsq = dx * dx + dz * dz
+        local ownerrange = GetAttractionRange(owner)
+        if dsq > ownerrange * ownerrange then
+            owner = SelectAttractionOwner(inst, now)
+            nextretarget = now + .2
+            if owner == nil then
+                inst._et_attract_task:Cancel()
+                inst._et_attract_task = nil
+                QueueEmberAttraction(inst, .25)
+                return
+            end
+            ox, oy, oz = owner.Transform:GetWorldPosition()
+            dx, dz = ox - x, oz - z
+            dsq = dx * dx + dz * dz
+        end
+        if dsq <= 1 then
+            local storage = CFG.EMBER_STORAGE and owner.components.et_ember_storage or nil
+            if storage ~= nil then
+                inst._et_attract_task:Cancel()
+                inst._et_attract_task = nil
+                if not storage:GiveItem(inst) and inst:IsValid() then
+                    QueueEmberAttraction(inst)
+                end
+            else
+                -- Without the dedicated reservoir, attraction remains useful:
+                -- hand the real ember item to Willow's normal inventory. The
+                -- base inventory component drops leftovers back to the ground
+                -- when a controller player has no available slot.
+                inst._et_attract_task:Cancel()
+                inst._et_attract_task = nil
+                owner.components.inventory:GiveItem(inst)
+                if inst:IsValid() and (inst.components.inventoryitem == nil
+                    or not inst.components.inventoryitem:IsHeld()) then
+                    QueueEmberAttraction(inst)
+                end
+            end
+            return
+        end
+        local dist = math.sqrt(dsq)
+        local step = math.min(dist, .9)
+        inst.Transform:SetPosition(x + dx / dist * step, y, z + dz / dist * step)
+    end)
+end
+
+--------------------------------------------------------------------------
+-- Lighter and Bernie durability.
+
+local Fueled = require("components/fueled")
+local BaseFueledDoDelta = Fueled.DoDelta
+local LIGHTER_FUEL_FLOOR_PERCENT = .001
+
+local function IsCarriedByWillow(inst)
+    local item = inst.components.inventoryitem
+    local owner = item ~= nil and item:GetGrandOwner() or nil
+    return owner ~= nil and owner.prefab == "willow" and not owner:HasTag("playerghost")
+end
+
+local function OnLighterFuelPercentChanged(inst, data)
+    if inst:HasTag("et_lighter_empty")
+        and data ~= nil
+        and data.percent ~= nil
+        and data.percent > 0.00001 then
+        inst:RemoveTag("et_lighter_empty")
+    end
+end
+
+local function ReturnLighterToInventory(inst, owner)
+    local inventory = owner ~= nil and owner.components.inventory or nil
+    local equippable = inst.components.equippable
+    if inventory == nil or equippable == nil or not equippable:IsEquipped() then
+        return
+    end
+
+    local preferred_slot = inst.prevslot
+    local item = inventory:Unequip(equippable.equipslot)
+    if item ~= nil and item:IsValid() then
+        -- Unequip only clears the equipment slot; it does not put the entity
+        -- back into itemslots. GiveItem restores it to its previous slot when
+        -- possible, otherwise the inventory chooses another valid slot.
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:willow_shadow_flame
+
+AddPrefabPostInit("willow_shadow_flame", function(inst)
+    if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+    if CFG.SHADOW_FIRE_DAMAGE and inst.components.weapon ~= nil then
+        inst.components.weapon:SetDamage(SHADOW_FIRE_DAMAGE)
+    end
+    if CFG.SHADOW_FIRE_DAMAGE and inst.components.planardamage ~= nil then
+        inst.components.planardamage:SetBaseDamage(SHADOW_FIRE_PLANAR_DAMAGE)
+    end
+    if CFG.ETERNAL_HEART and inst.settarget ~= nil then
+        local OldSetTarget = inst.settarget
+        inst.settarget = function(flame, target, life, source)
+            local result = OldSetTarget(flame, target, life, source)
+            local heart = source ~= nil and source.components.et_eternal_heart or nil
+            if heart ~= nil and heart:IsActive() then
+                heart:RegisterShadowFlame(flame)
+            end
+            return result
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lighter
+
+AddPrefabPostInit("lighter", function(inst)
+    if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+    local fueled = inst.components.fueled
+    if fueled == nil then
+        return
+    end
+
+    inst:ListenForEvent("percentusedchange", OnLighterFuelPercentChanged)
+
+    if CFG.LIGHTER_INDESTRUCTIBLE then
+    fueled.DoDelta = SafeLighterDoDelta
+    fueled:SetDepletedFn(function() end)
+    fueled:SetSectionCallback(function(newsection, oldsection, item)
+        if newsection <= 0 then
+            -- Fueled:DoDelta checks currentfuel again immediately after this
+            -- callback and may call a deletion callback installed by another
+            -- mod. Keep a tiny non-zero floor so that removal is impossible,
+            -- while the tag below still treats the lighter as empty.
+            EnterEmptyLighterState(item)
+        else
+            item:RemoveTag("et_lighter_empty")
+        end
+      end)
+
+      if inst.components.equippable ~= nil then
+        local equippable = inst.components.equippable
+        local oldequip = equippable.onequipfn
+        equippable:SetOnEquip(function(item, owner)
+            if item:HasTag("et_lighter_empty") or item.components.fueled:IsEmpty() then
+                item:DoTaskInTime(0, function()
+                    if item:IsValid() and owner:IsValid() and owner.components.inventory ~= nil then
+                        ReturnLighterToInventory(item, owner)
+                    end
+                end)
+                return
+            end
+            if oldequip ~= nil then
+                oldequip(item, owner)
+            end
+        end)
+      end
+    end
+
+    if CFG.LIGHTER_REGEN then inst:DoPeriodicTask(1, function(item)
+        local equippable = item.components.equippable
+        if IsCarriedByWillow(item) and (equippable == nil or not equippable:IsEquipped()) and not item.components.fueled:IsFull() then
+            item.components.fueled:DoDelta(item.components.fueled.maxfuel / LIGHTER_REGEN_SECONDS)
+        end
+    end) end
+end)
+
+AddPrefabPostInit("bernie_inactive", function(inst)
+    if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+    if not (CFG.BERNIE_INDESTRUCTIBLE or CFG.BERNIE_REGEN_ITEM) then
+        return
+    end
+    inst:DoPeriodicTask(1, function(item)
+        if CFG.BERNIE_INDESTRUCTIBLE and item._decaytask ~= nil then
+            item._decaytask:Cancel()
+            item._decaytask = nil
+        end
+        local equippable = item.components.equippable
+        if CFG.BERNIE_REGEN_ITEM and IsCarriedByWillow(item) and (equippable == nil or not equippable:IsEquipped()) and not item.components.fueled:IsFull() then
+            item.components.fueled:DoDelta(item.components.fueled.maxfuel / BERNIE_REGEN_SECONDS)
+        end
+    end)
+end)
+
+--------------------------------------------------------------------------
+-- Allegiance normalization and percentage Bernie regeneration.
+
+local function HasSkill(updater, name)
+    return updater ~= nil and updater:IsActivated(name)
+end
+
+local function RefreshPlayerAlignment(inst)
+    if not CFG.DUAL_ALIGNMENT or _G.TheWorld == nil or not _G.TheWorld.ismastersim or inst.components.skilltreeupdater == nil then
+        return
+    end
+    local updater = inst.components.skilltreeupdater
+    local shadow = HasSkill(updater, "willow_allegiance_shadow_fire") or HasSkill(updater, "willow_allegiance_shadow_bernie")
+    local lunar = HasSkill(updater, "willow_allegiance_lunar_fire") or HasSkill(updater, "willow_allegiance_lunar_bernie")
+    local resist = inst.components.damagetyperesist
+    local bonus = inst.components.damagetypebonus
+
+    inst:RemoveTag("player_shadow_aligned")
+    inst:RemoveTag("player_lunar_aligned")
+    if resist ~= nil then
+        resist:RemoveResist("shadow_aligned", inst, "willow_allegiance_shadow")
+        resist:RemoveResist("lunar_aligned", inst, "willow_allegiance_lunar")
+    end
+    if bonus ~= nil then
+        bonus:RemoveBonus("lunar_aligned", inst, "willow_allegiance_shadow")
+        bonus:RemoveBonus("shadow_aligned", inst, "willow_allegiance_lunar")
+        bonus:RemoveBonus("lunar_aligned", inst, "et_dual_shadow")
+        bonus:RemoveBonus("shadow_aligned", inst, "et_dual_lunar")
+    end
+
+    if shadow and lunar then
+        if bonus ~= nil then
+            bonus:AddBonus("lunar_aligned", inst, 1.1, "et_dual_shadow")
+            bonus:AddBonus("shadow_aligned", inst, 1.1, "et_dual_lunar")
+        end
+    elseif shadow then
+        inst:AddTag("player_shadow_aligned")
+        if resist ~= nil then
+            resist:AddResist("shadow_aligned", inst, 0.9, "willow_allegiance_shadow")
+        end
+        if bonus ~= nil then
+            bonus:AddBonus("lunar_aligned", inst, 1.1, "willow_allegiance_shadow")
+        end
+    elseif lunar then
+        inst:AddTag("player_lunar_aligned")
+        if resist ~= nil then
+            resist:AddResist("lunar_aligned", inst, 0.9, "willow_allegiance_lunar")
+        end
+        if bonus ~= nil then
+            bonus:AddBonus("shadow_aligned", inst, 1.1, "willow_allegiance_lunar")
+        end
+    end
+end
+
+local function RefreshDualBernie(inst)
+    inst:RemoveTag("et_dual_aligned")
+    local function RefreshVisual()
+        inst:DoTaskInTime(0, function(target)
+            VisualTheme.ApplyBernieBig(target, CONFIG, true)
+        end)
+    end
+    if not CFG.DUAL_ALIGNMENT then
+        RefreshVisual()
+        return
+    end
+    local leader = inst.bernieleader
+    if leader == nil or leader.components.skilltreeupdater == nil then
+        RefreshVisual()
+        return
+    end
+    local updater = leader.components.skilltreeupdater
+    local shadow = HasSkill(updater, "willow_allegiance_shadow_bernie")
+    local lunar = HasSkill(updater, "willow_allegiance_lunar_bernie")
+    local bonus = inst.components.damagetypebonus
+    if bonus ~= nil then
+        bonus:RemoveBonus("lunar_aligned", inst, "et_dual_shadow")
+        bonus:RemoveBonus("shadow_aligned", inst, "et_dual_lunar")
+    end
+    if not (shadow and lunar) then
+        RefreshVisual()
+        return
+    end
+
+    inst:AddTag("et_dual_aligned")
+    inst:RemoveTag("shadow_aligned")
+    inst:RemoveTag("lunar_aligned")
+    local resist = inst.components.damagetyperesist
+    if resist ~= nil then
+        resist:RemoveResist("shadow_aligned", inst, "willow_allegiance_shadow")
+        resist:RemoveResist("lunar_aligned", inst, "willow_allegiance_lunar")
+    end
+    if bonus ~= nil then
+        bonus:RemoveBonus("lunar_aligned", inst, "willow_allegiance_shadow")
+        bonus:RemoveBonus("shadow_aligned", inst, "willow_allegiance_lunar")
+        bonus:AddBonus("lunar_aligned", inst, 1.1, "et_dual_shadow")
+        bonus:AddBonus("shadow_aligned", inst, 1.1, "et_dual_lunar")
+    end
+    if inst.components.planarentity == nil then
+        inst:AddComponent("planarentity")
+    end
+    if inst.components.planardamage == nil then
+        inst:AddComponent("planardamage")
+    end
+    if inst.components.planardefense == nil then
+        inst:AddComponent("planardefense")
+    end
+    inst.components.planardamage:SetBaseDamage(CFG.BERNIE_COMBAT and V.BERNIE_PLANAR_DAMAGE or TUNING.BERNIE_PLANAR_DAMAGE)
+    inst.components.planardefense:SetBaseDefense(CFG.BERNIE_COMBAT and V.BERNIE_PLANAR_DEFENCE or TUNING.BERNIE_PLANAR_DEFENCE)
+    if inst.current_allegiance ~= nil and inst.current_allegiance:value() == 0 then
+        -- Zero tells the original state machine to shrink and re-transform. Keep
+        -- Shadow as the stable presentation state while applying both bonuses.
+        inst.current_allegiance:set(BERNIEALLEGIANCE.SHADOW)
+    end
+    RefreshVisual()
+end
+
+local function IsBernieTauntable(bernie, target)
+    local combat = target ~= nil and target.components.combat or nil
+    if target == nil
+        or target.components.health ~= nil and target.components.health:IsDead()
+        or combat == nil
+        or combat:TargetIs(bernie)
+        or not combat:CanTarget(bernie) then
+        return false
+    end
+
+    if target:HasTag("shadowcreature") then
+        return true
+    end
+
+    local leader = bernie.bernieleader
+    local updater = leader ~= nil and leader.components.skilltreeupdater or nil
+    if updater ~= nil and updater:IsActivated("willow_bernieai")
+        and target:HasTag("hostile")
+        and (target:HasTag("brightmare")
+            or target:HasTag("lunar_aligned")
+            or target:HasTag("shadow_aligned")) then
+        return true
+    end
+
+    local current = combat.target
+    return current ~= nil
+        and (current:HasTag("player")
+            or current:HasTag("companion") and current.prefab ~= bernie.prefab)
+end
+
+AddPrefabPostInit("bernie_big", function(inst)
+    if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+    if CFG.BERNIE_COMMANDS and inst.components.et_bernie_orders == nil then
+        inst:AddComponent("et_bernie_orders")
+        -- The stock brain always prioritizes combat and following its leader.
+        -- Our order-aware brain preserves those defaults for follow/taunt but
+        -- gives guard and hold a real behavioural boundary.
+        inst:SetBrain(require("brains/etberniebigbrain"))
+
+        local combat = inst.components.combat
+        if combat ~= nil then
+            local oldtargetfn = combat.targetfn
+            local oldkeeptargetfn = combat.keeptargetfn
+            combat:SetRetargetFunction(combat.retargetperiod or 1, function(bernie)
+                local orders = bernie.components.et_bernie_orders
+                if orders ~= nil and orders:IsHolding() then
+                    return nil
+                end
+                local target = oldtargetfn ~= nil and oldtargetfn(bernie) or nil
+                return orders == nil or orders:IsTargetAllowed(target) and target or nil
+            end)
+            combat:SetKeepTargetFunction(function(bernie, target)
+                local orders = bernie.components.et_bernie_orders
+                return (orders == nil or orders:IsTargetAllowed(target))
+                    and (oldkeeptargetfn == nil or oldkeeptargetfn(bernie, target))
+            end)
+        end
+    end
+    if CFG.ETERNAL_HEART and CFG.ETERNAL_BERNIE then
+        inst:ListenForEvent("onhitother", function(bernie, data)
+            local owner = bernie.bernieleader
+            local target = data ~= nil and data.target or nil
+            if owner ~= nil and target ~= nil then
+                ApplyEternalBurn(target, owner, bernie)
+            end
+        end)
+    end
+    if CFG.BERNIE_AI then
+        local function Taunt(bernie)
+            if bernie.components.health == nil or bernie.components.health:IsDead() then return end
+            local orders = bernie.components.et_bernie_orders
+            if orders ~= nil and orders:IsHolding() then return end
+            local x,y,z = bernie.Transform:GetWorldPosition()
+            for _, target in ipairs(TheSim:FindEntities(x,y,z,V.BERNIE_TAUNT_RADIUS,{"_combat"},{"INLIMBO","player","companion","epic","notaunt"},{"locomotor","lunarthrall_plant"})) do
+                if IsBernieTauntable(bernie, target)
+                    and (orders == nil or orders:IsTargetAllowed(target)) then
+                    target.components.combat:SetTarget(bernie)
+                end
+            end
+        end
+        local function ScheduleTaunt(bernie)
+            if bernie._taunttask ~= nil then bernie._taunttask:Cancel() end
+            bernie._taunttask = bernie:DoPeriodicTask(V.BERNIE_TAUNT_PERIOD, Taunt, 0)
+        end
+        ScheduleTaunt(inst)
+        local oldload = inst.OnLoad
+        inst.OnLoad = function(bernie, data)
+            if oldload ~= nil then oldload(bernie, data) end
+            ScheduleTaunt(bernie)
+        end
+    end
+    local needs_leader_compat = CFG.DUAL_ALIGNMENT or CFG.BERNIE_HEAL or CFG.BERNIE_COMMANDS
+        or CFG.ETERNAL_HEART or CFG.BERNIE_LOW_HEALTH or CFG.BERNIE_SANITY
+    local oldleaderchanged = inst.onLeaderChanged
+    if needs_leader_compat and oldleaderchanged ~= nil then
+        inst.onLeaderChanged = function(bernie, leader)
+            oldleaderchanged(bernie, leader)
+            if leader ~= nil then
+                bernie._et_willow_owner = leader
+                local prefs = leader.components ~= nil and leader.components.et_willow_preferences or nil
+                local orders = bernie.components.et_bernie_orders
+                if prefs ~= nil and orders ~= nil then
+                    local index = prefs:Get("bernie_order", 1)
+                    orders:SetOrder(({"follow","guard","taunt","hold"})[index] or "follow",
+                        leader, bernie:GetPosition())
+                end
+            elseif bernie.components.et_bernie_orders ~= nil then
+                bernie.components.et_bernie_orders:SetOrder("follow")
+            end
+            if CFG.BERNIE_HEAL and leader ~= nil and bernie.components.health ~= nil then
+                local updater = leader.components.skilltreeupdater
+                bernie.components.health:StopRegen()
+                if HasSkill(updater, "willow_bernieregen_2") then
+                    bernie.components.health:StartRegen(V.BERNIE_HEAL_MODE == "fixed" and 2 or bernie.components.health.maxhealth * BERNIE_HEAL_2, 1)
+                elseif HasSkill(updater, "willow_bernieregen_1") then
+                    bernie.components.health:StartRegen(V.BERNIE_HEAL_MODE == "fixed" and 1 or bernie.components.health.maxhealth * BERNIE_HEAL_1, 1)
+                end
+            end
+            RefreshDualBernie(bernie)
+            if CFG.ETERNAL_HEART and leader ~= nil
+                and leader.components.et_eternal_heart ~= nil
+                and leader.components.et_eternal_heart:IsActive() then
+                leader.components.et_eternal_heart:ApplyBernieBoost(bernie)
+            end
+        end
+    end
+
+    -- Preserve the original owner's ability to soothe Bernie even if the
+    -- brain has temporarily released its active follow target.
+    local activatable = inst.components.activatable
+    if needs_leader_compat and activatable ~= nil then
+        local OldCanActivate = activatable.CanActivateFn
+        activatable.CanActivateFn = function(bernie, doer)
+            if doer ~= nil and doer == bernie._et_willow_owner then
+                return true
+            end
+            return OldCanActivate ~= nil and OldCanActivate(bernie, doer) or false
+        end
+    end
+end)
+
+local function OnWillowEntityDeath(inst, data)
+    if not CFG.SPELL_KILL_EMBERS then
+        return
+    end
+    local victim = data ~= nil and data.inst or nil
+    if victim == nil or not victim:IsValid() or GetFreshSpellSource(victim) ~= inst or victim.noembertask ~= nil then
+        return
+    end
+    if inst.components.skilltreeupdater == nil or not inst.components.skilltreeupdater:IsActivated("willow_embers") then
+        return
+    end
+    if victim:HasTag("noember") or not victim:HasOneOfTags(EMBER_CREATURE_TAGS) then
+        return
+    end
+    victim.noembertask = victim:DoTaskInTime(5, function(target) target.noembertask = nil end)
+    victim._embersource = inst
+    embercommon.SpawnEmbersAt(victim, embercommon.GetNumEmbers(victim))
+end
+
+local function GetDedicatedEmberSpellbook(player)
+    if player == nil or player:HasTag("wonkey") then return nil end
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim
+        and player.components ~= nil and player.components.et_ember_storage ~= nil then
+        local container = player.components.et_ember_storage:GetContainer()
+        return container ~= nil and container:GetItemInSlot(1) or nil
+    end
+    local classified = player._et_ember_classified
+    local pouch = classified ~= nil and classified:IsValid() and classified._pouch:value() or nil
+    local container = pouch ~= nil and pouch.replica.container or nil
+    return container ~= nil and container:GetItemInSlot(1) or nil
+end
+
+EmberSlotShortcutHooks.Install(CFG)
+
+local function GiveEmbersToWillow(inst, amount)
+    amount = math.max(0, math.floor(amount or 0))
+    if amount <= 0 then
+        return true
+    end
+    local left = amount
+    local storage = inst.components ~= nil and inst.components.et_ember_storage or nil
+    if CFG.EMBER_STORAGE and storage ~= nil then
+        local added = storage:Add(left)
+        left = left - added
+    end
+    if left <= 0 then
+        return true
+    end
+    local ember = SpawnPrefab("willow_ember")
+    if ember == nil then
+        return false
+    end
+    if ember.components.stackable ~= nil then
+        ember.components.stackable:SetStackSize(left)
+    end
+    if inst.components.inventory == nil or not inst.components.inventory:GiveItem(ember) then
+        ember.Transform:SetPosition(inst.Transform:GetWorldPosition())
+    end
+    return true
+end
+
+local function TryGrantStartingEmbers(inst)
+    if not CFG.STARTING_EMBERS or _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+    local tracker = _G.TheWorld.components.et_starting_embers
+    if tracker == nil or not tracker:CanClaim(inst) then
+        return
+    end
+    if GiveEmbersToWillow(inst, V.STARTING_EMBERS_COUNT) then
+        tracker:MarkClaimed(inst)
+        if V.STARTING_EMBERS_COUNT > 0 and inst.components.talker ~= nil then
+            inst.components.talker:Say("A few embers for a fresh spark.")
+        end
+    end
+end
+
+if CFG.STARTING_EMBERS then
+    AddPrefabPostInit("world", function(inst)
+        if _G.TheWorld ~= nil and _G.TheWorld.ismastersim
+            and inst.components.et_starting_embers == nil then
+            inst:AddComponent("et_starting_embers")
+        end
+    end)
+end
+
+AddPlayerPostInit(function(inst)
+    -- Keep the preference component on every player prefab so celestial
+    -- portal character changes do not discard a user's saved Willow setup.
+    -- Only Willow can open or apply the workbench gameplay options.
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim and CFG.FLAME_WORKBENCH then
+        inst._et_preferences_defaults = PREFERENCE_DEFAULTS
+        inst._et_preferences_limits = PREFERENCE_LIMITS
+        if inst.components.et_willow_preferences == nil then
+            inst:AddComponent("et_willow_preferences")
+        end
+        function inst:_et_send_preferences(payload, limits)
+            if self.userid ~= nil then
+                SendModRPCToClient(GetClientModRPC(modname, "sync_flame_preferences"),
+                    self.userid, payload, limits)
+            end
+        end
+        inst:ListenForEvent("et_preferences_dirty", function(player)
+            player._et_eternal_heart_config = CopyEternalHeartConfig(player)
+            VisualTheme.RefreshPlayer(player, CONFIG)
+            local order_index = player.components.et_willow_preferences:Get("bernie_order", 1)
+            local order = ({"follow","guard","taunt","hold"})[order_index] or "follow"
+            if player.bigbernies ~= nil then
+                for bernie in pairs(player.bigbernies) do
+                    if bernie.components.et_bernie_orders ~= nil then
+                        bernie.components.et_bernie_orders:SetOrder(order, player, bernie:GetPosition())
+                    end
+                end
+            end
+        end)
+        inst:DoTaskInTime(1, function(player)
+            if player.components.et_willow_preferences ~= nil then
+                player.components.et_willow_preferences:Publish()
+            end
+        end)
+    elseif _G.TheWorld ~= nil and not _G.TheWorld.ismastersim and CFG.FLAME_WORKBENCH then
+        inst:DoTaskInTime(1, function(player)
+            if player == _G.ThePlayer then
+                SendModRPCToServer(GetModRPC(modname, "request_flame_preferences"))
+            end
+        end)
+    end
+
+    if inst.prefab ~= "willow" then
+        return
+    end
+
+    if CFG.NATIVE_SPELLBOOK_LINK then
+        local OldGetLinkedSpellbook = inst.getlinkedspellbookfn
+        inst.getlinkedspellbookfn = function(player)
+            local ember = GetDedicatedEmberSpellbook(player)
+            if ember ~= nil and ember:IsValid() and ember.components.spellbook ~= nil
+                and ember.components.spellbook:CanBeUsedBy(player) then
+                return ember
+            end
+            return OldGetLinkedSpellbook ~= nil and OldGetLinkedSpellbook(player) or nil
+        end
+    end
+
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+        -- Keep this shim for old saves; it has no OnSave data of its own.
+        if inst.components.et_ember_reservoir == nil then
+            inst:AddComponent("et_ember_reservoir")
+        end
+        -- Never share this table with TUNING. Each Willow receives the server
+        -- configuration selected at world startup, including values used only
+        -- while Eternal Heart is already active.
+        inst._et_eternal_heart_config = CopyEternalHeartConfig(inst)
+        if CFG.ETERNAL_HEART and inst.components.et_eternal_heart == nil then
+            inst:AddComponent("et_eternal_heart")
+        end
+        inst._et_ember_storage_disabled = not CFG.EMBER_STORAGE
+        if inst.components.et_ember_storage == nil then
+            inst:AddComponent("et_ember_storage")
+        end
+        inst:DoTaskInTime(0, TryGrantStartingEmbers)
+        inst:ListenForEvent("ms_playerdespawnandmigrate", function()
+            if inst.components.et_eternal_heart ~= nil then
+                inst.components.et_eternal_heart:Stop("shard_migration")
+            end
+        end)
+        if CFG.DUAL_ALIGNMENT then
+            inst:ListenForEvent("onactivateskill_server", function()
+                inst:DoTaskInTime(0, RefreshPlayerAlignment)
+            end)
+            inst:ListenForEvent("ondeactivateskill_server", function()
+                inst:DoTaskInTime(0, RefreshPlayerAlignment)
+            end)
+            inst:DoTaskInTime(1, RefreshPlayerAlignment)
+        end
+        if CFG.SPELL_KILL_EMBERS then
+            inst:ListenForEvent("entity_death", function(src, data)
+                OnWillowEntityDeath(inst, data)
+            end, _G.TheWorld)
+        end
+        if CFG.ETERNAL_HEART then
+            inst:ListenForEvent("onhitother", function(willow, data)
+                local weapon = data ~= nil and data.weapon or nil
+                local target = data ~= nil and data.target or nil
+                if target ~= nil and weapon ~= nil
+                    and (weapon.prefab == "flamethrower_fx" or weapon:HasTag("willow_shadow_flame")) then
+                    ApplyEternalBurn(target, willow, willow)
+                end
+            end)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bernie_inactive
+
+AddPrefabPostInit("bernie_inactive", function(inst)
+    if _G.TheWorld == nil or not _G.TheWorld.ismastersim then
+        return
+    end
+    if not (CFG.BERNIE_INDESTRUCTIBLE or CFG.BERNIE_REGEN_ITEM) then
+        return
+    end
+    inst:DoPeriodicTask(1, function(item)
+        if CFG.BERNIE_INDESTRUCTIBLE and item._decaytask ~= nil then
+            item._decaytask:Cancel()
+            item._decaytask = nil
+        end
+        local equippable = item.components.equippable
+        if CFG.BERNIE_REGEN_ITEM and IsCarriedByWillow(item) and (equippable == nil or not equippable:IsEquipped()) and not item.components.fueled:IsFull() then
+            item.components.fueled:DoDelta(item.components.fueled.maxfuel / BERNIE_REGEN_SECONDS)
+        end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：双手装备 · Swap Object Other (Mod 3805034726)
+- **变体场景与切面**：收录来自工坊 Mod 3805034726 (`双手装备 · Swap Object Other`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3805034726)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+    end)
+    env.AddComponentPostInit("playercontroller", function(controller)
+        local old = controller.DoActionAutoEquip
+        if old == nil then return end
+        controller.DoActionAutoEquip = function(self, action, ...)
+            local inv = Inventory(self.inst)
+            if action ~= nil and action.action == actions.ATTACK and inv ~= nil
+                and action.invobject == inv:GetEquippedItem(api.slot) and M.IsRangedWeapon(action.invobject) then return end
+            return old(self, action, ...)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+    end
+    env.AddStategraphPostInit("wilson", function(sg) InstallGraph(sg, false) end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+    env.AddStategraphPostInit("wilson", function(sg) InstallGraph(sg, false) end)
+    env.AddStategraphPostInit("wilson_client", function(sg) InstallGraph(sg, true) end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+    end
+    env.AddComponentPostInit("playeractionpicker", function(picker)
+        if picker._so_other_fishing then return end
+        picker._so_other_fishing = true
+        local equipped, scene = picker.GetEquippedItemActions, picker.GetSceneActions
+        picker.GetEquippedItemActions = function(self, target, item, right, ...)
+            local result = Pack(equipped(self, target, item, right, ...))
+            result[1] = Fallback(self, result[1], target, right)
+            return unpack(result, 1, result.n)
+        end
+        picker.GetSceneActions = function(self, target, right, ...)
+            local result = Pack(scene(self, target, right, ...))
+            result[1] = Fallback(self, result[1], target, right)
+            return unpack(result, 1, result.n)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+
+    env.AddComponentPostInit("locomotor", function(locomotor)
+        if locomotor._so_other_right_attack then return end
+        locomotor._so_other_right_attack = true
+        local old = locomotor.OnUpdate
+        locomotor.OnUpdate = function(self, ...)
+            local buffered = self.bufferedaction
+            if api.IsOtherAttack(buffered) and not self.hopping and Alive(self.inst)
+                and self.dest ~= nil and self.dest:IsValid() and buffered:IsValid() then
+                local reached, invalid, cooldown = api.OtherAttackArrival(self.inst, buffered)
+                -- Native customarrivecheck discards the third return value.
+                -- Retain native ATTACK's wait-at-range behavior during cooldown.
+                if reached and not invalid and cooldown then return end
+            end
+            return old(self, ...)
+        end
+    end)
+
+```
+
