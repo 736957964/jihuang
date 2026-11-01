@@ -4260,3 +4260,54 @@ end)
 
 ```
 
+
+
+### 变体演进：Mod Skin Unlocker (Mod 3787391869)
+- **变体场景与切面**：收录来自工坊 Mod 3787391869 (`Mod Skin Unlocker`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3787391869)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", patch_after_world_spawn)
+AddPrefabPostInit("cave", patch_after_world_spawn)
+
+AddPlayerPostInit(function(inst)
+    patch_book_skins()
+    patch_component(inst.components and inst.components.tbat_com_skins_controller)
+    if inst.replica then
+        patch_component(inst.replica.tbat_com_skins_controller)
+        if inst.replica._ then
+            patch_component(inst.replica._.tbat_com_skins_controller)
+        end
+    end
+    inst:DoTaskInTime(0.5, patch_book_skins)
+    inst:DoTaskInTime(2, patch_book_skins)
+    inst:DoTaskInTime(5, patch_book_skins)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+AddPrefabPostInit("world", patch_after_world_spawn)
+AddPrefabPostInit("cave", patch_after_world_spawn)
+
+AddPlayerPostInit(function(inst)
+    patch_book_skins()
+    patch_component(inst.components and inst.components.tbat_com_skins_controller)
+    if inst.replica then
+        patch_component(inst.replica.tbat_com_skins_controller)
+        if inst.replica._ then
+            patch_component(inst.replica._.tbat_com_skins_controller)
+        end
+    end
+    inst:DoTaskInTime(0.5, patch_book_skins)
+    inst:DoTaskInTime(2, patch_book_skins)
+    inst:DoTaskInTime(5, patch_book_skins)
+end)
+
+```
+

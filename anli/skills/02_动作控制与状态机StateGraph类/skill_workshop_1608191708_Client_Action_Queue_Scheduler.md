@@ -44675,3 +44675,159 @@ end)
 
 ```
 
+
+
+### 变体演进：GENERAL (Mod 3815942726)
+- **变体场景与切面**：收录来自工坊 Mod 3815942726 (`GENERAL`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3815942726)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddRecipePostInit:boomerang
+if TUNING.OE_BOOMERANG.ENABLED and BOOMERANG_RECIPE then
+    AddRecipePostInit("boomerang", function(recipe)
+        if recipe.ingredients ~= nil then
+            recipe.ingredients[2] = Ingredient("rope", 1)
+        end
+
+        if recipe.tech ~= nil then
+            recipe.tech = TECH.SCIENCE_ONE
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:firestaff
+if TUNING.OE_FIRESTAFF.ENABLED and FIRESTAFF_RECIPE then
+    AddRecipePostInit("firestaff", function(recipe)
+        if recipe.ingredients ~= nil then
+            recipe.ingredients[1] = Ingredient("nightmarefuel", 5)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:aoespell
+
+AddComponentPostInit("aoespell", function(self)
+    self.cancastfn = nil
+
+    function self:SetCanCastFn(fn)
+        self.cancastfn = fn
+    end
+
+    local _CanCast = self.CanCast
+
+    function self:CanCast(doer, pos)
+        if self.cancastfn ~= nil then
+            local cancast, reason = self.cancastfn(self.inst, doer, pos)
+
+            if not cancast then
+                return false, reason
+            end
+        end
+
+        return _CanCast(self, doer, pos)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:burnable
+-- Bypass Willow's controlled_burn restrictions, allowing it to be used in any character.
+AddComponentPostInit("burnable", function(self)
+    local _Ignite = self.Ignite
+
+    function self:Ignite(immediate, source, doer, ...)
+        local burner = (doer ~= nil and doer._controlled_burner) or (source ~= nil and source._controlled_burner)
+
+        if burner and not self.burning and not self.inst:HasTag("fireimmune") then
+            local old = self.controlled_burn
+
+            _Ignite(self, immediate, source, doer, ...)
+
+            self.controlled_burn =  { duration_creature = nil, damage = nil }
+            self.stokeablefire = self.inst.components.health == nil
+
+            for _, fx in ipairs(self.fxchildren) do
+                if fx.components.firefx ~= nil then
+                    fx.components.firefx.level = nil
+                    fx.components.firefx:SetLevel(self.fxlevel, true, self.controlled_burn)
+                end
+            end
+
+            return
+        end
+
+        return _Ignite(self, immediate, source, doer, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:caveweather
+
+AddComponentPostInit("caveweather", function(self, inst)
+    local OnUpdate = self.OnUpdate
+
+    if OnUpdate == nil then
+        return
+    end
+
+    local _preciptype       = UpvalueHacker.GetUpvalue(OnUpdate, "_preciptype")
+    local _moisture         = UpvalueHacker.GetUpvalue(OnUpdate, "_moisture")
+    local _moistureceil     = UpvalueHacker.GetUpvalue(OnUpdate, "_moistureceil")
+    local _moisturerate     = UpvalueHacker.GetUpvalue(OnUpdate, "_moisturerate")
+    local PRECIP_TYPES      = UpvalueHacker.GetUpvalue(OnUpdate, "PRECIP_TYPES")
+    local PRECIP_TYPE_NAMES = UpvalueHacker.GetUpvalue(OnUpdate, "PRECIP_TYPE_NAMES")
+
+    if _preciptype == nil or _moisture == nil or _moistureceil == nil or _moisturerate == nil or PRECIP_TYPES == nil then
+        return
+    end
+
+    function self:IsRaining()
+        return _preciptype:value() == PRECIP_TYPES.rain
+    end
+
+    function self:IsAcidRaining()
+        return _preciptype:value() == PRECIP_TYPES.acidrain
+    end
+
+    function self:GetTimeToNextPrecipitation()
+        if _preciptype:value() ~= PRECIP_TYPES.none then
+            return 0
+        end
+
+        local moisture     = _moisture:value()
+        local moistureceil = _moistureceil:value()
+        local moisturerate = _moisturerate:value()
+
+        if moistureceil <= moisture or moisturerate <= 0 then
+            return nil
+        end
+
+        local time = (moistureceil - moisture) / moisturerate
+
+        if time > TUNING.OE_WAGSTAFF_RADIO.MAX_FORECAST_TIME then
+            return nil
+        end
+
+        return time
+    end
+
+    function self:GetNextPrecipitationType()
+        if _preciptype:value() ~= PRECIP_TYPES.none then
+            return PRECIP_TYPE_NAMES[_preciptype:value()]
+        end
+
+        local riftspawner = _G.TheWorld.components.riftspawner
+
+        if TUNING.ACIDRAIN_ENABLED and riftspawner ~= nil and riftspawner:IsShadowPortalActive() then
+            return "acidrain"
+        end
+
+        return "rain"
+    end
+end)
+
+```
+
