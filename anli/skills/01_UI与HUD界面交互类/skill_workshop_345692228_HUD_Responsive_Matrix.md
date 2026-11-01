@@ -720,3 +720,33 @@ end)
 
 ```
 
+
+
+### 变体演进：[DST] Roseate HUD (Mod 2250176974)
+- **变体场景与切面**：收录来自工坊 Mod 2250176974 (`[DST] Roseate HUD`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2250176974)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player
+-- delay to make sure it runs after other mods
+AddPrefabPostInit("player", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", BadgePostConstruct)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
+	end
+end)
+
+```
+

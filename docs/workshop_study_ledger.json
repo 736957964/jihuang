@@ -8301,8 +8301,26 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 14:59:04",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2250176974",
+      "name": "[DST] Roseate HUD",
+      "author": "Charlie",
+      "version": "1.7",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 15:09:48",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3754805642",
+      "name": "Enrico Pucci (Whitesnake)",
+      "author": "dog",
+      "version": "1.0.21",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 15:09:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 14:59:04"
+  "lastUpdated": "2026-11-01 15:09:49"
 }

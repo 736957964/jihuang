@@ -64070,3 +64070,285 @@ if tech == G.TECH.LOST then
 
 ```
 
+
+
+### 变体演进：Enrico Pucci (Whitesnake) (Mod 3754805642)
+- **变体场景与切面**：收录来自工坊 Mod 3754805642 (`Enrico Pucci (Whitesnake)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3754805642)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+local _player_classified = require "overrides/prefabs/pucci_classified"
+AddPrefabPostInit("player_classified", _player_classified)
+
+GLOBAL.TUNING.PUCCI = {}
+GLOBAL.TUNING.PUCCI.SSTANDWS = GetModConfigData("sstandws") or 122
+GLOBAL.TUNING.PUCCI.WS = GetModConfigData("1ws") or 120
+GLOBAL.TUNING.PUCCI.FOG = GetModConfigData("FOG") or 118 
+GLOBAL.TUNING.PUCCI.WSDISC = GetModConfigData("WSDISC") or 104 
+
+
+-- 1. เพิ่มชื่อ Prefab
+table.insert(PrefabFiles, "pucci_disc")
+
+-- 2. แปลชื่อและคำอธิบายไอเทม
+STRINGS.NAMES.PUCCI_DISC = "Memory Disc"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.PUCCI_DISC = "It feels strangely warm... like it contains someone's soul."
+
+AddRecipe2(
+    "pucci_disc",
+    {}, 
+    TECH.NONE,
+    {
+        numtogive = 1,
+        builder_tag = "pucci",
+        atlas = "images/inventoryimages/pucci_disc.xml",
+        image = "pucci_disc.tex",
+        testfn = function(inst) 
+            -- เช็คจาก replica เท่านั้น เพราะเมนูคราฟต์คือฝั่ง Client
+            local current_hp = inst.replica.hpws and inst.replica.hpws:GetCurrent() or 0
+            return current_hp >= 35
+        end,
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pucci
+-- ==========================================
+AddPrefabPostInit("pucci", function(inst)
+    inst.PUCCI_STRIKE = PUCCI_STRIKE -- ✅ เพิ่มบรรทัดนี้ ไม่งั้นเกมแครชตอนคลิกขวา
+    -- 1. โหลดระบบดักปุ่มกด (ทำงานเฉพาะฝั่งหน้าจอผู้เล่น)
+    inst:DoTaskInTime(0, AddDashInputHandler)
+    inst:DoTaskInTime(0.5, AddXHoldHandler)
+inst.is_counting = false
+    -- 2. ระบบตรวจจับเมาส์คลิกขวาที่พื้นเปล่า (Client-Side)
+-- 2. ระบบตรวจจับเมาส์คลิกขวาที่พื้นเปล่าและคลิกที่ตัวเอง (Client-Side)
+-- ✅ เพิ่มการรับสัญญาณสั่งบังคับเก็บสแตนด์ตรงนี้
+    if GLOBAL.TheWorld.ismastersim then
+        inst:ListenForEvent("force_stand_off", function(inst)
+            if inst:HasTag("standOnPucci") then
+                RevertToBody(inst)
+            end
+        end)
+    end
+
+
+    inst:DoTaskInTime(0.5, function(inst)
+        if inst ~= GLOBAL.ThePlayer or inst.prefab ~= "pucci" then return end -- ✅ ดักพุชชี่
+        
+        if inst._ground_mouse_handler ~= nil then return end
+        inst._ground_mouse_handler = GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
+            if button ~= GLOBAL.MOUSEBUTTON_RIGHT then return end
+            if not down or not inst:HasTag("standOnPucci") or inst:HasTag("busy") then return end
+            
+            local screen = GLOBAL.TheFrontEnd:GetActiveScreen()
+            if screen == nil or screen.name ~= "HUD" then return end
+
+            local pc = inst.components.playercontroller
+            if not pc then return end
+
+            if pc:GetRightMouseAction() == nil then
+                local target = GLOBAL.TheInput:GetWorldEntityUnderMouse()
+                
+                if target == nil then
+                    -- คลิกขวาที่พื้นเปล่า -> วางกับดัก
+                    local pos = GLOBAL.TheInput:GetWorldPosition()
+                    GLOBAL.SendModRPCToServer(GLOBAL.GetModRPC("pucci", "PUCCI_GROUND"), pos.x, pos.z)
+                    
+                elseif target == inst then
+                    -- ✅ เพิ่มตรงนี้: คลิกขวาที่ตัวเอง -> แปลงร่าง
+                    GLOBAL.SendModRPCToServer(GLOBAL.GetModRPC("pucci", "APPLY_DISGUISE"))
+                end
+            end
+        end)
+    end)
+
+
+-- 🌟 ระบบ Passive Auto-Dodge ของ Made in Heaven
+    if inst.components.combat then
+        local old_GetAttacked = inst.components.combat.GetAttacked
+        inst.components.combat.GetAttacked = function(self, attacker, damage, weapon, stimuli, spdamage)
+            if inst.stand_mode == "mih" and inst.mih_accel then
+                -- โอกาสหลบคำนวณเพิ่มขึ้นตาม Tier ความเร็ว 
+                -- (Tier 1 = 16% ... Tier 7 = 31%) ซึ่งครอบคลุม 15-30% ที่ต้องการพอดี
+                local dodge_chance = 14 + ((inst.mih_tier or 1) * 4)
+                if math.random(100) <= dodge_chance then
+                    -- หลบสำเร็จ! เล่นเอฟเฟกต์และเสียง
+                    local px, py, pz = inst.Transform:GetWorldPosition()
+                    local dodge_fx = GLOBAL.SpawnPrefab("collapse_small")
+                    if dodge_fx then
+                        dodge_fx.Transform:SetPosition(px, py, pz)
+                        dodge_fx.Transform:SetScale(1.2, 1.2, 1.2)
+                    end
+                    inst.SoundEmitter:PlaySound("dontstarve/common/lava_arena/spell/vortex")
+                    
+                    if inst.components.talker then
+                        inst.components.talker:Say("Too slow!", nil, nil, nil, nil, {1, 1, 1, 1})
+                    end
+                    
+                    -- คืนค่า false เพื่อข้ามการรับดาเมจและไม่เกิดการกระตุก (เหมือนตีฟันลม)
+                    return false 
+                end
+            end
+            -- ถ้าหลบไม่สำเร็จ หรือไม่ได้ใช้ MIH เร่งเวลาอยู่ ให้โดนตีรับดาเมจตามปกติ
+            return old_GetAttacked(self, attacker, damage, weapon, stimuli, spdamage)
+        end
+    end
+
+-- 2.5 ระบบตรวจจับคลิกขวาค้าง (Client-Side Hold Detector for Barrage)
+    inst:DoTaskInTime(0.5, function(i)
+        if i ~= GLOBAL.ThePlayer or i.prefab ~= "pucci" then return end
+
+        i._rmb_down_time = 0
+        i._rmb_is_down = false
+        i._pucci_hold_sent = false
+
+        if i._hold_mouse_handler ~= nil then return end
+        i._hold_mouse_handler = GLOBAL.TheInput:AddMouseButtonHandler(function(button, down)
+            if i == nil or not i:IsValid() or i ~= GLOBAL.ThePlayer or i.prefab ~= "pucci" then return end
+            if button ~= GLOBAL.MOUSEBUTTON_RIGHT then return end
+            if not down then
+                i._rmb_is_down = false
+                if i._pucci_hold_sent then
+                    GLOBAL.SendModRPCToServer(GLOBAL.GetModRPC("pucci", "PUCCI_HOLD_STATE"), false)
+                    i._pucci_hold_sent = false
+                end
+                return
+            end
+            if not i:HasTag("standOnPucci") then return end
+            i._rmb_is_down = true
+            i._rmb_down_time = GLOBAL.GetTime()
+            i._pucci_hold_sent = false
+        end)
+
+        i._hold_watch_task = i:DoPeriodicTask(0.1, function()
+            if i._rmb_is_down and not i._pucci_hold_sent then
+                if GLOBAL.GetTime() - i._rmb_down_time > 0.25 then 
+                    i._pucci_hold_sent = true
+                    GLOBAL.SendModRPCToServer(GLOBAL.GetModRPC("pucci", "PUCCI_HOLD_STATE"), true)
+                end
+            end
+        end)
+    end)
+    -- 3. ส่วนการตั้งค่าสถานะและเลือด (ทำงานเฉพาะฝั่ง Server)
+    if not GLOBAL.TheWorld.ismastersim then return end
+
+    -- ตั้งค่าเริ่มต้นโหมด Pucci
+
+
+    if not inst.components.timer then inst:AddComponent("timer") end
+
+    inst:ListenForEvent("healthdelta", function(inst, data)
+        if data and data.amount and data.amount < 0 then
+            if inst:HasTag("standOnPucci") and inst.components.health and inst.components.health.currenthealth <= 1 then
+                RevertToBody(inst)
+            end
+        end
+    end)
+	
+inst:ListenForEvent("builditem", function(inst, data)
+        if data and data.item and data.item.prefab == "pucci_disc" then
+            local builder = inst
+            
+            -- ตรวจสอบค่า HPWS
+            if builder.components.hpws and builder.components.hpws:GetCurrent() >= 35 then
+                -- ถ้าพลังพอ หักพลังงาน 35 หน่วย
+                builder.components.hpws:DoDelta(-35)
+                builder.components.talker:Say("I have stored a memory in a disc.")
+            else
+                -- ถ้าพลังไม่พอ (น้อยกว่า 35) หักเลือด 10 หน่วยแทน
+                if builder.components.health then
+                    builder.components.health:DoDelta(-10)
+                    builder.components.talker:Say("That took a toll on my body... (Health -10)")
+                end
+            end
+        end
+    end)
+
+    inst:ListenForEvent("minhealth", function(inst)
+        if inst:HasTag("standOnPucci") then
+            RevertToBody(inst)
+        end
+    end)
+
+    inst:ListenForEvent("death", function(inst)
+	StopTimeEffect(inst) -- ✅ 3. เพิ่มบรรทัดนี้เข้าไปตอนตาย
+        if inst.skinny_dummy and inst.skinny_dummy:IsValid() then
+            inst.skinny_dummy:Remove()
+            inst.skinny_dummy = nil
+        end
+    end)
+
+    inst:ListenForEvent("onremove", function(inst)
+        if inst.skinny_dummy and inst.skinny_dummy:IsValid() then
+            inst.skinny_dummy:Remove()
+            inst.skinny_dummy = nil
+        end
+    end)
+    
+    inst:DoPeriodicTask(0.5, function(inst)
+        if inst:HasTag("standOnPucci") and inst.components.hpws then
+            if inst.components.hpws:GetCurrent() <= 0 then
+                if inst.components.talker then
+                    inst.components.talker:Say("Power depleted...")
+                end
+                RevertToBody(inst)
+            end
+        end
+    end)
+end)
+
+AddClientModRPCHandler("pucci", "LOCK_CONTROL", function(is_locked)
+    local inst = GLOBAL.ThePlayer
+    if not inst or inst.prefab ~= "pucci" then return end
+    
+    if is_locked then
+        inst:AddTag("pucci_client_busy") -- ติดแท็กให้ Client รู้ว่าห้ามแดช
+        if inst.components.playercontroller then
+            inst.components.playercontroller:Enable(false) -- ตัดเมาส์/คีย์บอร์ดเดิน
+        end
+    else
+        inst:RemoveTag("pucci_client_busy")
+        if inst.components.playercontroller then
+            inst.components.playercontroller:Enable(true) -- คืนค่าเมาส์/คีย์บอร์ดเดิน
+        end
+    end
+end)
+
+
+
+
+
+
+-- เปลี่ยนชื่อ Dummy และรายละเอียด
+STRINGS.NAMES.PUCCI_DUMMY = "Enrico Pucci" 
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.PUCCI_DUMMY = "He is muttering prime numbers to himself..."
+
+-- ข้อมูลตัวละครหน้าเลือกตัว (Character Selection)
+STRINGS.CHARACTER_TITLES.pucci = "The Devout Priest"
+STRINGS.CHARACTER_NAMES.pucci = "Enrico Pucci"
+STRINGS.CHARACTER_DESCRIPTIONS.pucci = "*Wielder of Whitesnake\n*Can extract memories and Stands into Discs\n*Seeks to attain Heaven\n*Calms down by counting prime numbers"
+STRINGS.CHARACTER_QUOTES.pucci = "\"Do you believe in gravity?\""
+STRINGS.CHARACTER_SURVIVABILITY.pucci = "Fated"
+
+-- ไฟล์คำพูด (อย่าลืมเปลี่ยนชื่อไฟล์ speech เป็น speech_pucci ในโฟลเดอร์ scripts ด้วยนะครับ)
+STRINGS.CHARACTERS.pucci = require "speech_pucci"
+STRINGS.NAMES.pucci = "Pucci"
+AddMinimapAtlas("images/map_icons/pucci.xml")
+AddMinimapAtlas("images/map_icons/ws.xml")
+AddModCharacter("pucci", "MALE")
+AddPrefabPostInit("pucci", function(inst)
+    local function _pucci_cleanup(i) PucciCompat.CleanupPlayer(i) end
+    -- Client input handlers must be removed when the local entity is replaced
+    -- during reconnect, shard travel, rollback, or character switching.
+    inst:ListenForEvent("onremove", _pucci_cleanup)
+    if GLOBAL.TheWorld.ismastersim then
+        inst:ListenForEvent("death", _pucci_cleanup)
+        inst:ListenForEvent("ms_becameghost", _pucci_cleanup)
+    end
+end)
+
+```
+
