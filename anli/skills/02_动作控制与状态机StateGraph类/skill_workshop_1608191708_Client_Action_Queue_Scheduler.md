@@ -31408,3 +31408,165 @@ TUNING.ZHEI_XINGLAN_SWORD = {
 
 ```
 
+
+
+### 变体演进：Netra Benyalohet (Mod 3528008923)
+- **变体场景与切面**：收录来自工坊 Mod 3528008923 (`Netra Benyalohet`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3528008923)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+
+    local old = sg.events.knockback
+
+    sg.events.knockback = GLOBAL.EventHandler("knockback", function(inst, data)
+
+        if inst.sg and inst.sg:HasStateTag("m_noknockback") then           
+            return
+        end
+
+        if old and old.fn then
+            return old.fn(inst, data)
+        end
+    end)
+
+end)
+
+```
+
+
+
+### 变体演进：五维介质 (Mod 3738343537)
+- **变体场景与切面**：收录来自工坊 Mod 3738343537 (`五维介质`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3738343537)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+require("compat/tropical_quaker").Install(AddComponentPostInit)
+AddPrefabPostInit("player_classified", require("compat/player_classified_gym").Install)
+require("haiyi/rain_revival").Install(env)
+require("yongye/revival").Install(env)
+require("shian/revival").Install(env)
+require("yongye/compat/aporkalypse_combat").Install(AddComponentPostInit, AddPrefabPostInit)
+require("yongye/compat/aporkalypse_fire").Install(AddComponentPostInit, AddPrefabPostInit)
+require("yongye/minion_dismiss").Install(GLOBAL.ACTIONS)
+local TropicalSeasonTraits = require("tropical_season_traits")
+local CangqiongWindMovement = require("cangqiong/wind_movement")
+local CangqiongWeatherAdapter = require("cangqiong/weather_adapter")
+
+-- 2.21：窄化 hook 到苍穹 locomotor；服务端由 controller 写入顺风倍率，
+-- 客户端通过官方 locomotor 外部倍率同步，并在参考风动态减速存在时做逆风抵消。
+CangqiongWindMovement.InstallLocomotorHook(AddComponentPostInit)
+
+local function IsCangqiongFanProtected(player)
+    local classified = player ~= nil and player.player_classified or nil
+    local protected = classified ~= nil and classified._cq_fan_protected or nil
+    return protected ~= nil and protected:value() == true
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- 苍穹的临时风暴仍保留强风 trait 与数值效果；参考模组相关生态组件继续受依赖门控。
+AddPrefabPostInit("world", function(inst)
+    if inst.ismastersim then
+        inst:AddComponent("pentamedia_seasonfusion")
+        inst:AddComponent("pentamedia_season_effects")
+        if TropicalCompat.IsReferenceAvailable() then
+            inst:AddComponent("pentamedia_tropical_ecology")
+            inst:AddComponent("pentamedia_tropical_hounds")
+            inst:AddComponent("pentamedia_aporkalypse_adapter")
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+    if AddStategraphPostInit ~= nil then
+        AddStategraphPostInit("wilson", Metatron_PatchCastaoeMeteorSwing)
+        AddStategraphPostInit("wilson_client", Metatron_PatchCastaoeMeteorSwing)
+    end
+end
+
+--------------------------------------------------------------------------
+-- 星尘 metatron_cube AddPrefabPostInit + CollectActions 覆写
+--------------------------------------------------------------------------
+
+AddPrefabPostInit("metatron_cube", function(inst)
+    inst:AddTag("quickcast")
+    Metatron_ConfigureMeteorAoeItem(inst)
+    Metatron_EnsureCubeSpellbook(inst)
+
+    local old_CollectActions = inst.CollectActions
+    if old_CollectActions == nil then
+        return
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+        AddStategraphPostInit("wilson", Metatron_PatchCastaoeMeteorSwing)
+        AddStategraphPostInit("wilson_client", Metatron_PatchCastaoeMeteorSwing)
+    end
+end
+
+--------------------------------------------------------------------------
+-- 星尘 metatron_cube AddPrefabPostInit + CollectActions 覆写
+--------------------------------------------------------------------------
+
+AddPrefabPostInit("metatron_cube", function(inst)
+    inst:AddTag("quickcast")
+    Metatron_ConfigureMeteorAoeItem(inst)
+    Metatron_EnsureCubeSpellbook(inst)
+
+    local old_CollectActions = inst.CollectActions
+    if old_CollectActions == nil then
+        return
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:metatron_cube
+
+AddPrefabPostInit("metatron_cube", function(inst)
+    inst:AddTag("quickcast")
+    Metatron_ConfigureMeteorAoeItem(inst)
+    Metatron_EnsureCubeSpellbook(inst)
+
+    local old_CollectActions = inst.CollectActions
+    if old_CollectActions == nil then
+        return
+    end
+    inst.CollectActions = function(self, actiontype, ...)
+        if actiontype == "POINT" then
+            old_CollectActions(self, actiontype, ...)
+            local doer, pos, actions, right = ...
+            local requested = GLOBAL.CLIENT_REQUESTED_ACTION
+            local pc = doer ~= nil and doer.components ~= nil and doer.components.playercontroller or nil
+            -- 仅技能栏启动的本地选点或对应的服务端施法校验保留 CASTAOE。
+            -- 普通右键不收集陨石动作，也不抢占尘降或场景交互。
+            local casting = requested == GLOBAL.ACTIONS.CASTAOE
+                or (requested == nil and pc ~= nil and pc:IsAOETargeting()
+                    and pc.reticule.inst == self)
+            if right and actions ~= nil and not casting then
+                for i = #actions, 1, -1 do
+                    if actions[i] == GLOBAL.ACTIONS.CASTAOE then
+                        table.remove(actions, i)
+                    end
+                end
+            end
+            return
+        end
+        return old_CollectActions(self, actiontype, ...)
+    end
+end)
+
+```
+
