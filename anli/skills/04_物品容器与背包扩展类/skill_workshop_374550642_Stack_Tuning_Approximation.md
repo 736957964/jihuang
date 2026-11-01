@@ -1038,3 +1038,17 @@ AddPrefabPostInit("storeroom", function(inst)
 	inst.components.container.onopenfn = onopen
 end)
 `
+
+
+### 变体演进：Simple Controller (Mod 3116978471)
+- **变体场景与切面**：收录来自工坊 Mod 3116978471 (`Simple Controller`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3116978471)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
