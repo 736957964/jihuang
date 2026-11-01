@@ -8364,8 +8364,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 15:31:42",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2510473186",
+      "name": "null",
+      "author": "Sperenza & YiFei Zhu",
+      "version": "2.3.14",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 15:33:59",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2677590844",
+      "name": "Craft Pot",
+      "author": "IvanX",
+      "version": "0.14.2b3",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 15:33:59",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "2754469576",
+      "name": "Language",
+      "author": "丧芝，LUOXIA11，vandoordeep，早雾，御坂十三号",
+      "version": "0.1.4.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 15:33:59",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 15:31:42"
+  "lastUpdated": "2026-11-01 15:33:59"
 }

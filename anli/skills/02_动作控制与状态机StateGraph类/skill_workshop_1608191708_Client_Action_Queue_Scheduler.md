@@ -65198,3 +65198,48 @@ AddStategraphPostInit(
 
 ```
 
+
+
+### 变体演进：Language (Mod 2754469576)
+- **变体场景与切面**：收录来自工坊 Mod 2754469576 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2754469576)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:freezable
+
+AddComponentPostInit(
+    'freezable',
+    function(self)
+        local OldFreeze = self.Freeze
+        self.Freeze = function(self, freezetime, ...)
+            if self.inst._buff_music_resisdance == true then
+                return
+            end
+            return OldFreeze(self, freezetime, ...)
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+AddStategraphState('wilson', fast_run_start)
+AddStategraphPostInit(
+    'wilson',
+    function(sg)
+        soma_run(sg)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphState('wilson_client', fast_run_start)
+AddStategraphPostInit(
+    'wilson_client',
+    function(sg)
+        soma_run_client(sg)
+    end
+
+```
+
