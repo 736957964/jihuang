@@ -7190,3 +7190,111 @@ end)
 
 ```
 
+
+
+### 变体演进：Terrarium Targets Closest Player (Mod 2785785516)
+- **变体场景与切面**：收录来自工坊 Mod 2785785516 (`Terrarium Targets Closest Player`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2785785516)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:terrarium
+
+AddPrefabPostInit("terrarium", function(inst)
+    local _SpawnEyeOfTerror = UpvalueHacker.GetUpvalue(GLOBAL.Prefabs.terrarium.fn, "TimerDone", "SpawnEyeOfTerror")
+    local is_crimson = UpvalueHacker.GetUpvalue(_SpawnEyeOfTerror, "is_crimson")
+    local SPAWN_OFFSET = UpvalueHacker.GetUpvalue(_SpawnEyeOfTerror, "SPAWN_OFFSET")
+    local spawn_eye_prefab = UpvalueHacker.GetUpvalue(_SpawnEyeOfTerror, "spawn_eye_prefab")
+    local hookup_eye_listeners = UpvalueHacker.GetUpvalue(_SpawnEyeOfTerror, "hookup_eye_listeners")
+
+    local function SpawnEyeOfTerror(inst)
+        if AllPlayers ~= nil and #AllPlayers > 0 then
+            local targeted_player = inst:GetNearestPlayer()
+
+            if not targeted_player then
+                return _SpawnEyeOfTerror(inst)
+            end
+
+            local announce_template = (is_crimson(inst) and STRINGS.TWINS_TARGET) or STRINGS.EYEOFTERROR_TARGET
+            TheNet:Announce(GLOBAL.subfmt(announce_template, {player_name = targeted_player.name}))
+
+            local angle = math.random() * 6.28318
+            local player_pt = targeted_player:GetPosition()
+            local spawn_offset = GLOBAL.FindWalkableOffset(player_pt, angle, SPAWN_OFFSET, nil, false, true, nil, true, true)
+                or Vector3(SPAWN_OFFSET * math.cos(angle), 0, SPAWN_OFFSET * math.sin(angle))
+            local spawn_position = player_pt + spawn_offset
+
+            if inst.eyeofterror ~= nil and inst.eyeofterror:IsInLimbo() then
+                inst.eyeofterror:ReturnToScene()
+                -- Needs to be done so the spawn fx spawn in the right place
+                inst.eyeofterror.Transform:SetPosition(spawn_position:Get())
+                if inst.eyeofterror.sg ~= nil then
+                    inst.eyeofterror.sg:GoToState("flyback", targeted_player)
+                else
+                    inst.eyeofterror:PushEvent("flyback", targeted_player)
+                end
+            else
+                inst.eyeofterror = spawn_eye_prefab(inst)
+                -- Needs to be done so the spawn fx spawn in the right place
+                inst.eyeofterror.Transform:SetPosition(spawn_position:Get())
+                if inst.eyeofterror.sg ~= nil then
+                    inst.eyeofterror.sg:GoToState("arrive", targeted_player)
+                else
+                    inst.eyeofterror:PushEvent("arrive", targeted_player)
+                end
+            end
+            inst.eyeofterror:PushEvent("set_spawn_target", targeted_player)
+
+            hookup_eye_listeners(inst, inst.eyeofterror)
+        end
+    end
+
+    UpvalueHacker.SetUpvalue(GLOBAL.Prefabs.terrarium.fn, SpawnEyeOfTerror, "TimerDone", "SpawnEyeOfTerror")
+
+    _OnActivate = inst.components.activatable.OnActivate
+    inst.components.activatable.OnActivate = function(inst, doer)
+        if inst.inlimbo then
+            inst.components.activatable.inactive = true
+            return
+        end
+        return _OnActivate(inst, doer)
+    end
+end)
+
+```
+
+
+
+### 变体演进：我们饥佬是这样的 (Mod 3627920230)
+- **变体场景与切面**：收录来自工坊 Mod 3627920230 (`我们饥佬是这样的`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3627920230)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skinner
+    --人物皮肤的init_fn 和 clear_fn
+    AddComponentPostInit("skinner",function(self)
+        local oldfn = self.SetSkinName
+        if oldfn then
+            function self.SetSkinName(s,skinname,...)
+                local old = s.skin_name
+                local new = skinname
+                if characterskins[old] and characterskins[old].clear_fn then
+                    characterskins[old].clear_fn(s.inst,old)
+                end
+                if characterskins[new] and characterskins[new].init_fn then
+                    characterskins[new].init_fn(s.inst,new)
+                end
+                oldfn(s,skinname,...)
+            end
+        end
+    end)
+
+```
+

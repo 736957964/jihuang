@@ -27225,3 +27225,83 @@ end);
 
 ```
 
+
+
+### 变体演进：Mon3tr (Mod 3703731465)
+- **变体场景与切面**：收录来自工坊 Mod 3703731465 (`Mon3tr`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3703731465)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", CombatPost)
+AddClassPostConstruct("components/combat_replica", CombatPost)
+
+AddComponentPostInit('combat', function(self, inst)--修改强制攻击间隔
+	local oldBlankOutAttacks = self.BlankOutAttacks
+	function self:BlankOutAttacks(fortime)
+		if self.inst and self.inst:HasOneOfTags(canaccepttags) and self.inst.m3_attackspeed then
+			fortime = fortime * (1 - (self.inst.m3_attackspeed - 1))
+		end
+		return oldBlankOutAttacks(self, fortime)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:slipperyfeet
+-- 不会在冰面上滑倒 --
+AddComponentPostInit("slipperyfeet", function(self)
+    local olddodelta = self.DoDelta
+    function self:DoDelta(delta)
+        if IsFlying(self.inst) then
+            self:SetCurrent(0)
+            return
+        end
+        olddodelta(self, delta)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+-- 飞行时移速修正+上船判定问题 --
+AddComponentPostInit("locomotor", function(self)
+    local oldupdategroundspeedmultiplier = self.UpdateGroundSpeedMultiplier
+    function self:UpdateGroundSpeedMultiplier()
+        if IsFlying(self.inst) then
+            self.groundspeedmultiplier = 1
+            return
+        end
+        oldupdategroundspeedmultiplier(self)
+    end
+
+    local oldstarthopping = self.StartHopping
+    function self:StartHopping(x,z,target_platform)
+        if IsFlying(self.inst) then
+            return
+        end
+        oldstarthopping(self, x, z, target_platform)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    OverrideHeadrideDestState(sg, ACTIONS.ATTACK)
+    OverrideHeadrideDestState(sg, HEADRIDE_HEALSELF_ACTION)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(sg)
+    OverrideHeadrideDestState(sg, ACTIONS.ATTACK)
+    OverrideHeadrideDestState(sg, HEADRIDE_HEALSELF_ACTION)
+end)
+
+```
+

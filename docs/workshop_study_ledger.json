@@ -5790,8 +5790,44 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 08:16:15",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2785785516",
+      "name": "Terrarium Targets Closest Player",
+      "author": "KoreanWaffles",
+      "version": "1.1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 08:22:16",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3405222829",
+      "name": "移除地面积雪",
+      "author": "Relief_to_me",
+      "version": "1.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 08:22:16",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3627920230",
+      "name": "我们饥佬是这样的",
+      "author": "作者-胖头鱼，高脚鸟（后者是个不干活的）",
+      "version": "4.9",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 08:22:16",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3703731465",
+      "name": "Mon3tr",
+      "author": "冰糖、犬塚霜冥（狗王）",
+      "version": "1.7.31",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:22:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:16:15"
+  "lastUpdated": "2026-11-01 08:22:16"
 }
