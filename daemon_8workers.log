@@ -6062,3 +6062,28 @@
 [2026-11-01 10:06:06] Reducer: 完成母本归约并清理草稿 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md
 [2026-11-01 10:06:06] Reducer: 成功将 Mod 3778622972 (Title) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 10:06:06] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 10:06:10] Git 自动提交并推送成功！
+[2026-11-01 10:06:10] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 10:06:10] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 10:06:40] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['2955770972', '2924370887', '2329855041', '2140417765', '3797046133', '3760823838']
+[2026-11-01 10:06:40] SteamCMD 下载 2955770972 ...
+[2026-11-01 10:06:40] SteamCMD 下载 2329855041 ...
+[2026-11-01 10:06:40] SteamCMD 下载 2924370887 ...
+[2026-11-01 10:06:40] SteamCMD 下载 2140417765 ...
+[2026-11-01 10:06:40] SteamCMD 下载 3797046133 ...
+[2026-11-01 10:06:40] SteamCMD 下载 3760823838 ...
+[2026-11-01 10:06:51] Worker [2955770972] 成功解析入库暂存区 -> 雷德 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 10:07:00] Worker [2329855041] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 10:07:10] Worker [2924370887] 成功解析入库暂存区 -> Brighter Dusk (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 10:07:25] Worker [2140417765] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 10:07:35] Worker [3797046133] 成功解析入库暂存区 -> 12槽电路 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 10:07:46] Worker [3760823838] 成功解析入库暂存区 -> 自动走位躲避 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 10:07:46] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 10:07:46] Reducer: 成功将 Mod 2924370887 (Brighter Dusk) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 10:07:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 10:07:46] Reducer: 成功将 Mod 2955770972 (雷德) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 10:07:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 10:07:46] Reducer: 成功将 Mod 3760823838 (自动走位躲避) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 10:07:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 10:07:46] Reducer: 成功将 Mod 3797046133 (12槽电路) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 10:07:46] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md

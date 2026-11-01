@@ -6465,8 +6465,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 10:06:06",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2924370887",
+      "name": "Brighter Dusk",
+      "author": "zzzzzzzs",
+      "version": "20230407",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:07:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2955770972",
+      "name": "雷德",
+      "author": "风早Zanoku",
+      "version": "0.2.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:07:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3760823838",
+      "name": "自动走位躲避",
+      "author": "萌萌的新",
+      "version": "1.58",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 10:07:46",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3797046133",
+      "name": "12槽电路",
+      "author": "招兵买马",
+      "version": "1.1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 10:07:46",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 10:06:06"
+  "lastUpdated": "2026-11-01 10:07:46"
 }

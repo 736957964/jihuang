@@ -7887,3 +7887,137 @@ AddClassPostConstruct('widgets/controls', function(self) T.CONTROLS = self end) 
 
 ```
 
+
+
+### 变体演进：自动走位躲避 (Mod 3760823838)
+- **变体场景与切面**：收录来自工坊 Mod 3760823838 (`自动走位躲避`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3760823838)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+end
+AddComponentPostInit("playercontroller", function(self, inst)
+	inst = inst or self.inst
+	if inst ~= ThePlayer then return end
+	if self._auto_dodger_task ~= nil then return end
+	inst:DoTaskInTime(0, function()
+		if inst == ThePlayer and self._auto_dodger_task == nil then
+			self._auto_dodger_task = inst:DoPeriodicTask(0, RefreshMain)
+		end
+	end)
+end)
+
+```
+
+
+
+### 变体演进：12槽电路 (Mod 3797046133)
+- **变体场景与切面**：收录来自工坊 Mod 3797046133 (`12槽电路`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3797046133)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wx78_classified
+
+AddPrefabPostInit("wx78_classified",function(inst)
+    for i, name in pairs(CIRCUIT_BARS_LOOKUP) do
+        for j = START_MAX_CIRCUIT_SLOTS, NEW_MAX_CIRCUIT_SLOTS do
+            inst._activatedmods[i][j] = false
+            inst.upgrademodulebars[i][j] = net_smallbyte(inst.GUID, "wx78.upgrademodulebars"..i.."mods"..j, "upgrademoduleslistdirty")
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:upgrademoduleowner
+
+AddComponentPostInit("upgrademoduleowner", function(self)
+    local old_SetMaxCharge = self.SetMaxCharge
+    function self:SetMaxCharge(max_charge, ...)
+        -- WX-78 always has 12 circuit slots: ignore the vanilla 6 / 7.
+        if self.inst.prefab == "wx78" and max_charge ~= NEW_MAX_CIRCUIT_SLOTS then
+            self.inst._chasni_originalmaxchargelevel = max_charge
+            return
+        end
+
+        -- The chassis always mirror their owner, who always has 12 slots, so
+        -- they always have 12 slots too. Clamping instead of ignoring keeps the
+        -- upgrade modules display in sync (it would otherwise pop chips) and
+        -- stops vanilla from ejecting the extra circuits.
+        if (self.inst.prefab == "wx78_backupbody" or self.inst.prefab == "wx78_possessedbody")
+            and (max_charge == nil or max_charge < NEW_MAX_CIRCUIT_SLOTS) then
+            max_charge = NEW_MAX_CIRCUIT_SLOTS
+        end
+
+        return old_SetMaxCharge(self, max_charge, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78
+if TheNet:GetIsServer() then
+    AddPrefabPostInit("wx78",function(inst)
+        local function ApplyCircuitSlotCapacity()
+            if inst.components.upgrademoduleowner ~= nil then
+                inst.components.upgrademoduleowner:SetMaxCharge(NEW_MAX_CIRCUIT_SLOTS)
+            end
+        end
+
+        -- Force the 12-slot charge level on WX-78 (the original mod granted it
+        -- when the expertwx1 perk was purchased).
+        -- This has to happen here and now: the chassis copy their owner's slot
+        -- count while the save is being loaded, which can be long before any
+        -- delayed task gets a chance to run.
+        ApplyCircuitSlotCapacity()
+
+        inst:DoTaskInTime(0.5, function()
+            -- Re-assert it (harmless if nothing touched it) and push the slot
+            -- count into every chassis this player already has, so chassis
+            -- stored with a vanilla maxcharge are repaired instead of popping
+            -- their circuits.
+            ApplyCircuitSlotCapacity()
+
+            local linkeditemmanager = TheWorld ~= nil and TheWorld.components.linkeditemmanager or nil
+            if linkeditemmanager ~= nil then
+                local function SyncChassisCircuitSlots(item, player)
+                    if item ~= nil and item.CheckCircuitSlotStatesFrom ~= nil then
+                        item:CheckCircuitSlotStatesFrom(player)
+                    end
+                end
+                linkeditemmanager:ForEachLinkedItemForPlayerOfPrefab(inst, "wx78_backupbody", SyncChassisCircuitSlots)
+                linkeditemmanager:ForEachLinkedItemForPlayerOfPrefab(inst, "wx78_possessedbody", SyncChassisCircuitSlots)
+            end
+        end)
+
+        local old_GetModulesData = inst.GetModulesData
+
+        local function _GetModulesData(_inst, ...)
+            local data = old_GetModulesData(_inst, ...)
+            local newdata = {}
+
+            for bartype, modules in pairs(data) do
+                newdata[bartype] = {}
+
+                for i, v in ipairs(modules) do
+                    table.insert(newdata[bartype], v)
+                end
+
+                while #newdata[bartype] < NEW_MAX_CIRCUIT_SLOTS do
+                    table.insert(newdata[bartype], 0)
+                end
+            end
+
+            return newdata
+        end
+        inst.GetModulesData = _GetModulesData
+    end)
+
+```
+

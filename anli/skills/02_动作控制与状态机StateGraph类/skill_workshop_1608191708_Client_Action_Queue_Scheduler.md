@@ -34838,3 +34838,101 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：Brighter Dusk (Mod 2924370887)
+- **变体场景与切面**：收录来自工坊 Mod 2924370887 (`Brighter Dusk`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2924370887)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+      else
+        AddPrefabPostInit("world", function(inst) inst:ListenForEvent("ms_playerspawn", utils._playeroninit) end)
+
+```
+
+
+
+### 变体演进：雷德 (Mod 2955770972)
+- **变体场景与切面**：收录来自工坊 Mod 2955770972 (`雷德`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2955770972)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+	local old = self.DoActionAutoEquip
+	function self:DoActionAutoEquip(buffaction,...)
+		if buffaction and buffaction.action == ACTIONS.REID_FORGE then
+			return
+		end
+		return old(self,buffaction,...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+AddComponentPostInit("health", function(self)
+    local old_SetVal = self.SetVal
+    function self:SetVal(val, cause, afflicter, ...)
+        if not self.inst:HasTag("reid") then
+            return old_SetVal(self, val, cause, afflicter, ...)
+        end
+
+        if self.inst.components.reidimmortality ~= nil --无敌期间免疫掉血
+        and self.inst.components.reidimmortality.is_immortal 
+        and val < self.currenthealth then
+            return 
+        end
+
+        local max_health = self:GetMaxWithPenalty()
+        local min_health = math.min(self.minhealth or 0, max_health)
+        if val > 0 or min_health > 0 --没有死，或者有其他锁血机制，不触发技能树锁血
+        or not self.inst.components.reidimmortality:CanUseImmortality() then --每次生命只有一次锁血机会
+            return old_SetVal(self, val, cause, afflicter, ...)
+        end
+
+        self.inst.components.reidimmortality:Immortality()
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:reid
+end
+AddPrefabPostInit("reid", function(inst)   
+    if inst.sg ~= nil then
+        AddReidAttackSpeed(inst, inst.sg)
+    end    
+    local old_SetStateGraph = inst.SetStateGraph
+    function inst:SetStateGraph(name, ...) --为了使sg变化时依然有加攻速效果（如从鬼魂变回来时）
+        old_SetStateGraph(self, name, ...)
+        AddReidAttackSpeed(self, self.sg)
+        return self.sg
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", SGWilsonPostInit)
+
+local function ReidImmune(sg)
+    local old_attacked = sg.events.attacked.fn
+    sg.events.attacked.fn = function(inst, data, ...)
+        if inst.components.skilltreeupdater:IsActivated("reid_resistance5") and inst.components.health:GetPercentWithPenalty() <= 0.5 then
+            return
+        end
+        return old_attacked(inst, data, ...)
+    end
+end
+
+```
+
