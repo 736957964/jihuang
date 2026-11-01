@@ -5318,3 +5318,58 @@ AddPrefabPostInit("slingshot999ex", AddTargetIndicationHook)
 
 ```
 
+
+
+### 变体演进：hyper_random (Mod 3743551348)
+- **变体场景与切面**：收录来自工坊 Mod 3743551348 (`hyper_random`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3743551348)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+-- 节点图就绪（但断裂），用真实邻接覆盖重建。0 秒任务在风暴/裂隙触发前很久就执行。
+AddPrefabPostInit("world", function(inst)
+    inst:DoTaskInTime(0, function()
+        local graph = inst.topology or (_G.TheWorld and _G.TheWorld.topology)
+        if IsOddLandsBlueprint(graph) then
+            -- 先把落海的质心吸附回陆地，再据此重建节点图（边几何也用上修正后的质心）
+            _G.pcall(FixNodeCentroids, graph)
+            local ok, err = _G.pcall(RebuildOddLandsGraph, graph)
+            if not ok then
+                print("[OddLands] topology rebuild failed: " .. tostring(err))
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:moonstormmanager
+-------------------------------------------------------------------------------
+AddComponentPostInit("moonstormmanager", function(self)
+    local old_start = self.StartMoonstorm
+    local old_calc = self.CalcNewMoonstormBaseNodeIndex
+    if type(old_start) ~= "function" or type(old_calc) ~= "function" then return end
+
+    self.StartMoonstorm = function(self, ...)
+        self._oddlands_basenode_calls = 0
+        return old_start(self, ...)
+    end
+
+    self.CalcNewMoonstormBaseNodeIndex = function(self, ...)
+        self._oddlands_basenode_calls = (self._oddlands_basenode_calls or 0) + 1
+        local topo = _G.TheWorld and _G.TheWorld.topology
+        local cap = (topo and topo.nodes and (#topo.nodes * 4)) or 1000
+        cap = cap + 64
+        if self._oddlands_basenode_calls > cap then
+            print("[OddLands] moonstorm base-node search hit cap (" .. cap .. "); aborting to avoid server hang")
+            return nil
+        end
+        return old_calc(self, ...)
+    end
+end)
+
+```
+

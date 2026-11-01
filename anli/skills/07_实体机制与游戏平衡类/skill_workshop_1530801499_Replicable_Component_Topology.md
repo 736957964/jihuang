@@ -11839,3 +11839,25 @@ end
 
 ```
 
+
+
+### 变体演进：表情全解锁 (Mod 2623277832)
+- **变体场景与切面**：收录来自工坊 Mod 2623277832 (`表情全解锁`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2623277832)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:talker
+
+AddComponentPostInit('talker', function(Talker)
+    local oldSay = Talker.Say
+    function Talker:Say(script, ...)
+        oldSay(self, replace_emoji(script), ...)
+    end
+end)
+
+```
+

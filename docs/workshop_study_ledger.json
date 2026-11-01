@@ -7842,8 +7842,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 13:27:16",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2623277832",
+      "name": "表情全解锁",
+      "author": "NoMu",
+      "version": "0.0.13",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 13:34:22",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3717430555",
+      "name": "satori_lang",
+      "author": "未知",
+      "version": "1.6.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:34:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3743551348",
+      "name": "hyper_random",
+      "author": "Phil Langmuir",
+      "version": "1.0.6",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 13:34:23",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3747189878",
+      "name": "Mod 3747189878",
+      "author": "Wendigail",
+      "version": "1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:34:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:27:16"
+  "lastUpdated": "2026-11-01 13:34:23"
 }

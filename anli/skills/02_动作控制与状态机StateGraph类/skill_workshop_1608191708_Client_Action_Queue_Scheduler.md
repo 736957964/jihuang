@@ -56464,3 +56464,291 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：satori_lang (Mod 3717430555)
+- **变体场景与切面**：收录来自工坊 Mod 3717430555 (`satori_lang`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3717430555)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+-- 修改空手攻击距离 --
+--[[AddComponentPostInit("combat", function(self)
+    local OldGetAttackRange = self.GetAttackRange
+    function self:GetAttackRange()
+        if self.inst and self.inst:HasTag("satori") then
+            local weapon = self:GetWeapon()
+            return weapon ~= nil and weapon.components.weapon.attackrange ~= nil and
+                       math.max(0, self.attackrange + weapon.components.weapon.attackrange) or (weapon == nil and 12) or self.attackrange
+        else
+            return OldGetAttackRange(self)
+        end
+    end
+
+    local OldGetHitRange = self.GetHitRange
+    function self:GetHitRange()
+        if self.inst and self.inst:HasTag("satori") then
+            local weapon = self:GetWeapon()
+            return self.temprange or weapon ~= nil and weapon.components.weapon.hitrange ~= nil and self.hitrange +
+                       weapon.components.weapon.hitrange or (weapon == nil and 12) or self.hitrange
+        else
+            return OldGetHitRange(self)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+--生命组件相关--
+AddComponentPostInit("health", function(self)
+	local oldDoDelta = self.DoDelta
+	function self:DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb,...)
+        local old_absorb = self.inst.components.health.absorb or 0
+        
+        if self.inst.satori_ap_buff then
+            self.inst.components.health.absorb = (self.inst.components.health.absorb or 0) - (0.025 * self.inst.satori_ap_buff)
+        end
+
+        if (self.inst.components.health.absorb or 0) < 0 then
+            self.inst.components.health.absorb = (self.inst.components.health.absorb or 0) * 0.25
+            if amount < 0 then
+                amount = amount * (1-(self.inst.components.health.absorb or 0))
+            end
+        end
+
+        if self.inst.satori_cure_ban_buff then
+            if amount > 0 then
+                amount = amount * (1 - (self.inst.satori_cure_ban_buff * 0.01))
+            elseif amount < 0 then
+                amount = amount * (1 + (self.inst.satori_cure_ban_buff * 0.005))
+            end
+        end
+
+        if afflicter ~= nil and type(afflicter) == "table" and afflicter.HasTag and afflicter:HasTag("satori") and not (self.inst:HasOneOfTags({"soulless", "chess"})) and not overtime then
+            local target_pos = self.inst:GetPosition()
+            local dist = (afflicter:GetPosition() - target_pos):Length()
+            local mult = dist / 32
+
+            if mult > .5 then
+                mult = .5
+            end
+
+            if dist >= 8 then
+                if self.inst.components.locomotor then
+                    self.inst.components.locomotor:SetExternalSpeedMultiplier(afflicter, "satori_stop_speed_mod", 0.4)
+                    if self.inst.satori_stop_task then
+                        self.inst.satori_stop_task:Cancel()
+                    end
+                    self.inst.satori_stop_task = self.inst:DoTaskInTime(1, function()
+                        self.inst.components.locomotor:RemoveExternalSpeedMultiplier(afflicter, "satori_stop_speed_mod")
+                    end)
+                end
+            end
+
+            if (self.inst.satori_damage_bonus or 0) < 25 then
+                self.inst.satori_damage_bonus = (self.inst.satori_damage_bonus or 0) + 1
+            end
+
+            if self.inst.satori_damage_task then
+                self.inst.satori_damage_task:Cancel()
+            end
+
+            self.inst.satori_damage_task = self.inst:DoTaskInTime(30, function()
+                self.inst.satori_damage_bonus = nil
+            end)
+
+            if amount < 0 then
+                if math.random() <= .17 + ((self.inst.satori_damage_bonus or 0) * 0.017) then
+                    amount = amount * 1.17
+                    if not ignore_absorb then
+                        ignore_absorb = true
+                    end
+                    if not ignore_invincible then
+                        ignore_invincible = true
+                    end
+                end
+                amount = amount * (1 + mult +((self.inst.satori_damage_bonus or 0) * 0.02))
+            end
+
+            --if afflicter.components.sanity then
+            --    afflicter.components.sanity:DoDelta(-amount * 0.025)
+            --end
+
+            if (self.inst.satori_damage_bonus or 0) >= 20 then
+                if afflicter.components.sanity then
+                    afflicter.components.sanity:DoDelta(-amount * 0.025)
+                end
+            end
+        end
+  
+        local result = oldDoDelta(self,amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb,...)
+		return result
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+-- 飞行时移速修正+上船判定问题 --
+AddComponentPostInit("locomotor", function(self)
+    local oldSetExternalSpeedMultiplier = self.SetExternalSpeedMultiplier --一般减速免疫
+    function self:SetExternalSpeedMultiplier(source, key, m, ...)
+        if m ~= nil and m < 1 and ((self.inst.sg and self.inst.sg:HasStateTag("satoriflying")) or self.inst:HasTag("satoriflying")) then
+            return
+        end
+        return oldSetExternalSpeedMultiplier(self, source, key, m, ...)
+    end
+
+    local PushTempGroundSpeedMultiplier = self.PushTempGroundSpeedMultiplier
+    function self:PushTempGroundSpeedMultiplier(mult, ...)
+        if mult ~= nil and mult < 1 and ((self.inst.sg and self.inst.sg:HasStateTag("satoriflying")) or self.inst:HasTag("satoriflying")) then
+            return
+        end
+        PushTempGroundSpeedMultiplier(self, mult, ...)
+    end
+
+    local oldUpdateGroundSpeedMultiplier = self.UpdateGroundSpeedMultiplier --地面类减速免疫
+    function self:UpdateGroundSpeedMultiplier(...)
+        if ((self.inst.sg and self.inst.sg:HasStateTag("satoriflying")) or self.inst:HasTag("satoriflying")) then
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local oncreep = TheWorld.GroundCreep:OnCreep(x, y, z)
+            self.wasoncreep = false
+            local current_ground_tile = TheWorld.Map:GetTileAtPoint(x, 0, z)
+            self.groundspeedmultiplier =
+                (self:IsFasterOnGroundTile(current_ground_tile) or oncreep) and 1
+                or
+                (self:FasterOnRoad() and ((RoadManager ~= nil and RoadManager:IsOnRoad(x, 0, z)) or current_ground_tile == GROUND.ROAD)) and
+                self.fastmultiplier
+                or 1
+        else
+            return oldUpdateGroundSpeedMultiplier(self, ...)
+        end
+    end
+
+    local oldstarthopping = self.StartHopping
+    function self:StartHopping(x,z,target_platform)
+        if ((self.inst.sg and self.inst.sg:HasStateTag("satoriflying")) or self.inst:HasTag("satoriflying")) then
+            return
+        end
+        oldstarthopping(self, x, z, target_platform)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit('wilson',function (sg)
+    satori_fly(sg)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+end)
+AddStategraphPostInit('wilson_client',function(sg)
+    satori_fly(sg)
+end)]]
+
+```
+
+
+
+### 变体演进：Mod 3747189878 (Mod 3747189878)
+- **变体场景与切面**：收录来自工坊 Mod 3747189878 (`Mod 3747189878`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3747189878)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+-- 服务端
+AddStategraphPostInit("wilson", function(sg)
+    -- 打开容器
+    local start_state = sg.states["start_pocket_rummage"]
+    if start_state then
+        local orig_onenter = start_state.onenter
+        start_state.onenter = function(inst, resume_item)
+            orig_onenter(inst, resume_item)
+            local item = inst.sg.statemem.item
+            local isRiding = inst.components.rider and inst.components.rider:IsRiding()
+            if item and item.prefab == "elixir_container" and not isRiding then
+                inst.SoundEmitter:KillSound("make")
+                inst.AnimState:PlayAnimation("picnic_empty_pre")
+                inst.AnimState:PushAnimation("picnic_empty_start")
+                inst.AnimState:PushAnimation("picnic_loop", true)
+                inst.AnimState:AddOverrideBuild("wendy_picnicbucket")
+            end
+        end
+    end
+
+    -- 关闭容器
+    local stop_state = sg.states["stop_pocket_rummage"]
+    if stop_state then
+        local orig_stop_onenter = stop_state.onenter
+        stop_state.onenter = function(inst, ignoreaction)
+            orig_stop_onenter(inst, ignoreaction)
+            local item = inst.sg.mem.pocket_rummage_item
+            local isRiding = inst.components.rider and inst.components.rider:IsRiding()
+            if item and item.prefab == "elixir_container" and not isRiding then
+                inst.AnimState:PlayAnimation("picnic_empty_pst")
+                inst.AnimState:PushAnimation("idle_loop", true)
+                inst.AnimState:ClearOverrideBuild("wendy_picnicbucket")
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+--客户端
+AddStategraphPostInit("wilson_client", function(sg)
+    -- 预测状态（longaction_busy）
+    local longaction_state = sg.states["longaction_busy"]
+    if longaction_state then
+        local orig_onenter = longaction_state.onenter
+        local orig_onexit = longaction_state.onexit
+        longaction_state.onenter = function(inst)
+            orig_onenter(inst)
+            local buffaction = inst:GetBufferedAction()
+            local target = buffaction and buffaction.invobject
+            -- 客户端replica.rider 判断骑乘
+            local rider = inst.replica.rider
+            local isRiding = rider and rider:IsRiding()
+            if target and target.prefab == "elixir_container" and not isRiding then
+                inst.SoundEmitter:KillSound("make")
+                inst.AnimState:PlayAnimation("picnic_empty_pre")
+                inst.AnimState:PushAnimation("picnic_empty_start")
+                inst.AnimState:PushAnimation("picnic_loop", true)
+                if not inst.sg.statemem.picnic_build_added then
+                    inst.AnimState:AddOverrideBuild("wendy_picnicbucket")
+                    inst.sg.statemem.picnic_build_added = true
+                end
+            end
+        end
+        longaction_state.onexit = function(inst)
+            if orig_onexit then orig_onexit(inst) end
+        end
+    end
+
+    -- 客户端关闭容器
+    local stop_state = sg.states["stop_pocket_rummage"]
+    if stop_state then
+        local orig_stop_onenter = stop_state.onenter
+        stop_state.onenter = function(inst, ignoreaction)
+            orig_stop_onenter(inst, ignoreaction)
+            if inst.sg.statemem.picnic_build_added then
+                inst.AnimState:PlayAnimation("picnic_empty_pst")
+                inst.AnimState:PushAnimation("idle_loop", true)
+                inst.AnimState:ClearOverrideBuild("wendy_picnicbucket")
+                inst.sg.statemem.picnic_build_added = nil
+            end
+        end
+    end
+end)
+
+```
+
