@@ -6501,8 +6501,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 10:07:46",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1462979419",
+      "name": "DJPaul",
+      "author": "Paul Gibbs (DJPaul)",
+      "version": "1.9d",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 10:11:24",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3818912434",
+      "name": "沈星回",
+      "author": "PG",
+      "version": "0.0.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:11:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3821415777",
+      "name": "玖渚澪 / Kunagisa Mio",
+      "author": "KunagisaChiya",
+      "version": "0.7.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:11:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 10:07:46"
+  "lastUpdated": "2026-11-01 10:11:24"
 }

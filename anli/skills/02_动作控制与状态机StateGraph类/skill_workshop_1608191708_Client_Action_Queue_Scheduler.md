@@ -34936,3 +34936,665 @@ end
 
 ```
 
+
+
+### 变体演进：沈星回 (Mod 3818912434)
+- **变体场景与切面**：收录来自工坊 Mod 3818912434 (`沈星回`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3818912434)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:xxtpack
+-- 星小团背包：应用可配置保鲜模式（仅服务器）
+AddPrefabPostInit("xxtpack", function(inst)
+    if not TheWorld.ismastersim then return end
+    inst:DoTaskInTime(0, function()
+        ApplyContainerPreserve(inst, (GetModConfigData("xxtpack_preserve_mode") or "normal"))
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:bird
+
+AddStategraphPostInit("bird", function(sg)
+	local old = sg.events.flyaway.fn
+	sg.events.flyaway.fn = function(inst)
+		if bird_no(inst) then
+		   old(inst)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:critter_glomling
+-- 仅对带有 tq_pet 标签的小格罗姆改名称/检查文本与外观
+AddPrefabPostInit("critter_glomling", function(inst)
+	local function ApplyTqOverrides()
+		if not inst:HasTag("tq_pet") then
+			return
+		end
+
+		-- 名称与检查文本
+		inst.displaynamefn = function()
+			return "兔球球"
+		end
+		if inst.components ~= nil and inst.components.inspectable ~= nil then
+			inst.components.inspectable.description = "兔子急了也会咬人"
+		end
+
+		-- 使用自定义 build：tq（不改 bank，沿用原版小格罗姆动画）
+		if inst.AnimState ~= nil then
+			inst.AnimState:SetBuild("tq")
+		end
+
+		-- 只保留 idle / walk 相关动画，其余动画强制切回 idle
+		if inst.AnimState ~= nil then
+			local as = inst.AnimState
+			-- 固定允许的动画名列表（不再调用 HasAnimation，避免方法不存在崩溃）
+			local allowed_list = { "idle_loop", "idle", "walk_pre", "walk", "walk_loop", "walk_pst" }
+			-- 选一个 idle 动画名优先使用 idle_loop，其次 idle
+			local idle_name = inst._tq_idle_anim or "idle_loop"
+			if not as:IsCurrentAnimation("idle_loop") and not as:IsCurrentAnimation("idle") then
+				-- 当前既不是 idle_loop 也不是 idle，就先记为 idle_loop，若后续不存在也只是动画不播放
+				idle_name = "idle_loop"
+			end
+			inst._tq_idle_anim = idle_name
+
+			-- 检查当前动画是否在允许列表里
+			local allowed = false
+			for _, name in ipairs(allowed_list) do
+				if as:IsCurrentAnimation(name) then
+					allowed = true
+					break
+				end
+			end
+			-- 如果不在允许列表中，则强制切回 idle（循环播放）
+			if not allowed then
+				as:PlayAnimation(inst._tq_idle_anim or "idle_loop", true)
+			end
+		end
+
+		-- 兔球球静音：事件 + 每帧清理，彻底禁声
+		MutePet(inst)
+
+		-- 移除 talker，避免触发说话音效（使用安全移除，仅移除一次）
+		if inst._tq_components_removed ~= true then
+		if inst.components ~= nil and inst.components.talker ~= nil then
+				SafeRemoveComponent(inst, "talker")
+			end
+		end
+
+		-- 不会饥饿：若有饥饿组件则关闭衰减
+		if inst.components ~= nil and inst.components.hunger ~= nil then
+			local hunger = inst.components.hunger
+			hunger:SetRate(0)
+			hunger:SetPercent(1)
+			if hunger.max ~= nil then
+				hunger.current = hunger.max
+			end
+		end
+
+		-- 不会腐烂/流失：若有 perishable 则阻止（与星际小宝一致）
+		if inst.components ~= nil and inst.components.perishable ~= nil then
+			inst.components.perishable.StartPerishing = SPE_StopPerishingStart
+			inst.components.perishable:StopPerishing()
+			inst.components.perishable:SetPercent(1)
+		end
+
+		-- 不会睡觉：保留 sleeper 组件，通过 SleepTest 阻止进入睡眠
+		if inst.components ~= nil and inst.components.sleeper ~= nil then
+			inst.components.sleeper:SetSleepTest(PetSleepTestAlwaysFalse)
+		end
+
+		-- 不可喂食 / 不可抚摸：移除相关组件（使用安全移除，仅移除一次）
+		if inst._tq_components_removed ~= true then
+		if inst.components ~= nil then
+			if inst.components.trader ~= nil then
+					SafeRemoveComponent(inst, "trader")
+			end
+			if inst.components.eater ~= nil then
+					SafeRemoveComponent(inst, "eater")
+			end
+			-- 不能抚摸：直接移除 petable，保留 crittertraits 以避免 brain 崩溃
+			if inst.components.petable ~= nil then
+					SafeRemoveComponent(inst, "petable")
+			end
+			end
+			-- 标记组件已移除，避免重复移除
+			inst._tq_components_removed = true
+		end
+
+		-- 战斗能力：仅服务器端为兔球球添加贴身灼伤光环
+		if TheWorld ~= nil and TheWorld.ismastersim then
+			if inst._tq_aura_init ~= true then
+				inst._tq_aura_init = true
+				-- 使用自定义 brain，避免原 glomling 的逃跑逻辑
+				inst:SetBrain(require "brains/tqbrain")
+				-- 默认关闭嘲讽
+				inst._tq_taunt_on = false
+				-- 允许敌人将目标转到兔球球：添加可被攻击但无敌的体质
+				if inst._tq_targetable_init ~= true then
+					inst._tq_targetable_init = true
+					if inst.components.health == nil then
+						inst:AddComponent("health")
+					end
+					inst.components.health:SetMaxHealth(100)
+					inst.components.health:SetPercent(1)
+					inst.components.health:SetInvincible(true)
+					if inst.components.combat == nil then
+						inst:AddComponent("combat")
+					end
+					-- 一些检索会通过内部标记判断是否可作战目标
+					if not inst:HasTag("_combat") then inst:AddTag("_combat") end
+					if not inst:HasTag("_health") then inst:AddTag("_health") end
+					if inst:HasTag("notarget") then inst:RemoveTag("notarget") end
+				end
+				-- follower.leader 守护：防止 leader 被解绑后导致快捷键误判
+				-- 优化：频率 0.5s → 2.0s（leader 不会突然消失，2s 完全够用）
+				if inst._tq_leader_guard ~= true then
+					inst._tq_leader_guard = true
+					inst:DoPeriodicTask(2.0, function(p)
+						if p == nil or not p:IsValid() then return end
+						if p.components == nil or p.components.follower == nil then return end
+						local cur_leader = p.components.follower.leader
+						if (cur_leader == nil or not cur_leader:IsValid()) and p._tq_owner ~= nil then
+							local owner = p._tq_owner
+							if owner:IsValid() and owner.components ~= nil
+								and owner.components.health ~= nil
+								and not owner.components.health:IsDead() then
+								p.components.follower:SetLeader(owner)
+								owner._tq_pet = p
+							end
+						end
+					end)
+				end
+				-- 每秒对半径2.5内的指定目标造成5点伤害
+				inst:DoPeriodicTask(1, function(i)
+					if i.components ~= nil and i.components.health ~= nil and i.components.health:IsDead() then
+						return
+					end
+					-- 只在有跟随者时工作
+					local leader = i.components.follower ~= nil and i.components.follower.leader or nil
+					if leader == nil or (leader.components ~= nil and leader.components.health ~= nil and leader.components.health:IsDead()) then
+						return
+					end
+					-- 仅三类目标来源：玩家当前攻击目标 / 正在攻击玩家 / 正在攻击兔球球
+					local leader_target = nil
+					local primary = nil
+					if leader.components ~= nil and leader.components.combat ~= nil then
+						local lt = leader.components.combat.target
+						if lt ~= nil and lt:IsValid() and lt.components ~= nil and lt.components.health ~= nil and not lt.components.health:IsDead() then
+							leader_target = lt
+							primary = lt
+						end
+					end
+					-- 其次：正在攻击玩家的生物
+					if primary == nil then
+						primary = FindEntity(i, 10, function(e)
+							return e ~= nil and e ~= i
+								and e.components ~= nil
+								and e.components.combat ~= nil
+								and e.components.combat.target == leader
+								and e.components.health ~= nil
+								and not e.components.health:IsDead()
+						end, nil, {"player", "companion", "wall", "INLIMBO", "tq_pet", "xjxb_pet"})
+					end
+					-- 再次：正在攻击兔球球的生物
+					if primary == nil then
+						primary = FindEntity(i, 10, function(e)
+							return e ~= nil and e ~= i
+								and e.components ~= nil
+								and e.components.combat ~= nil
+								and e.components.combat.target == i
+								and e.components.health ~= nil
+								and not e.components.health:IsDead()
+						end, nil, {"player", "companion", "wall", "INLIMBO", "tq_pet", "xjxb_pet"})
+					end
+					-- 若有主要目标且距离不超过50，让兔球主动靠近；否则不追击，保持跟随玩家
+					if primary ~= nil and i.components.locomotor ~= nil then
+						local distsq = i:GetDistanceSqToInst(primary)
+						if distsq ~= nil and distsq <= 50 * 50 then
+							i.components.locomotor:GoToEntity(primary)
+						end
+					end
+					-- 在半径2.5内对符合条件的单位造成伤害：
+					-- 1）玩家当前攻击的目标
+					-- 2）正在攻击玩家的单位
+					local x, y, z = i.Transform:GetWorldPosition()
+					local ents = TheSim:FindEntities(
+						x, y, z, 2.5,
+						nil,
+						{"player", "companion", "wall", "INLIMBO", "tq_pet", "xjxb_pet"}
+					)
+					for _, e in ipairs(ents) do
+						if e ~= nil and e ~= i and e.components ~= nil and e.components.health ~= nil and not e.components.health:IsDead() then
+							local is_leader_target = (leader.components ~= nil and leader.components.combat ~= nil and leader.components.combat.target == e)
+							local is_attacking_leader = (e.components.combat ~= nil and e.components.combat.target == leader)
+							local is_attacking_tq = (e.components.combat ~= nil and e.components.combat.target == i)
+							if is_leader_target or is_attacking_leader or is_attacking_tq then
+								if e.components.combat ~= nil or e:HasTag("_combat") or e:HasTag("_health") then
+									e.components.health:DoDelta(-15, false, "tq_aura", nil, i)
+								end
+							end
+						end
+					end
+					-- 吸引仇恨：仅限三类对象（玩家攻击目标 / 正在攻击玩家 / 正在攻击兔球球），仅在开启嘲讽时执行
+					if i._tq_taunt_on then
+						local taunt_radius = 8
+						local mobs = TheSim:FindEntities(x, y, z, taunt_radius, nil, {"player", "companion", "wall", "INLIMBO", "tq_pet", "xjxb_pet"})
+						for _, m in ipairs(mobs) do
+							if m ~= nil and m ~= i and m.components ~= nil and m.components.health ~= nil and not m.components.health:IsDead() and m.components.combat ~= nil then
+								local tgt = m.components.combat.target
+								local is_players_target = (leader_target ~= nil and m == leader_target)
+								local is_targeting_leader = (tgt == leader)
+								local is_targeting_tq = (tgt == i)
+								if is_players_target or is_targeting_leader or is_targeting_tq then
+									m.components.combat:SuggestTarget(i)
+									if m.components.combat.target ~= i then
+										m.components.combat:SetTarget(i)
+									end
+								end
+							end
+						end
+					end
+				end)
+			end
+		end
+	end
+
+	-- 下一帧先应用一次，避免打标签时序问题
+	inst:DoTaskInTime(0, ApplyTqOverrides)
+	-- 周期性刷新，保证存档加载或其他代码改 build 后仍然保持兔球球外观
+	-- 优化：0.1s → 1.0s（玩家根本看不出 1s 一次的切换）
+	inst:DoPeriodicTask(1.0, ApplyTqOverrides)
+
+	-- 持久化：保存/读取 tq_pet 标记
+	local _old_OnSave = inst.OnSave
+	inst.OnSave = function(inst, data)
+		if _old_OnSave ~= nil then
+			_old_OnSave(inst, data)
+		end
+		if inst:HasTag("tq_pet") then
+			data.tq_pet = true
+		end
+	end
+
+	local _old_OnLoad = inst.OnLoad
+	inst.OnLoad = function(inst, data)
+		if _old_OnLoad ~= nil then
+			_old_OnLoad(inst, data)
+		end
+		if data ~= nil and data.tq_pet then
+			inst:AddTag("tq_pet")
+			ApplyTqOverrides()
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:critter_perdling
+end)
+AddPrefabPostInit("critter_perdling", function(inst)
+    -- 客户端：确保副本容器挂载自定义 widget
+    if not TheWorld.ismastersim then
+        inst.OnEntityReplicated = function(inst_)
+            if inst_.replica ~= nil and inst_.replica.container ~= nil then
+                inst_.replica.container:WidgetSetup("xjxb_container")
+            end
+        end
+    end
+
+    -- 持久化实体本体
+    inst.persists = true
+
+    -- 服务器：容器预创建（保证读档能恢复物品），默认不可打开，只有打上 xjxb_pet 后再开启
+    if TheWorld ~= nil and TheWorld.ismastersim then
+        if inst.components.container == nil then
+            inst:AddComponent("container")
+            inst.components.container:WidgetSetup("xjxb_container")
+            inst.components.container.canbeopened = false
+            inst.components.container.skipopensnd = true
+            inst.components.container.skipclosesnd = true
+        end
+        -- 应用可配置保鲜模式
+        ApplyContainerPreserve(inst, (GetModConfigData("xjxb_preserve_mode") or "normal"))
+    end
+
+    local function ApplyXjxbOverrides()
+        if not inst:HasTag("xjxb_pet") then
+            return
+        end
+
+        -- 名称与检查文本
+        inst.displaynamefn = function() return "星际小宝" end
+        if inst.components ~= nil and inst.components.inspectable ~= nil then
+            inst.components.inspectable.description = "迷路的小外星人"
+        end
+
+        -- 外观/静音/发光
+        if inst.AnimState ~= nil then
+            inst.AnimState:SetBuild("xjxb")
+        end
+        MutePet(inst)
+        -- 处于隐藏（INLIMBO）或被收回（_xjxb_recalled）状态时不要启用 Light，避免光圈残留
+        if inst:HasTag("INLIMBO") or inst._xjxb_recalled then
+            if inst.Light ~= nil then inst.Light:Enable(false) end
+        else
+            if inst.Light == nil then inst.entity:AddLight() end
+            inst.Light:Enable(true)
+            inst.Light:SetRadius(3)
+            inst.Light:SetFalloff(.8)
+            inst.Light:SetIntensity(.6)
+            inst.Light:SetColour(150/255, 200/255, 255/255)
+        end
+        -- 不会饥饿/腐烂/睡觉
+        if inst.components ~= nil and inst.components.hunger ~= nil then
+            local hunger = inst.components.hunger
+            hunger:SetRate(0)
+            hunger:SetPercent(1)
+            if hunger.max ~= nil then hunger.current = hunger.max end
+        end
+        if inst.components ~= nil and inst.components.perishable ~= nil then
+            inst.components.perishable.StartPerishing = SPE_StopPerishingStart
+            inst.components.perishable:StopPerishing()
+            inst.components.perishable:SetPercent(1)
+        end
+        if inst.components ~= nil and inst.components.sleeper ~= nil then
+            inst.components.sleeper:SetSleepTest(PetSleepTestAlwaysFalse)
+        end
+
+        -- 服务器：把 brain 替换为专用 brain（仅在脑被原版脑恢复时执行一次），
+        -- 防止 critter_perdling 原版 brain 中饥饿驱动的"停止跟随"行为。
+        if TheWorld ~= nil and TheWorld.ismastersim and inst._xjxb_brain_set ~= true then
+            inst._xjxb_brain_set = true
+            inst:SetBrain(require "brains/xjxbpetbrain")
+        end
+
+        -- 服务器：follower.leader 守护 —— 防止饥饿/脑切换/外部代码把 leader 解绑
+        -- 优化：频率 0.5s → 2.0s（leader 不会频繁丢失，2s 足够）
+        if TheWorld ~= nil and TheWorld.ismastersim and inst._xjxb_leader_guard ~= true then
+            inst._xjxb_leader_guard = true
+            inst:DoPeriodicTask(2.0, function(p)
+                if p == nil or not p:IsValid() then return end
+                if p.components == nil or p.components.follower == nil then return end
+                local cur_leader = p.components.follower.leader
+                -- leader 丢失或失效时，按宠物上记录的 _xjxb_owner 自动恢复
+                if (cur_leader == nil or not cur_leader:IsValid()) and p._xjxb_owner ~= nil then
+                    local owner = p._xjxb_owner
+                    if owner:IsValid() and owner.components ~= nil
+                        and owner.components.health ~= nil
+                        and not owner.components.health:IsDead() then
+                        p.components.follower:SetLeader(owner)
+                        owner._xjxb_pet = p
+                    end
+                end
+            end)
+        end
+
+        -- 服务器：允许打开容器
+        if TheWorld ~= nil and TheWorld.ismastersim and inst.components.container ~= nil then
+            inst.components.container.canbeopened = true
+        end
+    end
+
+    -- 首帧与周期性校正（频率从 0.1s 调整为 1.0s）
+    inst:DoTaskInTime(0, ApplyXjxbOverrides)
+    inst:DoPeriodicTask(1.0, ApplyXjxbOverrides)
+
+    -- 存读档：保留 xjxb_pet 标记（容器内容由组件自动序列化）
+    local _old_OnSave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        if _old_OnSave ~= nil then _old_OnSave(inst, data) end
+        if inst:HasTag("xjxb_pet") then data.xjxb_pet = true end
+    end
+    local _old_OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data)
+        if _old_OnLoad ~= nil then _old_OnLoad(inst, data) end
+        if data ~= nil and data.xjxb_pet then
+            inst:AddTag("xjxb_pet")
+            ApplyXjxbOverrides()
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:esctemplate
+-- 赋予角色读书能力（读威克伯顿的书，并解锁书籍标签下的合成）
+AddPrefabPostInit("esctemplate", function(inst)
+    if not TheWorld.ismastersim then return end
+    if inst.components.reader == nil then
+        inst:AddComponent("reader")
+    end
+    -- 允许在“书籍”标签下制作书本
+    if not inst:HasTag("bookbuilder") then
+        inst:AddTag("bookbuilder")
+    end
+
+    inst:DoTaskInTime(0, function()
+        if inst == nil or not inst:IsValid() then return end
+        local talker = inst.components and inst.components.talker or nil
+        if talker == nil or talker._xxtpack_filter_applied then
+            return
+        end
+        talker._xxtpack_filter_applied = true
+        local _Say = talker.Say
+        talker.Say = function(self, message, ...)
+            local target_str = STRINGS and STRINGS.CHARACTERS and STRINGS.CHARACTERS.ESCTEMPLATE and STRINGS.CHARACTERS.ESCTEMPLATE.ANNOUNCE_INV_FULL or nil
+            if type(message) == "string" then
+                if message == (target_str or "") or message == "背包已经装满了" or message == "你的背包已经装满了" then
+                    local backpack = FindXxtpackBackpack(inst)
+                    if backpack ~= nil and backpack:IsValid() then
+                        local container = backpack.components and backpack.components.container or nil
+                        if container ~= nil then
+                            local num_slots = container:GetNumSlots()
+                            for slot = 1, num_slots do
+                                local existing = container:GetItemInSlot(slot)
+                                if existing == nil then
+                                    return
+                                end
+                                local estack = existing.components and existing.components.stackable or nil
+                                if estack ~= nil and not estack:IsFull() then
+                                    return
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            return _Say(self, message, ...)
+        end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：玖渚澪 / Kunagisa Mio (Mod 3821415777)
+- **变体场景与切面**：收录来自工坊 Mod 3821415777 (`玖渚澪 / Kunagisa Mio`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3821415777)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:curseditem
+require("mio_skin_binding").Install(AddComponentPostInit)
+AddComponentPostInit("curseditem", require("mio_monkey_curse").Item)
+
+Assets = {
+    Asset("ANIM", "anim/mio_shadow_actions.zip"),
+    Asset("ANIM", "anim/mio.zip"),
+    Asset("ANIM", "anim/mio_head_ui.zip"),
+    Asset("ANIM", "anim/mio_ui_compat.zip"),
+    Asset("ANIM", "anim/mio_actions_000.zip"),
+    Asset("ANIM", "anim/mio_actions_001.zip"),
+    Asset("ANIM", "anim/mio_actions_002.zip"),
+    Asset("ANIM", "anim/mio_actions_003.zip"),
+    Asset("ANIM", "anim/mio_actions_004.zip"),
+    Asset("ANIM", "anim/mio_actions_005.zip"),
+    Asset("ANIM", "anim/mio_actions_006.zip"),
+    Asset("ANIM", "anim/mio_actions_007.zip"),
+    Asset("ANIM", "anim/mio_actions_008.zip"),
+    Asset("ANIM", "anim/mio_actions_009.zip"),
+    Asset("ANIM", "anim/mio_actions_010.zip"),
+    Asset("ANIM", "anim/mio_actions_011.zip"),
+    Asset("ANIM", "anim/mio_actions_012.zip"),
+    Asset("ANIM", "anim/mio_actions_013.zip"),
+    Asset("ANIM", "anim/mio_actions_014.zip"),
+    Asset("ANIM", "anim/mio_actions_015.zip"),
+    Asset("ANIM", "anim/mio_actions_016.zip"),
+    Asset("ANIM", "anim/mio_actions_017.zip"),
+    Asset("ANIM", "anim/mio_actions_018.zip"),
+    Asset("ANIM", "anim/mio_actions_019.zip"),
+    Asset("ANIM", "anim/mio_actions_020.zip"),
+    Asset("ANIM", "anim/mio_actions_021.zip"),
+    Asset("ANIM", "anim/mio_actions_022.zip"),
+    Asset("ANIM", "anim/mio_actions_023.zip"),
+    Asset("ANIM", "anim/mio_actions_024.zip"),
+    Asset("ANIM", "anim/mio_actions_025.zip"),
+    Asset("ANIM", "anim/mio_actions_026.zip"),
+    Asset("ANIM", "anim/mio_actions_027.zip"),
+    Asset("ANIM", "anim/mio_actions_028.zip"),
+    Asset("ANIM", "anim/mio_actions_029.zip"),
+    Asset("ANIM", "anim/mio_actions_030.zip"),
+    Asset("ANIM", "anim/mio_actions_031.zip"),
+    Asset("ANIM", "anim/mio_actions_032.zip"),
+    Asset("ANIM", "anim/mio_actions_033.zip"),
+    Asset("ANIM", "anim/mio_actions_034.zip"),
+    Asset("ANIM", "anim/mio_actions_035.zip"),
+    Asset("ANIM", "anim/mio_actions_036.zip"),
+    Asset("ANIM", "anim/mio_actions_037.zip"),
+    Asset("ANIM", "anim/mio_actions_038.zip"),
+    Asset("ANIM", "anim/mio_actions_039.zip"),
+    Asset("ANIM", "anim/mio_actions_040.zip"),
+    Asset("ANIM", "anim/mio_actions_041.zip"),
+    Asset("ANIM", "anim/mio_actions_042.zip"),
+    Asset("ANIM", "anim/mio_actions_043.zip"),
+    Asset("ANIM", "anim/mio_actions_044.zip"),
+    Asset("ANIM", "anim/mio_actions_045.zip"),
+    Asset("ANIM", "anim/mio_actions_046.zip"),
+    Asset("ANIM", "anim/mio_actions_047.zip"),
+    Asset("ANIM", "anim/mio_actions_048.zip"),
+    Asset("ANIM", "anim/mio_actions_049.zip"),
+    Asset("ANIM", "anim/mio_actions_050.zip"),
+    Asset("ANIM", "anim/mio_actions_051.zip"),
+    Asset("ANIM", "anim/mio_actions_052.zip"),
+    Asset("ANIM", "anim/mio_actions_053.zip"),
+    Asset("ANIM", "anim/mio_actions_054.zip"),
+    Asset("ANIM", "anim/mio_actions_055.zip"),
+    Asset("ANIM", "anim/mio_actions_056.zip"),
+    Asset("ANIM", "anim/mio_actions_057.zip"),
+    Asset("ANIM", "anim/mio_actions_058.zip"),
+    Asset("ANIM", "anim/mio_actions_059.zip"),
+    Asset("ANIM", "anim/mio_actions_060.zip"),
+    Asset("ANIM", "anim/mio_actions_061.zip"),
+    Asset("ANIM", "anim/mio_actions_062.zip"),
+    Asset("ANIM", "anim/mio_actions_063.zip"),
+    Asset("ANIM", "anim/mio_actions_064.zip"),
+    Asset("ANIM", "anim/mio_actions_065.zip"),
+    Asset("ANIM", "anim/mio_actions_066.zip"),
+    Asset("ANIM", "anim/mio_actions_067.zip"),
+    Asset("ANIM", "anim/mio_actions_068.zip"),
+    Asset("ANIM", "anim/mio_actions_069.zip"),
+    Asset("ANIM", "anim/mio_actions_070.zip"),
+    Asset("ANIM", "anim/mio_actions_071.zip"),
+    Asset("ANIM", "anim/mio_actions_072.zip"),
+    Asset("ANIM", "anim/mio_actions_073.zip"),
+    Asset("ANIM", "anim/mio_actions_074.zip"),
+    Asset("ANIM", "anim/mio_actions_075.zip"),
+    Asset("ANIM", "anim/mio_actions_076.zip"),
+    Asset("ANIM", "anim/mio_actions_077.zip"),
+    Asset("ANIM", "anim/mio_actions_078.zip"),
+    Asset("ANIM", "anim/mio_actions_079.zip"),
+    Asset("ANIM", "anim/mio_actions_080.zip"),
+    Asset("ANIM", "anim/mio_actions_081.zip"),
+    Asset("ANIM", "anim/mio_actions_082.zip"),
+    Asset("ANIM", "anim/mio_actions_083.zip"),
+    Asset("ANIM", "anim/mio_actions_084.zip"),
+    Asset("ANIM", "anim/mio_actions_085.zip"),
+    Asset("ANIM", "anim/mio_actions_086.zip"),
+    Asset("ANIM", "anim/mio_actions_087.zip"),
+    Asset("ANIM", "anim/mio_actions_088.zip"),
+    Asset("ANIM", "anim/mio_actions_089.zip"),
+    Asset("ANIM", "anim/mio_actions_090.zip"),
+    Asset("ANIM", "anim/mio_actions_091.zip"),
+    Asset("ANIM", "anim/mio_actions_092.zip"),
+
+    Asset("ANIM", "anim/mio.zip"),
+    Asset("ANIM", "anim/ghost_mio_build.zip"),
+    Asset("ATLAS", "images/map_icons/mio.xml"),
+    Asset("IMAGE", "images/map_icons/mio.tex"),
+    Asset("ATLAS", "images/avatars/avatar_mio.xml"),
+    Asset("IMAGE", "images/avatars/avatar_mio.tex"),
+    Asset("ATLAS", "images/avatars/avatar_ghost_mio.xml"),
+    Asset("IMAGE", "images/avatars/avatar_ghost_mio.tex"),
+    Asset("ATLAS", "images/avatars/self_inspect_mio.xml"),
+    Asset("IMAGE", "images/avatars/avatar_mio.tex"),
+    Asset("ATLAS", "images/saveslot_portraits/mio.xml"),
+    Asset("IMAGE", "images/saveslot_portraits/mio.tex"),
+    Asset("ATLAS", "images/selectscreen_portraits/mio.xml"),
+    Asset("IMAGE", "images/selectscreen_portraits/mio.tex"),
+    Asset("ATLAS", "images/selectscreen_portraits/mio_silho.xml"),
+    Asset("IMAGE", "images/selectscreen_portraits/mio_silho.tex"),
+    Asset("ATLAS", "bigportraits/mio_none.xml"),
+    Asset("IMAGE", "bigportraits/mio.tex"),
+    Asset("ATLAS", "bigportraits/mio.xml"),
+    Asset("IMAGE", "bigportraits/mio.tex"),
+}
+
+-- Relic-only depth variants share original poses and build symbols.
+for i=0,20 do
+    Assets[#Assets+1]=Asset("ANIM",string.format("anim/mio_relicfront_actions_%03d.zip",i))
+end
+
+-- The approved Kai face is private to Mio UI Text instances.
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_kaiti_48.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_kaiti_144.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_slot_2.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_activation_4.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_activation_5.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_activation_15.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_toast_16.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_toast_32.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_oracle_8.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_status_5.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_toast_soft.zip")
+Assets[#Assets+1]=Asset("FONT","fonts/mio_ui_shadow_category_7.zip")
+local native_ui_font_root=MODROOT
+AddSimPostInit(function()require("mio_native_font").Install(native_ui_font_root)end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+AddMinimapAtlas("images/map_icons/mio.xml")
+AddStategraphPostInit("wilson",require("mio_nightlight_sg"))
+AddPrefabPostInit("smallghost",function(inst)require("mio_smallghost").Install(inst)end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:smallghost
+AddStategraphPostInit("wilson",require("mio_nightlight_sg"))
+AddPrefabPostInit("smallghost",function(inst)require("mio_smallghost").Install(inst)end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:kunagisamio_building_starleap_boat
+-- The bottle stays carried while its deployed star boat is a separate entity.
+AddPrefabPostInit("kunagisamio_building_starleap_boat",function(inst)
+    require("mio_relic_mapicon").Install(inst,33)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mio
+end)
+AddPrefabPostInit("mio", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        inst:AddComponent("mio_starsequence")
+        inst:DoTaskInTime(0, function() inst.components.mio_starsequence:Publish() end)
+    end
+end)
+
+```
+
