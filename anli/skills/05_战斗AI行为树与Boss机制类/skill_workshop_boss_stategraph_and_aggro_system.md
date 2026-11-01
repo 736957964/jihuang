@@ -800,3 +800,93 @@ end)
 
 ```
 
+
+
+### 变体演进：世界生成兼容 (Mod 3798999176)
+- **变体场景与切面**：收录来自工坊 Mod 3798999176 (`世界生成兼容`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3798999176)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+local function InstallCombatReplicaGuard()
+    AddComponentPostInit("combat", function(combat)
+        if combat == nil or combat._wgc_set_last_target_guarded then
+            return
+        end
+
+        local original_set_last_target = combat.SetLastTarget
+        if type(original_set_last_target) ~= "function" then
+            return
+        end
+
+        combat._wgc_set_last_target_guarded = true
+        combat.SetLastTarget = function(self, target)
+            local valid_target = target ~= nil and target:IsValid()
+            self.lasttargetGUID = valid_target and target.GUID or nil
+
+            local replica = self.inst ~= nil and self.inst.replica or nil
+            if replica == nil or replica.combat == nil then
+                return
+            end
+
+            replica.combat:SetLastTarget(valid_target and target or nil)
+        end
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:chimineafire
+    -- melter scales the effective snow-clearing radius with the flame level.
+    AddPrefabPostInit("chimineafire", function(inst)
+        AddWinterlandsSnowMelter(inst, GetWinterlandsSnowRange(1))
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:obsidianfirefire
+    -- scaling as a normal firepit, but give it a 25% larger base range.
+    AddPrefabPostInit("obsidianfirefire", function(inst)
+        AddWinterlandsSnowMelter(inst, GetWinterlandsSnowRange(1.25))
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:polarbear
+if MAMMOTH_PEACE_ENABLED then
+    AddPrefabPostInit("polarbear", InstallPolarBearMammothCompatibility)
+end
+
+-- Track both forms; vanilla transfers the paired targets on every swap.
+local cave_link = require("wgc_cave_link")
+if CAVE_FUSION_ENABLED then
+    AddPrefabPostInit("tentacle_pillar", cave_link.Attach)
+    AddPrefabPostInit("tentacle_pillar_hole", cave_link.Attach)
+end
+
+local function PairFusionCaveHoles()
+    if not CAVE_FUSION_ENABLED
+        or _G.TheWorld == nil
+        or not _G.TheWorld.ismastersim
+        or not _G.TheWorld:HasTag("cave") then
+        return
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tentacle_pillar
+if CAVE_FUSION_ENABLED then
+    AddPrefabPostInit("tentacle_pillar", cave_link.Attach)
+    AddPrefabPostInit("tentacle_pillar_hole", cave_link.Attach)
+end
+
+local function PairFusionCaveHoles()
+    if not CAVE_FUSION_ENABLED
+        or _G.TheWorld == nil
+        or not _G.TheWorld.ismastersim
+        or not _G.TheWorld:HasTag("cave") then
+        return
+    end
+
+```
+

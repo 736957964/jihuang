@@ -7010,3 +7010,26 @@
 [2026-11-01 13:12:36] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 13:12:36] Reducer: 成功将 Mod 3797282687 (rana_lang) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 13:12:36] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:12:42] Git 自动提交并推送成功！
+[2026-11-01 13:12:42] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 13:12:42] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 13:13:12] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3776034639', '3798999176', '3422869992', '3581669274', '833060148', '1247040097']
+[2026-11-01 13:13:12] SteamCMD 下载 3776034639 ...
+[2026-11-01 13:13:12] SteamCMD 下载 3798999176 ...
+[2026-11-01 13:13:12] SteamCMD 下载 3422869992 ...
+[2026-11-01 13:13:12] SteamCMD 下载 3581669274 ...
+[2026-11-01 13:13:12] SteamCMD 下载 833060148 ...
+[2026-11-01 13:13:12] SteamCMD 下载 1247040097 ...
+[2026-11-01 13:13:25] Worker [3776034639] 成功解析入库暂存区 -> INVENTORY_SORT_KEY (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 13:13:37] Worker [3798999176] 成功解析入库暂存区 -> 世界生成兼容 (类别: 05_战斗AI行为树与Boss机制类)
+[2026-11-01 13:13:49] Worker [3422869992] 过滤拦截:  (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 13:14:14] Worker [3581669274] 成功解析入库暂存区 -> 圣园未花 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 13:14:59] Worker [833060148] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 13:15:25] Worker [1247040097] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 13:15:25] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 13:15:25] Reducer: 成功将 Mod 3581669274 (圣园未花) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:15:25] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:15:25] Reducer: 成功将 Mod 3776034639 (INVENTORY_SORT_KEY) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:15:25] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:15:25] Reducer: 成功将 Mod 3798999176 (世界生成兼容) 增量归约合入既有权威母本 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md
+[2026-11-01 13:15:25] Reducer: 完成母本归约并清理草稿 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md

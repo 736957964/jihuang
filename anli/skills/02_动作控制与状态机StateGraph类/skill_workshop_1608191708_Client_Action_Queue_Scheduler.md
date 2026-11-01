@@ -55303,3 +55303,452 @@ local function HookRanaPlayerDespawn(inst)
 
 ```
 
+
+
+### 变体演进：圣园未花 (Mod 3581669274)
+- **变体场景与切面**：收录来自工坊 Mod 3581669274 (`圣园未花`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3581669274)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skinner
+    -- 人物皮肤的init_fn 和 clear_fn
+    AddComponentPostInit("skinner", function(self)
+        local oldfn = self.SetSkinName
+        if oldfn then
+            function self.SetSkinName(s, skinname, ...)
+                local old = s.skin_name
+                local new = skinname
+                if characterskins[old] and characterskins[old].clear_fn then
+                    characterskins[old].clear_fn(s.inst, old)
+                end
+                if characterskins[new] and characterskins[new].init_fn then
+                    characterskins[new].init_fn(s.inst, new)
+                end
+                oldfn(s, skinname, ...)
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+function dst_lan:_hookCombat()
+    AddComponentPostInit("combat", function(self)
+        self.dstlan_atkperiodmodifiers = SourceModifierList(self.inst)
+        self.dstlan_orig_min_attack_period = self.min_attack_period
+        local p = rawget(self, "_")["min_attack_period"]
+        local old_on_map = p[2]
+        p[2] = function(self, map)
+            if old_on_map ~= nil then
+                old_on_map(self, map)
+            end
+            if self.inst.replica.combat and self.inst.replica.combat.dstlan_atkperiodmult then
+                self.inst.replica.combat.dstlan_atkperiodmult:set(self.dstlan_atkperiodmodifiers:Get())
+            end
+        end
+
+        function self:SetAttackPeriod(val)
+            self.dstlan_orig_min_attack_period = val
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:SetAtkPeriodModifier(source, mult, key)
+            self.dstlan_atkperiodmodifiers:SetModifier(source, mult, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:RemoveAtkPeriodModifier(source, key)
+            self.dstlan_atkperiodmodifiers:RemoveModifier(source, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+function dst_lan:_hookSG()
+    AddStategraphPostInit("wilson", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local combat = inst.components.combat
+            local timeout = (math.floor(13/(combat.dstlan_atkperiodmodifiers:Get())))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(combat.dstlan_atkperiodmodifiers:Get())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+function dst_lan:_hookSGClient()
+    AddStategraphPostInit("wilson_client", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local timeout = (math.floor(13/inst.replica.combat.dstlan_atkperiodmult:value()))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(inst.replica.combat.dstlan_atkperiodmult:value())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformPreviewBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cook_certificate
+    --------------------------------------------
+    AddPrefabPostInit('cook_certificate',function (inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        local old_HarvestFoodFn = inst.HarvestFoodFn
+        ---@diagnostic disable-next-line: inject-field
+        inst.HarvestFoodFn = function(inst,foodname,harvester,cookpotname,...)
+            local fuelnum = GetThisMODDishConsume(foodname)
+            if foodname and fuelnum > 0 and not table.contains(inst.foodlist,foodname) then
+                --消耗耐久
+                if inst.components.finiteuses then
+                    inst.components.finiteuses:Use(fuelnum)
+                    inst.foodlist[#inst.foodlist+1]=foodname
+                    setFoodList(inst,harvester)--同步料理列表
+                    if not RewardToiler(harvester,0.1) then--天道酬勤
+                        SpawnMedalTips(harvester,fuelnum,10)--弹幕提示
+                    end
+                end
+            end
+            return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
+        end
+    end)
+
+```
+
+
+
+### 变体演进：INVENTORY_SORT_KEY (Mod 3776034639)
+- **变体场景与切面**：收录来自工坊 Mod 3776034639 (`INVENTORY_SORT_KEY`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3776034639)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+
+    AddPrefabPostInit("reskin_tool", function(inst)
+        -- spellcaster 是服务端组件；castontargets 标签仍按原版网络同步，
+        -- 客户端右键动作无需额外自定义 RPC。
+        if not IS_SERVER or inst.components.spellcaster == nil then
+            return
+        end
+
+        local spellcaster = inst.components.spellcaster
+        local old_spell = spellcaster.spell
+        local old_can_cast = spellcaster.can_cast_fn
+
+        spellcaster:SetCanCastFn(function(doer, target, pos, tool)
+            if IsPottedPlantShapeTarget(target) then
+                return true
+            end
+            if old_can_cast ~= nil then
+                return old_can_cast(doer, target, pos, tool)
+            end
+            return false
+        end)
+
+        spellcaster:SetSpellFn(function(tool, target, pos, caster)
+            if IsPottedPlantShapeTarget(target) then
+                CyclePottedPlantShape(target)
+                return
+            end
+            if old_spell ~= nil then
+                return old_spell(tool, target, pos, caster)
+            end
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadowheart_infused
+if DIRECT_PICKUP_POSSESSED_SHADOWHEART then
+    AddPrefabPostInit("shadowheart_infused", function(inst)
+        -- 原版地面 PICKUP 动作明确排除 catchable 标签。这个标签参与
+        -- 客户端动作收集，因此客户端和服务器都必须移除；仅修改服务端
+        -- inventoryitem.canbepickedup 会导致只剩“检查”而没有“拾取”。
+        inst:RemoveTag("catchable")
+
+        if not IS_SERVER or inst.components.inventoryitem == nil then
+            return
+        end
+
+        -- 原版已有完整的 inventoryitem 与入包流程；这里只将它固定为
+        -- 可直接拾取的材料形态，不替换 prefab，也不跳过原有存档数据。
+        inst.components.inventoryitem.canbepickedup = true
+
+        -- 只有已经由上方逻辑转成静止材料形态的附身心房才允许合堆。
+        -- stackable 拆分时会重新生成同 prefab，PostInit 会再次完成相同
+        -- 初始化；上限读取当前中型物品档，可跟随 374550642 的 80/99/999。
+        if STACK_POSSESSED_SHADOWHEART then
+            EnsureDynamicStackable(inst).maxsize = GetCompatibleMediumStackLimit()
+        else
+            MakeNonMergingStackable(inst)
+        end
+
+        -- 拆解魔杖会先生成配方材料，再在同一帧把材料弹向地面，因此
+        -- 延迟到下一帧清掉抛射速度。关闭 brainfn 可防止入包后再次丢下
+        -- 或眩晕结束时重启逃跑 AI；保留 locomotor 组件供原版代码安全访问。
+        local function ImmobilizePossessedShadowheart(target)
+            if target == nil or not target:IsValid() then
+                return
+            end
+
+            target:SetBrain(nil)
+            if target.components.locomotor ~= nil then
+                target.components.locomotor:Stop()
+                target.components.locomotor:SetExternalSpeedMultiplier(
+                    target,
+                    "ultimate_r_key_sorter_pickup",
+                    0
+                )
+            end
+            if target.Physics ~= nil then
+                target.Physics:Stop()
+            end
+        end
+
+        ImmobilizePossessedShadowheart(inst)
+        inst:DoTaskInTime(0, ImmobilizePossessedShadowheart)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:unwrappable
+    -- 容器或捆绑的存档记录；这里只补数量 1，不删除或重建任何物品。
+    AddComponentPostInit("unwrappable", function(unwrappable)
+        local function NormalizeDynamicStackAmounts()
+            local visited = {}
+            local function Visit(value)
+                if type(value) ~= "table" or visited[value] then
+                    return
+                end
+                visited[value] = true
+
+                local stackdata = value.prefab ~= nil
+                    and type(value.data) == "table"
+                    and type(value.data.stackable) == "table"
+                    and value.data.stackable or nil
+                if stackdata ~= nil and stackdata.stack == nil
+                    and (stackdata.add_component_if_missing == true
+                        or value.prefab == "blueprint"
+                        or value.prefab == "sketch")
+                then
+                    stackdata.stack = 1
+                end
+
+                for _, child in pairs(value) do
+                    Visit(child)
+                end
+            end
+            Visit(unwrappable.itemdata)
+        end
+
+        local old_on_load = unwrappable.OnLoad
+        unwrappable.OnLoad = function(self, data)
+            local result = old_on_load(self, data)
+            NormalizeDynamicStackAmounts()
+            return result
+        end
+
+        local old_wrap_items = unwrappable.WrapItems
+        unwrappable.WrapItems = function(self, items, doer)
+            local result = old_wrap_items(self, items, doer)
+            NormalizeDynamicStackAmounts()
+            return result
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+        AddComponentPostInit("inventory", function(inventory)
+            local old_next_slot = inventory.GetNextAvailableSlot
+            inventory.GetNextAvailableSlot = function(self, item)
+                return WithPaperMergeItem(item, function()
+                    return old_next_slot(self, item)
+                end)
+            end
+
+            local old_can_accept = inventory.CanAcceptCount
+            inventory.CanAcceptCount = function(self, item, maxcount)
+                return WithPaperMergeItem(item, function()
+                    return old_can_accept(self, item, maxcount)
+                end)
+            end
+
+            local old_give_item = inventory.GiveItem
+            inventory.GiveItem = function(self, item, slot, src_pos)
+                if IsPaper(item) then
+                    if slot ~= nil and IsDifferentPaperPair(item, self:GetItemInSlot(slot)) then
+                        slot = nil
+                    elseif slot == nil and item.prevcontainer == nil and item.prevslot ~= nil
+                        and IsDifferentPaperPair(item, self:GetItemInSlot(item.prevslot))
+                    then
+                        item.prevslot = nil
+                    end
+                    if item.prevcontainer ~= nil and item.prevslot ~= nil then
+                        local prevtarget = item.prevcontainer.inst ~= nil
+                            and item.prevcontainer.inst:IsValid()
+                            and item.prevcontainer:GetItemInSlot(item.prevslot)
+                            or nil
+                        if IsDifferentPaperPair(item, prevtarget) then
+                            item.prevcontainer = nil
+                            item.prevslot = nil
+                        end
+                    end
+                end
+                return WithPaperMergeItem(item, function()
+                    return old_give_item(self, item, slot, src_pos)
+                end)
+            end
+
+            local old_combine = inventory.CombineActiveStackWithSlot
+            inventory.CombineActiveStackWithSlot = function(self, slot, stack_mod)
+                if IsDifferentPaperPair(self:GetActiveItem(), self:GetItemInSlot(slot)) then
+                    return
+                end
+                return old_combine(self, slot, stack_mod)
+            end
+
+            local old_add_one = inventory.AddOneOfActiveItemToSlot
+            inventory.AddOneOfActiveItemToSlot = function(self, slot)
+                local active = self:GetActiveItem()
+                return WithPaperMergeItem(active, function()
+                    return old_add_one(self, slot)
+                end)
+            end
+
+            local old_add_all = inventory.AddAllOfActiveItemToSlot
+            inventory.AddAllOfActiveItemToSlot = function(self, slot)
+                if IsDifferentPaperPair(self:GetActiveItem(), self:GetItemInSlot(slot)) then
+                    return
+                end
+                return old_add_all(self, slot)
+            end
+        end)
+
+        AddComponentPostInit("container", function(container)
+            local old_can_accept = container.CanAcceptCount
+            container.CanAcceptCount = function(self, item, maxcount)
+                return WithPaperMergeItem(item, function()
+                    return old_can_accept(self, item, maxcount)
+                end)
+            end
+
+            local old_give_item = container.GiveItem
+            container.GiveItem = function(self, item, slot, src_pos, drop_on_fail)
+                if IsPaper(item)
+                    and slot ~= nil
+                    and IsDifferentPaperPair(item, self:GetItemInSlot(slot))
+                then
+                    slot = nil
+                end
+                return WithPaperMergeItem(item, function()
+                    return old_give_item(self, item, slot, src_pos, drop_on_fail)
+                end)
+            end
+
+            local old_add_one = container.AddOneOfActiveItemToSlot
+            container.AddOneOfActiveItemToSlot = function(self, slot, opener)
+                local inventory = opener ~= nil and opener.components.inventory or nil
+                local active = inventory ~= nil and inventory:GetActiveItem() or nil
+                return WithPaperMergeItem(active, function()
+                    return old_add_one(self, slot, opener)
+                end)
+            end
+
+            local old_add_all = container.AddAllOfActiveItemToSlot
+            container.AddAllOfActiveItemToSlot = function(self, slot, opener)
+                local inventory = opener ~= nil and opener.components.inventory or nil
+                local active = inventory ~= nil and inventory:GetActiveItem() or nil
+                if IsDifferentPaperPair(active, self:GetItemInSlot(slot)) then
+                    return
+                end
+                return old_add_all(self, slot, opener)
+            end
+        end)
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+
+        AddComponentPostInit("container", function(container)
+            local old_can_accept = container.CanAcceptCount
+            container.CanAcceptCount = function(self, item, maxcount)
+                return WithPaperMergeItem(item, function()
+                    return old_can_accept(self, item, maxcount)
+                end)
+            end
+
+            local old_give_item = container.GiveItem
+            container.GiveItem = function(self, item, slot, src_pos, drop_on_fail)
+                if IsPaper(item)
+                    and slot ~= nil
+                    and IsDifferentPaperPair(item, self:GetItemInSlot(slot))
+                then
+                    slot = nil
+                end
+                return WithPaperMergeItem(item, function()
+                    return old_give_item(self, item, slot, src_pos, drop_on_fail)
+                end)
+            end
+
+            local old_add_one = container.AddOneOfActiveItemToSlot
+            container.AddOneOfActiveItemToSlot = function(self, slot, opener)
+                local inventory = opener ~= nil and opener.components.inventory or nil
+                local active = inventory ~= nil and inventory:GetActiveItem() or nil
+                return WithPaperMergeItem(active, function()
+                    return old_add_one(self, slot, opener)
+                end)
+            end
+
+            local old_add_all = container.AddAllOfActiveItemToSlot
+            container.AddAllOfActiveItemToSlot = function(self, slot, opener)
+                local inventory = opener ~= nil and opener.components.inventory or nil
+                local active = inventory ~= nil and inventory:GetActiveItem() or nil
+                if IsDifferentPaperPair(active, self:GetItemInSlot(slot)) then
+                    return
+                end
+                return old_add_all(self, slot, opener)
+            end
+        end)
+
+```
+

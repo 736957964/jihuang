@@ -7752,8 +7752,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 13:12:36",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3581669274",
+      "name": "圣园未花",
+      "author": "小星&I72",
+      "version": "1.0.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:15:25",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3776034639",
+      "name": "INVENTORY_SORT_KEY",
+      "author": "Scam",
+      "version": "3.12.27",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:15:25",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3798999176",
+      "name": "世界生成兼容",
+      "author": "DST Project",
+      "version": "1.0.1",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 13:15:25",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:12:36"
+  "lastUpdated": "2026-11-01 13:15:25"
 }
