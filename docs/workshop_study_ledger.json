@@ -6852,8 +6852,53 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 11:01:23",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1115709310",
+      "name": "Language",
+      "author": "柴柴",
+      "version": "1.4.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 11:06:12",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2210996709",
+      "name": "Title",
+      "author": "傳說覺悟",
+      "version": "2.0.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 11:06:13",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2320254122",
+      "name": "蛞蝓猫",
+      "author": "Wulmaw & 楓喵",
+      "version": "1.4.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 11:06:13",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2994312711",
+      "name": "别吃！dont eat",
+      "author": "hxz5215",
+      "version": "1.1.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 11:06:13",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3586074130",
+      "name": "Abigail Sisturn Animation",
+      "author": "Lilith Is Gone",
+      "version": "1.0.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 11:06:13",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 11:01:23"
+  "lastUpdated": "2026-11-01 11:06:13"
 }

@@ -8790,3 +8790,353 @@ AddModCharacter("rui", "MALE", skin_modes)
 
 ```
 
+
+
+### 变体演进：蛞蝓猫 (Mod 2320254122)
+- **变体场景与切面**：收录来自工坊 Mod 2320254122 (`蛞蝓猫`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2320254122)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minisign
+
+AddPrefabPostInit("minisign", draw)
+AddPrefabPostInit("minisign_drawn", draw)
+
+local Eggs = {
+    "bird_egg", "bird_egg_cooked", "rottenegg", "tallbirdegg", "tallbirdegg_cracked", "tallbirdegg_cooked"
+}
+
+for k,v in pairs(Eggs) do
+   AddPrefabPostInit(v, function(inst)
+             if not TheWorld.ismastersim then
+                  return inst
+            end
+
+
+                 if inst.components.edible then
+                        inst.components.edible.foodtype = FOODTYPE.EGG
+             end           
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minisign_drawn
+AddPrefabPostInit("minisign", draw)
+AddPrefabPostInit("minisign_drawn", draw)
+
+local Eggs = {
+    "bird_egg", "bird_egg_cooked", "rottenegg", "tallbirdegg", "tallbirdegg_cracked", "tallbirdegg_cooked"
+}
+
+for k,v in pairs(Eggs) do
+   AddPrefabPostInit(v, function(inst)
+             if not TheWorld.ismastersim then
+                  return inst
+            end
+
+
+                 if inst.components.edible then
+                        inst.components.edible.foodtype = FOODTYPE.EGG
+             end           
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:pickable
+
+AddComponentPostInit("pickable", function(self)
+    local OldPick = self.Pick
+    function self:Pick(picker, ...)
+        if picker and picker.prefab == "xcz" then
+    if self.canbepicked and self.caninteractwith then
+        if self.transplanted and self.cycles_left ~= nil then
+            self.cycles_left = math.max(0, self.cycles_left - 1)
+        end
+
+        if self.protected_cycles ~= nil then
+            self.protected_cycles = self.protected_cycles - 1
+            if self.protected_cycles <= 0 then
+                self.protected_cycles = nil
+                if self.inst.components.witherable ~= nil then
+                    self.inst.components.witherable:Enable(true)
+                end
+            end
+        end
+
+        local loot = nil
+        if picker ~= nil and picker.components.inventory ~= nil and self.product ~= nil then
+            if self.droppicked and self.inst.components.lootdropper ~= nil then
+                local num = self.numtoharvest or 1
+                local pt = self.inst:GetPosition()
+                pt.y = pt.y + (self.dropheight or 0)
+                for i = 1, num+1 do
+                    self.inst.components.lootdropper:SpawnLootPrefab(self.product, pt)
+                end
+            else
+                loot = SpawnPrefab(self.product)
+                local randomNumber = math.random(100)
+                if randomNumber <= 30 then
+                    loot2 = SpawnPrefab(self.product)
+                end
+                if loot ~= nil then
+                    if loot.components.inventoryitem ~= nil then
+                        loot.components.inventoryitem:InheritMoisture(TheWorld.state.wetness, TheWorld.state.iswet)
+                    end
+                    if self.numtoharvest > 1 and loot.components.stackable ~= nil then
+                        loot.components.stackable:SetStackSize(self.numtoharvest)
+                    end
+                    picker:PushEvent("picksomething", { object = self.inst, loot = loot })
+                    picker.components.inventory:GiveItem(loot, nil, self.inst:GetPosition())
+                    if randomNumber <= 30 then
+                        picker.components.inventory:GiveItem(loot2, nil, self.inst:GetPosition())
+                    end
+                end
+            end
+        end
+
+        if self.onpickedfn ~= nil then
+            self.onpickedfn(self.inst, picker, loot)
+        end
+
+        self.canbepicked = false
+
+        if self.baseregentime ~= nil and not (self.paused or self:IsBarren() or self.inst:HasTag("withered")) then
+            if TheWorld.state.isspring then
+                self.regentime = self.baseregentime * TUNING.SPRING_GROWTH_MODIFIER
+            end
+
+            if self.task ~= nil then
+                self.task:Cancel()
+            end
+            self.task = self.inst:DoTaskInTime(self.regentime, OnRegen)
+            self.targettime = GetTime() + self.regentime
+        end
+
+        self.inst:PushEvent("picked", { picker = picker, loot = loot, plant = self.inst })
+    end
+        else
+               return OldPick(self, picker, ...)
+        end       
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:follower
+
+AddComponentPostInit("follower", function(self)
+    local OldAddLoyaltyTime = self.AddLoyaltyTime
+    function self:AddLoyaltyTime(time, ...)
+        if self.leader and self.leader.prefab == "sl" then
+               time = time*2
+               return OldAddLoyaltyTime(self, time, ...)
+        else
+               return OldAddLoyaltyTime(self, time, ...)
+        end       
+    end
+end)
+
+```
+
+
+
+### 变体演进：别吃！dont eat (Mod 2994312711)
+- **变体场景与切面**：收录来自工坊 Mod 2994312711 (`别吃！dont eat`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2994312711)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:pigman
+-- 核心修复：确保猪人变疯逻辑正常工作
+AddPrefabPostInit("pigman", function(inst)
+    if not inst.components.eater then 
+        print("[Pigman Mod] pigman has no eater component")
+        return 
+    end
+    
+    -- 确保变疯计数器存在
+    inst.monstermeat_eaten = inst.monstermeat_eaten or 0
+    print("[Pigman Mod] Initializing pigman. Monster meat eaten:", inst.monstermeat_eaten)
+    
+    -- 保存原始函数
+    local old_CanEat = inst.components.eater.CanEat
+    local old_OnAccept = inst.components.trader and inst.components.trader.onaccept
+    
+    -- 重写交易接受函数（处理雇佣）
+    if inst.components.trader then
+        inst.components.trader.onaccept = function(inst, giver, item)
+            print("[Pigman Mod] Trader accept gift:", item and item.prefab or "nil", "from", giver and giver.prefab or "unknown")
+            
+            -- 标记为玩家给予
+            inst.player_given_food = true
+            
+            -- 调用原始函数完成雇佣
+            if old_OnAccept then
+                old_OnAccept(inst, giver, item)
+            end
+            
+            -- 清除标记
+            inst.player_given_food = false
+            
+            -- 特殊处理：如果是怪物肉
+            if item and (item.prefab == "monstermeat" or item.prefab == "cookedmonstermeat") then
+                inst.monstermeat_eaten = (inst.monstermeat_eaten or 0) + 1
+                print("[Pigman Mod] Monster meat eaten count:", inst.monstermeat_eaten)
+                
+                -- 达到4块怪物肉时强制变身
+                if inst.monstermeat_eaten >= 4 and not inst:HasTag("werepig") then
+                    print("[Pigman Mod] Forcing werepig transformation")
+                    
+                    -- 方法1：推送变身事件
+                    inst:PushEvent("transformwerepig")
+                    
+                    -- 方法2：直接调用werebeast组件
+                    if inst.components.werebeast then
+                        print("[Pigman Mod] Using werebeast component")
+                        inst.components.werebeast:SetWere()
+                    end
+                    
+                    -- 方法3：调用原版变身函数
+                    if inst.SetWere then
+                        print("[Pigman Mod] Calling SetWere directly")
+                        inst:SetWere()
+                    end
+                    
+                    -- 标记已变身
+                    inst:AddTag("werepig")
+                    print("[Pigman Mod] Pigman marked as transformed")
+                end
+            end
+        end
+    end
+    
+    -- 重写食物检测逻辑
+    inst.components.eater.CanEat = function(self, item)
+        if not item then
+            print("[Pigman Mod] CanEat called with nil item")
+            return old_CanEat(self, item)
+        end
+        
+        print("[Pigman Mod] Checking if can eat:", item.prefab)
+        
+        -- 检查是否被玩家给予（雇佣场景）
+        if self.inst.player_given_food then
+            print("[Pigman Mod] Player given food - allowing")
+            return old_CanEat(self, item)
+        end
+        
+        -- 检查是否被配置禁止
+        for config_name, prefabs in pairs(CONFIG_MAP) do
+            if GetModConfigData(config_name) == false then
+                for _, prefab in ipairs(prefabs) do
+                    if item.prefab == prefab then
+                        print("[Pigman Mod] Blocked by config:", config_name)
+                        return false
+                    end
+                end
+            end
+        end
+        
+        local result = old_CanEat(self, item)
+        print("[Pigman Mod] Default result:", result)
+        return result
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:werepig
+-- 修改疯猪行为（确保一致性）
+AddPrefabPostInit("werepig", function(inst)
+    if not inst.components.eater then 
+        print("[Pigman Mod] werepig has no eater component")
+        return 
+    end
+    
+    print("[Pigman Mod] Initializing werepig")
+    
+    -- 保存原始函数
+    local old_CanEat = inst.components.eater.CanEat
+    
+    -- 重写食物检测逻辑
+    inst.components.eater.CanEat = function(self, item)
+        if not item then
+            print("[Pigman Mod] Werepig CanEat called with nil item")
+            return old_CanEat(self, item)
+        end
+        
+        print("[Pigman Mod] Werepig checking if can eat:", item.prefab)
+        
+        -- 检查是否被玩家给予（雇佣场景）
+        if self.inst.player_given_food then
+            print("[Pigman Mod] Werepig - player given food - allowing")
+            return old_CanEat(self, item)
+        end
+        
+        -- 检查是否被配置禁止
+        for config_name, prefabs in pairs(CONFIG_MAP) do
+            if GetModConfigData(config_name) == false then
+                for _, prefab in ipairs(prefabs) do
+                    if item.prefab == prefab then
+                        print("[Pigman Mod] Werepig blocked by config:", config_name)
+                        return false
+                    end
+                end
+            end
+        end
+        
+        local result = old_CanEat(self, item)
+        print("[Pigman Mod] Werepig default result:", result)
+        return result
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:trader
+-- 处理玩家给予食物的事件
+AddComponentPostInit("trader", function(self)
+    print("[Pigman Mod] Initializing trader component")
+    
+    local old_AcceptGift = self.AcceptGift
+    
+    self.AcceptGift = function(self, giver, item)
+        print("[Pigman Mod] Accepting gift:", item and item.prefab or "nil", "from", giver and giver.prefab or "unknown")
+        
+        -- 标记为玩家给予
+        self.inst.player_given_food = true
+        
+        -- 调用原始函数
+        local result = old_AcceptGift(self, giver, item)
+        
+        -- 清除标记
+        self.inst.player_given_food = false
+        
+        return result
+    end
+end)
+
+```
+
+
+
+### 变体演进：Abigail Sisturn Animation (Mod 3586074130)
+- **变体场景与切面**：收录来自工坊 Mod 3586074130 (`Abigail Sisturn Animation`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3586074130)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:abigail
+AddPrefabPostInit("abigail", function(inst)
+    inst:SetStateGraph("SGabigailidle")
+end)
+
+```
+

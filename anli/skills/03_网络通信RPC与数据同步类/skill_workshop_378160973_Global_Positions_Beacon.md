@@ -6724,3 +6724,781 @@ end)
 
 ```
 
+
+
+### 变体演进：Language (Mod 1115709310)
+- **变体场景与切面**：收录来自工坊 Mod 1115709310 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1115709310)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+--全局经济数据
+AddPrefabPostInit("forest", function(inst) GLOBAL.TheWorld:AddComponent("seworldstatus") end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+AddPrefabPostInit("forest", function(inst) GLOBAL.TheWorld:AddComponent("seworldstatus") end)
+AddPrefabPostInit("cave", function(inst) GLOBAL.TheWorld:AddComponent("seworldstatus") end)
+
+```
+
+
+
+### 变体演进：Title (Mod 2210996709)
+- **变体场景与切面**：收录来自工坊 Mod 2210996709 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2210996709)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:walrus
+-- 单独海象
+AddPrefabPostInit("walrus", function(inst)
+	if not _G.TheWorld.ismastersim then
+		return inst
+	end
+	
+	local function siwanggongao(inst, data)	--击杀
+		inst:RemoveEventCallback("attacked", siwanggongao)
+		TheNet:Announce("〖 "..GetInstName(inst).." 〗"..Language["被"].."【 "..GetAttacker(inst, data).." 】"..Language["击杀"])
+	end
+	
+	local function siwang(inst)
+		inst:ListenForEvent("attacked", siwanggongao)
+	end
+	
+	if k_gonggao then
+		inst:ListenForEvent("death", siwang)
+	end
+	
+	if k_hx then
+		inst:DoTaskInTime(.5, function(inst)
+			TheNet:Announce("〖 "..GetInstName(inst).." 〗"..Language["出现"])	--出现，刷新了
+		end)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- 猎犬袭击
+AddPrefabPostInit("world", function(inst)
+	if not inst.ismastersim then
+		return inst
+	end
+	--监听世界状态
+	-- inst:WatchWorldState("startday", check_startday)	--转天时
+	-- inst:ListenForEvent("moonphasechanged2", check_state)	--月相变化事件
+	if k_yongye then
+		inst:WatchWorldState("moonphase", check_state)	--月相，官方月晷现成的
+	end
+	
+	if k_hound == 1 then
+		-- 定义需要触发的时间点（单位：秒）
+		local h_warning_times = { 150, 120, 90, 60, 45, 30, 0 }
+		local houndWarned = {}  -- 记录每个时间点是否已经触发
+		
+		-- 初始化 houndWarned 表
+		for _, v in ipairs(h_warning_times) do
+			houndWarned[v] = false	--取到表里的时间标记为false，并存到houndWarned表
+		end
+		
+		-- 确保每次袭击只触发一次公告
+		local announcementLock = false
+		
+		inst:DoPeriodicTask(1, function(inst)
+			local battimean = TheWorld:HasTag("porkland") and TheWorld.components.batted and TheWorld.components.batted:GetDebugString():match("Next attack in:%s*(%d+%.?%d*)s")
+			local timeToAttack = TheWorld.components.hounded and TheWorld.components.hounded:GetTimeToAttack() or tonumber(battimean)
+			local seconds = type(timeToAttack) == "number" and math.floor(timeToAttack)
+			local atk_type = TheWorld:HasTag("cave") and Language["蠕虫"]
+				or TheWorld:HasTag("island") and Language["鳄狗"]
+				or TheWorld:HasTag("porkland") and Language["蝙蝠"]
+				or Language["猎犬"]
+			
+			for _, warn_time in ipairs(h_warning_times) do
+				if seconds and seconds == warn_time and not houndWarned[warn_time] then
+					-- 发送公告
+					if warn_time == 45 and not announcementLock then
+						TheNet:Announce(atk_type..string.format(Language["将在x秒后"]..Language["袭击"], warn_time))
+						announcementLock = true
+					elseif warn_time > 45 then
+						announcementLock = false
+					end
+
+					-- 让所有玩家角色说话
+					for _, player in ipairs(AllPlayers) do
+						if player.components.talker ~= nil then
+							if warn_time ~= 45 then
+								if warn_time == 0 then
+									player.components.talker:Say(atk_type .. Language["袭击中"])
+									-- print("打印猎犬消息：", warn_time)
+								elseif warn_time ~= 150 then
+									player.components.talker:Say(atk_type .. string.format(Language["将在x秒后"]..Language["袭击"], warn_time))
+								elseif TheWorld.state.cycles < 10 and warn_time == 150 then
+									player.components.talker:Say(atk_type .. string.format(Language["将在x秒后"]..Language["袭击"], warn_time))
+								end
+							end 
+						end
+					end
+
+					houndWarned[warn_time] = true  -- 标记已触发
+				elseif seconds and seconds > warn_time then
+					houndWarned[warn_time] = false  -- 重置标记，以便下次攻击可以再次触发
+				end
+			end
+		end)
+	end
+end)
+
+--BOSS袭击列表
+local KnBOSS_CONFIG = {
+    deerclops = {	--巨鹿
+		name = Language["巨鹿"],
+        timer_name = "deerclops_timetoattack",
+        BossAttackTime = {90, 60, 30},  -- 警告时间点（秒）
+    },
+    bearger = {		--熊大
+		name = Language["熊獾"],
+        timer_name = "bearger_timetospawn", 
+        BossAttackTime = {90, 60, 30},
+    },
+    toadstool = {		--毒菌蟾蜍
+		name = Language["毒菌蟾蜍"],
+        timer_name = "toadstool_respawntask", 
+		spawner_ann = false,
+        BossAttackTime = nil,
+    },
+    malbatross = {		--邪天翁
+		name = Language["邪天翁"],
+        timer_name = "malbatross_timetospawn", 
+		spawner_ann = false,
+        BossAttackTime = nil,
+    },
+    mock_dragonfly = {		--妥协龙蝇
+		name = Language["时令龙蝇"],
+        timer_name = "mockfly_timetoattack", 
+        BossAttackTime = {90, 60, 30},
+    },
+    mothergoose = {		--鹅妈妈
+		name = Language["鹅妈妈"],
+        timer_name = "mothergoose_timetoattack", 
+        BossAttackTime = {90, 60, 30},
+    },
+    twister = {		--飓风海豹
+		name = Language["飓风海豹"],
+        timer_name = "twister_timetoattack", 
+        BossAttackTime = {90, 60, 30},
+    },
+    -- 可添加更多BOSS，只要有TheWorld GetTimeLeft定时器什么都好说
+}
+-- TheWorld.components.malbatrossspawner:GetDebugString()
+
+-- 初始化公告状态表，定义一个变量来存储公告是否已经发送
+local knwarning_states = {}
+for k, _ in pairs(KnBOSS_CONFIG) do
+    knwarning_states[k] = {}
+	local KBC = KnBOSS_CONFIG[k].BossAttackTime
+	if KBC and KBC ~= nil then
+		for _, i in ipairs(KBC) do
+			knwarning_states[k][i] = false
+		end
+	end
+end
+
+-- 主检测函数
+local LandTsAn, LandKrAn = false, false
+local LandVolcano60, LandVolcano30 = false, false
+local function KnCheckBossWarnings()
+	-- 获取世界计时器组件
+    local worldsettingstimer = TheWorld.components.worldsettingstimer
+	local announce_msg = Language["将在x秒后"] .. Language["袭击"]
+	
+	if TheWorld:HasTag("island") then
+		local TigersharkerTime = TheWorld.components.tigersharker:TimeUntilRespawn()
+		local KrakenerTime = TheWorld.components.krakener:TimeUntilCanSpawn()
+		local volcano = TheWorld.components.volcanomanager and TheWorld.components.volcanomanager:GetNumSegmentsUntilEruption() or nil
+		
+		if TigersharkerTime and type(TigersharkerTime) == "number" then
+			TigersharkerTime = math.floor(TigersharkerTime)
+			if TigersharkerTime == 0 and not LandTsAn then
+				TheNet:Announce(Language["虎鲨"] .. Language["已重生"])
+				LandTsAn = true
+			elseif TigersharkerTime > 0 then
+				LandTsAn = false
+			end
+		end
+		
+		if KrakenerTime and type(KrakenerTime) == "number" then
+			KrakenerTime = math.floor(KrakenerTime)
+			if KrakenerTime == 0 and not LandKrAn then
+				TheNet:Announce(Language["海妖"] .. Language["已重生"])
+				LandKrAn = true
+			elseif KrakenerTime > 0 then
+				LandKrAn = false
+			end
+		end
+		
+		if TheWorld.state.isdry and volcano and type(volcano) == "number" then
+			local volcanonum = volcano * 30
+			if volcano == 2 and not LandVolcano60 then
+				TheNet:Announce(Language["火山"] .. string.format(Language["将在x秒后"], volcanonum) .. Language["爆发"])
+				LandVolcano60 = true
+			elseif volcano == 1 and not LandVolcano30 then
+				TheNet:Announce(Language["火山"] .. string.format(Language["将在x秒后"], volcanonum) .. Language["爆发"])
+				LandVolcano30 = true
+			elseif volcano > 2 then
+				LandVolcano60 = false
+			elseif volcano > 1 then
+				LandVolcano30 = false
+			end
+		end
+	end
+	
+	-- 检查计时器是否存在
+    if not worldsettingstimer then
+		return
+	end
+
+	--获取表KnBOSS_CONFIG键，例如n=deerclops
+    for k, n in pairs(KnBOSS_CONFIG) do
+		-- 获取定时器的剩余时间
+        local timetoattack = worldsettingstimer:GetTimeLeft(n.timer_name)
+        
+        if timetoattack and type(timetoattack) == "number" then	--定时器不为nil时
+			timetoattack = math.floor(timetoattack)
+			if n.BossAttackTime ~= nil then
+				for _, i in ipairs(n.BossAttackTime) do	--获取n.BossAttackTime表的设定公告时间
+					--当定时器timetoattack <= i 则发送公告，例如 i = 60秒
+					if timetoattack <= i and not knwarning_states[k][i] then
+						TheNet:Announce(n.name .. string.format(announce_msg, i))
+						knwarning_states[k][i] = true	--标记公告已发送
+					elseif timetoattack > i then	--如果定时器时间都大于BossAttackTime表里的，那么初始化公告；
+						knwarning_states[k][i] = false
+					end
+				end
+			else
+				if timetoattack < 1 and not spawner_ann then
+					announce_msg = Language["已重生"]
+					TheNet:Announce(n.name .. announce_msg)
+					spawner_ann = true
+				elseif timetoattack > 0 then
+					spawner_ann = false
+				end
+			end
+        end
+    end
+end
+
+-- 在游戏启动时注册一个周期性的任务来检查
+AddSimPostInit(function()
+	if not TheWorld.ismastersim then
+		return
+	end
+	if k_boss then
+		TheWorld:DoPeriodicTask(1, KnCheckBossWarnings)
+	end
+end)
+
+-- 仅对prefab里有worldsettingstimer定时器的
+local BOSS_TIMERS = {
+    antlion = {
+        {
+			name = Language["蚁狮"],
+			TimerName = "rage",
+			BossAttackTime = {30, 20, 10},
+			text = Language["将在x秒后"],
+			text2 = Language["地震"],
+			-- custom_check = function(inst)  -- 可自定义条件
+                -- return inst.components.health:GetPercent() < 0.5
+            -- end,
+		},
+    },
+    dragonfly_spawner = {
+		{	
+			name = Language["龙蝇"],
+			TimerName = "regen_dragonfly",
+			BossAttackTime = {10},
+			text = Language["将在x秒后"],
+			text2 = Language["重生"],
+		},
+    },
+    -- 可以继续添加其他BOSS...
+}
+
+local dragonfly_spawner_ref = nil
+-- 通用BOSS计时器监听函数
+local function SetupBossTimerListener(prefab)
+    AddPrefabPostInit(prefab, function(inst)
+	
+		if not TheWorld.ismastersim then
+            return inst
+        end
+	
+        if not inst.components.worldsettingstimer or not BOSS_TIMERS[prefab] then
+            return
+        end
+		
+		local timer = inst.components.worldsettingstimer
+		dragonfly_spawner_ref = inst
+		
+		-- 初始化 announced 表（如果不存在）
+        for _, v in ipairs(BOSS_TIMERS[prefab]) do
+            if v.BossAttackTime and not v.announced then
+                v.announced = {}  --添加 announced 表作为标记是否已公告
+            end
+        end
+		
+        inst:DoPeriodicTask(1, function()
+            for _, v in ipairs(BOSS_TIMERS[prefab]) do
+				local PrefabName = v.name
+				local timer_name = v.TimerName	-- 计时器名称
+				local custom_text = v.text	-- 自定义文案
+				local custom_text2 = v.text2	-- 自定义文案
+				local time_atk = v.BossAttackTime	-- 公告时间
+				
+                local time_left = timer:GetTimeLeft(timer_name)
+				
+				if time_left and type(time_left) == "number" then  -- 新增检查
+					time_left = math.floor(time_left)
+					
+					for _, i in ipairs(time_atk) do
+						if time_left == i and not v.announced[i] then
+							TheNet:Announce(PrefabName..string.format(custom_text, time_left) .. custom_text2)
+							v.announced[i] = true  -- 标记已触发
+						elseif time_left > i then	--当定时器大于表里的重置标记
+							v.announced[i] = false
+						end
+					end
+                end
+            end
+        end)
+    end)
+end
+
+-- 为所有BOSS注册监听
+if k_boss then
+	for k, _ in pairs(BOSS_TIMERS) do
+		SetupBossTimerListener(k)
+	end
+end
+-- BOSS 袭击END
+
+-- 【 控制台查BOSS刷新时间，c_kanboss() 或 c_kanboss("deerclops") 】volcano_altar
+local function ckbosstime(boss_key)
+	
+	--获取世界计时器组件
+    local worldsettingstimer = TheWorld.components.worldsettingstimer
+	-- print(TheWorld.components.worldsettingstimer:GetTimeLeft(""))	--:TimerExists true
+	-- TheWorld.net.components.beargerspawner:GetDebugString()
+    
+    local function announce_boss_time(boss_data)
+        local timetoattack = worldsettingstimer:GetTimeLeft(boss_data.timer_name)
+		local IsPaused = worldsettingstimer:IsPaused(boss_data.timer_name) and Language["计时已暂停"] or ""
+		
+        if timetoattack and type(timetoattack) == "number" then
+            -- local msg = timetoattack >= TUNING.TOTAL_DAY_TIME / 2 and "( " .. string.format("%0.2f", timetoattack / TUNING.TOTAL_DAY_TIME) .. Language["天"] .. " ) " or ""
+            TheNet:Announce(boss_data.name .. Language["将在"] .. formatTime(timetoattack) .. formatDay(timetoattack) .. Language["出现"] .. IsPaused)
+        else
+            TheNet:Announce(boss_data.name .. Language["无计时器"])
+        end
+    end
+
+    if boss_key then
+		local key_volcano = TheWorld.components.volcanomanager and TheWorld.components.volcanomanager:GetNumSegmentsUntilEruption() or nil
+        -- 有参数时，只公告指定的BOSS
+		if KnBOSS_CONFIG[boss_key] then		--执行世界计时器表
+			local boss_data = KnBOSS_CONFIG[boss_key]
+			announce_boss_time(boss_data)
+		elseif BOSS_TIMERS[boss_key] then	--执行prefab表
+			local inst = TheSim:FindFirstEntityWithTag(boss_key)
+			if not inst then	--当计时器实体与实际实体不一致时，直接获取AddPrefabPostInit缓存
+				inst = dragonfly_spawner_ref
+			end
+            if inst and inst.components.worldsettingstimer then
+                for _, i_data in ipairs(BOSS_TIMERS[boss_key]) do
+					if i_data.TimerName == "rage" and not Antlion_IsSpawn then break end
+                    local time_left = inst.components.worldsettingstimer:GetTimeLeft(i_data.TimerName)
+                    if time_left and type(time_left) == "number" then
+						local time_left = math.floor(time_left)
+						TheNet:Announce(i_data.name .. Language["将在"] .. formatTime(time_left) .. formatDay(time_left) .. i_data.text2)
+                    end
+                end
+			else
+				TheNet:Announce(boss_key .. Language["无计时器"])
+            end
+		elseif TheWorld:HasTag("island") then	-- 参数是海难世界的
+			local land_boss
+			local LandBossName = ""
+			if boss_key == "tigershark" then
+				land_boss = TheWorld.components.tigersharker:TimeUntilRespawn()
+				LandBossName = Language["虎鲨"]
+			end
+			if boss_key == "kraken" then
+				land_boss = TheWorld.components.krakener:TimeUntilCanSpawn()
+				LandBossName = Language["海妖"]
+			end
+			if land_boss and type(land_boss) == "number" and land_boss >= 1 then
+				local land_boss = math.floor(land_boss)
+				TheNet:Announce(LandBossName .. Language["将在"] .. formatTime(land_boss) .. formatDay(land_boss) .. Language["重生"])
+			elseif land_boss <= 0 then
+				TheNet:Announce(LandBossName .. Language["已重生"])
+			else
+				TheNet:Announce(LandBossName .. Language["无计时器"])
+			end
+			if boss_key == "volcano" and TheWorld.state.isdry and key_volcano and type(key_volcano) == "number" and key_volcano > 2 then
+				key_volcano = key_volcano *30
+				TheNet:Announce(Language["火山"] .. Language["将在"] .. formatTime(key_volcano) .. formatDay(key_volcano) .. Language["爆发"])
+			else
+				TheNet:Announce(Language["火山"] .. Language["无计时器"])
+			end
+		elseif boss_key == "hound" then	-- 参数是猎犬
+			local battime = TheWorld:HasTag("porkland") and TheWorld.components.batted and TheWorld.components.batted:GetDebugString():match("Next attack in:%s*(%d+%.?%d*)s")
+			local HoundAt = TheWorld.components.hounded and TheWorld.components.hounded:GetTimeToAttack() or tonumber(battime)
+			local HoundType = TheWorld:HasTag("cave") and Language["蠕虫"]
+				or TheWorld:HasTag("island") and Language["鳄狗"]
+				or TheWorld:HasTag("porkland") and Language["蝙蝠"]
+				or Language["猎犬"]
+			if HoundAt and type(HoundAt) == "number" then
+				local HoundAt = math.floor(HoundAt)
+				TheNet:Announce(HoundType .. Language["将在"] .. formatTime(HoundAt) .. formatDay(HoundAt) .. Language["袭击"])
+			else
+				TheNet:Announce(HoundType .. Language["无计时器"])
+			end
+		else
+			TheNet:Announce("c_kanboss(" .. "\"" ..boss_key.. "\"" .. ") * 当前世界无 ".. boss_key .." 计时器 或者 传入的参数有误 *")
+            return
+        end
+    else	-- 无参数时
+		-- 海难的
+		local function LandBossQuery (timer, name)
+			if timer and type(timer) == "number" and timer >= 1 then
+				timer = math.floor(timer)
+				TheNet:Announce(name .. Language["将在"] .. formatTime(timer) .. formatDay(timer) .. Language["重生"])
+			elseif timer <= 0 then
+				TheNet:Announce(name .. Language["已重生"])
+			end
+		end
+		if TheWorld:HasTag("island") then
+			local LandTs = TheWorld.components.tigersharker:TimeUntilRespawn()
+			local LandKr = TheWorld.components.krakener:TimeUntilCanSpawn()
+			local c_volcano = TheWorld.components.volcanomanager:GetNumSegmentsUntilEruption()
+			
+			LandBossQuery (LandTs, Language["虎鲨"])
+			LandBossQuery (LandKr, Language["海妖"])
+			if TheWorld.state.isdry and c_volcano and type(c_volcano) == "number" and c_volcano > 2 then
+				c_volcano = c_volcano *30
+				TheNet:Announce(Language["火山"] .. Language["将在"] .. formatTime(c_volcano) .. formatDay(c_volcano) .. Language["爆发"])
+			end
+		end
+		-- 猎犬袭击时间
+		if TheWorld:HasTag("porkland") and TheWorld.components.batted or TheWorld.components.hounded then
+			local battime = TheWorld.components.batted and TheWorld.components.batted:GetDebugString():match("Next attack in:%s*(%d+%.?%d*)s")
+			local HoundAt = TheWorld.components.hounded and TheWorld.components.hounded:GetTimeToAttack() or tonumber(battime)
+			if HoundAt and type(HoundAt) == "number" then
+				local HoundAt = math.floor(HoundAt)
+				local HoundType = TheWorld:HasTag("cave") and Language["蠕虫"]
+				or TheWorld:HasTag("island") and Language["鳄狗"]
+				or TheWorld:HasTag("porkland") and Language["蝙蝠"]
+				or Language["猎犬"]
+				TheNet:Announce(HoundType .. Language["将在"] .. formatTime(HoundAt) .. formatDay(HoundAt) .. Language["袭击"])
+			end
+		end
+		
+        -- 公告表里全部有计时器的BOSS
+        for k, v in pairs(KnBOSS_CONFIG) do	-- 世界定时器
+			local kat_noval = worldsettingstimer:GetTimeLeft(v.timer_name)
+			if kat_noval and type(kat_noval) == "number" then
+				announce_boss_time(v)
+			end
+        end
+		-- prefab 里的
+		for prefab, _ in pairs(BOSS_TIMERS) do
+			local inst = TheSim:FindFirstEntityWithTag(prefab)
+            
+			if not inst then
+				inst = dragonfly_spawner_ref
+			end
+			
+            if inst and inst.components.worldsettingstimer then
+                for _, i_data in ipairs(BOSS_TIMERS[prefab]) do
+					if i_data.TimerName == "rage" and not Antlion_IsSpawn then break end	-- 蚁狮不存在时跳出循环
+                    local time_left = inst.components.worldsettingstimer:GetTimeLeft(i_data.TimerName)
+                    if time_left and type(time_left) == "number" then
+						local time_left = math.floor(time_left)
+						TheNet:Announce(i_data.name .. Language["将在"] .. formatTime(time_left) .. formatDay(time_left) .. i_data.text2)
+                    end
+                end
+            end
+        end
+    end
+end
+
+--GLOBAL.rawset(GLOBAL, "c_boss", Fn)
+AddModRPCHandler("k_bossRPC", "k_btname", function(player, bossname)	--响应RPC函数的第一个参数必须是player
+	local playerneme = player:GetDisplayName() or player
+	local boss_name = ""
+	if bossname then
+		boss_name = bossname
+	end
+	if boss_name == "dragonfly_spawner" then
+		boss_name = "dragonfly"
+	end
+	--TheNet:Announce(playerneme .. " 在本地的 控制台 执行了 c_kanboss(" .. "\"" .. boss_name .. "\"" .. ")")
+	ckbosstime(bossname)
+end)
+
+GLOBAL.rawset(GLOBAL, "c_kanboss", function(bossname)	--将全局变量 c_kanboss 注册到控制台
+-- GLOBAL.c_kanboss = function(bossname)
+	if bossname and bossname == "dragonfly" then
+		bossname = "dragonfly_spawner"
+	end
+	-- if dragonfly_spawner_ref then
+        -- local time_left = dragonfly_spawner_ref.components.worldsettingstimer:GetTimeLeft("regen_dragonfly")
+	-- end
+	if TheNet:GetIsClient() then
+		SendModRPCToServer(GetModRPC("k_bossRPC", "k_btname"), bossname)	--如果是客机执行，会通过RPC传到服务器执行公告
+	else
+		ckbosstime(bossname)
+	end
+end)
+-- 【控制台查询 END】
+
+--血量成长
+if GetModConfigData("M_XLup") then
+    AddComponentPostInit("health", function(self)
+		if not TheWorld.ismastersim then
+            return self
+        end
+	
+		local xLuplv = type(GetModConfigData("M_XLup")) == "number" and GetModConfigData("M_XLup") > 0 and GetModConfigData("M_XLup") or 1
+		local knSetMaxHealth = self.SetMaxHealth
+		local knday = TheWorld.state.cycles
+		local hpdata = string.format("%0.6f", knday / 70 * xLuplv)	--游戏天数 / 一年天数 * 成长值
+		--local hpdata = string.sub(kndata, 1, 8)		--截取前1~8个字符串
+		
+		self.SetMaxHealth = function(self, amount)
+			local inst = self.inst
+			local set_amount
+		
+			if inst:HasTag("player") then
+				return knSetMaxHealth(self, amount)
+			end
+			
+			-- --if (inst:HasTag("epic") or inst:HasTag("shadowchesspiece") or inst:HasTag("crabking")) then	--BOSS成长倍率，一般BOSS都有epic标签
+			-- return knSetMaxHealth(self, inst._set_health * hpdata)
+			if not inst.kn_hpup then
+				inst.kn_hpup = 0
+			end
+			
+			if inst.kn_hpup >= 1 then
+				if inst._set_health == nil then
+					inst._set_health = amount	-- 将第一次变动的数据储存起来，以防后续变动导致无限增大
+				end
+				inst.kn_hpup = inst.kn_hpup + 1
+				set_amount = inst._set_health * hpdata
+				if set_amount < inst._set_health then
+					set_amount = inst._set_health + set_amount	-- 当低于原血量则加上原血量
+				end
+				return knSetMaxHealth(self, set_amount)
+			else	-- 第一次设置
+				inst.kn_hpup = inst.kn_hpup + 1
+				set_amount = amount * hpdata	-- 血量 * 成长值
+				if set_amount < amount then		-- 当得出的血量低于原血量，那么就加上原血量
+					set_amount = amount + set_amount
+				end
+				return knSetMaxHealth(self, set_amount)
+			end
+		end
+	end)
+end
+
+--攻击成长
+if GetModConfigData("M_atkup") then
+    AddComponentPostInit("combat", function(self)
+		if not TheWorld.ismastersim then
+            return self
+        end
+		
+		local atkSetDefaultDamage = self.SetDefaultDamage
+		local atkuplv = type(GetModConfigData("M_atkup")) == "number" and GetModConfigData("M_atkup") > 0 and GetModConfigData("M_atkup") or 1
+		local atkday = _G.TheWorld.state.cycles
+		local atkdata = string.format("%0.2f", atkday / 70 * atkuplv)	-- 游戏天数除去一年天数
+		
+		self.SetDefaultDamage = function(self, damage)
+			local inst = self.inst
+			local set_combat
+		
+			if inst:HasTag("player") then	-- 玩家攻击不成长
+				return atkSetDefaultDamage(self, damage)
+			end
+			
+			if not inst.kn_dmgup then
+				inst.kn_dmgup = 0
+			end
+			
+			if inst.kn_dmgup >= 1 then
+				-- 保存第一次变化的数据
+				if inst._set_combat == nil then
+					inst._set_combat = damage
+				end
+				
+				inst.kn_dmgup = inst.kn_dmgup + 1
+				set_combat = inst._set_combat * atkdata
+				
+				if set_combat < inst._set_combat then
+					set_combat = inst._set_combat + set_combat	-- 当低于原数据则加上原数据
+				end
+				
+				return atkSetDefaultDamage(self, set_combat)
+			else	-- 第一次变化
+				inst.kn_dmgup = inst.kn_dmgup + 1
+				set_combat = damage * atkdata
+				
+				if set_combat < damage then
+					set_combat = damage + set_combat
+				end
+				
+				return atkSetDefaultDamage(self, set_combat)
+			end
+		end
+	end)
+end
+
+local hplist = {
+    -- 分组定义
+    {prefab_table = {"bearger", "deerclops", "moose", "antlion", "twister", "tigershark", "moonmaw_dragonfly", "mock_dragonfly", "mothergoose"}, value = GetModConfigData("M_XueLiang")},
+    {prefab_table = {"beequeen", "medal_beequeen"}, value = GetModConfigData("M_fhhp")},
+    {prefab_table = {"toadstool", "toadstool_dark"}, value = GetModConfigData("M_hmhp")},
+    {prefab_table = {"warg", "claywarg", "gingerbreadwarg"}, value = GetModConfigData("M_zuol")},
+    {prefab_table = {"stalker_atrium", "stalker_forest", "stalker"}, value = GetModConfigData("M_ygbz")},
+    {prefab_table = {"eyeofterror", "twinofterror1", "twinofterror2"}, value = GetModConfigData("M_teye")},
+    {prefab_table = {"shadow_rook", "shadow_bishop", "shadow_knight"}, value = GetModConfigData("M_s_rbk")},
+    {prefab_table = {"alterguardian_phase1", "alterguardian_phase2", "alterguardian_phase3"}, value = GetModConfigData("M_tiant")},
+    {prefab_table = {"leif", "leif_sparse", "treeguard", "leif_palm", "leif_jungle", "jungletreeguard"}, value = GetModConfigData("M_shuj")},
+    -- 其他组...
+    
+    -- 单独定义
+    {prefab = "dragonfly", value = GetModConfigData("M_lyhp")},
+    {prefab = "klaus", value = GetModConfigData("M_klshp")},
+    {prefab = "malbatross", value = GetModConfigData("M_xtwhp")},
+    {prefab = "minotaur", value = GetModConfigData("M_ygshhp")},
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+if GetModConfigData("M_XLup") then
+    AddComponentPostInit("health", function(self)
+		if not TheWorld.ismastersim then
+            return self
+        end
+	
+		local xLuplv = type(GetModConfigData("M_XLup")) == "number" and GetModConfigData("M_XLup") > 0 and GetModConfigData("M_XLup") or 1
+		local knSetMaxHealth = self.SetMaxHealth
+		local knday = TheWorld.state.cycles
+		local hpdata = string.format("%0.6f", knday / 70 * xLuplv)	--游戏天数 / 一年天数 * 成长值
+		--local hpdata = string.sub(kndata, 1, 8)		--截取前1~8个字符串
+		
+		self.SetMaxHealth = function(self, amount)
+			local inst = self.inst
+			local set_amount
+		
+			if inst:HasTag("player") then
+				return knSetMaxHealth(self, amount)
+			end
+			
+			-- --if (inst:HasTag("epic") or inst:HasTag("shadowchesspiece") or inst:HasTag("crabking")) then	--BOSS成长倍率，一般BOSS都有epic标签
+			-- return knSetMaxHealth(self, inst._set_health * hpdata)
+			if not inst.kn_hpup then
+				inst.kn_hpup = 0
+			end
+			
+			if inst.kn_hpup >= 1 then
+				if inst._set_health == nil then
+					inst._set_health = amount	-- 将第一次变动的数据储存起来，以防后续变动导致无限增大
+				end
+				inst.kn_hpup = inst.kn_hpup + 1
+				set_amount = inst._set_health * hpdata
+				if set_amount < inst._set_health then
+					set_amount = inst._set_health + set_amount	-- 当低于原血量则加上原血量
+				end
+				return knSetMaxHealth(self, set_amount)
+			else	-- 第一次设置
+				inst.kn_hpup = inst.kn_hpup + 1
+				set_amount = amount * hpdata	-- 血量 * 成长值
+				if set_amount < amount then		-- 当得出的血量低于原血量，那么就加上原血量
+					set_amount = amount + set_amount
+				end
+				return knSetMaxHealth(self, set_amount)
+			end
+		end
+	end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+if GetModConfigData("M_atkup") then
+    AddComponentPostInit("combat", function(self)
+		if not TheWorld.ismastersim then
+            return self
+        end
+		
+		local atkSetDefaultDamage = self.SetDefaultDamage
+		local atkuplv = type(GetModConfigData("M_atkup")) == "number" and GetModConfigData("M_atkup") > 0 and GetModConfigData("M_atkup") or 1
+		local atkday = _G.TheWorld.state.cycles
+		local atkdata = string.format("%0.2f", atkday / 70 * atkuplv)	-- 游戏天数除去一年天数
+		
+		self.SetDefaultDamage = function(self, damage)
+			local inst = self.inst
+			local set_combat
+		
+			if inst:HasTag("player") then	-- 玩家攻击不成长
+				return atkSetDefaultDamage(self, damage)
+			end
+			
+			if not inst.kn_dmgup then
+				inst.kn_dmgup = 0
+			end
+			
+			if inst.kn_dmgup >= 1 then
+				-- 保存第一次变化的数据
+				if inst._set_combat == nil then
+					inst._set_combat = damage
+				end
+				
+				inst.kn_dmgup = inst.kn_dmgup + 1
+				set_combat = inst._set_combat * atkdata
+				
+				if set_combat < inst._set_combat then
+					set_combat = inst._set_combat + set_combat	-- 当低于原数据则加上原数据
+				end
+				
+				return atkSetDefaultDamage(self, set_combat)
+			else	-- 第一次变化
+				inst.kn_dmgup = inst.kn_dmgup + 1
+				set_combat = damage * atkdata
+				
+				if set_combat < damage then
+					set_combat = damage + set_combat
+				end
+				
+				return atkSetDefaultDamage(self, set_combat)
+			end
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:stinger
+if GetModConfigData("g_haodanpao") then
+	AddPrefabPostInit("stinger", function(inst)		-- 给蜂刺支持嚎弹炮
+		inst:AddComponent("reloaditem")
+		inst:AddTag("blowpipeammo")
+		--inst:AddTag("stinger_ammo")
+		inst:AddTag("reloaditem_ammo")
+	end)
+
+```
+
