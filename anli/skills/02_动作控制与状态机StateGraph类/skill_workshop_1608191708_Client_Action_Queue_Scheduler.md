@@ -41684,3 +41684,136 @@ end)
 
 ```
 
+
+
+### 变体演进：SONIC: The Hedgehog (Mod 3760907948)
+- **变体场景与切面**：收录来自工坊 Mod 3760907948 (`SONIC: The Hedgehog`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3760907948)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：xichun_lang (Mod 3794860312)
+- **变体场景与切面**：收录来自工坊 Mod 3794860312 (`xichun_lang`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3794860312)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+    if TheWorld ~= nil and TheWorld.ismastersim and
+        self.inst.components.xichun_effecthandler == nil then
+        self.inst:AddComponent("xichun_effecthandler")
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:armor
+
+AddComponentPostInit("armor", function(self)
+    local oldTakeDamage = self.TakeDamage
+    function self:TakeDamage(damage_amount, ...)
+        local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner
+        if owner and owner.sg and owner.sg:HasStateTag("xichun_nostun") then
+            damage_amount = 0
+        end
+        return oldTakeDamage(self, damage_amount, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer", function(self)
+    local old_StartCooking = self.StartCooking
+    function self:StartCooking(doer, ...)
+        local level_component = doer ~= nil and
+            doer.components.xichun_level or nil
+        local level = level_component ~= nil and
+            level_component:GetLevel() or 0
+        local was_idle = self.targettime == nil
+        local old_cooktimemult = self.cooktimemult
+
+        if was_idle and level >= 2 then
+            self.cooktimemult = old_cooktimemult * (1 - .1 * level)
+        end
+
+        local result = old_StartCooking(self, doer, ...)
+        self.cooktimemult = old_cooktimemult
+
+        if was_idle and self:IsCooking() and level_component ~= nil then
+            level_component:AddExperience("wisdom", 4)
+
+            if level >= 2 then
+                local remaining = self:GetTimeToCook()
+                if remaining > 0 then
+                    self:LongUpdate(math.min(level, remaining))
+                end
+            end
+        end
+
+        return result
+    end
+
+    local old_Harvest = self.Harvest
+    function self:Harvest(harvester, ...)
+        local level_component = harvester ~= nil and
+            harvester.components.xichun_level or nil
+        local level = level_component ~= nil and
+            level_component:GetLevel() or 0
+        local product = self.done and self.product or nil
+        local recipe = product ~= nil and
+            cooking.GetRecipe(self.inst.prefab, product) or nil
+        local spoiltime = self.spoiltime
+        local product_spoilage = self.product_spoilage
+        local time_to_spoil = spoiltime ~= nil and self:GetTimeToSpoil() or nil
+
+        local succeeded = old_Harvest(self, harvester, ...)
+        if succeeded and level_component ~= nil then
+            level_component:AddExperience("wisdom", 4)
+
+            if level >= 2 and math.random() < .1 * level then
+                GiveCookedProduct(
+                    self,
+                    harvester,
+                    product,
+                    recipe,
+                    spoiltime,
+                    product_spoilage,
+                    time_to_spoil
+                )
+            end
+        end
+        return succeeded
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:xichun
+
+AddPrefabPostInit("xichun", function(inst)
+    inst:DoTaskInTime(0, InstallBuilderDiscount)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+
+AddComponentPostInit("health", function(self)
+    if TheWorld ~= nil and TheWorld.ismastersim then
+        self.inst:ListenForEvent("healthdelta", OnAnyHealthDelta)
+    end
+end)
+
+```
+

@@ -9140,3 +9140,100 @@ end)
 
 ```
 
+
+
+### 变体演进：Title (Mod 2991592240)
+- **变体场景与切面**：收录来自工坊 Mod 2991592240 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2991592240)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:sleepingbaguser
+local SleepingBU = require("components/sleepingbaguser")
+AddComponentPostInit("sleepingbaguser", function(SleepingBU)
+	if t_smup then	--黑血恢复
+		local _DoSleep = SleepingBU.DoSleep
+		local _DoWakeUp = SleepingBU.DoWakeUp
+
+		SleepingBU.DoSleep = function(self, bed)
+			_DoSleep(self, bed)
+			self.healthtask = self.inst:DoPeriodicTask(self.bed.components.sleepingbag.tick_period, function()
+				local health_tick
+				if self.bed.components.sleepingbag ~= nil then
+					health_tick = self.bed.components.sleepingbag.health_tick * self.health_bonus_mult
+				end
+				if self.inst.components.health ~= nil and not self.inst:HasTag("TiddleVirus") and health_tick ~= nil then
+					self.inst.components.health:DeltaPenalty(-health_tick / 200)
+				end
+			end)
+		end
+
+		SleepingBU.DoWakeUp = function(self, nostatechange)
+			if self.healthtask ~= nil then
+				self.healthtask:Cancel()
+				self.healthtask = nil
+			end
+			_DoWakeUp(self, nostatechange)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：石果,大理石树收获改掉落 (Mod 3233667082)
+- **变体场景与切面**：收录来自工坊 Mod 3233667082 (`石果,大理石树收获改掉落`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3233667082)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:rock_avocado_bush
+
+AddPrefabPostInit("rock_avocado_bush",function(inst)   
+   
+   --不会自燃
+   inst:AddTag("wildfireprotected")     --防野火的
+
+   if not TheWorld.ismastersim then
+      return inst
+   end
+
+   --慢一点，让官方先走流程
+   inst:DoTaskInTime(1,function(inst)
+      if inst.components.burnable then
+         inst:RemoveComponent("burnable")     --禁止燃烧
+      end
+   
+      if inst.components.witherable then
+         inst:RemoveComponent("witherable")     --移除夏季枯萎标签
+      end
+   
+      --不需要施肥
+      if inst.components.pickable then
+         inst.components.pickable.transplanted = false  --变野生
+         if inst.components.pickable:IsBarren() then
+            inst.components.pickable:MakeEmpty()
+            inst.components.pickable.cycles_left = inst.components.pickable.max_cycles
+         end
+      end
+
+   end)
+   
+      if GetModConfigData("shiguo_tress") then
+         if inst.components.growable.stages then
+            inst.components.growable.stages = growth_stages
+         end
+      end
+
+
+end)
+
+```
+

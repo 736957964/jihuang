@@ -6378,3 +6378,28 @@
 [2026-11-01 11:06:13] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 11:06:13] Reducer: 成功将 Mod 3586074130 (Abigail Sisturn Animation) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 11:06:13] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 11:06:20] Git 自动提交并推送成功！
+[2026-11-01 11:06:20] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 11:06:20] 【批次结算】：本批归约出 5 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 11:06:50] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3794860312', '3760907948', '2991592240', '3233667082', '2756880869', '3417528598']
+[2026-11-01 11:06:50] SteamCMD 下载 3794860312 ...
+[2026-11-01 11:06:51] SteamCMD 下载 3760907948 ...
+[2026-11-01 11:06:51] SteamCMD 下载 2991592240 ...
+[2026-11-01 11:06:51] SteamCMD 下载 3233667082 ...
+[2026-11-01 11:06:51] SteamCMD 下载 2756880869 ...
+[2026-11-01 11:06:51] SteamCMD 下载 3417528598 ...
+[2026-11-01 11:08:06] Worker [3794860312] 成功解析入库暂存区 -> xichun_lang (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 11:09:34] Worker [3760907948] 成功解析入库暂存区 -> SONIC: The Hedgehog (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 11:10:38] Worker [2991592240] 成功解析入库暂存区 -> Title (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 11:11:00] Worker [3233667082] 成功解析入库暂存区 -> 石果,大理石树收获改掉落 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 11:11:10] Worker [2756880869] 过滤拦截: keyboard_save (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 11:11:21] Worker [3417528598] 过滤拦截: Joker, The Weeping Clown. (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 11:11:21] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 11:11:21] Reducer: 成功将 Mod 2991592240 (Title) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 11:11:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 11:11:21] Reducer: 成功将 Mod 3233667082 (石果,大理石树收获改掉落) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 11:11:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 11:11:21] Reducer: 成功将 Mod 3760907948 (SONIC: The Hedgehog) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:11:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:11:22] Reducer: 成功将 Mod 3794860312 (xichun_lang) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 11:11:22] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
