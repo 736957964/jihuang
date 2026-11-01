@@ -33914,3 +33914,352 @@ AddComponentPostInit("playercontroller", addActionButtonPostInit)
 
 ```
 
+
+
+### 变体演进：Atri[亚托莉] (Mod 3028502978)
+- **变体场景与切面**：收录来自工坊 Mod 3028502978 (`Atri[亚托莉]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3028502978)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer",function(self)
+    local old_StartCooking = self.StartCooking
+    function self:StartCooking(doer,...)
+        local nocook  = self.targettime == nil
+        local old = old_StartCooking(self,doer,...)
+        if nocook and self.targettime ~= nil and self.task ~= nil and doer and doer:HasTag("atri") then
+			local time = (self.task.period or 0)*0.75
+            self.targettime = GetTime() + time
+            local fn = self.task.fn
+            self.task:Cancel()
+            self.task = self.inst:DoTaskInTime(time, fn, self)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst) 
+	inst.max_electricpower = net_byte(inst.GUID, "current_electricpower.max")
+	inst.current_electricpower = net_byte(inst.GUID, "current_electricpower.current", "current_electricpowerdirty")
+	if not TheWorld.ismastersim then
+		inst._old_electricpowerpercent = inst.max_electricpower:value() > 0 and inst.current_electricpower:value() / inst.max_electricpower:value() or 0
+		inst:ListenForEvent("current_electricpowerdirty", OnAngryDirty)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+end
+AddComponentPostInit("combat",function(self)
+	local old_SetRetargetFunction = self.SetRetargetFunction
+	function self:SetRetargetFunction(...)
+		old_SetRetargetFunction(self,...)
+		if self.targetfn ~= nil then
+			local old_targetfn = self.targetfn
+			self.targetfn = function(...)
+				local newtarget, forcechange = old_targetfn(...)
+				if newtarget then
+					if isvalidtarget(self.inst) and newtarget:HasTag("atri") then
+						newtarget = nil
+					end
+				end
+				return newtarget, forcechange
+			end
+		end
+	end
+	local old_ShareTarget = self.ShareTarget
+	function self:ShareTarget(target,...)
+		if isvalidtarget(self.inst) and target and  target:HasTag("atri") then
+			return
+		end
+		old_ShareTarget(self,target,...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:equippable
+
+AddComponentPostInit("equippable", function(self) 
+	local oldGetWalkSpeedMult = self.GetWalkSpeedMult
+	function self:GetWalkSpeedMult(...)
+		local old = oldGetWalkSpeedMult(self,...)
+		local owner =  self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner or nil
+		if self.inst:HasTag("heavy") and owner and owner:HasTag("atri") then
+			return math.max(1,old)
+		end
+		return old
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder",function(self)
+	local old_MakeRecipeAtPoint = self.MakeRecipeAtPoint
+	function self:MakeRecipeAtPoint(recipe, pt, rot, skin,...)
+		if self.inst.prefab == "atri" then
+			if not self.inst.components.inventory:IsOpenedBy(self.inst) then
+				return
+			end
+			if recipe.placer ~= nil and
+				self:IsBuildBuffered(recipe.name) and
+				TheWorld.Map:CanDeployRecipeAtPoint(pt, recipe, rot) then
+				self:MakeRecipe(recipe, pt, rot, skin)
+			end
+		else
+			return 	old_MakeRecipeAtPoint(self,recipe, pt, rot, skin,...)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：STREAMERMODE (Mod 3626344451)
+- **变体场景与切面**：收录来自工坊 Mod 3626344451 (`STREAMERMODE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3626344451)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", SGWilsonPostInit)
+
+local BEAM_SFX_ATTACKER = {
+    wiku_none = fmodtable.miku_beam_attacker.track,
+    ms_teto_kasane = fmodtable.teto_beam_attacker.track,
+}
+BEAM_SFX_ATTACKER.wiku_hires = BEAM_SFX_ATTACKER.wiku_none
+BEAM_SFX_ATTACKER.wiku = BEAM_SFX_ATTACKER.wiku_none
+
+
+local function SGWilsonPostInit(sg)
+	local oldcast = sg.states["castspell"].onenter
+	sg.states["castspell"].onenter = function(inst, ...)
+
+
+		if oldcast then
+			local staff = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+			if staff and staff.prefab == "wiku_microphone" then
+				staff.castsound = inst.components.singinginspiration:GetPercent() > 0.01 and BEAM_SFX_ATTACKER[inst.AnimState:GetBuild()] or fmodtable.drain_0.track
+			end
+
+
+
+			oldcast(inst, ...)
+		end
+
+		if inst.prefab == "wiku" and inst.sg.statemem.stafffx then
+			local x,y,z = inst.Transform:GetWorldPosition()
+			inst.sg.statemem.stafffx.Transform:SetPosition(0,-.5,.1)
+	
+		end
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:treasurechest
+
+--[[ AddPrefabPostInit("treasurechest", function(inst)
+
+
+	MakeItBurn(inst, 5, 8, -0.1)
+
+end) ]]
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wanderingtrader
+
+    AddPrefabPostInit("wanderingtrader", function(inst)
+        if not TheWorld.ismastersim then return inst end
+
+        local custom_wares = {
+            [data.product] = {
+                recipe = data.recipe_name,
+                min = data.min or 1,
+                max = data.max or 1,
+                limit = data.limit or 1,
+
+
+            },
+        }
+
+        local old_reroll = inst.RerollWares or function() end
+
+        inst.RerollWares = function(inst, ...)
+            old_reroll(inst, ...)
+            inst:AddWares(custom_wares)
+            if inst.AddPrototyper then
+				inst:AddPrototyper()
+			end
+        end
+
+        inst:DoTaskInTime(0.5, function()
+            inst:RerollWares()
+        end)
+    end)
+
+```
+
+
+
+### 变体演进：EGGMAN: The Inventor (Mod 3777841665)
+- **变体场景与切面**：收录来自工坊 Mod 3777841665 (`EGGMAN: The Inventor`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3777841665)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+
+ENV.AddComponentPostInit("combat", function(self)
+    local inst = self.inst
+    if inst == nil or not inst:HasTag("player") then return end
+    if inst._eggshield_getattacked_patched then return end
+    inst._eggshield_getattacked_patched = true
+
+    local _OldGetAttacked = self.GetAttacked
+    self.GetAttacked = function(combat_self, attacker, damage, weapon, stimuli, ...)
+        local target = combat_self.inst
+        local health = target.components.health
+
+        if damage == nil or damage <= 0 or health == nil or health:IsDead() then
+            return _OldGetAttacked(combat_self, attacker, damage, weapon, stimuli, ...)
+        end
+
+        -- Inmunidad post-explosión (0.15s), cubre el frame de transición
+        -- shield_dead -> otra vez vulnerable.
+        if target._eggshield_immune_until ~= nil and GetTime() < target._eggshield_immune_until then
+            return
+        end
+
+        local shield = EggShieldRegistry.FindProtecting(target)
+        if shield == nil then
+            return _OldGetAttacked(combat_self, attacker, damage, weapon, stimuli, ...)
+        end
+
+        shield:Explode(attacker, target)
+        return -- golpe anulado por completo, nunca corre el GetAttacked original
+    end
+end)
+
+```
+
+
+
+### 变体演进：DeepSeek 娘 (Mod 3810751898)
+- **变体场景与切面**：收录来自工坊 Mod 3810751898 (`DeepSeek 娘`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3810751898)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+end
+AddStategraphPostInit("wilson", UseRemoteCastForDSH("remotecast_pre"))
+AddStategraphPostInit("wilson_client", UseRemoteCastForDSH("remotecast"))
+
+---------------------------------------------------------------------------
+-- 饿了抢饭：任何玩家吃下东西时在世界上广播，饥饿的 DeepSeek（deepseek_foodrage 组件）收到后决定要不要抢。
+-- 动作状态在 scripts/deepseek_foodrage_sg.lua。
+---------------------------------------------------------------------------
+AddComponentPostInit("playervision", function(self, inst)
+	if not TheWorld.ismastersim then return end
+	inst:ListenForEvent("oneat", function(inst, data)
+        if data ~= nil and data.food ~= nil then
+            TheWorld:PushEvent("deepseek_playerate", { eater = inst, food = data.food.prefab })
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", UseRemoteCastForDSH("remotecast_pre"))
+AddStategraphPostInit("wilson_client", UseRemoteCastForDSH("remotecast"))
+
+---------------------------------------------------------------------------
+-- 饿了抢饭：任何玩家吃下东西时在世界上广播，饥饿的 DeepSeek（deepseek_foodrage 组件）收到后决定要不要抢。
+-- 动作状态在 scripts/deepseek_foodrage_sg.lua。
+---------------------------------------------------------------------------
+AddComponentPostInit("playervision", function(self, inst)
+	if not TheWorld.ismastersim then return end
+	inst:ListenForEvent("oneat", function(inst, data)
+        if data ~= nil and data.food ~= nil then
+            TheWorld:PushEvent("deepseek_playerate", { eater = inst, food = data.food.prefab })
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playervision
+---------------------------------------------------------------------------
+AddComponentPostInit("playervision", function(self, inst)
+	if not TheWorld.ismastersim then return end
+	inst:ListenForEvent("oneat", function(inst, data)
+        if data ~= nil and data.food ~= nil then
+            TheWorld:PushEvent("deepseek_playerate", { eater = inst, food = data.food.prefab })
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:deepseek
+
+AddPrefabPostInit("deepseek", function(inst)
+	if TheWorld:HasTag("cave") then
+		return
+	end
+	inst:AddTag("deepseek_swimmer")
+	IgnoreLimits(inst)
+	inst.Physics:SetCollisionCallback(OnCollide)
+	inst:ListenForEvent("deepseekswimmingdirty", OnSwimmingDirty)
+	inst:ListenForEvent("playeractivated", RefreshActionFilter)
+
+	if not TheWorld.ismastersim then
+		return
+	end
+	if inst.components.drownable ~= nil then
+		inst.components.drownable.enabled = false
+		inst.components.drownable.CheckDrownable = function(...)
+		end
+	end
+	inst:DoPeriodicTask(0, CheckWater)
+	inst:ListenForEvent("mounted", RefreshCollision)
+	inst:ListenForEvent("dismounted", function(inst)
+		-- 龙蝇等坐骑会在下骑回调里重新开启溺水；等本轮回调结束后恢复，避免依赖监听顺序。
+		inst:DoTaskInTime(0, function(inst)
+			RefreshCollision(inst)
+		end)
+	end)
+	inst:ListenForEvent("death", function(inst)
+		SetSwimming(inst, false)
+	end)
+	PatchHopping(inst, inst.components.locomotor)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+-- 客户端开启移动预测时 locomotor 是后加的，在这里补上同样的跳船限制
+AddComponentPostInit("locomotor", function(self, inst)
+	if not TheWorld.ismastersim and inst:HasTag("deepseek_swimmer") then
+		PatchHopping(inst, self)
+	end
+end)
+
+```
+

@@ -7700,3 +7700,41 @@ end)
 
 ```
 
+
+
+### 变体演进：Tomioka Giyuu (Mod 2023012681)
+- **变体场景与切面**：收录来自工坊 Mod 2023012681 (`Tomioka Giyuu`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2023012681)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+
+AddComponentPostInit("playeractionpicker", function(self)
+    local old = self.SortActionList
+    function self:SortActionList(actions, target, useitem)
+        if #actions == 0 then
+            return actions
+        end
+        local c = 0
+        for k, v in pairs(actions) do
+            if v == GLOBAL.ACTIONS.ATTACK and
+            self.inst.prefab == "giyuu" and
+            untouchables[target.prefab] then
+                c = 1
+                break
+            end
+        end
+        if c == 1 then
+            return {}
+        else
+            return old(self, actions, target, useitem)
+        end
+    end
+end)
+
+```
+
