@@ -5637,8 +5637,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 07:57:16",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1916988643",
+      "name": "BUNDLE",
+      "author": "未知",
+      "version": "2.27.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:05:05",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3708333377",
+      "name": "十二符咒",
+      "author": "huahua",
+      "version": "1.0.12",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:05:05",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3723842201",
+      "name": "Wilton: The Undead",
+      "author": "Mr.Tier",
+      "version": "1.1.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:05:06",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3726352846",
+      "name": "Mod 3726352846",
+      "author": "Wendigail",
+      "version": "9.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:05:06",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3807808423",
+      "name": "lol_attack_speed_limit",
+      "author": "Celestema0",
+      "version": "0.5.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:05:06",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 07:57:16"
+  "lastUpdated": "2026-11-01 08:05:06"
 }

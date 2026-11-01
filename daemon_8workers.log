@@ -5385,3 +5385,30 @@
 [2026-11-01 07:57:16] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 07:57:16] Reducer: 成功将 Mod 3814974285 (YELLOW_GEM_MODE) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 07:57:16] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 07:57:22] Git 自动提交并推送成功！
+[2026-11-01 07:57:23] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 07:57:23] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 07:57:53] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['2801658795', '1916988643', '3723842201', '3708333377', '3807808423', '3726352846']
+[2026-11-01 07:57:53] SteamCMD 下载 2801658795 ...
+[2026-11-01 07:57:53] SteamCMD 下载 1916988643 ...
+[2026-11-01 07:57:53] SteamCMD 下载 3723842201 ...
+[2026-11-01 07:57:53] SteamCMD 下载 3708333377 ...
+[2026-11-01 07:57:53] SteamCMD 下载 3807808423 ...
+[2026-11-01 07:57:53] SteamCMD 下载 3726352846 ...
+[2026-11-01 07:59:10] Worker [2801658795] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 08:00:04] Worker [1916988643] 成功解析入库暂存区 -> BUNDLE (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:01:35] Worker [3723842201] 成功解析入库暂存区 -> Wilton: The Undead (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:02:38] Worker [3708333377] 成功解析入库暂存区 -> 十二符咒 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:03:54] Worker [3807808423] 成功解析入库暂存区 -> lol_attack_speed_limit (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:05:05] Worker [3726352846] 成功解析入库暂存区 ->  (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:05:05] Reducer Worker 7: 发现 5 份待存草稿，执行母本仲裁归约...
+[2026-11-01 08:05:05] Reducer: 成功将 Mod 1916988643 (BUNDLE) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:05] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:05] Reducer: 成功将 Mod 3708333377 (十二符咒) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:05] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:06] Reducer: 成功将 Mod 3723842201 (Wilton: The Undead) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:06] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:06] Reducer: 成功将 Mod 3726352846 (Mod 3726352846) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:06] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:06] Reducer: 成功将 Mod 3807808423 (lol_attack_speed_limit) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:06] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
