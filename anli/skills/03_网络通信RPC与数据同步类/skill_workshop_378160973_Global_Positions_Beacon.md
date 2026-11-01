@@ -5643,3 +5643,73 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：pzjg 骗子酒馆 (Mod 3484776980)
+- **变体场景与切面**：收录来自工坊 Mod 3484776980 (`pzjg 骗子酒馆`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3484776980)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+-- AddPrefabPostInit("world", function(inst)
+--     inst:DoWallTaskInTime(0, function() 
+--         print("[DoWallTaskInTime]第一帧 GetTime =", GetTime())
+--     end)
+--     inst:DoWallTaskInTime(1, function() 
+--         print("[DoWallTaskInTime]第一秒 GetTime =", GetTime())
+--     end)
+--     inst:DoTaskInTime(0, function() 
+--         print("[DoTaskInTime]世界生成后的第一帧", GetTime())
+--     end)
+--     inst:DoTaskInTime(1, function() 
+--         print("[DoTaskInTime]世界生成后的第一秒", GetTime())
+--     end)
+--     inst:ListenForEvent("serverpauseddirty", function(inst, data) 
+--         print("p键暂停")
+--         print(dumptable(data, 1, 5))
+--     end,inst)
+-- end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+-- AddPrefabPostInit("player_classified", function(inst)
+-- end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:sittable
+-- 凳子类的
+AddComponentPostInit("sittable", function(self)
+	self.SetOccupier = createHookedFunction(self.SetOccupier, 
+	function(self, occupier)
+		if self.occupier and self.occupier:HasTag("player") and occupier == nil then
+			local x, y, z = self.inst.Transform:GetWorldPosition()
+			local ents = TheSim:FindEntities(x, y, z, 8, {tag})
+			if #ents >= 1 then
+				ents[1]:PushEvent("exit_request_pzjg", self.occupier)
+			end
+		end
+		return true
+	end, 
+	function()
+		-- 是玩家且位于桌子附近 (生活需要一点点仪式感)
+		-- print("执行了", self.occupier and self.occupier:HasTag("player") )
+		if self.occupier and self.occupier:HasTag("player") then
+			local x, y, z = self.inst.Transform:GetWorldPosition()
+			local ents = TheSim:FindEntities(x, y, z, 8, {tag})
+			if #ents >= 1 then
+				ents[1]:PushEvent("join_request_pzjg", self.occupier)
+				-- 打开界面
+				-- pzjg_RPCToClient(self.occupier.userid, "expand", nil, ents[1])
+			end
+		end
+	end)
+end)
+
+```
+
