@@ -990,3 +990,792 @@ end)
 
 ```
 
+
+
+### 变体演进：Health Bar and Buff - Client (Mod 2316507379)
+- **变体场景与切面**：收录来自工坊 Mod 2316507379 (`Health Bar and Buff - Client`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2316507379)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit(
+    "playercontroller",
+    function(self, inst)
+        if inst ~= GLOBAL.ThePlayer then
+            return
+        end
+        ThePlayer = GLOBAL.ThePlayer
+
+        local function ModLefc(act)
+            if act.action == ACTIONS.EAT then
+                local item = ThePlayer.replica.inventory:GetActiveItem()
+                InsertFood(item)
+            elseif act.action == ACTIONS.GIVE and act.target.prefab == "beefalo" and #BeefFood == 0 then
+				local item = ThePlayer.replica.inventory:GetActiveItem()
+				local Spoil = GetPerishValue(item)
+                InsertBeefFood(item, act.target,Spoil)
+			elseif act.action == ACTIONS.BRUSH and act.target.prefab == "beefalo" and #BeefFood == 0 then
+				if act.target.BeefWiget then act.target.BeefWiget:OnBrushed() end
+			end
+            return false
+        end
+
+        local PlayerControllerOnLeftClick = self.OnLeftClick
+        self.OnLeftClick = function(self, down)
+            local act = self:GetLeftMouseAction()
+            if act then
+                ModLefc(act)
+            end
+            return PlayerControllerOnLeftClick(self, down)
+        end
+
+        ThePlayer.PreviousAnimTimer = 0
+        ThePlayer.PreviousAnim = ""
+        ThePlayer.RecordedAnim = false
+        ThePlayer.StartedAttack = false
+        ThePlayer:DoPeriodicTask(GLOBAL.FRAMES, AnimationRecordMain)
+    end
+)
+
+AddPlayerPostInit(
+    function(inst)
+        if inst ~= nil and inst ~= GLOBAL.ThePlayer then
+            inst:DoTaskInTime(
+                0,
+                function(inst)
+                    if inst:HasTag("player") and inst ~= GLOBAL.ThePlayer then
+                        inst.PreviousAnimTimer = 0
+                        inst.PreviousAnim = ""
+                        inst.RecordedAnim = false
+                        inst.StartedAttack = false
+                        inst:DoPeriodicTask(GLOBAL.FRAMES, AnimationRecordSub)
+                    end
+                end
+            )
+        end
+    end
+)
+
+AddClassPostConstruct(
+    "components/inventory_replica",
+    function(self)
+        local InFromTile = self.UseItemFromInvTile
+        self.UseItemFromInvTile = function(self, item)
+            InsertFood(item)
+            InFromTile(self, item)
+        end
+    end
+)
+
+local function ShowHp()
+    local ents = GLOBAL.Ents
+    for i, ent in pairs(ents) do
+        if MobList[ent.prefab] ~= nil then
+            AddInst(ent)
+        end
+    end
+end
+local function HideHp()
+    for inst, data in pairs(MonitorList) do
+        if data.Timer > 0 then
+            data.Timer = 0
+            data.Enti:Hide()
+        end
+    end
+end
+
+local function Switch(Label)
+    MdEnable = not MdEnable
+    HideHp()
+end
+
+local function AddIndicator(self)
+    local original_CreateOverlays = self.CreateOverlays
+    local original_OnMouseButton = self.OnMouseButton
+
+    -- normalize position in logic coords game, default center screen
+    local Buffpos = {x = 0, y = 0, hanchor = GLOBAL.ANCHOR_RIGHT, vanchor = GLOBAL.ANCHOR_BOTTOM}
+    local Controlpos = {x = 0, y = 0, hanchor = GLOBAL.ANCHOR_LEFT, vanchor = GLOBAL.ANCHOR_TOP}
+
+    self.CreateOverlays = function(owner)
+        original_CreateOverlays(self, self.owner)
+
+        --BuffEffect
+        self.buffeffect = self.under_root:AddChild(Widget("buffeffect_root"))
+        self.buffeffect:SetScaleMode(GLOBAL.SCALEMODE_PROPORTIONAL)
+        self.buffeffect:SetHAnchor(Buffpos.hanchor)
+        self.buffeffect:SetVAnchor(Buffpos.vanchor)
+        self.buffeffect:SetPosition(Buffpos.x, Buffpos.y)
+        self.buffeffect = self.buffeffect:AddChild(buffeffect())
+        self.buffeffect:SetScale(1)
+        SignBuff = self.buffeffect
+
+        --ModSETTING
+        if inbut then
+            self.sccontrol = self.under_root:AddChild(Widget("sccontrol_root"))
+            self.sccontrol:SetScaleMode(GLOBAL.SCALEMODE_PROPORTIONAL)
+            self.sccontrol:SetHAnchor(Controlpos.hanchor)
+            self.sccontrol:SetVAnchor(Controlpos.vanchor)
+            self.sccontrol:SetPosition(Controlpos.x, Controlpos.y)
+            self.sccontrol = self.sccontrol:AddChild(sccontrol())
+            self.sccontrol:SetScale(1)
+            self.sccontrol:Install(modname)
+            self.sccontrol.OnReconfig = ReConfig
+            self.sccontrol.ShowHp = ShowHp
+            self.sccontrol.HideHp = HideHp
+            self.sccontrol.Switch = Switch
+            SignControl = self.sccontrol
+        end
+    end
+end
+AddClassPostConstruct("screens/playerhud", AddIndicator)
+
+local AbiAtk = {
+    "attack1_loop",
+    "attack2_loop",
+    "attack3_loop",
+    "attack1_pre",
+    "attack2_pre",
+    "attack3_pre"
+}
+
+local function EXtend(inst)
+    if inst.AbiDmgBuff ~= nil then
+        inst.AbiDmgBuff:Cancel()
+    end
+    inst.AbiDmgBuff =
+        inst:DoTaskInTime(
+        TUNING.ABIGAIL_VEX_DURATION,
+        function()
+            inst.AbiDbuff = false
+        end
+    )
+end
+
+local function validfn(inst, target)
+    if target:HasTag("player") or target:HasTag("ghost") or target:HasTag("noauradamage") then
+        return false
+    end
+
+    if MobList[target.prefab] and not MobList[target.prefab].AbiFriend then
+        return true
+    end
+    return false
+end
+
+local auraexcludetags = {
+    "noauradamage",
+    "INLIMBO",
+    "notarget",
+    "noattack",
+    "flight",
+    "invisible",
+    "playerghost",
+    "shadowcreature",
+    "companion"
+}
+local function DoAbiAttack(inst, damage)
+    local range = 4
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local ents = TheSim:FindEntities(x, y, z, range, nil, auraexcludetags)
+
+    for i, ent in ipairs(ents) do
+        if ent ~= inst and validfn(inst, ent) then
+            if not (ent.AnimState and ent.AnimState:IsCurrentAnimation("death")) or (not ent.Lasthit) then
+                local dam = GetModifiDamage(damage, ent)
+                if SummonShow == 3 then
+                    SpawnDamage(ent, tostring(round(dam)), 1)
+                end
+                ent.AbiDbuff = true
+                EXtend(ent)
+                AddInst(ent, dam, SummonShow < 2)
+            else
+                ent.Lasthit = true
+            end
+        end
+    end
+end
+
+local ABIGAIL_DAMAGE = {
+    15,
+    25,
+    40
+}
+
+local function GetAbiDmg(dmg)
+    return ABIGAIL_DAMAGE[dmg]
+end
+
+AddPrefabPostInit(
+    "abigail_attack_fx",
+    function(inst)
+        local LastRecordTick = nil
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                local Animz = true
+                for i, animate in ipairs(AbiAtk) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        local CurTime = GLOBAL:GetTime()
+                        if LastRecordTick == nil then
+                            LastRecordTick = CurTime
+                        end
+                        local Ticks = round((CurTime - LastRecordTick) / GLOBAL.FRAMES)
+                        if Ticks % 29 == 0 then
+                            local dmg = GetAbiDmg((i - 1) % 3 + 1)
+                            DoAbiAttack(inst, dmg)
+                        end
+                        Animz = false
+                    end
+                end
+                if Animz then
+                    LastRecordTick = nil
+                end
+            end
+        )
+    end
+)
+
+local function ShadowLevelItem(inst)
+    if inst then
+        if not WPFetch:IsInCache(inst) then
+            WPFetch:AddItemToCache(inst)
+        end
+    end
+    if inst.prefab then
+        local Durability =
+            inst.replica.inventoryitem.classified.percentused or inst.replica.inventoryitem.classified.perish or
+            inst.replica.inventoryitem.classified.recharge or
+            inst.replica.inventoryitem.classified.rechargetime
+
+        if Durability ~= nil and Durability:value() == 0 then
+            return 0
+        end
+    end
+
+    local ShadowLevel = WPFetch:GetShadowLevel(inst) or 0
+    return ShadowLevel
+end
+
+local function GetShadowLevel(owner)
+    if owner == nil then
+        return 0
+    end
+    local userid = owner.userid
+    local data = TheNet:GetClientTableForUser(userid)
+    local Lv = 0
+    if owner.userid == ThePlayer.userid then
+        for slot, body in pairs(EQUIPSLOTS) do
+            ItemDta = GLOBAL.ThePlayer.replica.inventory:GetEquippedItem(body)
+            if ItemDta then
+                local Itm = ItemDta.prefab
+                if Itm then
+					if Itm == "tophat" then
+						if owner.ShadowHat then Lv = Lv + TUNING.MAGICIAN_TOPHAT_SHADOW_LEVEL end
+					else 
+						local Tlv = ShadowLevelItem(Itm) or TUNING[string.upper(Itm) .. "_SHADOW_LEVEL"] or 0
+						Lv = Lv + Tlv
+					end
+				end
+            end
+        end
+        return Lv
+    elseif owner ~= nil and owner.prefab == "waxwell" then
+        for i = 1, require("equipslotutil").Count() do
+            if data.equip[i] then
+                local EquipString = string.gsub(data.equip[i], "%s+", "")
+                if EquipString ~= "" then
+                    local Itm = GetPrefabFromSkin(EquipString) or EquipString
+					
+                    if Itm then
+						if Itm == "tophat" then
+							if owner.ShadowHat then Lv = Lv + TUNING.MAGICIAN_TOPHAT_SHADOW_LEVEL end
+						else 
+							local Tlv = ShadowLevelItem(Itm) or TUNING[string.upper(Itm) .. "_SHADOW_LEVEL"] or 0
+							Lv = Lv + Tlv
+						end
+                    end
+                end
+            end
+        end
+        return Lv
+    else
+        return 0
+    end
+end
+
+local ShadowPre = {
+    "atk_pre",
+    "lunge_pre",
+    "emerge"
+}
+
+local ShadowAtk = {
+    "atk",
+    "lunge_loop",
+    "atk_loop"
+}
+
+local function IsNearTarget(inst, target, range)
+	if inst.Transform and target.Transform then
+		return inst:IsNear(target, range + target:GetPhysicsRadius(0))
+	end
+	return false
+end
+
+local function IsLeaderNear(inst, leader, target, range)
+	if inst.Transform and leader.Transform then
+		return inst:IsNear(leader, range) or (target ~= nil and IsNearTarget(leader, target, range))
+	end
+	return false
+end
+
+AddPrefabPostInit(
+    "shadowprotector",
+    function(inst)
+        inst.StartedAttack = false
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                if inst.replica.combat:GetTarget() ~= nil then
+                    inst.TheTarget = inst.replica.combat:GetTarget()
+                end
+                local Target = inst.replica.combat:GetTarget() or inst.TheTarget
+
+                local Owner
+                if inst.replica.follower then
+                    Owner = inst.replica.follower:GetLeader()
+                end
+
+                for i, animate in ipairs(ShadowPre) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        inst.StartedAttack = true
+                    end
+                end
+
+                for i, animate in ipairs(ShadowAtk) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        local frameCount = 3
+                        local DmgMult = 1
+                        if animate == "lunge_loop" then
+                            frameCount = 3
+                            DmgMult = 1.5
+                        end
+                        if
+                            inst.AnimState:GetCurrentAnimationTime() > GLOBAL.FRAMES * frameCount and inst.StartedAttack and
+                                Target and
+                                (not PredictHit or CanHit(inst.replica.combat, Target))
+                         then
+                            local Damg = TUNING.SHADOWWAXWELL_PROTECTOR_DAMAGE
+                            if Owner ~= nil and Owner.entity then
+                                if
+                                    IsLeaderNear(
+                                        inst,
+                                        Owner,
+                                        Target,
+                                        TUNING.SHADOWWAXWELL_PROTECTOR_SHADOW_LEADER_RADIUS
+                                    )
+                                 then
+                                    Damg =
+                                        (TUNING.SHADOWWAXWELL_PROTECTOR_DAMAGE +
+                                        TUNING.SHADOWWAXWELL_PROTECTOR_DAMAGE_BONUS_PER_LEVEL * GetShadowLevel(Owner))
+                                end
+                            end
+                            Damg = DmgMult * Damg
+                            Damg = GetModifiDamage(Damg, Target)
+							
+							if Target.AbiDbuff then
+								Damg = Damg * TUNING.ABIGAIL_VEX_DAMAGE_MOD
+							end
+							
+                            if SummonShow == 3 then
+                                SpawnDamage(Target, tostring(round(Damg)), 1)
+                            end
+                            AddInst(Target, Damg, SummonShow < 2)
+                            inst.StartedAttack = false
+                        end
+                    end
+                end
+            end
+        )
+    end
+)
+
+
+AddPrefabPostInit(
+    "tophat_shadow_fx",
+    function(inst)
+        inst:DoTaskInTime(
+            GLOBAL.FRAMES,
+            function()
+                local Summonner =  GLOBAL.FindEntity(inst,2,function(bff)
+					return (bff.prefab == "waxwell" ) 
+					end,nil,{ "INLIMBO", "noauradamage" })	
+				if Summonner then Summonner.ShadowHat = true end
+				inst:ListenForEvent("onremove", function()
+					if Summonner then Summonner.ShadowHat = false end
+				end)
+            end
+        )
+    end
+)
+
+
+AddPrefabPostInit(
+    "alterguardianhat_projectile",
+    function(inst)
+        inst.StartedAttack = true
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                if inst.replica.combat:GetTarget() ~= nil then
+                    inst.TheTarget = inst.replica.combat:GetTarget()
+                end
+
+                if inst.TheTarget == nil and inst.replica.follower then
+                    local Owner = inst.replica.follower:GetLeader()
+                    if Owner and Owner.replica.combat then
+                        inst.TheTarget = Owner.replica.combat:GetTarget()
+                    end
+                end
+
+                local Target = inst.replica.combat:GetTarget() or inst.TheTarget
+
+                if inst.AnimState:IsCurrentAnimation("mutate") then
+                    local frameCount = 2
+
+                    if
+                        inst.AnimState:GetCurrentAnimationTime() > GLOBAL.FRAMES * frameCount and inst.StartedAttack and
+                            Target and
+                            (not PredictHit or CanHit(inst.replica.combat, Target))
+                     then
+                        local Damg = TUNING.ALTERGUARDIANHAT_GESTALT_DAMAGE
+                        Damg = GetModifiDamage(Damg, Target)
+
+						if Target.AbiDbuff then
+							Damg = Damg * TUNING.ABIGAIL_VEX_DAMAGE_MOD
+						end
+                        if SummonShow == 3 then
+                            SpawnDamage(Target, tostring(round(Damg)), 1)
+                        end
+                        AddInst(Target, Damg, SummonShow < 2)
+                        inst.StartedAttack = false
+                    end
+                end
+            end
+        )
+    end
+)
+
+AddPrefabPostInit(
+    "shadowtentacle",
+    function(inst)
+        inst.StartedAttack = 2
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                if inst.replica.combat:GetTarget() ~= nil then
+                    inst.TheTarget = inst.replica.combat:GetTarget()
+                end
+                local Target = inst.replica.combat:GetTarget() or inst.TheTarget
+
+                for i, animate in ipairs(ShadowPre) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        inst.StartedAttack = 0
+                    end
+                end
+
+                for i, animate in ipairs(ShadowAtk) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        local CurFrame = math.floor(inst.AnimState:GetCurrentAnimationTime() / GLOBAL.FRAMES)
+                        if
+                            (CurFrame == 8 or CurFrame == 18) and inst.StartedAttack < 2 and Target and
+                                (not PredictHit or CanHit(inst.replica.combat, Target))
+                         then
+                            local Damg = TUNING.TENTACLE_DAMAGE
+                            Damg = GetModifiDamage(Damg, Target)
+
+							if Target.AbiDbuff then
+								Damg = Damg * TUNING.ABIGAIL_VEX_DAMAGE_MOD
+							end
+                            if SummonShow == 3 then
+                                SpawnDamage(Target, tostring(round(Damg)), 1)
+                            end
+                            AddInst(Target, Damg, SummonShow < 2)
+                            inst.StartedAttack = inst.StartedAttack + 1
+                        end
+                    end
+                end
+            end
+        )
+    end
+)
+
+
+AddPrefabPostInit(
+    "lunarplanttentacle",
+    function(inst)
+        inst.StartedAttack = false
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                if inst.replica.combat:GetTarget() ~= nil then
+                    inst.TheTarget = inst.replica.combat:GetTarget()
+                end
+                local Target = inst.replica.combat:GetTarget() or inst.TheTarget
+
+				if inst.AnimState:IsCurrentAnimation("atk") then
+					local CurFrame = math.floor(inst.AnimState:GetCurrentAnimationTime() / GLOBAL.FRAMES)
+					if (CurFrame >= 15) and not inst.StartedAttack  and Target and (not PredictHit or CanHit(inst.replica.combat, Target)) then
+						local Damg = TUNING.LUNARPLANTTENTACLE_DAMAGE
+						Damg = GetModifiDamage(Damg, Target)
+
+						if Target.AbiDbuff then
+							Damg = Damg * TUNING.ABIGAIL_VEX_DAMAGE_MOD
+						end
+						if SummonShow == 3 then
+							SpawnDamage(Target, tostring(round(Damg)), 1)
+						end
+						AddInst(Target, Damg, SummonShow < 2)
+						
+						local SpDamg = TUNING.LUNARPLANTTENTACLE_PLANARDAMAGE
+						SpDamg = GetModifiDamage(SpDamg, Target, true)
+
+						if SummonShow == 3 then
+							SpawnDamage(Target, tostring(round(SpDamg)), 1)
+						end
+						AddInst(Target, SpDamg, SummonShow < 2)
+						inst.StartedAttack = true
+					end
+				end
+            end
+        )
+    end
+)
+
+AddPrefabPostInit(
+    "beeguard",
+    function(inst)
+        inst.StartedAttack = false
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                if inst.replica.combat:GetTarget() ~= nil then
+                    inst.TheTarget = inst.replica.combat:GetTarget()
+                end
+                local Target = inst.replica.combat:GetTarget() or inst.TheTarget
+
+                if Target and Target:HasTag("player") then
+                    return
+                end
+
+                if inst.AnimState:IsCurrentAnimation("atk") then
+                    local frameCount = 13
+
+                    if inst.AnimState:GetCurrentAnimationTime() < GLOBAL.FRAMES * 2 then
+                        inst.StartedAttack = true
+                    end
+
+                    if
+                        inst.AnimState:GetCurrentAnimationTime() > GLOBAL.FRAMES * frameCount and inst.StartedAttack and
+                            Target and
+                            (not PredictHit or CanHit(inst.replica.combat, Target))
+                     then
+                        local Damg = TUNING.BEEGUARD_DAMAGE
+                        Damg = GetModifiDamage(Damg, Target)
+
+						if Target.AbiDbuff then
+							Damg = Damg * TUNING.ABIGAIL_VEX_DAMAGE_MOD
+						end
+
+                        if SummonShow == 3 then
+                            SpawnDamage(Target, tostring(round(Damg)), 1)
+                        end
+						
+						
+                        AddInst(Target, Damg, SummonShow < 2)
+						
+                        inst.StartedAttack = false
+                    end
+                end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail_attack_fx
+
+AddPrefabPostInit(
+    "abigail_attack_fx",
+    function(inst)
+        local LastRecordTick = nil
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                local Animz = true
+                for i, animate in ipairs(AbiAtk) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        local CurTime = GLOBAL:GetTime()
+                        if LastRecordTick == nil then
+                            LastRecordTick = CurTime
+                        end
+                        local Ticks = round((CurTime - LastRecordTick) / GLOBAL.FRAMES)
+                        if Ticks % 29 == 0 then
+                            local dmg = GetAbiDmg((i - 1) % 3 + 1)
+                            DoAbiAttack(inst, dmg)
+                        end
+                        Animz = false
+                    end
+                end
+                if Animz then
+                    LastRecordTick = nil
+                end
+            end
+        )
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadowprotector
+
+AddPrefabPostInit(
+    "shadowprotector",
+    function(inst)
+        inst.StartedAttack = false
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                if inst.replica.combat:GetTarget() ~= nil then
+                    inst.TheTarget = inst.replica.combat:GetTarget()
+                end
+                local Target = inst.replica.combat:GetTarget() or inst.TheTarget
+
+                local Owner
+                if inst.replica.follower then
+                    Owner = inst.replica.follower:GetLeader()
+                end
+
+                for i, animate in ipairs(ShadowPre) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        inst.StartedAttack = true
+                    end
+                end
+
+                for i, animate in ipairs(ShadowAtk) do
+                    if inst.AnimState:IsCurrentAnimation(animate) then
+                        local frameCount = 3
+                        local DmgMult = 1
+                        if animate == "lunge_loop" then
+                            frameCount = 3
+                            DmgMult = 1.5
+                        end
+                        if
+                            inst.AnimState:GetCurrentAnimationTime() > GLOBAL.FRAMES * frameCount and inst.StartedAttack and
+                                Target and
+                                (not PredictHit or CanHit(inst.replica.combat, Target))
+                         then
+                            local Damg = TUNING.SHADOWWAXWELL_PROTECTOR_DAMAGE
+                            if Owner ~= nil and Owner.entity then
+                                if
+                                    IsLeaderNear(
+                                        inst,
+                                        Owner,
+                                        Target,
+                                        TUNING.SHADOWWAXWELL_PROTECTOR_SHADOW_LEADER_RADIUS
+                                    )
+                                 then
+                                    Damg =
+                                        (TUNING.SHADOWWAXWELL_PROTECTOR_DAMAGE +
+                                        TUNING.SHADOWWAXWELL_PROTECTOR_DAMAGE_BONUS_PER_LEVEL * GetShadowLevel(Owner))
+                                end
+                            end
+                            Damg = DmgMult * Damg
+                            Damg = GetModifiDamage(Damg, Target)
+							
+							if Target.AbiDbuff then
+								Damg = Damg * TUNING.ABIGAIL_VEX_DAMAGE_MOD
+							end
+							
+                            if SummonShow == 3 then
+                                SpawnDamage(Target, tostring(round(Damg)), 1)
+                            end
+                            AddInst(Target, Damg, SummonShow < 2)
+                            inst.StartedAttack = false
+                        end
+                    end
+                end
+            end
+        )
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tophat_shadow_fx
+
+AddPrefabPostInit(
+    "tophat_shadow_fx",
+    function(inst)
+        inst:DoTaskInTime(
+            GLOBAL.FRAMES,
+            function()
+                local Summonner =  GLOBAL.FindEntity(inst,2,function(bff)
+					return (bff.prefab == "waxwell" ) 
+					end,nil,{ "INLIMBO", "noauradamage" })	
+				if Summonner then Summonner.ShadowHat = true end
+				inst:ListenForEvent("onremove", function()
+					if Summonner then Summonner.ShadowHat = false end
+				end)
+            end
+        )
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:alterguardianhat_projectile
+
+AddPrefabPostInit(
+    "alterguardianhat_projectile",
+    function(inst)
+        inst.StartedAttack = true
+        inst:DoPeriodicTask(
+            GLOBAL.FRAMES,
+            function()
+                if inst.replica.combat:GetTarget() ~= nil then
+                    inst.TheTarget = inst.replica.combat:GetTarget()
+                end
+
+                if inst.TheTarget == nil and inst.replica.follower then
+                    local Owner = inst.replica.follower:GetLeader()
+                    if Owner and Owner.replica.combat then
+                        inst.TheTarget = Owner.replica.combat:GetTarget()
+                    end
+                end
+
+                local Target = inst.replica.combat:GetTarget() or inst.TheTarget
+
+                if inst.AnimState:IsCurrentAnimation("mutate") then
+                    local frameCount = 2
+
+                    if
+                        inst.AnimState:GetCurrentAnimationTime() > GLOBAL.FRAMES * frameCount and inst.StartedAttack and
+                            Target and
+                            (not PredictHit or CanHit(inst.replica.combat, Target))
+                     then
+                        local Damg = TUNING.ALTERGUARDIANHAT_GESTALT_DAMAGE
+                        Damg = GetModifiDamage(Damg, Target)
+
+						if Target.AbiDbuff then
+							Damg = Damg * TUNING.ABIGAIL_VEX_DAMAGE_MOD
+						end
+                        if SummonShow == 3 then
+                            SpawnDamage(Target, tostring(round(Damg)), 1)
+                        end
+                        AddInst(Target, Damg, SummonShow < 2)
+                        inst.StartedAttack = false
+                    end
+                end
+            end
+        )
+    end
+
+```
+

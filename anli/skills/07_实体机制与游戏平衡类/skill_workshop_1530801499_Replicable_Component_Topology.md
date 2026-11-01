@@ -12353,3 +12353,67 @@ end)
 
 ```
 
+
+
+### 变体演进：Ocean Currents (Mod 2485482489)
+- **变体场景与切面**：收录来自工坊 Mod 2485482489 (`Ocean Currents`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2485482489)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+
+AddPrefabPostInit("forest", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		inst:ListenForEvent("ms_playerjoined", OnPlayerJoined)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+
+AddComponentPostInit("locomotor", function(self) --Hornet: slightly hacky way to make sure ocean current doesn't give speed boost to players, since it's considered a road (duh)
+	local _FasterOnRoad = self.FasterOnRoad
+	
+	self.FasterOnRoad = function(self, ...)
+		local x, y, z = self.inst.Transform:GetWorldPosition()
+		
+		if GLOBAL.TheWorld.Map:IsOceanTileAtPoint(x, 0, z) then
+			return false
+		end
+
+		if _FasterOnRoad ~= nil then
+			return _FasterOnRoad(self, ...)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:boatphysics
+
+AddComponentPostInit("boatphysics", function(self)
+	local _GetMaxVelocity = self.GetMaxVelocity
+	
+	function self:GetMaxVelocity(...)
+		local max_vel = _GetMaxVelocity(self, ...)
+
+		if IsOnCurrent(self.inst) then
+			max_vel = max_vel * 1.34
+		end
+		
+		return max_vel
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:burnable_locator_medium
+
+AddPrefabPostInit("burnable_locator_medium", function(inst)
+	inst:AddTag("burnable_locator")
+end)
+
+```
+

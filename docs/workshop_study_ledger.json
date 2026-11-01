@@ -8274,8 +8274,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 14:55:00",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2311599832",
+      "name": "Seed Pouches",
+      "author": "Electroely",
+      "version": "1.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:59:03",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2316507379",
+      "name": "Health Bar and Buff - Client",
+      "author": "Tranoze",
+      "version": "241025",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 14:59:03",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "2485482489",
+      "name": "Ocean Currents",
+      "author": "Hornet",
+      "version": "1.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 14:59:04",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 14:55:00"
+  "lastUpdated": "2026-11-01 14:59:04"
 }

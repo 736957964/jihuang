@@ -64030,3 +64030,43 @@ end)
 
 ```
 
+
+
+### 变体演进：Seed Pouches (Mod 2311599832)
+- **变体场景与切面**：收录来自工坊 Mod 2311599832 (`Seed Pouches`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2311599832)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+	local GiveItem_old = self.GiveItem
+	function self:GiveItem(item, ...)
+		if item.ignore_give_item then
+			return
+		end
+		return GiveItem_old(self, item, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lordfruitfly
+if tech == G.TECH.LOST then
+	AddPrefabPostInit("lordfruitfly", function(inst)
+		if inst.components.lootdropper then
+			local fn_old = inst.components.lootdropper.lootsetupfn
+			inst.components.lootdropper.lootsetupfn = function(self, ...)
+				if fn_old then
+					fn_old(self, ...)
+				end
+				self:AddChanceLoot("seedcontainer_empty_blueprint", 1)
+			end
+		end
+	end)
+
+```
+
