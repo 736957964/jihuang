@@ -7248,3 +7248,26 @@
 [2026-11-01 14:10:57] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 14:10:57] Reducer: 成功将 Mod 3628657754 (Wxwood is canon! (in this mod)) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 14:10:57] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:11:05] Git 自动提交并推送成功！
+[2026-11-01 14:11:06] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 14:11:06] 【批次结算】：本批归约出 5 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 14:11:42] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['2986515645', '1171138081', '3557753834', '2801880191', '1581892848', '1840284484']
+[2026-11-01 14:11:42] SteamCMD 下载 2986515645 ...
+[2026-11-01 14:11:44] SteamCMD 下载 1171138081 ...
+[2026-11-01 14:11:44] SteamCMD 下载 3557753834 ...
+[2026-11-01 14:11:44] SteamCMD 下载 2801880191 ...
+[2026-11-01 14:11:44] SteamCMD 下载 1581892848 ...
+[2026-11-01 14:11:44] SteamCMD 下载 1840284484 ...
+[2026-11-01 14:12:48] Worker [2986515645] 成功解析入库暂存区 -> quick_pick_cactus (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:14:01] Worker [1171138081] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 14:14:41] Worker [3557753834] 过滤拦截: Drying Helper (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 14:14:52] Worker [2801880191] 成功解析入库暂存区 -> 45 Inventory Slots [Fixed] (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:15:08] Worker [1581892848] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 14:16:17] Worker [1840284484] 成功解析入库暂存区 -> SYSTEM (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:16:17] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 14:16:18] Reducer: 成功将 Mod 1840284484 (SYSTEM) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:16:18] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:16:18] Reducer: 成功将 Mod 2801880191 (45 Inventory Slots [Fixed]) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:16:18] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:16:18] Reducer: 成功将 Mod 2986515645 (quick_pick_cactus) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:16:18] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md

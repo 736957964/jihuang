@@ -59286,3 +59286,254 @@ end)
 
 ```
 
+
+
+### 变体演进：SYSTEM (Mod 1840284484)
+- **变体场景与切面**：收录来自工坊 Mod 1840284484 (`SYSTEM`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1840284484)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+    if GLOBAL.STRINGS.NAMES.MIGRATION_PORTAL then
+        AddPrefabPostInit("forest", function(inst)
+            if inst.ismastersim then
+                inst:AddComponent("minspawner")
+            end
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+    else
+        AddPrefabPostInit("world", function(inst)
+            if inst.ismastersim then
+                inst:AddComponent("minspawner")
+            end
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+--欧皇检测
+AddPrefabPostInit("krampus_sack", function(inst)
+    inst:AddComponent("ksmark")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:klaussackkey
+end)
+AddPrefabPostInit("klaussackkey", function(inst)
+    inst:AddComponent("ksmark")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:warly
+end)
+AddPrefabPostInit("warly", function(inst)
+    inst:AddTag("realchef")
+end)
+
+```
+
+
+
+### 变体演进：45 Inventory Slots [Fixed] (Mod 2801880191)
+- **变体场景与切面**：收录来自工坊 Mod 2801880191 (`45 Inventory Slots [Fixed]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2801880191)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:resurrectable
+
+    AddComponentPostInit("resurrectable", function(self)
+        local original_FindClosestResurrector = self.FindClosestResurrector
+        local original_CanResurrect = self.CanResurrect
+        local original_DoResurrect = self.DoResurrect
+
+        self.FindClosestResurrector = function(self)
+            if IsServer and self.inst.components.inventory then
+                local item = self.inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.NECK)
+                if item and item.prefab == "amulet" then
+                    return item
+                end
+            end
+            original_FindClosestResurrector(self)
+        end
+
+        self.CanResurrect = function(self)
+            if IsServer and self.inst.components.inventory then
+                local item = self.inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.NECK)
+                if item and item.prefab == "amulet" then
+                    return true
+                end
+            end
+            original_CanResurrect(self)
+        end
+
+        self.DoResurrect = function(self)
+            self.inst:PushEvent("resurrect")
+            if IsServer and self.inst.components.inventory then
+                local item = self.inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.NECK)
+                if item and item.prefab == "amulet" then
+                    self.inst.sg:GoToState("amulet_rebirth")
+                    return true
+                end
+            end
+            original_DoResurrect(self)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+    AddComponentPostInit("inventory", function(self)
+        local original_Equip = self.Equip
+        self.Equip = function(self, item, old_to_active, no_animation, force_ui_anim)
+            if original_Equip(self, item, old_to_active, no_animation, force_ui_anim) and item and item.components and item.components.equippable then
+                local eslot = item.components.equippable.equipslot
+                if self.equipslots[eslot] ~= item then
+                    if eslot == GLOBAL.EQUIPSLOTS.BACK and item.components.container ~= nil then
+                        self.inst:PushEvent("setoverflow", { overflow = item })
+                    end
+                end
+                return true
+            else
+                return
+            end
+        end
+
+        self.GetOverflowContainer = function()
+            if self.ignoreoverflow then
+                return
+            end
+            local item = self:GetEquippedItem(GLOBAL.EQUIPSLOTS.BACK)
+            return (item ~= nil and item.components.container ~= nil and item.components.container.canbeopened)
+                and item.components.container
+                or nil
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+
+    AddPrefabPostInit("inventory_classified", function(inst)
+        function GetOverflowContainer(inst)
+            if inst.ignoreoverflow then
+                return
+            end
+            local item = inst.GetEquippedItem(inst, GLOBAL.EQUIPSLOTS.BACK)
+            return (item ~= nil and item.components.container ~= nil and item.components.container.canbeopened)
+                and item.components.container
+                or nil
+        end
+
+        function Count(item)
+            return item.replica.stackable ~= nil and item.replica.stackable:StackSize() or 1
+        end
+
+		function Has(inst, prefab, amount, checkallcontainers)
+			local iscrafting = checkallcontainers
+
+			local count =
+				inst._activeitem ~= nil and
+				inst._activeitem.prefab == prefab and
+				not (iscrafting and inst._activeitem:HasTag("nocrafting")) and
+				Count(inst._activeitem) or 0
+
+			if inst._itemspreview ~= nil then
+				for i, v in ipairs(inst._items) do
+					local item = inst._itemspreview[i]
+					if item ~= nil and item.prefab == prefab and not (iscrafting and item:HasTag("nocrafting")) then
+						count = count + Count(item)
+					end
+				end
+			else
+				for i, v in ipairs(inst._items) do
+					local item = v:value()
+					if item ~= nil and item ~= inst._activeitem and item.prefab == prefab and not (iscrafting and item:HasTag("nocrafting")) then
+						count = count + Count(item)
+					end
+				end
+			end
+
+			local overflow = GetOverflowContainer(inst)
+			if overflow ~= nil then
+				local overflowhas, overflowcount = overflow:Has(prefab, amount, iscrafting)
+				count = count + overflowcount
+			end
+
+			if checkallcontainers then
+				local inventory_replica = inst and inst._parent and inst._parent.replica.inventory
+				local containers = inventory_replica and inventory_replica:GetOpenContainers()
+
+				if containers then
+					for container_inst in pairs(containers) do
+						local container = container_inst.replica.container or container_inst.replica.inventory
+						if container and container ~= overflow and not container.excludefromcrafting then
+							local containerhas, containercount = container:Has(prefab, amount, iscrafting)
+							count = count + containercount
+						end
+					end
+				end
+			end
+
+			return count >= amount, count
+		end
+
+        if not IsServer then
+            inst.GetOverflowContainer = GetOverflowContainer
+            inst.Has = Has
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+    AddStategraphPostInit("wilson", function(self)
+        for key,value in pairs(self.states) do
+            if value.name == 'amulet_rebirth' then
+                local original_amulet_rebirth_onexit = self.states[key].onexit
+
+
+                self.states[key].onexit = function(inst)
+                    local item = inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.NECK)
+                    if item ~= nil and item.prefab == "amulet" then
+                        item = inst.components.inventory:RemoveItem(item)
+                        if item ~= nil then
+                            item:Remove()
+                            item.persists = false
+                        end
+                    end
+                    original_amulet_rebirth_onexit(inst)
+                end
+            end
+        end
+    end)
+
+```
+
+
+
+### 变体演进：quick_pick_cactus (Mod 2986515645)
+- **变体场景与切面**：收录来自工坊 Mod 2986515645 (`quick_pick_cactus`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2986515645)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+if GetModConfigData("quick_harvest") then
+    AddStategraphPostInit("wilson", function(sg)
+        local actionhandler = GLOBAL.ActionHandler(GLOBAL.ACTIONS.HARVEST, "doshortaction")
+        sg.actionhandlers[GLOBAL.ACTIONS.HARVEST] = actionhandler
+    end)
+
+```
+

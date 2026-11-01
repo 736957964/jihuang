@@ -8058,8 +8058,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 14:10:57",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1840284484",
+      "name": "SYSTEM",
+      "author": "Lavax",
+      "version": "3.7.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:16:18",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2801880191",
+      "name": "45 Inventory Slots [Fixed]",
+      "author": "Antaeogo",
+      "version": "1.1.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:16:18",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2986515645",
+      "name": "quick_pick_cactus",
+      "author": "Makonew (Origin.PiaoYang (Origin.辣椒小皇纸))",
+      "version": "1.9.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:16:18",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 14:10:57"
+  "lastUpdated": "2026-11-01 14:16:18"
 }
