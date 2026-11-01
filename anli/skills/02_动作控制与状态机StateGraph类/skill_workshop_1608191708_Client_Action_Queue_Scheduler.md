@@ -36654,3 +36654,362 @@ end)
 
 ```
 
+
+
+### 变体演进：灵界 (Mod 3803837945)
+- **变体场景与切面**：收录来自工坊 Mod 3803837945 (`灵界`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3803837945)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:highlight
+
+AddComponentPostInit("highlight", function(self)
+    if self._lj_shadow_highlight_hooked then
+        return
+    end
+    self._lj_shadow_highlight_hooked = true
+
+    local old_ApplyColour = self.ApplyColour
+    self.ApplyColour = function(highlight, ...)
+        -- 每次播放时再判断，兼容生成后才补上影体标记的情况。
+        if IsShadowClone(highlight.inst) then
+            return
+        end
+
+        if old_ApplyColour ~= nil then
+            return old_ApplyColour(highlight, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:klaus
+
+AddPrefabPostInit("klaus", AddKlausClientProcess)
+AddPrefabPostInit("klaus2hm", AddKlausClientProcess)
+
+local function ApplyDaywalkerHeadShadowColour(inst)
+    local head = inst ~= nil and inst.head or nil
+    if head ~= nil and (head.IsValid == nil or head:IsValid()) and head.AnimState ~= nil then
+        -- 噩梦猪人的头颅使用独立动画，需要单独着色。
+        if not IsShadowClone(inst) and not inst._lj_demonization_cleared and inst._lj_demon_colour ~= nil then
+            local colour = inst._lj_demon_colour
+            head.AnimState:SetMultColour(colour[1], colour[2], colour[3], colour[4] or 1)
+            return
+        end
+
+        if not IsShadowClone(inst) then
+            return
+        end
+
+        head.AnimState:SetMultColour(0, 0, 0, 0.5)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:klaus2hm
+AddPrefabPostInit("klaus", AddKlausClientProcess)
+AddPrefabPostInit("klaus2hm", AddKlausClientProcess)
+
+local function ApplyDaywalkerHeadShadowColour(inst)
+    local head = inst ~= nil and inst.head or nil
+    if head ~= nil and (head.IsValid == nil or head:IsValid()) and head.AnimState ~= nil then
+        -- 噩梦猪人的头颅使用独立动画，需要单独着色。
+        if not IsShadowClone(inst) and not inst._lj_demonization_cleared and inst._lj_demon_colour ~= nil then
+            local colour = inst._lj_demon_colour
+            head.AnimState:SetMultColour(colour[1], colour[2], colour[3], colour[4] or 1)
+            return
+        end
+
+        if not IsShadowClone(inst) then
+            return
+        end
+
+        head.AnimState:SetMultColour(0, 0, 0, 0.5)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:daywalker
+
+AddPrefabPostInit("daywalker", AddDaywalkerHeadShadowProcess)
+AddPrefabPostInit("daywalker2", AddDaywalkerHeadShadowProcess)
+
+local function GetWorldDay()
+    return (TheWorld.state.cycles or 0) + 1
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:daywalker2
+AddPrefabPostInit("daywalker", AddDaywalkerHeadShadowProcess)
+AddPrefabPostInit("daywalker2", AddDaywalkerHeadShadowProcess)
+
+local function GetWorldDay()
+    return (TheWorld.state.cycles or 0) + 1
+end
+
+```
+
+
+
+### 变体演进：Arzu & Nawfal图奈同人模组 (Mod 3812078283)
+- **变体场景与切面**：收录来自工坊 Mod 3812078283 (`Arzu & Nawfal图奈同人模组`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3812078283)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+local G = GLOBAL
+AddStategraphPostInit("wilson", function(sg)
+    local state = sg.states.attack
+    if state == nil then return end
+    local onenter, onexit = state.onenter, state.onexit
+    state.onenter = function(inst, ...)
+        onenter(inst, ...)
+        local mult = inst._blp_attack_speed
+        if mult and mult > 1 and inst.sg.timeout then
+            inst.sg:SetTimeout(math.min(inst.sg.timeout, math.max(inst.sg.timeout / mult, 11 * G.FRAMES)))
+            inst.AnimState:SetDeltaTimeMultiplier(mult)
+            inst.sg.statemem.blp_fast = true
+        end
+    end
+    state.onexit = function(inst, ...)
+        if inst.sg.statemem.blp_fast then inst.AnimState:SetDeltaTimeMultiplier(1) end
+        if onexit then return onexit(inst, ...) end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sgarzu
+end
+AddPrefabPostInit("sgarzu", function(inst)
+    if not G.TheWorld.ismastersim then return end
+	--给阿尔图加reader组件
+	if inst.components.reader == nil then inst:AddComponent("reader") end
+    inst.components.reader:SetSanityPenaltyMultiplier(C.arzu_read_sanity)
+	
+    inst.components.combat.damagemultiplier = C.arzu_damage
+    inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst, C.arzu_taken, "blp_innate")
+    inst:AddComponent("planardefense")
+    inst.components.planardefense:SetBaseDefense(C.arzu_planar)
+    inst.components.combat.customdamagemultfn = function(attacker, target)
+        local partner = R.Partner(attacker)
+        local mult = ArmorBonus(attacker, partner)
+        if partner and target and target:HasTag("epic") then mult = mult * C.partner_boss_bonus end
+        return mult
+    end
+    ChainStats(inst, function(eater, health, hunger, sanity, food, feeder)
+        if feeder and feeder ~= eater and feeder.prefab == "sgnawfal" then
+            return Positive(health, C.nawfal_arzu_heal), Positive(hunger, C.nawfal_arzu_heal), Positive(sanity, C.nawfal_arzu_heal)
+        end
+        return health, hunger, sanity
+    end)
+    inst:DoPeriodicTask(1, PartnerTick, 1)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sgnawfal
+end
+AddPrefabPostInit("sgnawfal", function(inst)
+    if not G.TheWorld.ismastersim then return end
+    if inst.components.reader == nil then inst:AddComponent("reader") end
+    inst.components.reader:SetSanityPenaltyMultiplier(C.nawfal_read_sanity)
+    if inst.components.preserver == nil then inst:AddComponent("preserver") end
+    inst.components.preserver:SetPerishRateMultiplier(function(owner, item)
+        return item and (item.components.edible or item.components.healer) and C.nawfal_preserve or 1
+    end)
+    inst.components.combat.customdamagemultfn = function(attacker, target)
+        if R.Partner(attacker) and target and target.components.combat and not target:HasTag("epic") and not target:HasTag("player") then
+            return C.partner_monster_bonus
+        end
+        return 1
+    end
+    ChainStats(inst, function(eater, health, hunger, sanity, food, feeder)
+        if feeder == nil or feeder == eater then
+            return Positive(health, C.nawfal_self_heal), Positive(hunger, C.nawfal_self_heal), Positive(sanity, C.nawfal_self_heal)
+        end
+        return health, hunger, sanity
+    end)
+    local combat = inst.components.combat
+    local attacked = combat.GetAttacked
+    inst._blp_grudges = {}
+    combat.GetAttacked = function(self, attacker, damage, weapon, stimuli, spdamage, ...)
+        local mult = 1
+        local key = attacker and attacker.prefab
+        local now = G.GetTime()
+        if key and attacker ~= inst then
+            local grudge = inst._blp_grudges[key]
+            if grudge and now < grudge.active then
+                mult = mult * C.grudge_mult
+            elseif grudge == nil or now >= grudge.ready then
+                inst._blp_grudges[key] = { active = now + C.grudge_active, ready = now + C.grudge_cooldown }
+            end
+        end
+        if inst.components.health:GetPercent() < C.low_threshold then mult = mult * C.low_health_taken end
+        if mult ~= 1 then
+            damage = damage and damage * mult
+            if spdamage then
+                local scaled = {}
+                for k, v in pairs(spdamage) do scaled[k] = v * mult end
+                spdamage = scaled
+            end
+        end
+        return attacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
+    end
+    local sanity = inst.components.sanity
+    local recalc = sanity.Recalc
+    sanity.Recalc = function(self, ...)
+        self._blp_recalc = true
+        local result = { recalc(self, ...) }
+        self._blp_recalc = nil
+        return G.unpack(result)
+    end
+    local delta = sanity.DoDelta
+    sanity.DoDelta = function(self, amount, overtime, ...)
+        if self._blp_recalc and amount and amount < 0 and self:GetPercent() < C.low_threshold then amount = amount * C.low_sanity_rate end
+        return delta(self, amount, overtime, ...)
+    end
+    inst:DoPeriodicTask(1, NawfalTick, 1)
+end)
+AddComponentPostInit("healer", function(self)
+    local heal = self.Heal
+    self.Heal = function(healer, target, doer, ...)
+        local mult = 1
+        if doer and doer.prefab == "sgnawfal" then
+            mult = target == doer and C.nawfal_self_heal or target and target.prefab == "sgarzu" and C.nawfal_arzu_heal or 1
+        end
+        if mult == 1 then return heal(healer, target, doer, ...) end
+        local original = healer.health
+        healer.health = original * mult
+        local result = { heal(healer, target, doer, ...) }
+        if healer.inst:IsValid() then healer.health = original end
+        return G.unpack(result)
+    end
+end)
+AddStategraphPostInit("wilson", function(sg)
+    local state = sg.states.dolongaction
+    if state == nil then return end
+    local enter = state.onenter
+    state.onenter = function(inst, timeout, ...)
+        if inst.prefab == "sgarzu" then timeout = (timeout or 1) * C.arzu_action_speed end
+        return enter(inst, timeout, ...)
+    end
+end)
+local function Nurture(plant)
+    if plant._blp_nurtured then return end
+    plant._blp_nurtured = true
+    local growable = plant.components.growable
+    if growable and growable.targettime then
+        growable:StartGrowingTask((growable.targettime - G.GetTime()) / C.nawfal_crop_speed)
+    end
+end
+AddComponentPostInit("growable", function(self)
+    local start = self.StartGrowing
+    self.StartGrowing = function(growable, ...)
+        local result = { start(growable, ...) }
+        if growable.inst._blp_nurtured and growable.targettime then
+            growable:StartGrowingTask((growable.targettime - G.GetTime()) / C.nawfal_crop_speed)
+        end
+        return G.unpack(result)
+    end
+    local save = self.OnSave
+    self.OnSave = function(growable, ...)
+        local data, refs = save(growable, ...)
+        if growable.inst._blp_nurtured then
+            data = data or {}
+            data.blp_nurtured = true
+        end
+        return data, refs
+    end
+    local load = self.OnLoad
+    self.OnLoad = function(growable, data, ...)
+        if data and data.blp_nurtured then growable.inst._blp_nurtured = true end
+        return load(growable, data, ...)
+    end
+end)
+AddComponentPostInit("farmplanttendable", function(self)
+    local tend = self.TendTo
+    self.TendTo = function(tendable, doer, ...)
+        local result = tend(tendable, doer, ...)
+        if result and doer and doer.prefab == "sgnawfal" then Nurture(tendable.inst) end
+        return result
+    end
+end)
+AddPrefabPostInitAny(function(inst)
+    if not G.TheWorld.ismastersim or not inst:HasTag("farm_plant") then return end
+    inst:ListenForEvent("on_planted", function(plant, data)
+        if data and data.doer and data.doer.prefab == "sgnawfal" then Nurture(plant) end
+    end)
+end)
+AddPlayerPostInit(function(inst)
+    if not G.TheWorld.ismastersim then return end
+    if inst.components.blp_cooldowns == nil then inst:AddComponent("blp_cooldowns") end
+    if inst.prefab ~= "sgarzu" and inst.prefab ~= "sgnawfal" then return end
+    inst:DoPeriodicTask(1, function(player)
+        local sanity = player.components.sanity
+        if sanity == nil then return end
+        local note = player.components.inventory and player.components.inventory:FindItem(function(item) return item.prefab == "blp_note" end)
+        if note and not player:HasTag("playerghost") then
+            sanity.externalmodifiers:SetModifier(player, C.note_sanity, "blp_note")
+        else
+            sanity.externalmodifiers:RemoveModifier(player, "blp_note")
+        end
+    end, 1)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:healer
+end)
+AddComponentPostInit("healer", function(self)
+    local heal = self.Heal
+    self.Heal = function(healer, target, doer, ...)
+        local mult = 1
+        if doer and doer.prefab == "sgnawfal" then
+            mult = target == doer and C.nawfal_self_heal or target and target.prefab == "sgarzu" and C.nawfal_arzu_heal or 1
+        end
+        if mult == 1 then return heal(healer, target, doer, ...) end
+        local original = healer.health
+        healer.health = original * mult
+        local result = { heal(healer, target, doer, ...) }
+        if healer.inst:IsValid() then healer.health = original end
+        return G.unpack(result)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:growable
+end
+AddComponentPostInit("growable", function(self)
+    local start = self.StartGrowing
+    self.StartGrowing = function(growable, ...)
+        local result = { start(growable, ...) }
+        if growable.inst._blp_nurtured and growable.targettime then
+            growable:StartGrowingTask((growable.targettime - G.GetTime()) / C.nawfal_crop_speed)
+        end
+        return G.unpack(result)
+    end
+    local save = self.OnSave
+    self.OnSave = function(growable, ...)
+        local data, refs = save(growable, ...)
+        if growable.inst._blp_nurtured then
+            data = data or {}
+            data.blp_nurtured = true
+        end
+        return data, refs
+    end
+    local load = self.OnLoad
+    self.OnLoad = function(growable, data, ...)
+        if data and data.blp_nurtured then growable.inst._blp_nurtured = true end
+        return load(growable, data, ...)
+    end
+end)
+
+```
+

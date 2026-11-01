@@ -8180,3 +8180,220 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：텐마 츠카사 (Mod 3322441409)
+- **变体场景与切面**：收录来自工坊 Mod 3322441409 (`텐마 츠카사`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3322441409)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:bee
+--forest insect
+AddPrefabPostInit("bee", AddSanityAura)
+AddPrefabPostInit("killerbee", AddSanityAura)
+AddPrefabPostInit("butterfly", AddSanityAura)
+AddPrefabPostInit("mosquito", AddSanityAura)
+AddPrefabPostInit("fireflies", AddSanityAura)
+AddPrefabPostInit("dragonfly", AddSanityAura)
+--etc
+AddPrefabPostInit("moonbutterfly", AddSanityAura)
+AddPrefabPostInit("lightflier", AddSanityAura)
+AddPrefabPostInit("dustmoth", AddSanityAura)
+AddPrefabPostInit("archive_centipede", AddSanityAura)
+--object
+AddPrefabPostInit("spiderden", AddSanityAura)
+AddPrefabPostInit("spiderden_2", AddSanityAura)
+AddPrefabPostInit("spiderden_3", AddSanityAura)
+AddPrefabPostInit("beebox", AddSanityAura)
+AddPrefabPostInit("beehive", AddSanityAura)
+AddPrefabPostInit("wasphive", AddSanityAura)
+AddPrefabPostInit("beequeenhivegrown", AddSanityAura)
+--pet
+AddPrefabPostInit("critter_glomling", AddSanityAura)
+AddPrefabPostInit("critter_dragonling", AddSanityAura)
+AddPrefabPostInit("critter_lunarmothling", AddSanityAura)
+
+
+-- The skins shown in the cycle view window on the character select screen.
+-- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("tsukasa", "MALE", skin_modes)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:killerbee
+AddPrefabPostInit("bee", AddSanityAura)
+AddPrefabPostInit("killerbee", AddSanityAura)
+AddPrefabPostInit("butterfly", AddSanityAura)
+AddPrefabPostInit("mosquito", AddSanityAura)
+AddPrefabPostInit("fireflies", AddSanityAura)
+AddPrefabPostInit("dragonfly", AddSanityAura)
+--etc
+AddPrefabPostInit("moonbutterfly", AddSanityAura)
+AddPrefabPostInit("lightflier", AddSanityAura)
+AddPrefabPostInit("dustmoth", AddSanityAura)
+AddPrefabPostInit("archive_centipede", AddSanityAura)
+--object
+AddPrefabPostInit("spiderden", AddSanityAura)
+AddPrefabPostInit("spiderden_2", AddSanityAura)
+AddPrefabPostInit("spiderden_3", AddSanityAura)
+AddPrefabPostInit("beebox", AddSanityAura)
+AddPrefabPostInit("beehive", AddSanityAura)
+AddPrefabPostInit("wasphive", AddSanityAura)
+AddPrefabPostInit("beequeenhivegrown", AddSanityAura)
+--pet
+AddPrefabPostInit("critter_glomling", AddSanityAura)
+AddPrefabPostInit("critter_dragonling", AddSanityAura)
+AddPrefabPostInit("critter_lunarmothling", AddSanityAura)
+
+
+-- The skins shown in the cycle view window on the character select screen.
+-- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("tsukasa", "MALE", skin_modes)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:butterfly
+AddPrefabPostInit("killerbee", AddSanityAura)
+AddPrefabPostInit("butterfly", AddSanityAura)
+AddPrefabPostInit("mosquito", AddSanityAura)
+AddPrefabPostInit("fireflies", AddSanityAura)
+AddPrefabPostInit("dragonfly", AddSanityAura)
+--etc
+AddPrefabPostInit("moonbutterfly", AddSanityAura)
+AddPrefabPostInit("lightflier", AddSanityAura)
+AddPrefabPostInit("dustmoth", AddSanityAura)
+AddPrefabPostInit("archive_centipede", AddSanityAura)
+--object
+AddPrefabPostInit("spiderden", AddSanityAura)
+AddPrefabPostInit("spiderden_2", AddSanityAura)
+AddPrefabPostInit("spiderden_3", AddSanityAura)
+AddPrefabPostInit("beebox", AddSanityAura)
+AddPrefabPostInit("beehive", AddSanityAura)
+AddPrefabPostInit("wasphive", AddSanityAura)
+AddPrefabPostInit("beequeenhivegrown", AddSanityAura)
+--pet
+AddPrefabPostInit("critter_glomling", AddSanityAura)
+AddPrefabPostInit("critter_dragonling", AddSanityAura)
+AddPrefabPostInit("critter_lunarmothling", AddSanityAura)
+
+
+-- The skins shown in the cycle view window on the character select screen.
+-- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("tsukasa", "MALE", skin_modes)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mosquito
+AddPrefabPostInit("butterfly", AddSanityAura)
+AddPrefabPostInit("mosquito", AddSanityAura)
+AddPrefabPostInit("fireflies", AddSanityAura)
+AddPrefabPostInit("dragonfly", AddSanityAura)
+--etc
+AddPrefabPostInit("moonbutterfly", AddSanityAura)
+AddPrefabPostInit("lightflier", AddSanityAura)
+AddPrefabPostInit("dustmoth", AddSanityAura)
+AddPrefabPostInit("archive_centipede", AddSanityAura)
+--object
+AddPrefabPostInit("spiderden", AddSanityAura)
+AddPrefabPostInit("spiderden_2", AddSanityAura)
+AddPrefabPostInit("spiderden_3", AddSanityAura)
+AddPrefabPostInit("beebox", AddSanityAura)
+AddPrefabPostInit("beehive", AddSanityAura)
+AddPrefabPostInit("wasphive", AddSanityAura)
+AddPrefabPostInit("beequeenhivegrown", AddSanityAura)
+--pet
+AddPrefabPostInit("critter_glomling", AddSanityAura)
+AddPrefabPostInit("critter_dragonling", AddSanityAura)
+AddPrefabPostInit("critter_lunarmothling", AddSanityAura)
+
+
+-- The skins shown in the cycle view window on the character select screen.
+-- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("tsukasa", "MALE", skin_modes)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:fireflies
+AddPrefabPostInit("mosquito", AddSanityAura)
+AddPrefabPostInit("fireflies", AddSanityAura)
+AddPrefabPostInit("dragonfly", AddSanityAura)
+--etc
+AddPrefabPostInit("moonbutterfly", AddSanityAura)
+AddPrefabPostInit("lightflier", AddSanityAura)
+AddPrefabPostInit("dustmoth", AddSanityAura)
+AddPrefabPostInit("archive_centipede", AddSanityAura)
+--object
+AddPrefabPostInit("spiderden", AddSanityAura)
+AddPrefabPostInit("spiderden_2", AddSanityAura)
+AddPrefabPostInit("spiderden_3", AddSanityAura)
+AddPrefabPostInit("beebox", AddSanityAura)
+AddPrefabPostInit("beehive", AddSanityAura)
+AddPrefabPostInit("wasphive", AddSanityAura)
+AddPrefabPostInit("beequeenhivegrown", AddSanityAura)
+--pet
+AddPrefabPostInit("critter_glomling", AddSanityAura)
+AddPrefabPostInit("critter_dragonling", AddSanityAura)
+AddPrefabPostInit("critter_lunarmothling", AddSanityAura)
+
+
+-- The skins shown in the cycle view window on the character select screen.
+-- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("tsukasa", "MALE", skin_modes)
+
+```
+
