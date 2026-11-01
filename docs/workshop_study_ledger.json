@@ -7662,8 +7662,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 12:51:05",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2945533555",
+      "name": "六格装备栏（适配时崎狂三mod版）",
+      "author": "三兮穹",
+      "version": "1.0.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:58:43",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2995235767",
+      "name": "TINT_PERCENT",
+      "author": "川小胖",
+      "version": "2.5",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 12:58:44",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 12:51:05"
+  "lastUpdated": "2026-11-01 12:58:44"
 }

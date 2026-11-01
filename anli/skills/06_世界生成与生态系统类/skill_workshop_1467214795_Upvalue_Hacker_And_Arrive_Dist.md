@@ -4579,3 +4579,742 @@ AddPrefabPostInit("marblepillar", MarblePillarPostInit)
 
 ```
 
+
+
+### 变体演进：TINT_PERCENT (Mod 2995235767)
+- **变体场景与切面**：收录来自工坊 Mod 2995235767 (`TINT_PERCENT`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2995235767)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:highlight
+end
+AddComponentPostInit("highlight", hookHighlight)
+
+local function ToggleHighlight(inst, tint)
+	if inst and inst:IsValid() and inst.AnimState then
+		if type(tint) == "table" then
+			if inst.components.highlight == nil then
+				inst:AddComponent("highlight")
+			end
+			inst.components.highlight:Highlight(unpack(tint))
+			inst.AnimState:SetLightOverride(1) -- make it can be seen clearly in dark
+		elseif tint == false and inst.components.highlight then
+			inst.components.highlight:UnHighlight()
+			inst.AnimState:SetLightOverride(0)
+		end
+	end
+end
+
+-- deprecated
+local function updateAtkTargetHighlight()
+	--print(combat_target or "nil", attack_target or "nil")
+	local target = attack_target
+	if last_attacktarget ~= target then
+		local is_lasttarget_locked = last_attacktarget == locked_target
+		local is_lasttarget_exclud = last_attacktarget == exclud_target
+		highlight_access = true
+
+		ToggleHighlight(last_attacktarget, (is_lasttarget_locked and locked_tint) or (is_lasttarget_exclud and exclud_tint) or false)
+		ToggleHighlight(target, attack_tint)
+		--print(last_attacktarget or "nil" , target or "nil")
+
+		highlight_access = false
+
+		last_attacktarget = target
+	end
+end
+
+local function setAttackTargetRecord(target)
+	last_attacktarget = attack_target
+	attack_target = target
+end
+
+local function setLockedTargetRecord(target)
+	last_lockedtarget = locked_target
+	locked_target = target
+end
+
+local function AddToExcludTargetList(target)
+	if excludtarget_list and not excludtarget_list[target] then
+		excludtarget_list[target] = true
+	end
+end
+
+local function RemoveFromExcludTargetList(target)
+	if excludtarget_list and excludtarget_list[target] then
+		excludtarget_list[target] = false
+	end
+end
+
+local function ClearAllExcludTargetList()
+	excludtarget_list = {}
+end
+
+local function updateTargetHighlight(target)
+	if target == nil or not target:IsValid() then return end
+	local is_atking = target == attack_target
+	local is_locked = target == locked_target
+	local is_exclud = excludtarget_list and excludtarget_list[target]
+	local tint = (is_atking and attack_tint) or
+				 (is_locked and locked_tint) or 
+				 (is_exclud and exclud_tint) or
+				 false
+	highlight_access = true
+
+	ToggleHighlight(target, tint)
+
+	highlight_access = false
+end
+
+------------------------ get locomotor attack target via hook RPC and Locomotor ----------------
+local old_SendRPCToServer = SendRPCToServer
+
+local forceattack_override = false  -- override the forceattack param in SendAttackButtonRPC, order to success to launch an attack to locked_target
+--- for lag compensation OFF, hook the RPC
+-- hook all the RPC about ATTACK action
+GLOBAL.SendRPCToServer = function(rpc, param1, param2, param3, param4, ...)
+	local actioncode, target
+	if rpc == RPC.AttackButton then -- for RPC.AttackButton: rpc, target, forceattack, noforce(no force is used for controller)
+		actioncode = ACTIONS.ATTACK.code
+		target = param1
+		-- if forceattack_override then
+		-- 	param2 = true
+		-- end
+	elseif rpc == RPC.LeftClick then -- for RPC.LeftClick: rpc, actioncode, x, z, target, isreleased, controlmods, noforce
+		actioncode = param1
+		target = param4
+	end
+
+	if actioncode == ACTIONS.ATTACK.code and target ~= nil then
+		setAttackTargetRecord(target)
+		updateTargetHighlight(last_attacktarget)
+		updateTargetHighlight(attack_target)
+		--print("rpc set atk", target)
+	end
+
+	return old_SendRPCToServer(rpc, param1, param2, param3, param4, ...)
+end
+
+---- for lag compensation ON, hook the bufferedaction in LocoMotor:GoToEntity
+local function hookLocoMotorForPlayer(self, inst)
+	if not inst:HasTag("player") then return end -- only for player
+
+	local old_GoToEntity = self.GoToEntity
+	self.GoToEntity = function(self, target, bufferedaction, ...)
+		if target ~= nil and bufferedaction.action == ACTIONS.ATTACK then
+			setAttackTargetRecord(target)
+			updateTargetHighlight(last_attacktarget)
+			updateTargetHighlight(attack_target)
+			--print("locomotor set atk", target)
+		end
+		--print(target or "nil target", bufferedaction or "nil action")
+		return old_GoToEntity and old_GoToEntity(self, target, bufferedaction, ...)
+	end
+
+end
+AddComponentPostInit("locomotor", hookLocoMotorForPlayer)
+
+
+----------------------------clear the locomtor attack target via walk buttons ----------------------------------
+local walk_controls = {}
+for control = CONTROL_MOVE_UP, CONTROL_MOVE_RIGHT do
+    walk_controls[control] = true
+end
+
+local function IsAtkBufferedAction(bufferedaction)
+	return bufferedaction and bufferedaction.action == ACTIONS.ATTACK
+end
+local function AddWalkBtnHook(self)
+	local old_OnControl = self.OnControl
+	 self.OnControl = function(self, control, down)
+
+		if attack_target ~= nil then
+
+			if walk_controls[control] or
+					((control == CONTROL_PRIMARY) and not IsAtkBufferedAction(self:GetLeftMouseAction())) or
+					((control == CONTROL_SECONDARY) and self:GetRightMouseAction() ~= nil) then
+				setAttackTargetRecord(nil)
+				updateTargetHighlight(last_attacktarget)
+				--updateTargetHighlight(attack_target) -- attack_target = nil  when we reach here
+			end
+		end
+		return old_OnControl and old_OnControl(self, control, down)
+	end
+end
+
+--------------------- lock the attack target via Ctrl+LeftClick, exclude the target via Shift+LeftClick, unlock the attack target via Alt+LeftClick ------------------------
+-- a modify of ValidateAttackTarget in PlayerController, it check the target of ActionButton
+local function ValidateForceAttackTarget(combat, target, with_checkdist, x, z, reach)
+    if not combat:CanTarget(target) or (combat.hal_OldIsAlly and combat:hal_OldIsAlly(target))  then
+        return false
+    end
+	-- no need the forceattack check since we has overrided the forceattack = true
+
+	if with_checkdist and x and z and reach then
+		reach = reach + target:GetPhysicsRadius(0)
+		return target:GetDistanceSqToPoint(x, 0, z) <= reach * reach
+	else -- without_checkdist
+		return true
+	end
+end
+
+-- deprecated
+local function updateLockedTargetHighlight()
+	if last_lockedtarget ~= locked_target then
+		local is_lastlocked_atktarget = attack_target == last_lockedtarget
+		
+		highlight_access = true
+
+		ToggleHighlight(last_lockedtarget, is_lastlocked_atktarget and attack_tint or false)
+		ToggleHighlight(locked_target, locked_tint)
+
+		highlight_access = false
+
+		last_lockedtarget = locked_target
+	end
+end
+
+local last_excludclick_time = nil
+local DBCLICK_TIME_THRESHOLD = 0.3
+
+local function DoLockButton(ent)
+	if ThePlayer and ThePlayer.replica.combat and ent and ent:IsValid() then
+		if not IsEntityDead(ent) and CanEntitySeeTarget(ThePlayer, ent) and ValidateForceAttackTarget(ThePlayer.replica.combat, ent) then
+			-- to avoid exclude and locked target conflict each other
+			if excludtarget_list and excludtarget_list[ent] then
+				RemoveFromExcludTargetList(ent)
+			end
+			setLockedTargetRecord(ent)
+			updateTargetHighlight(last_lockedtarget)
+			updateTargetHighlight(locked_target)
+		end
+	end
+end
+
+local function DoExcludeButton(ent)
+	if ThePlayer and ThePlayer.replica.combat and ent and ent:IsValid() then
+		if ent ~= ThePlayer and ent:HasTag("_combat") and ent:HasTag("_health") then -- looser condition because we are not need really able to target it
+			local targets = nil
+			local curtime = GetStaticTime()
+			if last_excludclick_time and curtime - last_excludclick_time < DBCLICK_TIME_THRESHOLD then -- doubleclick
+				local x, y, z = ThePlayer.Transform:GetWorldPosition()
+				targets = TheSim:FindEntities(x, 0, z, 30, {"_combat", "_health"}, {"FX", "NOCLICK", "DECOR", "INLIMBO"}) -- we will do prefab name check follow up
+			else -- singleclick
+				targets = {ent}
+			end
+			--dumptable(targets)
+			
+			for k,target in ipairs(targets) do 
+				-- to avoid exclude and locked target conflict each other
+				if target.prefab == ent.prefab then
+					if locked_target == target then
+						setLockedTargetRecord(nil)
+					end
+					AddToExcludTargetList(target)
+					updateTargetHighlight(target)
+				end	
+			end
+			last_excludclick_time = curtime
+		end
+	end
+end
+
+local function DoClearButton()
+	setAttackTargetRecord(nil)
+	setLockedTargetRecord(nil)
+	local cached_excludtarget_list = shallowcopy(excludtarget_list)
+	ClearAllExcludTargetList()
+	updateTargetHighlight(last_attacktarget)
+	updateTargetHighlight(last_lockedtarget)
+	for k,v in pairs(cached_excludtarget_list) do 
+		updateTargetHighlight(k)
+	end	
+end
+
+local function KeystrToKeyNum(str)
+	if str and type(str) == "string" then
+		local upper = string.upper(str)
+		if upper == "DEFAULT" then
+			return 0
+		elseif upper == "DISABLED" then
+			return -1
+		else
+			return GLOBAL.rawget(GLOBAL, upper) or 0
+		end
+	end
+	return 0 -- default trigger if invalid str
+end
+
+local KEY_FNS = {
+					LOCK 	= { key = KeystrToKeyNum(GetModConfigData("KEY_LOCK")), 	fn = DoLockButton,			need_target = true},
+					EXCLUD 	= { key = KeystrToKeyNum(GetModConfigData("KEY_EXCLUD")), 	fn = DoExcludeButton,		need_target = true},
+					CLEAR 	= { key = KeystrToKeyNum(GetModConfigData("KEY_CLEAR")), 	fn = DoClearButton,			need_target = false},
+				}
+
+-- GLOBAL.key_fn = KEY_FNS
+
+local function IsDefaultTrigger(k)
+	local key = KEY_FNS[k] and KEY_FNS[k].key
+	return key and type(key) == "number" and key == 0
+end
+
+local function IsCustomTrigger(k)
+	local key = KEY_FNS[k] and KEY_FNS[k].key
+	return key and type(key) == "number" and key > 0
+end
+
+local controls_include = {CONTROL_FORCE_ATTACK, CONTROL_FORCE_TRADE, CONTROL_FORCE_INSPECT}
+local function IsControlPressedSingly(control)
+	if TheInput and TheInput:IsControlPressed(control) then
+		for k,v in ipairs(controls_include) do
+			if v ~= control and TheInput:IsControlPressed(v) then
+				return false
+			end
+		end
+		return true
+	end
+
+end
+local function GetActivateItem()
+	return ThePlayer and ThePlayer.replica.inventory and ThePlayer.replica.inventory:GetActiveItem() or nil
+end
+local function CanTarget(ent)
+	return ThePlayer and ThePlayer.replica.combat and ThePlayer.replica.combat:CanTarget(ent)
+end
+local function AddDefaultTrigger(self)
+	-- lock trigger
+	local old_OnLeftUp = self.OnLeftUp -- note that has changed to OnLeftUp because holding for a shortwhile will trigger many times OnLeftClick and will effects doubleclick checks
+	self.OnLeftUp = function(self, ...)
+		local act = self:GetLeftMouseAction()
+		local target = act and act.target or nil --or TheInput:GetWorldEntityUnderMouse()
+		-- lock
+		if IsDefaultTrigger("LOCK") and act and act.action == ACTIONS.ATTACK and act.target ~= nil and IsControlPressedSingly(CONTROL_FORCE_ATTACK) then
+			DoLockButton(target)
+		-- exclude(to avoid conflicts with ActionQueuer Mod and Status Announcements Mod, we need extra check SinglyPressed and activated item)
+		elseif IsDefaultTrigger("EXCLUD") and target ~= nil and CanTarget(target) and IsControlPressedSingly(CONTROL_FORCE_TRADE) and GetActivateItem() == nil then --looser restrict because we are not need really able to attack it
+			DoExcludeButton(target)
+		--clear all
+		elseif IsDefaultTrigger("CLEAR") and IsControlPressedSingly(CONTROL_FORCE_INSPECT) then -- no target limit
+			DoClearButton()
+		end
+		return old_OnLeftUp and old_OnLeftUp(self, ...)
+	end
+end
+
+local function AddCustomTrigger(self)
+	local function AddStandardKeyUpHandler(key, do_fn, need_target)
+		TheInput:AddKeyUpHandler(key, function()
+			if ThePlayer and ThePlayer.HUD and not ThePlayer.HUD:HasInputFocus() then
+				local ent = TheInput:GetWorldEntityUnderMouse()
+				if not need_target or (ent ~= nil and CanTarget(ent)) and do_fn ~= nil and type(do_fn) == "function" then
+					do_fn(need_target and ent or nil)
+				end
+			end
+		end)
+	end
+
+	for k, v in pairs(KEY_FNS) do
+		if IsCustomTrigger(k) then
+			AddStandardKeyUpHandler(v.key, v.fn, v.need_target)
+		end
+	end
+
+end
+
+
+local function AddAtkBtnHook(self)
+	-- 从 PlayerController:GetAttackTarget 抄了一部分
+	local function GetSearchRad(self)
+		local attackrange = self.inst and self.inst.replica.combat and self.inst.replica.combat:GetAttackRangeWithWeapon()
+		return self.directwalking and attackrange or attackrange + 6
+		--return attackrange
+	end
+	
+	local old_GetAttackTarget = self.GetAttackTarget
+	self.GetAttackTarget = function(self, force_attack, force_target, isretarget, ...)
+		if locked_target ~= nil then
+			if not IsEntityDead(locked_target) and ValidateForceAttackTarget(self.inst.replica.combat, locked_target) then
+				local x, y, z = self.inst.Transform:GetWorldPosition()
+				local rad = GetSearchRad(self)
+				local reach = self.inst:GetPhysicsRadius(0) + rad + .1
+				if CanEntitySeeTarget(self.inst, locked_target) and ValidateForceAttackTarget(self.inst.replica.combat, locked_target, true, x, z, reach) then
+					-- print("override attack")
+					return old_GetAttackTarget and old_GetAttackTarget(self, true, locked_target, true, ...)
+				end
+			else -- locked_target became invalid , clear it
+				setLockedTargetRecord(nil)
+				updateTargetHighlight(last_lockedtarget)
+			end
+		end
+		return old_GetAttackTarget and old_GetAttackTarget(self, force_attack, force_target, isretarget, ...)
+	end
+	
+	local old_RemoteAttackButton = self.RemoteAttackButton
+	self.RemoteAttackButton = function(self, target, force_attack)
+		return old_RemoteAttackButton and old_RemoteAttackButton(self, target, target ~= nil)
+	end
+end
+
+local UpvalueHacker = require "upvaluehacker"
+local AUTO_EXCLUDE_FNS = require "auto_exclude_list" or {}
+local entering_GetAttackTarget = false
+local function AddValAtkTgtHook(self)
+
+	local old_GetAttackTarget = self.GetAttackTarget
+	self.GetAttackTarget = function(...)
+		entering_GetAttackTarget = true
+		local target = old_GetAttackTarget(...) -- should make sure got one return value
+		entering_GetAttackTarget = false
+		return target
+	end
+
+---- for some reason, it failed
+-- 	local old_ValidateAttackTarget = UpvalueHacker.GetUpvalue(self.GetAttackTarget, "ValidateAttackTarget")
+-- 	if old_ValidateAttackTarget then
+-- 		local new_ValidateAttackTarget = function(combat, target, ...)
+-- 			local auto_exclude_fn = target and target.prefab and AUTO_EXCLUDE_FNS[target.prefab]
+-- 			if auto_exclude_fn ~= nil and type(auto_exclude_fn) == "function" then
+-- 				if auto_exclude_fn(target) then
+-- 					-- should exclude
+-- 					AddToExcludTargetList(target)
+-- 					updateTargetHighlight(target)
+-- 				else
+-- 					-- should cancel exclude
+-- 					RemoveFromExcludTargetList(target)
+-- 					updateTargetHighlight(target)
+-- 				end
+-- 			end
+-- 			return not (excludtarget_list and excludtarget_list[guy]) and (old_ValidateAttackTarget and old_ValidateAttackTarget(combat, target, ...))
+-- 		end
+-- 		
+-- 		UpvalueHacker.SetUpvalue(self.GetAttackTarget, new_ValidateAttackTarget, "ValidateAttackTarget")
+-- 		print("DEBUG: SUCCESS")
+-- 	else
+-- 		print("DEBUG: FAILED")
+-- 	end
+end
+
+AddComponentPostInit("playercontroller", function (self)
+	AddWalkBtnHook(self)
+	AddDefaultTrigger(self) -- do config key check inside
+	AddCustomTrigger(self)	-- do config key check inside
+	AddAtkBtnHook(self)
+	AddValAtkTgtHook(self)
+end)
+
+--------- apply the exclude target list via hook IsAlly method -------
+
+
+local function AddAllyHook(self)
+	if self.inst then
+		self.inst:DoTaskInTime(0, function()
+			if self.inst ~= ThePlayer then return end
+			local old_IsAlly = self.IsAlly
+			self.IsAlly = function(self, guy)
+				-- do auto exclude detection here
+				local auto_exclude_fn = guy and guy.prefab and AUTO_EXCLUDE_FNS[guy.prefab]
+				if auto_exclude_fn ~= nil and type(auto_exclude_fn) == "function" then
+					if auto_exclude_fn(guy) then
+						-- should exclude
+						AddToExcludTargetList(guy)
+						updateTargetHighlight(guy)
+					else
+						-- should cancel exclude
+						RemoveFromExcludTargetList(guy)
+						updateTargetHighlight(guy)
+					end
+				end
+				-- auto exclude detection over
+
+				-- return new is_ally result
+				return (entering_GetAttackTarget and excludtarget_list and excludtarget_list[guy]) or (old_IsAlly and old_IsAlly(self, guy))
+			end
+			self.hal_OldIsAlly = old_IsAlly -- save a replica of old_IsAlly to do check in ValidateForceAttackTarget function
+		end)
+	end
+
+end	
+AddClassPostConstruct("components/combat_replica", AddAllyHook)
+
+
+
+-------- for walter chargedshotting skilltree -------
+local SCAN_RANGE = 25
+local HIT_DIST = .7
+local AOE_TARGET_MUST_TAGS     = { "_combat", "_health" }
+local AOE_TARGET_CANT_TAGS     = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "playerghost", "companion", "player", "wall"}
+local AOE_TARGET_CANT_TAGS_PVP = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "playerghost" }
+
+-- 点与直线的距离
+-- the distance between point and line of two points
+local function GetDistFromPointToLine(point, linePoint1, linePoint2)
+	local x0,y0 = point.x, point.z
+	local x1,y1 = linePoint1.x, linePoint1.z
+	local x2,y2 = linePoint2.x, linePoint2.z
+	return math.abs( (x2-x1)*(y0-y1) - (y2-y1)*(x0-x1) ) / math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+end
+
+-- 是否在人物前方180°
+local function IsFacingForward(point, linePoint1, linePoint2)
+	local vec1 = point - linePoint1
+	local vec2 = linePoint2 - linePoint1
+	return vec1.x * vec2.x + vec1.z * vec2.z > 0
+end
+
+-- 能否击中目标
+local function CanHitTarget(guy, linePoint1, linePoint2, hitDist)
+	local pt = guy:GetPosition()
+	return IsFacingForward(pt, linePoint1, linePoint2) and --facing forward to theplayer
+			GetDistFromPointToLine(pt, linePoint1, linePoint2) < guy:GetPhysicsRadius(.5) + hitDist and -- can collides with projectile
+			ThePlayer.replica.combat:CanTarget(guy) and guy.replica.combat:CanBeAttacked(ThePlayer) and not ThePlayer.replica.combat:IsAlly(guy) -- can attack this guy
+end
+
+local function GetClosestCanHitTarget(linePoint1, linePoint2, range, hitDist)
+	local vec = (linePoint2 - linePoint1):GetNormalized()
+	local middle_pt = linePoint1 + vec * range / 2
+	local ents = TheSim:FindEntities(middle_pt.x, 0, middle_pt.z, range, AOE_TARGET_MUST_TAGS, TheNet:GetPVPEnabled() and AOE_TARGET_CANT_TAGS_PVP or AOE_TARGET_CANT_TAGS)
+	local closest_ent = nil
+	local min_distsq = math.huge
+	for i, v in ipairs(ents) do
+		local distsq = v:GetDistanceSqToPoint(linePoint1:Get())
+		if distsq < min_distsq and CanHitTarget(v, linePoint1, linePoint2, hitDist) then
+			min_distsq = distsq
+			closest_ent = v
+		end
+	end
+	return closest_ent
+end
+
+local function UpdateSlingShotTargetHighlight(my_pos, target_pos, scane_range, hit_dist)
+	local target = GetClosestCanHitTarget(my_pos, target_pos, scane_range, hit_dist)
+	if target then
+		if target ~= attack_target then
+			setAttackTargetRecord(target)
+			updateTargetHighlight(last_attacktarget)
+			updateTargetHighlight(attack_target)
+		end
+	else
+		setAttackTargetRecord(nil)
+		updateTargetHighlight(last_attacktarget)
+	end
+end
+local function AddTargetIndicationHook(inst)
+	local aoetargeting = inst.components.aoetargeting --[[or inst.components.aoecharging]]
+	local aoecharging = inst.components.aoecharging
+	local reticule = aoetargeting and aoetargeting.reticule
+	local updatepositionfn = reticule and reticule.updatepositionfn
+	if updatepositionfn then
+		reticule.updatepositionfn = function(inst, pos, ...)
+			local my_pt = inst:GetPosition()
+			UpdateSlingShotTargetHighlight(my_pt, pos, SCAN_RANGE, HIT_DIST)
+			return updatepositionfn(inst, pos, ...)
+		end
+	elseif aoecharging then
+		local old_UpdateRotation = aoecharging.UpdateRotation
+		aoecharging.UpdateRotation = function (self)
+			if self.reticule then
+				local theta = self.reticule.Transform:GetRotation() * DEGREES
+				if theta < 0 then
+					theta = PI + PI + theta
+				end
+				local my_pos = self.owner:GetPosition()
+				local target_pos = my_pos + Vector3(math.cos(theta), 0, -math.sin(theta)) * 20
+				UpdateSlingShotTargetHighlight(my_pos, target_pos, SCAN_RANGE, HIT_DIST)
+			end
+			return old_UpdateRotation(self)
+		end
+	end
+end
+AddPrefabPostInit("slingshotex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot2ex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot999ex", AddTargetIndicationHook)
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:locomotor
+end
+AddComponentPostInit("locomotor", hookLocoMotorForPlayer)
+
+
+----------------------------clear the locomtor attack target via walk buttons ----------------------------------
+local walk_controls = {}
+for control = CONTROL_MOVE_UP, CONTROL_MOVE_RIGHT do
+    walk_controls[control] = true
+end
+
+local function IsAtkBufferedAction(bufferedaction)
+	return bufferedaction and bufferedaction.action == ACTIONS.ATTACK
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function (self)
+	AddWalkBtnHook(self)
+	AddDefaultTrigger(self) -- do config key check inside
+	AddCustomTrigger(self)	-- do config key check inside
+	AddAtkBtnHook(self)
+	AddValAtkTgtHook(self)
+end)
+
+--------- apply the exclude target list via hook IsAlly method -------
+
+
+local function AddAllyHook(self)
+	if self.inst then
+		self.inst:DoTaskInTime(0, function()
+			if self.inst ~= ThePlayer then return end
+			local old_IsAlly = self.IsAlly
+			self.IsAlly = function(self, guy)
+				-- do auto exclude detection here
+				local auto_exclude_fn = guy and guy.prefab and AUTO_EXCLUDE_FNS[guy.prefab]
+				if auto_exclude_fn ~= nil and type(auto_exclude_fn) == "function" then
+					if auto_exclude_fn(guy) then
+						-- should exclude
+						AddToExcludTargetList(guy)
+						updateTargetHighlight(guy)
+					else
+						-- should cancel exclude
+						RemoveFromExcludTargetList(guy)
+						updateTargetHighlight(guy)
+					end
+				end
+				-- auto exclude detection over
+
+				-- return new is_ally result
+				return (entering_GetAttackTarget and excludtarget_list and excludtarget_list[guy]) or (old_IsAlly and old_IsAlly(self, guy))
+			end
+			self.hal_OldIsAlly = old_IsAlly -- save a replica of old_IsAlly to do check in ValidateForceAttackTarget function
+		end)
+	end
+
+end	
+AddClassPostConstruct("components/combat_replica", AddAllyHook)
+
+
+
+-------- for walter chargedshotting skilltree -------
+local SCAN_RANGE = 25
+local HIT_DIST = .7
+local AOE_TARGET_MUST_TAGS     = { "_combat", "_health" }
+local AOE_TARGET_CANT_TAGS     = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "playerghost", "companion", "player", "wall"}
+local AOE_TARGET_CANT_TAGS_PVP = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "playerghost" }
+
+-- 点与直线的距离
+-- the distance between point and line of two points
+local function GetDistFromPointToLine(point, linePoint1, linePoint2)
+	local x0,y0 = point.x, point.z
+	local x1,y1 = linePoint1.x, linePoint1.z
+	local x2,y2 = linePoint2.x, linePoint2.z
+	return math.abs( (x2-x1)*(y0-y1) - (y2-y1)*(x0-x1) ) / math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+end
+
+-- 是否在人物前方180°
+local function IsFacingForward(point, linePoint1, linePoint2)
+	local vec1 = point - linePoint1
+	local vec2 = linePoint2 - linePoint1
+	return vec1.x * vec2.x + vec1.z * vec2.z > 0
+end
+
+-- 能否击中目标
+local function CanHitTarget(guy, linePoint1, linePoint2, hitDist)
+	local pt = guy:GetPosition()
+	return IsFacingForward(pt, linePoint1, linePoint2) and --facing forward to theplayer
+			GetDistFromPointToLine(pt, linePoint1, linePoint2) < guy:GetPhysicsRadius(.5) + hitDist and -- can collides with projectile
+			ThePlayer.replica.combat:CanTarget(guy) and guy.replica.combat:CanBeAttacked(ThePlayer) and not ThePlayer.replica.combat:IsAlly(guy) -- can attack this guy
+end
+
+local function GetClosestCanHitTarget(linePoint1, linePoint2, range, hitDist)
+	local vec = (linePoint2 - linePoint1):GetNormalized()
+	local middle_pt = linePoint1 + vec * range / 2
+	local ents = TheSim:FindEntities(middle_pt.x, 0, middle_pt.z, range, AOE_TARGET_MUST_TAGS, TheNet:GetPVPEnabled() and AOE_TARGET_CANT_TAGS_PVP or AOE_TARGET_CANT_TAGS)
+	local closest_ent = nil
+	local min_distsq = math.huge
+	for i, v in ipairs(ents) do
+		local distsq = v:GetDistanceSqToPoint(linePoint1:Get())
+		if distsq < min_distsq and CanHitTarget(v, linePoint1, linePoint2, hitDist) then
+			min_distsq = distsq
+			closest_ent = v
+		end
+	end
+	return closest_ent
+end
+
+local function UpdateSlingShotTargetHighlight(my_pos, target_pos, scane_range, hit_dist)
+	local target = GetClosestCanHitTarget(my_pos, target_pos, scane_range, hit_dist)
+	if target then
+		if target ~= attack_target then
+			setAttackTargetRecord(target)
+			updateTargetHighlight(last_attacktarget)
+			updateTargetHighlight(attack_target)
+		end
+	else
+		setAttackTargetRecord(nil)
+		updateTargetHighlight(last_attacktarget)
+	end
+end
+local function AddTargetIndicationHook(inst)
+	local aoetargeting = inst.components.aoetargeting --[[or inst.components.aoecharging]]
+	local aoecharging = inst.components.aoecharging
+	local reticule = aoetargeting and aoetargeting.reticule
+	local updatepositionfn = reticule and reticule.updatepositionfn
+	if updatepositionfn then
+		reticule.updatepositionfn = function(inst, pos, ...)
+			local my_pt = inst:GetPosition()
+			UpdateSlingShotTargetHighlight(my_pt, pos, SCAN_RANGE, HIT_DIST)
+			return updatepositionfn(inst, pos, ...)
+		end
+	elseif aoecharging then
+		local old_UpdateRotation = aoecharging.UpdateRotation
+		aoecharging.UpdateRotation = function (self)
+			if self.reticule then
+				local theta = self.reticule.Transform:GetRotation() * DEGREES
+				if theta < 0 then
+					theta = PI + PI + theta
+				end
+				local my_pos = self.owner:GetPosition()
+				local target_pos = my_pos + Vector3(math.cos(theta), 0, -math.sin(theta)) * 20
+				UpdateSlingShotTargetHighlight(my_pos, target_pos, SCAN_RANGE, HIT_DIST)
+			end
+			return old_UpdateRotation(self)
+		end
+	end
+end
+AddPrefabPostInit("slingshotex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot2ex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot999ex", AddTargetIndicationHook)
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:slingshotex
+end
+AddPrefabPostInit("slingshotex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot2ex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot999ex", AddTargetIndicationHook)
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:slingshot2ex
+AddPrefabPostInit("slingshotex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot2ex", AddTargetIndicationHook)
+AddPrefabPostInit("slingshot999ex", AddTargetIndicationHook)
+
+
+
+
+
+```
+

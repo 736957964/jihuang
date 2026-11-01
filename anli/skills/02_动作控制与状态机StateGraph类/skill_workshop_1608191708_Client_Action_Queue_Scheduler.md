@@ -50746,3 +50746,483 @@ end)
 
 ```
 
+
+
+### 变体演进：六格装备栏（适配时崎狂三mod版） (Mod 2945533555)
+- **变体场景与切面**：收录来自工坊 Mod 2945533555 (`六格装备栏（适配时崎狂三mod版）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2945533555)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:hermitcrab
+    -- See `scripts/prefabs/hermitcrab.lua`.
+    AddPrefabPostInit("hermitcrab", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        local function iscoat(item)
+            return item.components.insulator and
+                    item.components.insulator:GetInsulation() >= GLOBAL.TUNING.INSULATION_SMALL and
+                    item.components.insulator:GetType() == GLOBAL.SEASONS.WINTER and
+                    item.components.equippable and
+                    item.components.equippable.equipslot == EQUIPSLOTS_MAP.CLOTHING
+        end
+
+        local function getcoat(inst1)
+            local equipped = inst1.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return inst1.components.inventory:FindItem(function(testitem) return iscoat(testitem) end)
+                    or (equipped and iscoat(equipped) and equipped)
+        end
+
+        -- Add an extra "itemget" listener.
+        -- See `scripts/prefabs/hermitcrab.lua:1011`.
+        inst:ListenForEvent("itemget", function(_, data)
+            if iscoat(data.item) and GLOBAL.TheWorld.state.issnowing then
+                local TASKS_GIVE_PUFFY_VEST = 11 -- Copy from `prefabs/hermitcrab.lua:57`.
+                inst.components.inventory:Equip(data.item)
+                inst.components.friendlevels:CompleteTask(TASKS_GIVE_PUFFY_VEST)
+            end
+        end)
+
+        -- Override `ShouldAcceptItem`.
+        -- See `scripts/prefabs/hermitcrab.lua:122-123,127`.
+        local ShouldAcceptItem_Base = inst.components.trader.test
+        inst.components.trader:SetAcceptTest(function(inst1, item)
+            return (iscoat(item) and GLOBAL.TheWorld.state.issnowing and not getcoat(inst1))
+                    or ShouldAcceptItem_Base(inst1, item)
+        end)
+
+        -- Override `OnRefuseItem`.
+        -- See `scripts/prefabs/hermitcrab.lua:144-146`.
+        local OnRefuseItem_Base = inst.components.trader.onrefuse
+        inst.components.trader.onrefuse = function(inst1, giver, item)
+            if iscoat(item) then
+                if getcoat(inst1) then
+                    inst1.components.npc_talker:Say(GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT_HASONE[math.random(#GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT_HASONE)])
+                elseif not GLOBAL.TheWorld.state.issnowing then
+                    inst1.components.npc_talker:Say(GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT[math.random(#GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT)])
+                end
+            end
+            OnRefuseItem_Base(inst, giver, item)
+        end
+
+        -- Override `iscoat`.
+        -- See `scripts/prefabs/hermitcrab.lua:1363`.
+        inst.iscoat = iscoat
+        inst.getcoat = getcoat
+    end)
+
+
+    -- 6. Crabby Hermit has a brain which allows her to equip/unequip a coat to/from the old equip slot. Let's use the new one too.
+    -- See `scripts/brains/hermitcrabbrain.lua`.
+    AddBrainPostInit("hermitcrabbrain", function(brain)
+        local function using_coat(inst)
+            local equipped = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return equipped and inst.iscoat(equipped) or nil
+        end
+
+        local function has_coat(inst)
+            return inst.components.inventory:FindItem(function(testitem) return inst.iscoat(testitem) end)
+        end
+
+        local function EquipCoat(inst)
+            local coat = inst.getcoat(inst)
+            if coat then
+                inst.components.inventory:Equip(coat)
+            end
+        end
+
+        local function UnequipCoat(inst)
+            local item = inst.components.inventory:Unequip(EQUIPSLOTS_MAP.CLOTHING)
+            inst.components.inventory:GiveItem(item)
+        end
+
+        local new_children = {}
+        for _, child in ipairs(brain.bt.root.children) do
+            if child.name == "Sequence" and child.children[1].name == "coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and GLOBAL.TheWorld.state.issnowing and has_coat(brain.inst) and not using_coat(brain.inst) end,
+                                "coat",
+                                GLOBAL.DoAction(brain.inst, EquipCoat, "coat", true))
+                )
+            elseif child.name == "Sequence" and child.children[1].name == "stop coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and not GLOBAL.TheWorld.state.issnowing and using_coat(brain.inst) end,
+                                "stop coat",
+                                GLOBAL.DoAction(brain.inst, UnequipCoat, "stop coat", true))
+                )
+            else
+                table.insert(new_children, child)
+            end
+        end
+        brain.bt = GLOBAL.BT(brain.inst, GLOBAL.PriorityNode(new_children, 0.5))
+    end)
+
+end
+
+
+if EQUIPSLOTS_MAP.AMULET ~= GLOBAL.EQUIPSLOTS.BODY then
+
+    -- 7. There is a state related to the Life Giving Amulet equipped in the old slot. Let's use the new slot too.
+    -- See `scripts/stategraphs/SGwilson.lua`.
+    AddStategraphPostInit("wilson", function(self)
+        local amulet_rebirth_state = self.states["amulet_rebirth"]
+
+        -- Override `onenter` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9372`.
+        local amulet_rebirth_state_onenter_base = amulet_rebirth_state.onenter
+        amulet_rebirth_state.onenter = function(inst)
+            amulet_rebirth_state_onenter_base(inst)
+            local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+            if item ~= nil and item.prefab == "amulet" then
+                item = inst.components.inventory:RemoveItem(item)
+                if item ~= nil then
+                    item:Remove()
+                    inst.sg.statemem.usedamulet_2 = true -- Mod note: `usedamulet_2` is set instead of `usedamulet`.
+                end
+            end
+        end
+
+        -- Override `onexit` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9414`.
+        local amulet_rebirth_state_onexit_base = amulet_rebirth_state.onexit
+        amulet_rebirth_state.onexit = function(inst)
+            -- Mod note: `usedamulet_2` is checked instead of `usedamulet`.
+            if inst.sg.statemem.usedamulet_2 and inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET) == nil then
+                inst.AnimState:ClearOverrideSymbol("swap_body")
+            end
+            amulet_rebirth_state_onexit_base(inst)
+        end
+    end)
+
+
+    -- 8. In the recipe popup the icon of the Construction Amulet is shown when it is equipped in the old slot. Let's use the new slot too.
+    -- See `scripts/widgets/recipepopup.lua:334`.
+
+    RecipePopup = GLOBAL.require "widgets/recipepopup"
+
+    AddGlobalClassPostConstruct("widgets/recipepopup", "RecipePopup", function(self)
+        local RecipePopup_Refresh_Base = RecipePopup.Refresh
+        function RecipePopup:Refresh()
+            RecipePopup_Refresh_Base(self)
+            if self.button:IsVisible() then
+                local equipped = self.owner.replica.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+                local showamulet = equipped and equipped.prefab == "greenamulet"
+                if showamulet then
+                    self.amulet:Show()
+                end
+            end
+        end
+    end)
+
+end
+
+
+-- 9. Render items from the new equip slots.
+if GetModConfigData("config_render") then
+
+    local anim_build_symbols = {
+        -- Backpacks
+        ["backpack"]     = {"swap_backpack",     "swap_body"}, -- Backpack
+        ["candybag"]     = {"candybag",          "swap_body"}, -- Candybag
+        ["icepack"]      = {"swap_icepack",      "swap_body"}, -- Insulated Pack
+        ["krampus_sack"] = {"swap_krampus_sack", "swap_body"}, -- Krampus Sack
+        ["piggyback"]    = {"swap_piggyback",    "swap_body"}, -- Piggyback
+        ["seedpouch"]    = {"seedpouch",         "swap_body"}, -- Seed Pack-It
+        ["spicepack"]    = {"swap_chefpack",     "swap_body"}, -- Chef Pouch
+
+        -- Band
+        ["onemanband"]        = {"swap_one_man_band",  "swap_body_tall"}, -- One-man Band
+
+        -- Shell
+        ["armorsnurtleshell"] = {"armor_slurtleshell", "swap_body_tall"}, -- Snurtle Shell Armor
+
+        -- Life vests
+        ["balloonvest"]     = {"balloonvest",     "swap_body"}, -- Inflatable Vest
+
+        -- Armors--护甲
+        ["armor_bramble"]   = {"armor_bramble",   "swap_body"}, -- Bramble Husk
+        ["armordragonfly"]  = {"torso_dragonfly", "swap_body"}, -- Scalemail
+        ["armorgrass"]      = {"armor_grass",     "swap_body"}, -- Grass Suit
+        ["armormarble"]     = {"armor_marble",    "swap_body"}, -- Marble Suit
+        ["armorruins"]      = {"armor_ruins",     "swap_body"}, -- Thulecite Suit
+        ["armor_sanity"]    = {"armor_sanity",    "swap_body"}, -- Night Armour
+        ["armorskeleton"]   = {"armor_skeleton",  "swap_body"}, -- Bone Armor
+        ["armorwood"]       = {"armor_wood",      "swap_body"}, -- Log Suit
+		["armor_medal_obsidian"]       = {"armor_medal_obsidian",      "swap_body"}, --能力勋章
+		["armor_blue_crystal"]         = {"armor_blue_crystal",        "swap_body"}, --能力勋章
+		["golden_armor_mk"]            = {"golden_armor_mk",           "swap_body"}, --神话书说
+		["yangjian_armor"]             = {"yangjian_armor",            "swap_body"}, --神话书说
+		["armorsiving"]                = {"armorsiving",               "swap_body"}, --神话书说
+		["nz_damask"]                  = {"nz_damask",                 "swap_body"}, --神话书说
+		["myth_iron_battlegear"]       = {"myth_iron_battlegear",      "swap_body"}, --神话书说
+		["xe_bag"]                     = {"xe_bag",                    "swap_body"}, --璇儿
+		["icearmor"]                   = {"icearmor",                  "swap_body"}, --玉子yuki
+		["yuanzi_armor_lv1"]           = {"yuanzi_armor_lv1",          "swap_body"}, --乃木園子
+		["yuanzi_armor_lv2"]           = {"yuanzi_armor_lv2",          "swap_body"}, --乃木園子
+		["monvfu"]                     = {"monvfu",                    "swap_body"}, --伊蕾娜
+		["bule_fairyskirt"]            = {"bule_fairyskirt",           "swap_body"}, --伊蕾娜
+		["red_fairyskirt"]             = {"red_fairyskirt",            "swap_body"}, --伊蕾娜
+		["sora2armor"]                 = {"sora2armor",                "swap_body"}, --小穹
+		["soraclothes"]                = {"soraclothes",               "swap_body"}, --小穹
+		["purgatory_armor"]            = {"purgatory_armor",           "swap_body"}, --艾露莎
+		["wharang_amulet_sack"]        = {"wharang_amulet_sack",       "swap_body"}, --千年狐
+		["ndnr_armorobsidian"]         = {"ndnr_armorobsidian",        "swap_body"}, --富贵
+		["changchunjz"]                = {"changchunjz",               "swap_body"}, --战舰少女-长春的舰装
+		["veneto_jz"]                  = {"veneto_jz",                 "swap_body"}, --战舰少女-维内托的舰装
+		["veneto_jzyf"]                = {"veneto_jzyf",               "swap_body"}, --战舰少女-豪华意式舰装
+		["fubuki_jz"]                  = {"fubuki_jz",                 "swap_body"}, --战舰少女-吹雪的舰装
+		["uniform_firemoths"]          = {"uniform_firemoths",         "swap_body"}, --希儿-逐火之蛾制服
+		["lijie_jz"]                   =  {"lijie_jz",                 "swap_body"}, --战舰少女补给包-黎塞留的舰装
+		["jianzhuang"]                 =  {"jianzhuang",               "swap_body"}, --战舰少女补给包-欧根的舰装
+		["fbk_jz"]                     =  {"fbk_jz",                   "swap_body"}, --战舰少女补给包-吹雪的舰装
+		["lex_jz"]                     =  {"lex_jz",                   "swap_body"}, --战舰少女补给包-列克星敦的舰装
+		["yukikaze_jz"]                =  {"yukikaze_jz",              "swap_body"}, --战舰少女补给包-火炮鱼雷并联舰装
+		["kahiro_dress"]               =  {"kahiro_dress",             "swap_body"}, --kahiro学院袍
+		["bf_nightmarearmor"]          =  {"bf_nightmarearmor",        "swap_body"}, --恶魔花护甲
+		["bf_rosearmor"]               =  {"bf_rosearmor",             "swap_body"}, --玫瑰护甲
+		["ov_armor"]                   =  {"ov_armor",                 "swap_body"}, --和平鸽
+		
+        -- Armors: from the mod "More Armor" (<https://steamcommunity.com/sharedfiles/filedetails/?id=1153998909>)
+        ["armor_bone"]  = {"armor_bone",  "armor_my_folder"}, -- Bone Suite
+        ["armor_stone"] = {"armor_stone", "armor_my_folder"}, -- Stone Suite
+
+        -- Clothing--服装
+        ["armorslurper"]     = {"armor_slurper",          "swap_body"}, -- Belt of Hunger
+        ["beargervest"]      = {"torso_bearger",          "swap_body"}, -- Hibearnation Vest
+        ["hawaiianshirt"]    = {"torso_hawaiian",         "swap_body"}, -- Floral Shirt
+        ["raincoat"]         = {"torso_rain",             "swap_body"}, -- Rain Coat
+        ["reflectivevest"]   = {"torso_reflective",       "swap_body"}, -- Summer Frest
+        ["sweatervest"]      = {"armor_sweatervest",      "swap_body"}, -- Dapper Vest
+        ["trunkvest_summer"] = {"armor_trunkvest_summer", "swap_body"}, -- Breezy Vest
+        ["trunkvest_winter"] = {"armor_trunkvest_winter", "swap_body"}, -- Puffy Vest
+        ["carnival_vest_a"]  = {"carnival_vest_a",        "swap_body"}, -- Chirpy Scarf
+        ["carnival_vest_b"]  = {"carnival_vest_b",        "swap_body"}, -- Chirpy Cloak
+        ["carnival_vest_c"]  = {"carnival_vest_c",        "swap_body"}, -- Chirpy Capelet
+		["down_filled_coat"] = {"down_filled_coat",       "swap_body"}, -- 能力勋章
+		["cassock"]          = {"cassock",                "swap_body"}, -- 神话书说
+		["kam_lan_cassock"]  = {"kam_lan_cassock",        "swap_body"}, -- 神话书说
+		["madameweb_armor"]  = {"madameweb_armor",        "swap_body"}, -- 神话书说
+		["sachet"]           =  {"sachet",                "swap_body"}, -- 棱镜
+		["veneto_yifu"]      =  {"veneto_yifu",           "swap_body"}, -- 战舰少女维内托-小时候的衣服
+		["dress_sea"]        =  {"dress_sea",             "swap_body"}, -- 希儿-幻海梦蝶
+		["seele_swimsuit"]   =  {"seele_swimsuit ",       "swap_body"}, -- 希儿-夏雪铃兰
+		["balloonvest"]      =  {"balloonvest",           "swap_body"}, -- 救生衣
+		["zhifu"]            =  {"zhifu",                 "swap_body"}, -- 战舰少女补给包-秋冬制服
+
+        -- Amulets -- 护符
+        ["amulet"]       = {"torso_amulets", "redamulet"   }, -- Life Giving Amulet
+        ["blueamulet"]   = {"torso_amulets", "blueamulet"  }, -- Chilled Amulet
+        ["purpleamulet"] = {"torso_amulets", "purpleamulet"}, -- Nightmare Amulet
+        ["orangeamulet"] = {"torso_amulets", "orangeamulet"}, -- The Lazy Forager
+        ["greenamulet"]  = {"torso_amulets", "greenamulet" }, -- Construction Amulet
+        ["yellowamulet"] = {"torso_amulets", "yellowamulet"}, -- Magiluminescence
+		["brooch1"]                      = {"torso_amulets",             "brooch1"}, --伊蕾娜
+		["brooch2"]                      = {"torso_amulets",             "brooch2"}, --伊蕾娜
+		["brooch4"]                      = {"torso_amulets",             "brooch4"}, --伊蕾娜
+		["brooch5"]                      = {"torso_amulets",             "brooch5"}, --伊蕾娜
+		["brooch6"]                      = {"torso_amulets",             "brooch6"}, --伊蕾娜
+		["brooch7"]                      = {"torso_amulets",             "brooch7"}, --伊蕾娜
+		["brooch8"]                      = {"torso_amulets",             "brooch8"}, --伊蕾娜
+		["brooch9"]                      = {"torso_amulets",             "brooch9"}, --伊蕾娜
+		["moon_brooch"]                  = {"torso_amulets",             "moon_brooch"}, --伊蕾娜
+		["star_brooch"]                  = {"torso_amulets",             "star_brooch"}, --伊蕾娜
+		["sora2amulet"]                  = {"torso_amulets",             "sora2amulet"}, --小穹
+		["sorabowknot"]                  = {"torso_amulets",             "sorabowknot"}, --小穹
+		["luckamulet"]                   = {"torso_amulets",             "luckamulet"}, --经济学
+		["wharang_amulet"]               = {"torso_amulets",             "wharang_amulet"}, --千年狐
+		["ndnr_opalpreciousamulet"]      = {"torso_amulets",   "ndnr_opalpreciousamulet"}, --富贵
+		["terraprisma"]                  = {"torso_amulets",             "terraprisma"}, --光棱剑
+
+        -- Heavy
+        ["cavein_boulder"]       = {"swap_cavein_boulder", "swap_body"}, -- Boulder -- TODO: variations.
+        ["glassspike_short"]     = {"swap_glass_spike", "swap_body_short"}, -- Glass Spike - Short
+        ["glassspike_med"]       = {"swap_glass_spike", "swap_body_med"},   -- Glass Spike - Medium
+        ["glassspike_tall"]      = {"swap_glass_spike", "swap_body_tall"},  -- Glass Spike - Tall
+        ["glassblock"]           = {"swap_glass_block", "swap_body"},       -- Glass Castle
+        ["moon_altar_idol"]      = {"swap_altar_idolpiece",  "swap_body"}, -- Celestial Altar Idol
+        ["moon_altar_glass"]     = {"swap_altar_glasspiece", "swap_body"}, -- Celestial Altar Base
+        ["moon_altar_seed"]      = {"swap_altar_seedpiece",  "swap_body"}, -- Celestial Altar Orb
+        ["moon_altar_crown"]     = {"swap_altar_crownpiece", "swap_body"}, -- Inactive Celestial Tribute
+        ["moon_altar_ward"]      = {"swap_altar_wardpiece",  "swap_body"}, -- Celestial Sanctum Ward
+        ["moon_altar_icon"]      = {"swap_altar_iconpiece",  "swap_body"}, -- Celestial Sanctum Icon
+        ["sculpture_knighthead"] = {"swap_sculpture_knighthead", "swap_body"}, -- Suspicious Marble - Knight Head
+        ["sculpture_bishophead"] = {"swap_sculpture_bishophead", "swap_body"}, -- Suspicious Marble - Bishop Head
+        ["sculpture_rooknose"]   = {"swap_sculpture_rooknose",   "swap_body"}, -- Suspicious Marble - Rook Nose
+        ["shell_cluster"]        = {"singingshell_cluster", "swap_body"}, -- Shell Cluster
+        ["sunkenchest"]          = {"swap_sunken_treasurechest", "swap_body"}, -- Sunken Chest
+        ["oceantreenut"]         = {"oceantreenut", "swap_body"}, -- Knobbly Tree Nut
+
+        -- Heavy: from the mod "Moving Box" (<https://steamcommunity.com/sharedfiles/filedetails/?id=1079538195>)
+        ["moving_box_full"]      = {"swap_box_full", "swap_body"} -- Moving Box (Full)
+    }
+
+    -- Heavy: chess pieces
+    local CHESS_PIESES = {
+        "pawn", "rook", "knight", "bishop", "muse", "formal", "hornucopia", "pipe", "deerclops", "bearger",
+        "moosegoose", "dragonfly", "clayhound", "claywarg", "butterfly", "anchor", "moon", "carrat", "crabking",
+        "malbatross", "toadstool", "stalker", "klaus", "beequeen", "antlion", "minotaur"
+    }
+    local CHESS_MATERIALS = {"marble", "stone", "moonglass"}
+    for _, p in ipairs(CHESS_PIESES) do
+        anim_build_symbols["chesspiece_" .. p] = {"swap_chesspiece_" .. p, "swap_body"}
+        for _, m in ipairs(CHESS_MATERIALS) do
+            anim_build_symbols["chesspiece_" .. p .. "_" .. m] = {"swap_chesspiece_" .. p .. "_" .. m, "swap_body"}
+        end
+    end
+
+    -- Heavy: veggies
+    local PLANT_DEFS = require("prefabs/farm_plant_defs").PLANT_DEFS
+    for name, def in pairs(PLANT_DEFS) do
+        local build_symbol = {def.build or "farm_plant_" .. name, "swap_body"}
+        anim_build_symbols[name .. "_oversized"]       = build_symbol
+        anim_build_symbols[name .. "_oversized_waxed"] = build_symbol
+    end
+
+    local function get_equipped_item(inventory, type)
+        local candidate = inventory:GetEquippedItem(EQUIPSLOTS_MAP[string.upper(type)])
+        return ((candidate ~= nil) and candidate:HasTag(type)) and candidate or nil
+    end
+
+    local function render_equipped_item(owner, render_slot, item)
+        if item ~= nil then
+            local build_symbol = anim_build_symbols[item.prefab]
+            if build_symbol ~= nil then
+                local skin_build = item:GetSkinBuild()
+                if skin_build ~= nil then
+                    owner.AnimState:OverrideItemSkinSymbol(render_slot, skin_build, "swap_body", item.GUID, build_symbol[1])
+                else
+                    owner.AnimState:OverrideSymbol(render_slot, build_symbol[1], build_symbol[2])
+                end
+            end
+        else
+            owner.AnimState:ClearOverrideSymbol(render_slot)
+        end
+    end
+
+    local function render_body_equipment(owner)
+        local inventory = owner.replica.inventory
+
+        local item1 =
+                   get_equipped_item(inventory, EQUIP_TYPES.BACKPACK)
+                or get_equipped_item(inventory, EQUIP_TYPES.BAND)
+                or get_equipped_item(inventory, EQUIP_TYPES.SHELL)
+        local item2 =
+                   get_equipped_item(inventory, EQUIP_TYPES.HEAVY)
+                or get_equipped_item(inventory, EQUIP_TYPES.LIFEVEST)
+                or get_equipped_item(inventory, EQUIP_TYPES.ARMOR)
+                or get_equipped_item(inventory, EQUIP_TYPES.CLOTHING)
+                or get_equipped_item(inventory, EQUIP_TYPES.AMULET)
+
+        render_equipped_item(owner, "swap_body_tall", item1)
+        render_equipped_item(owner, "swap_body",      item2)
+    end
+
+    local function on_equip_or_unequip(owner, data)
+        if (data.eslot == GLOBAL.EQUIPSLOTS.BODY) or table.contains(EXTRA_EQUIPSLOTS, data.eslot) then
+            render_body_equipment(owner)
+        end
+    end
+
+    AddComponentPostInit("inventory", function(_, inst)
+        inst:ListenForEvent("equip",   on_equip_or_unequip)
+        inst:ListenForEvent("unequip", on_equip_or_unequip)
+    end)
+
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:hermitcrabbrain
+    -- See `scripts/brains/hermitcrabbrain.lua`.
+    AddBrainPostInit("hermitcrabbrain", function(brain)
+        local function using_coat(inst)
+            local equipped = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return equipped and inst.iscoat(equipped) or nil
+        end
+
+        local function has_coat(inst)
+            return inst.components.inventory:FindItem(function(testitem) return inst.iscoat(testitem) end)
+        end
+
+        local function EquipCoat(inst)
+            local coat = inst.getcoat(inst)
+            if coat then
+                inst.components.inventory:Equip(coat)
+            end
+        end
+
+        local function UnequipCoat(inst)
+            local item = inst.components.inventory:Unequip(EQUIPSLOTS_MAP.CLOTHING)
+            inst.components.inventory:GiveItem(item)
+        end
+
+        local new_children = {}
+        for _, child in ipairs(brain.bt.root.children) do
+            if child.name == "Sequence" and child.children[1].name == "coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and GLOBAL.TheWorld.state.issnowing and has_coat(brain.inst) and not using_coat(brain.inst) end,
+                                "coat",
+                                GLOBAL.DoAction(brain.inst, EquipCoat, "coat", true))
+                )
+            elseif child.name == "Sequence" and child.children[1].name == "stop coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and not GLOBAL.TheWorld.state.issnowing and using_coat(brain.inst) end,
+                                "stop coat",
+                                GLOBAL.DoAction(brain.inst, UnequipCoat, "stop coat", true))
+                )
+            else
+                table.insert(new_children, child)
+            end
+        end
+        brain.bt = GLOBAL.BT(brain.inst, GLOBAL.PriorityNode(new_children, 0.5))
+    end)
+
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+    -- See `scripts/stategraphs/SGwilson.lua`.
+    AddStategraphPostInit("wilson", function(self)
+        local amulet_rebirth_state = self.states["amulet_rebirth"]
+
+        -- Override `onenter` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9372`.
+        local amulet_rebirth_state_onenter_base = amulet_rebirth_state.onenter
+        amulet_rebirth_state.onenter = function(inst)
+            amulet_rebirth_state_onenter_base(inst)
+            local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+            if item ~= nil and item.prefab == "amulet" then
+                item = inst.components.inventory:RemoveItem(item)
+                if item ~= nil then
+                    item:Remove()
+                    inst.sg.statemem.usedamulet_2 = true -- Mod note: `usedamulet_2` is set instead of `usedamulet`.
+                end
+            end
+        end
+
+        -- Override `onexit` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9414`.
+        local amulet_rebirth_state_onexit_base = amulet_rebirth_state.onexit
+        amulet_rebirth_state.onexit = function(inst)
+            -- Mod note: `usedamulet_2` is checked instead of `usedamulet`.
+            if inst.sg.statemem.usedamulet_2 and inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET) == nil then
+                inst.AnimState:ClearOverrideSymbol("swap_body")
+            end
+            amulet_rebirth_state_onexit_base(inst)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+    AddComponentPostInit("inventory", function(_, inst)
+        inst:ListenForEvent("equip",   on_equip_or_unequip)
+        inst:ListenForEvent("unequip", on_equip_or_unequip)
+    end)
+
+```
+
