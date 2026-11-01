@@ -11345,3 +11345,48 @@ end
 
 ```
 
+
+
+### 变体演进：时崎狂三 (Mod 2941989744)
+- **变体场景与切面**：收录来自工坊 Mod 2941989744 (`时崎狂三`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2941989744)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:debuffable
+	}
+	AddComponentPostInit("debuffable", function(self)
+		local OldAddDebuff = self.AddDebuff
+		self.AddDebuff = function(self, name, prefab, data, ...)
+			local inst = self.inst.components.debuffable
+			if inst ~= nil and inst:HasDebuff("krm_immune_buff") then
+				if name and table.contains(debuff, name) then return end
+			end
+			return OldAddDebuff(self, name, prefab, data, ...)
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krm_crystal
+	end)
+	AddPrefabPostInit("krm_crystal", function(inst)
+		if not TheWorld.ismastersim then return end
+		local Oldeatfn = inst.components.edible.oneaten
+		inst.components.edible.oneaten = function(inst, eater, ...)
+			if eater and not eater:HasDebuff("krm_immune_buff") then
+				eater:AddDebuff("krm_immune_buff","krm_immune_buff")
+				for k,v in ipairs(debuff) do
+					if eater:HasDebuff(v) then
+						eater:RemoveDebuff(v)
+					end
+				end
+			end
+			if Oldeatfn then Oldeatfn(inst, eater, ...) end
+		end
+	end)
+
+```
+

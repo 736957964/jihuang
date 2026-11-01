@@ -47949,3 +47949,877 @@ end)
 
 ```
 
+
+
+### 变体演进：六格装备栏（适配mod版） (Mod 2798599672)
+- **变体场景与切面**：收录来自工坊 Mod 2798599672 (`六格装备栏（适配mod版）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2798599672)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:hermitcrab
+    -- See `scripts/prefabs/hermitcrab.lua`.
+    AddPrefabPostInit("hermitcrab", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        local function iscoat(item)
+            return item.components.insulator and
+                    item.components.insulator:GetInsulation() >= GLOBAL.TUNING.INSULATION_SMALL and
+                    item.components.insulator:GetType() == GLOBAL.SEASONS.WINTER and
+                    item.components.equippable and
+                    item.components.equippable.equipslot == EQUIPSLOTS_MAP.CLOTHING
+        end
+
+        local function getcoat(inst1)
+            local equipped = inst1.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return inst1.components.inventory:FindItem(function(testitem) return iscoat(testitem) end)
+                    or (equipped and iscoat(equipped) and equipped)
+        end
+
+        -- 添加一个额外的项目监听器.
+        -- See `scripts/prefabs/hermitcrab.lua:1011`.
+        inst:ListenForEvent("itemget", function(_, data)
+            if iscoat(data.item) and GLOBAL.TheWorld.state.issnowing then
+                local TASKS_GIVE_PUFFY_VEST = 11 -- Copy from `prefabs/hermitcrab.lua:57`.
+                inst.components.inventory:Equip(data.item)
+                inst.components.friendlevels:CompleteTask(TASKS_GIVE_PUFFY_VEST)
+            end
+        end)
+
+        -- 覆盖 `ShouldAcceptItem`.
+        -- See `scripts/prefabs/hermitcrab.lua:122-123,127`.
+        local ShouldAcceptItem_Base = inst.components.trader.test
+        inst.components.trader:SetAcceptTest(function(inst1, item)
+            return (iscoat(item) and GLOBAL.TheWorld.state.issnowing and not getcoat(inst1))
+                    or ShouldAcceptItem_Base(inst1, item)
+        end)
+
+        -- 覆盖 `OnRefuseItem`.
+        -- See `scripts/prefabs/hermitcrab.lua:144-146`.
+        local OnRefuseItem_Base = inst.components.trader.onrefuse
+        inst.components.trader.onrefuse = function(inst1, giver, item)
+            if iscoat(item) then
+                if getcoat(inst1) then
+                    inst1.components.npc_talker:Say(GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT_HASONE[math.random(#GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT_HASONE)])
+                elseif not GLOBAL.TheWorld.state.issnowing then
+                    inst1.components.npc_talker:Say(GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT[math.random(#GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT)])
+                end
+            end
+            OnRefuseItem_Base(inst, giver, item)
+        end
+
+        -- 覆盖 `iscoat`.
+        -- See `scripts/prefabs/hermitcrab.lua:1363`.
+        inst.iscoat = iscoat
+        inst.getcoat = getcoat
+    end)
+
+
+    -- 6. “寄居蟹隐士”有一个大脑，可以让她在旧装备槽中装备/取消装备外套。让我们也用新的.
+    -- See `scripts/brains/hermitcrabbrain.lua`.
+    AddBrainPostInit("hermitcrabbrain", function(brain)
+        local function using_coat(inst)
+            local equipped = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return equipped and inst.iscoat(equipped) or nil
+        end
+
+        local function has_coat(inst)
+            return inst.components.inventory:FindItem(function(testitem) return inst.iscoat(testitem) end)
+        end
+
+        local function EquipCoat(inst)
+            local coat = inst.getcoat(inst)
+            if coat then
+                inst.components.inventory:Equip(coat)
+            end
+        end
+
+        local function UnequipCoat(inst)
+            local item = inst.components.inventory:Unequip(EQUIPSLOTS_MAP.CLOTHING)
+            inst.components.inventory:GiveItem(item)
+        end
+
+        local new_children = {}
+        for _, child in ipairs(brain.bt.root.children) do
+            if child.name == "Sequence" and child.children[1].name == "coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and GLOBAL.TheWorld.state.issnowing and has_coat(brain.inst) and not using_coat(brain.inst) end,
+                                "coat",
+                                GLOBAL.DoAction(brain.inst, EquipCoat, "coat", true))
+                )
+            elseif child.name == "Sequence" and child.children[1].name == "stop coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and not GLOBAL.TheWorld.state.issnowing and using_coat(brain.inst) end,
+                                "stop coat",
+                                GLOBAL.DoAction(brain.inst, UnequipCoat, "stop coat", true))
+                )
+            else
+                table.insert(new_children, child)
+            end
+        end
+        brain.bt = GLOBAL.BT(brain.inst, GLOBAL.PriorityNode(new_children, 0.5))
+    end)
+
+end
+
+
+if EQUIPSLOTS_MAP.AMULET ~= GLOBAL.EQUIPSLOTS.BODY then
+
+    -- 7. 有一个状态与旧插槽中配备的“赋予生命的护身符”有关。让我们也使用新的插槽.
+    -- See `scripts/stategraphs/SGwilson.lua`.
+    AddStategraphPostInit("wilson", function(self)
+        local amulet_rebirth_state = self.states["amulet_rebirth"]
+
+        -- Override `onenter` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9372`.
+        local amulet_rebirth_state_onenter_base = amulet_rebirth_state.onenter
+        amulet_rebirth_state.onenter = function(inst)
+            amulet_rebirth_state_onenter_base(inst)
+            local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+            if item ~= nil and item.prefab == "amulet" then
+                item = inst.components.inventory:RemoveItem(item)
+                if item ~= nil then
+                    item:Remove()
+                    inst.sg.statemem.usedamulet_2 = true -- Mod note: `usedamulet_2` is set instead of `usedamulet`.
+                end
+            end
+        end
+
+        -- Override `onexit` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9414`.
+        local amulet_rebirth_state_onexit_base = amulet_rebirth_state.onexit
+        amulet_rebirth_state.onexit = function(inst)
+            -- Mod note: `usedamulet_2` is checked instead of `usedamulet`.
+            if inst.sg.statemem.usedamulet_2 and inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET) == nil then
+                inst.AnimState:ClearOverrideSymbol("swap_body")
+            end
+            amulet_rebirth_state_onexit_base(inst)
+        end
+    end)
+
+    -- 8. 在配方弹出窗口中，当施工护身符安装在旧插槽中时，会显示施工护身符的图标。让我们也使用新的插槽。
+    -- See `scripts/widgets/recipepopup.lua:334`.
+
+    RecipePopup = GLOBAL.require "widgets/recipepopup"
+
+    AddGlobalClassPostConstruct("widgets/recipepopup", "RecipePopup", function(self)
+        local RecipePopup_Refresh_Base = RecipePopup.Refresh
+        function RecipePopup:Refresh()
+            RecipePopup_Refresh_Base(self)
+            if self.button:IsVisible() then
+                local equipped = self.owner.replica.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+                local showamulet = equipped and equipped.prefab == "greenamulet"
+                if showamulet then
+                    self.amulet:Show()
+                end
+            end
+        end
+    end)
+
+end
+
+
+-- 9. 渲染新装备插槽中的项目.
+if GetModConfigData("config_render") then
+
+    local anim_build_symbols = {
+        -- 背包
+        ["backpack"]     = {"swap_backpack",     "swap_body"}, -- 背包
+        ["candybag"]     = {"candybag",          "swap_body"}, -- 糖果袋
+        ["icepack"]      = {"swap_icepack",      "swap_body"}, -- 保鲜背包
+        ["krampus_sack"] = {"swap_krampus_sack", "swap_body"}, -- 坎普斯背包
+        ["piggyback"]    = {"swap_piggyback",    "swap_body"}, -- 小猪背包
+        ["seedpouch"]    = {"seedpouch",         "swap_body"}, -- 种子袋
+        ["spicepack"]    = {"swap_chefpack",     "swap_body"}, -- 厨师袋
+		
+        ["onemanband"]        = {"swap_one_man_band",  "swap_body_tall"}, -- 独奏乐器
+
+        ["armorsnurtleshell"] = {"armor_slurtleshell", "swap_body_tall"}, -- 蜗牛护甲
+
+        ["balloonvest"]     = {"balloonvest",     "swap_body"}, -- 充气背心
+
+        -- Armors护甲
+        ["armor_bramble"]   = {"armor_bramble",   "swap_body"}, -- 荆棘甲
+        ["armordragonfly"]  = {"torso_dragonfly", "swap_body"}, -- 鳞甲
+        ["armorgrass"]      = {"armor_grass",     "swap_body"}, -- 草甲
+        ["armormarble"]     = {"armor_marble",    "swap_body"}, -- 大理石甲
+        ["armorruins"]      = {"armor_ruins",     "swap_body"}, -- 铥矿甲
+        ["armor_sanity"]    = {"armor_sanity",    "swap_body"}, -- 影甲
+        ["armorskeleton"]   = {"armor_skeleton",  "swap_body"}, -- 骨甲
+        ["armorwood"]       = {"armor_wood",      "swap_body"}, -- 木甲
+
+        -- 护甲: 来自模组 "More Armor" (<https://steamcommunity.com/sharedfiles/filedetails/?id=1153998909>)
+        ["armor_bone"]  = {"armor_bone",  "armor_my_folder"}, -- Bone Suite
+        ["armor_stone"] = {"armor_stone", "armor_my_folder"}, -- Stone Suite
+
+        -- Clothing服装
+        ["armorslurper"]     = {"armor_slurper",          "swap_body"}, -- Belt of Hunger
+        ["beargervest"]      = {"torso_bearger",          "swap_body"}, -- Hibearnation Vest
+        ["hawaiianshirt"]    = {"torso_hawaiian",         "swap_body"}, -- Floral Shirt
+        ["raincoat"]         = {"torso_rain",             "swap_body"}, -- Rain Coat
+        ["reflectivevest"]   = {"torso_reflective",       "swap_body"}, -- Summer Frest
+        ["sweatervest"]      = {"armor_sweatervest",      "swap_body"}, -- Dapper Vest
+        ["trunkvest_summer"] = {"armor_trunkvest_summer", "swap_body"}, -- Breezy Vest
+        ["trunkvest_winter"] = {"armor_trunkvest_winter", "swap_body"}, -- Puffy Vest
+        ["carnival_vest_a"]  = {"carnival_vest_a",        "swap_body"}, -- Chirpy Scarf
+        ["carnival_vest_b"]  = {"carnival_vest_b",        "swap_body"}, -- Chirpy Cloak
+        ["carnival_vest_c"]  = {"carnival_vest_c",        "swap_body"}, -- Chirpy Capelet
+
+        -- Amulets护符
+        ["amulet"]       = {"torso_amulets", "redamulet"   }, -- Life Giving Amulet
+        ["blueamulet"]   = {"torso_amulets", "blueamulet"  }, -- Chilled Amulet
+        ["purpleamulet"] = {"torso_amulets", "purpleamulet"}, -- Nightmare Amulet
+        ["orangeamulet"] = {"torso_amulets", "orangeamulet"}, -- The Lazy Forager
+        ["greenamulet"]  = {"torso_amulets", "greenamulet" }, -- Construction Amulet
+        ["yellowamulet"] = {"torso_amulets", "yellowamulet"}, -- Magiluminescence
+
+        -- 重物
+        ["cavein_boulder"]       = {"swap_cavein_boulder", "swap_body"}, -- Boulder -- TODO: variations.
+        ["glassspike_short"]     = {"swap_glass_spike", "swap_body_short"}, -- Glass Spike - Short
+        ["glassspike_med"]       = {"swap_glass_spike", "swap_body_med"},   -- Glass Spike - Medium
+        ["glassspike_tall"]      = {"swap_glass_spike", "swap_body_tall"},  -- Glass Spike - Tall
+        ["glassblock"]           = {"swap_glass_block", "swap_body"},       -- Glass Castle
+        ["moon_altar_idol"]      = {"swap_altar_idolpiece",  "swap_body"}, -- Celestial Altar Idol
+        ["moon_altar_glass"]     = {"swap_altar_glasspiece", "swap_body"}, -- Celestial Altar Base
+        ["moon_altar_seed"]      = {"swap_altar_seedpiece",  "swap_body"}, -- Celestial Altar Orb
+        ["moon_altar_crown"]     = {"swap_altar_crownpiece", "swap_body"}, -- Inactive Celestial Tribute
+        ["moon_altar_ward"]      = {"swap_altar_wardpiece",  "swap_body"}, -- Celestial Sanctum Ward
+        ["moon_altar_icon"]      = {"swap_altar_iconpiece",  "swap_body"}, -- Celestial Sanctum Icon
+        ["sculpture_knighthead"] = {"swap_sculpture_knighthead", "swap_body"}, -- Suspicious Marble - Knight Head
+        ["sculpture_bishophead"] = {"swap_sculpture_bishophead", "swap_body"}, -- Suspicious Marble - Bishop Head
+        ["sculpture_rooknose"]   = {"swap_sculpture_rooknose",   "swap_body"}, -- Suspicious Marble - Rook Nose
+        ["shell_cluster"]        = {"singingshell_cluster", "swap_body"}, -- Shell Cluster
+        ["sunkenchest"]          = {"swap_sunken_treasurechest", "swap_body"}, -- Sunken Chest
+        ["oceantreenut"]         = {"oceantreenut", "swap_body"}, -- Knobbly Tree Nut
+
+        -- 重物: 来自模组"Moving Box" (<https://steamcommunity.com/sharedfiles/filedetails/?id=1079538195>)
+        ["moving_box_full"]      = {"swap_box_full", "swap_body"} -- Moving Box (Full)
+    }
+
+    -- 重物：棋子雕像
+    local CHESS_PIESES = {
+        "pawn", "rook", "knight", "bishop", "muse", "formal", "hornucopia", "pipe", "deerclops", "bearger",
+        "moosegoose", "dragonfly", "clayhound", "claywarg", "butterfly", "anchor", "moon", "carrat", "crabking",
+        "malbatross", "toadstool", "stalker", "klaus", "beequeen", "antlion", "minotaur"
+    }
+    local CHESS_MATERIALS = {"marble", "stone", "moonglass"}
+    for _, p in ipairs(CHESS_PIESES) do
+        anim_build_symbols["chesspiece_" .. p] = {"swap_chesspiece_" .. p, "swap_body"}
+        for _, m in ipairs(CHESS_MATERIALS) do
+            anim_build_symbols["chesspiece_" .. p .. "_" .. m] = {"swap_chesspiece_" .. p .. "_" .. m, "swap_body"}
+        end
+    end
+
+    -- 重物：蔬菜
+    local PLANT_DEFS = require("prefabs/farm_plant_defs").PLANT_DEFS
+    for name, def in pairs(PLANT_DEFS) do
+        local build_symbol = {def.build or "farm_plant_" .. name, "swap_body"}
+        anim_build_symbols[name .. "_oversized"]       = build_symbol
+        anim_build_symbols[name .. "_oversized_waxed"] = build_symbol
+    end
+
+    local function get_equipped_item(inventory, type)
+        local candidate = inventory:GetEquippedItem(EQUIPSLOTS_MAP[string.upper(type)])
+        return ((candidate ~= nil) and candidate:HasTag(type)) and candidate or nil
+    end
+
+    local function render_equipped_item(owner, render_slot, item)
+        if item ~= nil then
+            local build_symbol = anim_build_symbols[item.prefab]
+            if build_symbol ~= nil then
+                local skin_build = item:GetSkinBuild()
+                if skin_build ~= nil then
+                    owner.AnimState:OverrideItemSkinSymbol(render_slot, skin_build, "swap_body", item.GUID, build_symbol[1])
+                else
+                    owner.AnimState:OverrideSymbol(render_slot, build_symbol[1], build_symbol[2])
+                end
+            end
+        else
+            owner.AnimState:ClearOverrideSymbol(render_slot)
+        end
+    end
+
+    local function render_body_equipment(owner)
+        local inventory = owner.replica.inventory
+
+        local item1 =
+                   get_equipped_item(inventory, EQUIP_TYPES.BACKPACK)
+                or get_equipped_item(inventory, EQUIP_TYPES.BAND)
+                or get_equipped_item(inventory, EQUIP_TYPES.SHELL)
+        local item2 =
+                   get_equipped_item(inventory, EQUIP_TYPES.HEAVY)
+                or get_equipped_item(inventory, EQUIP_TYPES.LIFEVEST)
+                or get_equipped_item(inventory, EQUIP_TYPES.ARMOR)
+                or get_equipped_item(inventory, EQUIP_TYPES.CLOTHING)
+                or get_equipped_item(inventory, EQUIP_TYPES.AMULET)
+
+        render_equipped_item(owner, "swap_body_tall", item1)
+        render_equipped_item(owner, "swap_body",      item2)
+    end
+
+    local function on_equip_or_unequip(owner, data)
+        if (data.eslot == GLOBAL.EQUIPSLOTS.BODY) or table.contains(EXTRA_EQUIPSLOTS, data.eslot) then
+            render_body_equipment(owner)
+        end
+    end
+
+    AddComponentPostInit("inventory", function(_, inst)
+        inst:ListenForEvent("equip",   on_equip_or_unequip)
+        inst:ListenForEvent("unequip", on_equip_or_unequip)
+    end)
+
+end
+
+--修复假人互动bug、修复拳击袋不能给装备bug
+local function new_has_any_equipment(inst)
+    return inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS) ~= nil
+        or inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HEAD) ~= nil
+        or inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY) ~= nil
+        or inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.EXTRABODY1) ~= nil
+        or inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.EXTRABODY2) ~= nil
+        or inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.EXTRABODY3) ~= nil
+end
+
+local function newCanSwap(inst, doer)
+    -- We can perform a swap if either of our head/body slots are filled,
+    -- or either of the doer's are filled.
+    return new_has_any_equipment(inst)
+        or (doer.components.inventory ~= nil and new_has_any_equipment(doer))
+end
+
+local function swapEquipment(inst,doer,equipslot)
+    if equipslot == nil then
+        return false
+    end
+    local doer_item = doer.components.inventory:Unequip(equipslot)
+    local inst_item = inst.components.inventory:Unequip(equipslot)
+    if doer_item == nil and inst_item == nil then
+        return false
+    end
+    if inst_item ~= nil and not inst_item.components.equippable:IsRestricted(doer)then
+        doer.components.inventory:Equip(inst_item)
+    end
+    if doer_item ~= nil and not doer_item.components.equippable:IsRestricted(inst)then
+        inst.components.inventory:Equip(doer_item)
+    end
+    return true
+end
+
+local function new_should_accept_item(inst, item, doer)
+    return item.components.equippable ~= nil
+        and (item.components.equippable.equipslot == GLOBAL.EQUIPSLOTS.HANDS
+            or item.components.equippable.equipslot == GLOBAL.EQUIPSLOTS.HEAD
+            or item.components.equippable.equipslot == GLOBAL.EQUIPSLOTS.BODY
+            or item.components.equippable.equipslot == GLOBAL.EQUIPSLOTS.EXTRABODY1
+            or item.components.equippable.equipslot == GLOBAL.EQUIPSLOTS.EXTRABODY2
+            or item.components.equippable.equipslot == GLOBAL.EQUIPSLOTS.EXTRABODY3),
+        "GENERIC"
+end
+
+if GLOBAL.TheNet:GetIsServer() then --这段代码只能在服务端运行，所以加了这个判断
+    AddPrefabPostInit("sewing_mannequin", function(inst)
+        local function newOnActivate(inst, doer)
+            local function become_inactive(inst)
+                inst.components.activatable.inactive = true
+            end
+            inst:DoTaskInTime(5*GLOBAL.FRAMES, become_inactive)
+
+            if newCanSwap(inst, doer) then
+                local handswap_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.HANDS)
+                local headswap_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.HEAD)
+                local body_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.BODY)
+                local extrabody1_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.EXTRABODY1)
+                local extrabody2_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.EXTRABODY2)
+                local extrabody3_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.EXTRABODY3)
+                if (handswap_success or headswap_success or body_success or extrabody1_success or extrabody2_success or extrabody3_success) then
+                    inst.AnimState:PlayAnimation("swap")
+                    inst.SoundEmitter:PlaySound("stageplay_set/mannequin/swap")
+                    inst.AnimState:PushAnimation("idle", false)
+        
+                    return true
+                else
+                    return false, "MANNEQUIN_EQUIPSWAPFAILED"
+                end
+            else
+                -- This should be exceedingly rare because we shouldn't have been activatable
+                -- if we didn't have anything to swap.
+                return false
+            end
+        end
+        inst.components.activatable.OnActivate = newOnActivate
+        inst.components.trader:SetAbleToAcceptTest(new_should_accept_item)
+    end)
+    -- 替换拳击袋给予物品判断
+    AddPrefabPostInit("punchingbag",function(inst)
+        inst.components.trader:SetAbleToAcceptTest(new_should_accept_item)
+    end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:hermitcrabbrain
+    -- See `scripts/brains/hermitcrabbrain.lua`.
+    AddBrainPostInit("hermitcrabbrain", function(brain)
+        local function using_coat(inst)
+            local equipped = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return equipped and inst.iscoat(equipped) or nil
+        end
+
+        local function has_coat(inst)
+            return inst.components.inventory:FindItem(function(testitem) return inst.iscoat(testitem) end)
+        end
+
+        local function EquipCoat(inst)
+            local coat = inst.getcoat(inst)
+            if coat then
+                inst.components.inventory:Equip(coat)
+            end
+        end
+
+        local function UnequipCoat(inst)
+            local item = inst.components.inventory:Unequip(EQUIPSLOTS_MAP.CLOTHING)
+            inst.components.inventory:GiveItem(item)
+        end
+
+        local new_children = {}
+        for _, child in ipairs(brain.bt.root.children) do
+            if child.name == "Sequence" and child.children[1].name == "coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and GLOBAL.TheWorld.state.issnowing and has_coat(brain.inst) and not using_coat(brain.inst) end,
+                                "coat",
+                                GLOBAL.DoAction(brain.inst, EquipCoat, "coat", true))
+                )
+            elseif child.name == "Sequence" and child.children[1].name == "stop coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and not GLOBAL.TheWorld.state.issnowing and using_coat(brain.inst) end,
+                                "stop coat",
+                                GLOBAL.DoAction(brain.inst, UnequipCoat, "stop coat", true))
+                )
+            else
+                table.insert(new_children, child)
+            end
+        end
+        brain.bt = GLOBAL.BT(brain.inst, GLOBAL.PriorityNode(new_children, 0.5))
+    end)
+
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+    -- See `scripts/stategraphs/SGwilson.lua`.
+    AddStategraphPostInit("wilson", function(self)
+        local amulet_rebirth_state = self.states["amulet_rebirth"]
+
+        -- Override `onenter` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9372`.
+        local amulet_rebirth_state_onenter_base = amulet_rebirth_state.onenter
+        amulet_rebirth_state.onenter = function(inst)
+            amulet_rebirth_state_onenter_base(inst)
+            local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+            if item ~= nil and item.prefab == "amulet" then
+                item = inst.components.inventory:RemoveItem(item)
+                if item ~= nil then
+                    item:Remove()
+                    inst.sg.statemem.usedamulet_2 = true -- Mod note: `usedamulet_2` is set instead of `usedamulet`.
+                end
+            end
+        end
+
+        -- Override `onexit` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9414`.
+        local amulet_rebirth_state_onexit_base = amulet_rebirth_state.onexit
+        amulet_rebirth_state.onexit = function(inst)
+            -- Mod note: `usedamulet_2` is checked instead of `usedamulet`.
+            if inst.sg.statemem.usedamulet_2 and inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET) == nil then
+                inst.AnimState:ClearOverrideSymbol("swap_body")
+            end
+            amulet_rebirth_state_onexit_base(inst)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+    AddComponentPostInit("inventory", function(_, inst)
+        inst:ListenForEvent("equip",   on_equip_or_unequip)
+        inst:ListenForEvent("unequip", on_equip_or_unequip)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sewing_mannequin
+if GLOBAL.TheNet:GetIsServer() then --这段代码只能在服务端运行，所以加了这个判断
+    AddPrefabPostInit("sewing_mannequin", function(inst)
+        local function newOnActivate(inst, doer)
+            local function become_inactive(inst)
+                inst.components.activatable.inactive = true
+            end
+            inst:DoTaskInTime(5*GLOBAL.FRAMES, become_inactive)
+
+            if newCanSwap(inst, doer) then
+                local handswap_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.HANDS)
+                local headswap_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.HEAD)
+                local body_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.BODY)
+                local extrabody1_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.EXTRABODY1)
+                local extrabody2_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.EXTRABODY2)
+                local extrabody3_success = swapEquipment(inst, doer, GLOBAL.EQUIPSLOTS.EXTRABODY3)
+                if (handswap_success or headswap_success or body_success or extrabody1_success or extrabody2_success or extrabody3_success) then
+                    inst.AnimState:PlayAnimation("swap")
+                    inst.SoundEmitter:PlaySound("stageplay_set/mannequin/swap")
+                    inst.AnimState:PushAnimation("idle", false)
+        
+                    return true
+                else
+                    return false, "MANNEQUIN_EQUIPSWAPFAILED"
+                end
+            else
+                -- This should be exceedingly rare because we shouldn't have been activatable
+                -- if we didn't have anything to swap.
+                return false
+            end
+        end
+        inst.components.activatable.OnActivate = newOnActivate
+        inst.components.trader:SetAbleToAcceptTest(new_should_accept_item)
+    end)
+
+```
+
+
+
+### 变体演进：Cook Giant Crops (Mod 3220336495)
+- **变体场景与切面**：收录来自工坊 Mod 3220336495 (`Cook Giant Crops`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3220336495)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:mightiness
+-- More Mightiness when Mashed Potatoes buff is active
+AddComponentPostInit("mightiness", function(self)
+	local _old_dodelta = self.DoDelta
+	
+	function self:DoDelta(delta, force_update, delay_skin, forcesound, fromgym, ...)
+		if self.inst.components.debuffable ~= nil then
+			if self.inst.components.debuffable:GetDebuff("bigcrop_mightybuff") ~= nil and delta > 0 then
+				delta = delta * TUNING.BIGCROP_MIGHTYBUFF_MIGHTINESSMULT
+			end
+		end
+		
+		_old_dodelta(self, delta, force_update, delay_skin, forcesound, fromgym, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wurt
+-- Different hunger values for Wurt
+AddPrefabPostInit("wurt", function(inst)
+	if not G.TheWorld.ismastersim then
+		return inst
+	end
+	
+	if inst.components.foodaffinity ~= nil then
+		inst.components.foodaffinity:AddPrefabAffinity("bigcrop_duriancream", 65/30) -- Target value / Base value
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+	AddStategraphPostInit("wilson_client", function(sg)
+		GoopHealState(sg)
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+	AddStategraphPostInit("wilson", function(sg)
+		GoopHealState(sg)
+		
+		-- Make it look like goop, not poop
+		local _old_fertilize_onenter = sg.states.fertilize.onenter
+		sg.states.fertilize.onenter = function(inst, ...)
+			_old_fertilize_onenter(inst, ...)
+			
+			if inst.bufferedaction ~= nil and inst.bufferedaction.invobject ~= nil and inst.bufferedaction.invobject:HasTag("bigcrop_healinggoop") then
+				-- Wormwood's quick fertilizer skill sets it to true, but since this is a healing item and Walter has a skill for that, this is more appropriate
+				inst.sg.statemem.fast = inst.components.skilltreeupdater:IsActivated("walter_camp_firstaid")
+				
+				inst.sg.statemem.bigcrop_ishealinggoop = true
+				
+				inst.AnimState:OverrideSymbol("prop_poop", "bigcrop_swap_aloecream", "prop_poop")
+			end
+		end
+		
+		local _old_fertilize_onexit = sg.states.fertilize.onexit
+		sg.states.fertilize.onexit = function(inst, ...)
+			_old_fertilize_onexit(inst, ...)
+			
+			if inst.sg.statemem.bigcrop_ishealinggoop then
+				inst.AnimState:ClearOverrideSymbol("prop_poop")
+			end
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:poisonable
+	-- Aloe buff gives poison immunity
+	AddComponentPostInit("poisonable", function(self)
+		local _old_canbepoisoned = self.CanBePoisoned
+		function self:CanBePoisoned(gas, ...)
+			local aloebuff = self.inst.components.debuffable ~= nil and self.inst.components.debuffable:GetDebuff("bigcrop_aloebuff") or nil
+			
+			if aloebuff ~= nil then
+				return false
+			end
+			
+			return _old_canbepoisoned(self, gas, ...)
+		end
+	end)
+
+```
+
+
+
+### 变体演进：Moses (Mod 3773682884)
+- **变体场景与切面**：收录来自工坊 Mod 3773682884 (`Moses`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3773682884)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:skinner
+-- 人物皮肤的init_fn 和 clear_fn
+AddComponentPostInit("skinner", function(self)
+    local oldfn = self.SetSkinName
+    if oldfn then
+        function self.SetSkinName(s, skinname, ...)
+            local old = s.skin_name
+            local new = skinname
+            if characterskins[old] and characterskins[old].clear_fn then characterskins[old].clear_fn(s.inst, old) end
+            if characterskins[new] and characterskins[new].init_fn then characterskins[new].init_fn(s.inst, new) end
+            oldfn(s, skinname, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+function dst_lan:_hookCombat()
+    AddComponentPostInit("combat", function(self)
+        self.dstlan_atkperiodmodifiers = SourceModifierList(self.inst)
+        self.dstlan_orig_min_attack_period = self.min_attack_period
+        local p = rawget(self, "_")["min_attack_period"]
+        local old_on_map = p[2]
+        p[2] = function(self, map)
+            if old_on_map ~= nil then
+                old_on_map(self, map)
+            end
+            if self.inst.replica.combat and self.inst.replica.combat.dstlan_atkperiodmult then
+                self.inst.replica.combat.dstlan_atkperiodmult:set(self.dstlan_atkperiodmodifiers:Get())
+            end
+        end
+
+        function self:SetAttackPeriod(val)
+            self.dstlan_orig_min_attack_period = val
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:SetAtkPeriodModifier(source, mult, key)
+            self.dstlan_atkperiodmodifiers:SetModifier(source, mult, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:RemoveAtkPeriodModifier(source, key)
+            self.dstlan_atkperiodmodifiers:RemoveModifier(source, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+function dst_lan:_hookSG()
+    AddStategraphPostInit("wilson", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local combat = inst.components.combat
+            local timeout = (math.floor(13/(combat.dstlan_atkperiodmodifiers:Get())))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(combat.dstlan_atkperiodmodifiers:Get())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+function dst_lan:_hookSGClient()
+    AddStategraphPostInit("wilson_client", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local timeout = (math.floor(13/inst.replica.combat.dstlan_atkperiodmult:value()))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(inst.replica.combat.dstlan_atkperiodmult:value())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformPreviewBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cook_certificate
+    --------------------------------------------
+    AddPrefabPostInit('cook_certificate',function (inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        local old_HarvestFoodFn = inst.HarvestFoodFn
+        ---@diagnostic disable-next-line: inject-field
+        inst.HarvestFoodFn = function(inst,foodname,harvester,cookpotname,...)
+            local fuelnum = GetThisMODDishConsume(foodname)
+            if foodname and fuelnum > 0 and not table.contains(inst.foodlist,foodname) then
+                --消耗耐久
+                if inst.components.finiteuses then
+                    inst.components.finiteuses:Use(fuelnum)
+                    inst.foodlist[#inst.foodlist+1]=foodname
+                    setFoodList(inst,harvester)--同步料理列表
+                    if not RewardToiler(harvester,0.1) then--天道酬勤
+                        SpawnMedalTips(harvester,fuelnum,10)--弹幕提示
+                    end
+                end
+            end
+            return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
+        end
+    end)
+
+```
+
+
+
+### 变体演进：米斯蒂娅·萝蕾拉 (Mod 3803695198)
+- **变体场景与切面**：收录来自工坊 Mod 3803695198 (`米斯蒂娅·萝蕾拉`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3803695198)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+end
+AddStategraphPostInit("wilson", fixspell)
+AddStategraphPostInit("wilson_client", fixspell)
+
+
+----------------制作相关-----------------------------------
+--声明成分
+CHARACTER_INGREDIENT.MYSTIA_HUNGER = "mystia_hunger_builder"
+local oldIsCharacterIngredient = _G.IsCharacterIngredient
+if oldIsCharacterIngredient then
+    _G.IsCharacterIngredient = function(ingredienttype)
+        if ingredienttype == CHARACTER_INGREDIENT.MYSTIA_HUNGER then
+            return true
+        end
+        return oldIsCharacterIngredient(ingredienttype)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson", fixspell)
+AddStategraphPostInit("wilson_client", fixspell)
+
+
+----------------制作相关-----------------------------------
+--声明成分
+CHARACTER_INGREDIENT.MYSTIA_HUNGER = "mystia_hunger_builder"
+local oldIsCharacterIngredient = _G.IsCharacterIngredient
+if oldIsCharacterIngredient then
+    _G.IsCharacterIngredient = function(ingredienttype)
+        if ingredienttype == CHARACTER_INGREDIENT.MYSTIA_HUNGER then
+            return true
+        end
+        return oldIsCharacterIngredient(ingredienttype)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+end
+AddComponentPostInit("builder", function(self)
+    if not self.inst:HasTag("mystia") then
+        return -1
+    end
+    --制作解锁	
+    local oldHasCharacterIngredient = self.HasCharacterIngredient
+    self.HasCharacterIngredient = function(s, ingredient, ...)
+        if ingredient.type == CHARACTER_INGREDIENT.MYSTIA_HUNGER then
+            if self.inst.components.hunger ~= nil then
+                return (self.freebuildmode and 0) or
+                    math.ceil(self.inst.components.hunger.current) >= ingredient.amount,
+                    self.inst.components.hunger.current
+            end
+        end
+        return oldHasCharacterIngredient(s, ingredient, ...)
+    end
+    --消耗
+    local oldRemoveIngredients = self.RemoveIngredients
+    self.RemoveIngredients = function(s, ingredients, recname)
+        local recipe = AllRecipes[recname]
+        if recipe then
+            for _, v in pairs(recipe.character_ingredients) do
+                if v.type == CHARACTER_INGREDIENT.MYSTIA_HUNGER then
+                    local current = math.ceil(self.inst.components.hunger.current)
+                    if current >= v.amount and not self.freebuildmode then
+                        self.inst.components.hunger:DoDelta(-v.amount)
+                    end
+                end
+            end
+        end
+        return oldRemoveIngredients(s, ingredients, recname)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+-- AddPrefabPostInit("player_classified", function(inst)
+-- 	inst.techtrees = _G.deepcopy(_G.TECH.NONE)
+-- end)
+
+```
+

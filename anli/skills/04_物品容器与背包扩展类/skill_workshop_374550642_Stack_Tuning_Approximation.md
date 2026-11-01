@@ -981,3 +981,135 @@ end)
 
 ```
 
+
+
+### 变体演进：Large Chest (HD) (Mod 2087177552)
+- **变体场景与切面**：收录来自工坊 Mod 2087177552 (`Large Chest (HD)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2087177552)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+
+AddPrefabPostInit("reskin_tool", function(inst)
+    if inst.components ~= nil and inst.components.spellcaster ~= nil then
+        local original_CanCast = inst.components.spellcaster.can_cast_fn
+        local original_Spell   = inst.components.spellcaster.spell
+
+        local function PuffFX(tool, target, scale, offset)
+            local fx_pos_x, fx_pos_y, fx_pos_z = target.Transform:GetWorldPosition()
+            local fx = GLOBAL.SpawnPrefab("explode_reskin")
+
+            fx.Transform:SetScale(scale, scale, scale)
+            fx.Transform:SetPosition(fx_pos_x, fx_pos_y + (offset or 0), fx_pos_z)
+        end
+
+        local function CanCast(doer, target, pos, tool)
+            if target == nil then
+                return original_CanCast(doer, target, pos, tool)
+            end
+
+            if target.prefab == "largeicebox" then
+                for _, name in ipairs(ICEBOX_SKINS) do
+                    if GLOBAL.TheInventory:CheckClientOwnership(doer.userid, name) then
+                        return true
+                    end
+                end
+            end
+
+            if target.prefab == "largesaltbox" then
+                for _, name in ipairs(SALTBOX_SKINS) do
+                    if GLOBAL.TheInventory:CheckClientOwnership(doer.userid, name) then
+                        return true
+                    end
+                end
+            end
+
+            return original_CanCast(doer, target, pos, tool)
+        end
+
+        local function Spell(tool, target, pos, doer)
+            if target == nil then
+                return original_Spell(tool, target, pos, doer)
+            end
+
+            if target.prefab == "largeicebox" then
+                local available_skins = {"icebox"}
+
+                if tool._cached_reskinname["largeicebox"] == nil then
+                    tool._cached_reskinname["largeicebox"] = available_skins[1]
+                end
+
+                local skin = tool._cached_reskinname["largeicebox"]
+
+                for _, name in ipairs(ICEBOX_SKINS) do
+                    if GLOBAL.TheInventory:CheckClientOwnership(tool.parent.userid, name) then
+                        table.insert(available_skins, name)
+                    end
+                end
+
+                local index = 1
+                for i, name in ipairs(available_skins) do
+                    if name == target._skin then
+                        index = i
+                        break
+                    end
+                end
+
+                skin = available_skins[index + 1]
+                if skin == nil then
+                    skin = available_skins[1]
+                end
+
+                tool._cached_reskinname["largeicebox"] = skin
+
+                target:SetSkin(skin)
+                PuffFX(tool, target, 1.5, 1)
+
+            elseif target.prefab == "largesaltbox" then
+                local available_skins = {"saltbox"}
+
+                if tool._cached_reskinname["largesaltbox"] == nil then
+                    tool._cached_reskinname["largesaltbox"] = available_skins[1]
+                end
+
+                local skin = tool._cached_reskinname["largesaltbox"]
+
+                for _, name in ipairs(SALTBOX_SKINS) do
+                    if GLOBAL.TheInventory:CheckClientOwnership(tool.parent.userid, name) then
+                        table.insert(available_skins, name)
+                    end
+                end
+
+                local index = 1
+                for i, name in ipairs(available_skins) do
+                    if name == target._skin then
+                        index = i
+                        break
+                    end
+                end
+
+                skin = available_skins[index + 1]
+                if skin == nil then
+                    skin = available_skins[1]
+                end
+
+                tool._cached_reskinname["largesaltbox"] = skin
+
+                target:SetSkin(skin)
+                PuffFX(tool, target, 1.5, 1)
+            else
+                original_Spell(tool, target, pos, doer)
+            end
+        end
+
+        inst.components.spellcaster:SetSpellFn(Spell)
+        inst.components.spellcaster:SetCanCastFn(CanCast)
+    end
+end)
+
+```
+
