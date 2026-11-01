@@ -32327,3 +32327,683 @@ end)
 
 ```
 
+
+
+### 变体演进：charge_control (Mod 3645179905)
+- **变体场景与切面**：收录来自工坊 Mod 3645179905 (`charge_control`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3645179905)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+---TODO
+newcs_core.AddComponentPostInit("playeractionpicker",function (self)
+    local old_fn = self.GetPointSpecialActions
+    function self:GetPointSpecialActions(pos, useitem, right, usereticulepos)
+        if self.inst.components.playercontroller:IsControlPressed(CONTROL_FORCE_INSPECT) then
+            return {}
+        end
+        return old_fn(self,pos,useitem,right,usereticulepos)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+newcs_core.AddComponentPostInit("playercontroller", function(self)
+
+
+    local CHARGE_COOLDOWN = 0.3  -- 动作（的最小触发间隔
+    local SKILL_COOLDOWN = 0.3   -- 技能的最小触发间隔
+
+    local old_activate = self.Activate
+    local old_deactivate = self.Deactivate
+    function self:Activate()
+        old_activate(self)
+        if self.handler~=nil then
+            self.mabyss_keyhandler = TheInput:AddKeyHandler(function(key, down) self:NewCS_keyhandle(key, down) end )
+            self.newcs_timers = {
+                last_action_time = 0,
+                last_skill_time = 0
+            }
+        end
+    end
+    function self:Deactivate()
+        old_deactivate(self)
+        if self.mabyss_keyhandler~=nil then
+            self.mabyss_keyhandler:Remove()
+            self.mabyss_keyhandler = nil
+            self.newcs_timers = nil
+        end
+    end
+    
+
+    function self:NewCS_keyhandle(key,down)
+        if IsPaused() or not down then
+            return
+        end
+    
+        local isenabled, ishudblocking = self:IsEnabled()
+        if not isenabled or ishudblocking then
+            return
+        end
+
+         local now = GetTime()
+        -- 安全检查: 如果表或键不存在，默认为 0
+        local last_action_time = self.newcs_timers.last_action_time or 0
+        local last_skill_time = self.newcs_timers.last_skill_time or 0
+        
+
+        if key == newcs_core.KEY_MAP.CHARGE and (now - last_action_time)>CHARGE_COOLDOWN then
+            self:NewCS_actionhandle()
+        elseif key == newcs_core.KEY_MAP.SKILL and (now - last_skill_time)>SKILL_COOLDOWN then
+            self:NewCS_skillhandle()
+        end
+    end
+
+    function self:NewCS_Remote_actionhandle(position)
+        if self.ismastersim and self:IsEnabled() and self.mabyss_keyhandler == nil then
+            if self.inst:HasDebuff("buff_mooncurse") then
+                return false
+            end
+            local act = GetActionForKeyhandle(self.inst,position)
+            if act~=nil then
+                self:DoAction(act)
+            end
+        end
+    end
+
+
+    function self:NewCS_actionhandle()
+        local position
+        if CHARGE_MODE then
+            position = TheInput:GetWorldPosition()
+        else
+            local theta = self.inst.Transform:GetRotation()*DEGREES
+            local offset = Vector3(8 * math.cos( theta ), 0, -8 * math.sin( theta ))    
+            position = self.inst:GetPosition() + offset
+        end
+        
+        local act = GetActionForKeyhandle(self.inst,position)
+        if act == nil then
+            return
+        end
+        if not self.ismastersim then
+            
+            local platform, pos_x, pos_z = self:GetPlatformRelativePosition(position.x, position.z)
+            if self.locomotor == nil then
+                if act.action.pre_action_cb ~= nil then
+                    act.action.pre_action_cb(act)
+                end
+                SendModRPCToServer(GetModRPC("NewConstant","ActionHandle"),pos_x,pos_z,platform, platform ~= nil)
+            elseif self:CanLocomote() then
+                act.preview_cb = function()
+                    SendModRPCToServer(GetModRPC("NewConstant","ActionHandle"),pos_x,pos_z,platform, platform ~= nil)
+                end
+            end
+        end
+        self.newcs_timers.last_action_time = GetTime()
+        self:DoAction(act)
+    end
+
+
+
+    ---TODO
+    function self:NewCS_skillhandle()
+        if self.inst:HasTag("playerghost") then
+            return
+        end
+
+        local position = TheInput:GetWorldPosition()
+        local skill,item = GetSkillForKeyhandle(self.inst,position)
+        if skill == nil then
+            return
+        end
+        if not self.ismastersim then
+            local platform, pos_x, pos_z = self:GetPlatformRelativePosition(position.x, position.z)
+            SendModRPCToServer(GetModRPC("NewConstant","SkillHandle"),pos_x,pos_z,platform, platform ~= nil)
+        else
+            skill(item, self.inst,position)
+        end
+        self.newcs_timers.last_skill_time = GetTime()
+    end
+
+
+    function self:NewCS_Remote_skillhandle(position)
+        if self.ismastersim and self:IsEnabled() and self.mabyss_keyhandler == nil then
+            if self.inst:HasDebuff("buff_mooncurse") then
+                return false
+            end
+            local skill,item = GetSkillForKeyhandle(self.inst,position)
+            if skill~=nil then
+                skill(item, self.inst,position)
+            end
+        end
+    end
+    
+    self.remote_AOETARGET = false
+    local AOE_code = ACTIONS.CASTAOE.code
+
+    function self:IsAOETargeting()
+        
+        return (self.reticule ~= nil and self.reticule.inst.components.aoetargeting ~= nil) or self.remote_AOETARGET
+    end
+    local old_OnRemoteLeftClick = self.OnRemoteLeftClick
+
+    function self:OnRemoteLeftClick(actioncode, ...)
+        if actioncode == AOE_code then
+            self.remote_AOETARGET = true
+        end
+        old_OnRemoteLeftClick(self,actioncode, ...)
+        self.remote_AOETARGET = false
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+newcs_core.AddComponentPostInit("combat",function (self,inst)
+    local old_getatk = self.GetAttacked_Internal
+    function self:GetAttacked_Internal(attacker, damage, weapon, stimuli, spdamage,...)
+        if self.inst.components.health and self.inst.components.health:IsDead() then
+            return true
+        end
+        if attacker and attacker.components.truedamage~=nil then
+           attacker.components.truedamage:DoAttack(self.inst) 
+        end
+        if self.hit_stuntime and self:InHitStun() then
+            return false
+        end
+        return old_getatk(self,attacker, damage, weapon, stimuli, spdamage,...)
+    end    
+
+
+    --UpvalueTracker.SetUpvalue(self.externaldamagemultipliers.RemoveModifier,RecalculateModifier,"RecalculateModifier")
+    local modifier  = require("util/combatsourcemodifier")
+    self.externaldamagemultipliers = modifier(inst)
+    
+    function self:InHitStun()
+        return GetTime()<self.hit_stuntime + self.lastwasattackedtime
+    end
+
+
+    ---请输入非空实体，tag检测请在输入前完成
+    function self:newcs_AOECheck(target)
+        return  target.entity:IsValid() and target.entity:IsVisible()
+            and target~=self.inst
+            and target.replica.combat~=nil 
+            and target.replica.health~=nil and not target.replica.health:IsDead()
+    end
+
+    ---must be a non-nil entity!!!
+    function self:P_AOECheck(target)
+        if not (target.entity:IsValid() and target.entity:IsVisible()) then
+            return false
+        end
+
+        if target.replica.combat == nil or IsEntityDead(target, true) 
+        or target:HasTag("noplayertarget") or self:IsAlly(target) then
+            return false
+        end
+
+        --TODO  PVP???
+        local sanity = self.inst.replica.sanity
+
+        if sanity ~= nil and sanity:IsCrazy() or self.inst:HasTag("crazy") then
+            --Insane attacker can pretty much attack anything
+            return true
+        end
+
+        if target:HasAnyTag("shadowcreature", "nightmarecreature") and target:HasTag("locomotor") then
+            local victim = target.replica.combat:GetTarget()
+
+            if victim == nil or (victim~=self.inst and target.HostileToPlayerTest ~= nil 
+            and not target:HostileToPlayerTest(victim)) then
+                return false
+            end
+        end
+
+        return true
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:sanity
+
+newcs_core.AddComponentPostInit("sanity",function (self)
+    self.soul_loss_rate = 1
+    function self:GetSoulAttacked(attacker, damage)
+        local old_san = self.current
+        damage = damage * self.soul_loss_rate
+        self:DoDelta(-damage)
+        local new_san = self.current
+        if new_san<=0 then
+            self.inst.components.health:DoDelta(old_san-damage,nil,"SOUL_BREAK",nil,attacker,true)
+        end
+    end    
+    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:burnable
+
+newcs_core.AddComponentPostInit("burnable", function(self)
+    local function OnHealthErodeAway(inst)
+        local self = inst.components.burnable
+        self.fastextinguish = true
+        self:KillFX()
+    end
+    local function OnKilled(inst)
+        local self = inst.components.burnable
+        if self ~= nil and self:IsBurning() and not self.nocharring then
+            inst.AnimState:SetMultColour(.2, .2, .2, 1)
+        end
+    
+        --@V2C: #HACK, sync up burn fx to health component's auto-ErodeAway
+        if inst.components.health ~= nil and not inst.components.health.nofadeout then
+            if self.task ~= nil then
+                self.task:Cancel()
+            end
+            self.task = inst:DoTaskInTime(inst.components.health.destroytime or 2, OnHealthErodeAway)
+        end
+    end
+    function self:Extinguish(resetpropagator, heatpct, smotherer)
+        self:StopSmoldering(heatpct)
+    
+        if smotherer ~= nil then
+            if smotherer.components.finiteuses ~= nil then
+                smotherer.components.finiteuses:Use()
+            elseif smotherer.components.stackable ~= nil then
+                smotherer.components.stackable:Get():Remove()
+            end
+        end
+    
+        if self.burning then
+            if self.task ~= nil then
+                self.task:Cancel()
+                self.task = nil
+            end
+    
+            self.inst:RemoveEventCallback("death", OnKilled)
+    
+            if self.inst.components.propagator ~= nil then
+                if resetpropagator then
+                    self.inst.components.propagator:StopSpreading(true, heatpct)
+                else
+                    self.inst.components.propagator:StopSpreading()
+                end
+            end
+    
+            self.controlled_burn = nil
+    
+            self.burning = false
+            self:KillFX()
+            if self.inst.components.fueled ~= nil and not self.ignorefuel then
+                self.inst.components.fueled:StopConsuming()
+            end
+            if self.onextinguish ~= nil then
+                self.onextinguish(self.inst,smotherer)
+            end
+            self.inst:PushEvent("onextinguish",{resetpropagator=resetpropagator,smotherer=smotherer})
+        end
+    end
+end)
+
+
+newcs_core.AddComponentPostInit("spell",function (self)
+    function self:OnStart()
+        self.active = true
+        if self.onstartfn ~= nil then
+            self.onstartfn(self.inst)
+        end
+        if self.target and self.target.isplayer then
+            self.target:PushEvent("onspell",{spell = self.inst, duration = self.duration})
+        end
+    end
+    function self:OnFinish()
+        if self.target and self.target.isplayer then
+            self.target:PushEvent("endspell",self.inst)
+        end
+        if self.onfinishfn ~= nil then
+            self.onfinishfn(self.inst)
+        end
+        
+        self.inst:StopUpdatingComponent(self)
+    
+        if self.removeonfinish then
+            self.inst:Remove()
+        end
+    end
+    function self:ResumeSpell()
+        if self.resumefn ~= nil then
+            local timeleft = self.duration - self.lifetime
+            self.resumefn(self.inst, timeleft)
+            self.inst:StartUpdatingComponent(self)
+            if self.target and self.target.isplayer then
+                self.target:PushEvent("onspell",{spell = self.inst, duration = self.duration})
+            end
+        end
+    end
+end)
+
+---免控
+
+require("components/rooted")._ctor = function (self,inst)
+    self.inst = inst
+	self.sources = {}
+    if not self.inst:HasTag("no_rooted") then
+        if inst.Physics ~= nil then
+            inst.Physics:Stop()
+    
+            --Generally, don't call SetTempMass0 outside of here.
+            --A prefab's own internal logic should just manage Physics:SetMass.
+            --Otherwise, just add and use the "rooted" component where needed.
+            inst.Physics:SetTempMass0(true)
+        end
+        if inst.components.locomotor ~= nil then
+            inst.components.locomotor:SetExternalSpeedMultiplier(inst, "rooted", 0)
+        end
+    end
+    self._onremovesource = function(src)
+		self.sources[src] = nil
+		if next(self.sources) == nil then
+			inst:RemoveComponent("rooted")
+		end
+	end
+
+	inst:PushEvent("rooted")
+end
+
+
+---魂的使用
+newcs_core.AddComponentPostInit("toggleableitem",function (self)
+    function self:ToggleItem(doer)
+        if self.onusefn then
+            self.onusefn(self.inst,doer)
+        end
+    end
+end)
+
+
+newcs_core.AddComponentPostInit("colouradder",function (self)
+    function self:ForceMultColor(r,g,b,a)
+        self.inst.AnimState:SetMultColour(r, g, b, a)
+	
+        for k, v in pairs(self.children) do
+            if k.OnSyncMultColour ~= nil then
+                k:OnSyncMultColour(r,g,b,a)
+            elseif k.AnimState~=nil then
+                k.AnimState:SetMultColour(r, g, b, a)
+            end
+        end
+    end
+
+    function self:ClearMultColor()
+        self.inst.AnimState:SetMultColour(1,1,1,1)
+	
+        for k, v in pairs(self.children) do
+            if k.OnSyncMultColour ~= nil then
+                k:OnSyncMultColour(1,1,1,1)
+            elseif k.AnimState~= nil then
+                k.AnimState:SetMultColour(1,1,1,1)
+            end
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：【唐小可】【附魔-强化】 (Mod 3761589309)
+- **变体场景与切面**：收录来自工坊 Mod 3761589309 (`【唐小可】【附魔-强化】`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3761589309)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:health
+
+HOOKS.AddComponentPostInit("health", function(self)
+    self["hh_base_max"] = 0
+    METHOD_WRAPPER.Wrap(self, "SetMaxHealth", "txk_fumo.health.base_max", function(previous, self, amount, ...)
+        self["hh_base_max"] = amount
+        previous(self, amount, ...)
+        self["inst"]:PushEvent("hh_change_max_health")
+    end)
+    METHOD_WRAPPER.Wrap(self, "DoDelta", "txk_fumo.health.delta", function(previous, self, amount, overtime, cause, ignore_invincible, afflicter, ...)
+        --制裁效果
+        if HH_UTILS:HasComponents(self["inst"], "hh_player") and HH_UTILS:IsHHType(amount, "number")
+                and amount > 0
+        then
+            if self["inst"]["components"]["hh_player"]:HasSpecialEffect("healthSuppressNum") then
+                amount = amount * 0.1
+            end
+        end
+        if HH_UTILS:HasComponents(self["inst"], "hh_monster") and HH_UTILS:IsHHType(amount, "number")
+                and amount > 0
+        then
+            if self["inst"]["components"]["hh_monster"]:HasSpecialEffect("healthSuppressNum") then
+                amount = amount * 0.1
+            end
+        end
+        local result = previous(self, amount, overtime, cause, ignore_invincible, afflicter, ...)
+        --攻击力大于0才能吸血
+        if HH_UTILS:IsValidCombat(self["inst"]) then
+            --吸血效果
+            if HH_UTILS:HasComponents(afflicter, "hh_player") and HH_UTILS:IsHHType(result, "number") and result < 0 then
+                afflicter["components"]["hh_player"]:HandleBloodSuck(result)
+            end
+            if HH_UTILS:HasComponents(afflicter, "hh_monster") and HH_UTILS:IsHHType(result, "number") and result < 0 then
+                afflicter["components"]["hh_monster"]:HandleBloodSuck(result)
+            end
+        end
+        return result
+    end)
+    ----
+    ---单独的真伤方法
+    ---@param self:父类
+    ---@param amount:伤害-必须为负值
+    ---@param attacker:攻击者
+    ---@param cause:伤害类型-中文显示
+    ---
+    self["DoHHDelta"] = function(self, amount, attacker, cause)
+        if not HH_UTILS:IsHHType(amount, "number") or amount >= 0
+                or not HH_UTILS:HasComponents(attacker, "combat")
+        then
+            return false
+        end
+        local old_percent = self:GetPercent()
+        --官方限伤
+        if self["maxdamagetakenperhit"] ~= nil and amount < self["maxdamagetakenperhit"] and not self["_ignore_maxdamagetakenperhit"] then
+            amount = self["maxdamagetakenperhit"]
+        end
+        if HH_UTILS:IsHHType(cause, "string") then
+            HH_UTILS:SpawnClientStrFx(self["inst"], cause)
+        end
+        local hh_cause = "hh_true_damage"
+        self:SetVal(self["currenthealth"] + amount, hh_cause, attacker)
+        --推送事件同步客机
+        self["inst"]:PushEvent("healthdelta", {
+            ["oldpercent"] = old_percent,
+            ["newpercent"] = self:GetPercent(),
+            ["overtime"] = nil,
+            ["cause"] = hh_cause,
+            ["afflicter"] = attacker,
+            ["amount"] = amount
+        })
+        --实体死亡推送事件 用于兼容击杀掉落
+        if self:IsDead() then
+            attacker:PushEvent("killed", {
+                ["victim"] = self["inst"],
+                ["attacker"] = attacker
+            })
+            --兼容影怪san掉落
+            if HH_UTILS:HasComponents(self["inst"], "combat")
+                    and self["inst"]["components"]["combat"]["onkilledbyother"]
+            then
+                self["inst"]["components"]["combat"]["onkilledbyother"](self["inst"], attacker)
+            end
+        end
+        return true
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+HOOKS.AddComponentPostInit("combat", function(self)
+    -- 普攻、范围攻击和伤害重定向都在新入口结算；GetAttacked 只负责转发。
+    METHOD_WRAPPER.Wrap(self, "GetAttacked_Internal", "txk_fumo.combat.damage", function(previous, self, attacker, damage, ...)
+        local hh_inst = self["inst"]
+        if attacker and attacker["prefab"] == "abigail"
+                and HH_UTILS:HasComponents(attacker, "follower")
+                and attacker["components"]["follower"]["leader"]
+                and HH_UTILS:HasComponents(attacker["components"]["follower"]["leader"], "hh_player")
+        then
+            --温蒂
+            local wendy = attacker["components"]["follower"]["leader"]
+            --随从享受人物固定增伤
+            local extra_leader_damage = wendy["components"]["hh_player"]:DoAttackDamage(wendy, hh_inst, damage, true)
+            damage = extra_leader_damage
+        end
+        if HH_UTILS:HasComponents(attacker, "hh_player") then
+            damage = attacker["components"]["hh_player"]:DoAttackDamage(attacker, self["inst"], damage)
+        end
+        if HH_UTILS:HasComponents(attacker, "hh_monster") then
+            damage = attacker["components"]["hh_monster"]:DoAttackDamage(attacker, self["inst"], damage)
+        end
+        if HH_UTILS:HasComponents(self["inst"], "hh_player") then
+            damage = self["inst"]["components"]["hh_player"]:GetBlockDamage(self["inst"], attacker, damage)
+        end
+        if HH_UTILS:HasComponents(self["inst"], "hh_monster") then
+            damage = self["inst"]["components"]["hh_monster"]:GetBlockDamage(self["inst"], attacker, damage)
+        end
+        --随从强化
+        if HH_UTILS:HasComponents(attacker, "follower") and attacker["components"]["follower"]["leader"]
+                and HH_UTILS:HasComponents(attacker["components"]["follower"]["leader"], "hh_player")
+        then
+            local atk_leader = attacker["components"]["follower"]["leader"]
+            damage = atk_leader["components"]["hh_player"]:GetFollowerDamage(damage)
+        end
+        if HH_UTILS:HasComponents(self["inst"], "follower") and self["inst"]["components"]["follower"]["leader"]
+                and HH_UTILS:HasComponents(self["inst"]["components"]["follower"]["leader"], "hh_player")
+        then
+            local inst_leader = self["inst"]["components"]["follower"]["leader"]
+            damage = inst_leader["components"]["hh_player"]:GetFollowerArmor(damage)
+        end
+        damage = math["max"](damage, 0)
+        return previous(self, attacker, damage, ...)
+    end)
+    self["GetBrambleFx"] = function(self, attacker, amount)
+        if not HH_UTILS:NotIsDead(self["inst"]) then
+            return false
+        end
+        if self["inst"]["hh_bramble_cd"] then
+            return false
+        end
+        --建筑不会受到反伤效果
+        if self["inst"]:HasTag("structure") then
+            return false
+        end
+        --反甲增加cd
+        self["inst"]["hh_bramble_cd"] = true
+        if not self["inst"]["hh_bramble_cd_task"] then
+            self["inst"]["hh_bramble_cd_task"] = self["inst"]:DoTaskInTime(0.3, function(hh_inst)
+                hh_inst["hh_bramble_cd"] = false
+                HH_UTILS:HHKillTask(hh_inst, "hh_bramble_cd_task")
+            end)
+        end
+        if not HH_UTILS:IsHHType(amount, "number") then
+            return false
+        end
+        --小于0不做处理
+        if amount <= 0 then
+            return false
+        end
+        if attacker and HH_UTILS:NotIsDead(attacker) then
+            HH_UTILS:SpawnBrambleFx(attacker)
+            if HH_UTILS:HasComponents(self["inst"], "hh_player") then
+                if self["inst"]["components"]["hh_player"]:HasSpecialEffect("immuneBramble") then
+                    return true
+                end
+                amount = self["inst"]["components"]["hh_player"]:GetHitByBrambleFxDamage(amount)
+            end
+            if HH_UTILS:HasComponents(self["inst"], "hh_monster") then
+                amount = self["inst"]["components"]["hh_monster"]:GetHitByBrambleFxDamage(amount)
+            end
+            --处理各自的减伤
+            amount = amount * self["externaldamagetakenmultipliers"]:Get()
+            if HH_UTILS:HasComponents(self["inst"], "inventory") then
+                amount = self["inst"]["components"]["inventory"]:ApplyDamage(amount, attacker)
+            end
+            if amount > 0 then
+                self["inst"]["components"]["health"]:DoDelta(-amount, false, "hh_bramble_damage")
+                self:SetTarget(attacker)
+            end
+        end
+    end
+    return true
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:freezable
+
+HOOKS.AddComponentPostInit("freezable", function(self)
+    METHOD_WRAPPER.Wrap(self, "Freeze", "txk_fumo.freezable.immunity", function(previous, self, ...)
+        if HH_UTILS:HasComponents(self["inst"], "hh_player") then
+            --存在免疫参数
+            if self["inst"]["components"]["hh_player"]:HasSpecialEffect("immuneFreeze") then
+                --print("免疫冰冻")
+                return
+            end
+        end
+        if HH_UTILS:HasComponents(self["inst"], "hh_monster") then
+            --存在免疫参数
+            if self["inst"]["components"]["hh_monster"]:HasSpecialEffect("immuneFreeze") then
+                --print("怪物免疫冰冻")
+                return
+            end
+        end
+        previous(self, ...)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:gestalt
+---
+HOOKS.AddPrefabPostInit("gestalt", function(inst)
+    if not TheWorld["ismastersim"] then
+        return inst
+    end
+    if HH_UTILS:HasComponents(inst, "combat") then
+        METHOD_WRAPPER.Wrap(inst["components"]["combat"], "targetfn", "txk_fumo.gestalt.target", function(previous, inst, ...)
+                if HH_UTILS:HasComponents(inst["tracking_target"], "hh_player")
+                        and inst["tracking_target"]["components"]["hh_player"]:HasSpecialEffect("moonCamp") then
+                    return nil
+                end
+                return previous(inst, ...)
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:shadowsubmissive
+---
+HOOKS.AddComponentPostInit("shadowsubmissive", function(self)
+    METHOD_WRAPPER.Wrap(self, "ShouldSubmitToTarget", "txk_fumo.shadow_camp", function(previous, self, target, ...)
+        if HH_UTILS:HasComponents(target, "hh_player")
+                and target["components"]["hh_player"]:HasSpecialEffect("shadowCamp")
+        then
+            return true
+        end
+        return previous(self, target, ...)
+    end)
+end)
+
+```
+

@@ -6141,8 +6141,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 09:16:27",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3370672620",
+      "name": "灵魂罐修改",
+      "author": "Septet",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 09:22:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3645179905",
+      "name": "charge_control",
+      "author": "莫非则,萌新小黄,dearFrisk",
+      "version": "0.9.57",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:22:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3761589309",
+      "name": "【唐小可】【附魔-强化】",
+      "author": "唐小可",
+      "version": "3.27.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:22:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "443371186",
+      "name": "Sanity Tuner",
+      "author": "Ultroman",
+      "version": "0.1.11",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 09:22:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 09:16:27"
+  "lastUpdated": "2026-11-01 09:22:29"
 }

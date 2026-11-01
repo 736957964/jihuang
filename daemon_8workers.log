@@ -5786,3 +5786,28 @@
 [2026-11-01 09:16:27] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 09:16:27] Reducer: 成功将 Mod 3802676080 (command_wheel_extra_key) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 09:16:27] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 09:16:32] Git 自动提交并推送成功！
+[2026-11-01 09:16:32] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 09:16:32] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 09:17:02] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['443371186', '3785686885', '3761589309', '3741050541', '3645179905', '3370672620']
+[2026-11-01 09:17:02] SteamCMD 下载 443371186 ...
+[2026-11-01 09:17:02] SteamCMD 下载 3785686885 ...
+[2026-11-01 09:17:02] SteamCMD 下载 3761589309 ...
+[2026-11-01 09:17:02] SteamCMD 下载 3741050541 ...
+[2026-11-01 09:17:02] SteamCMD 下载 3645179905 ...
+[2026-11-01 09:17:02] SteamCMD 下载 3370672620 ...
+[2026-11-01 09:18:06] Worker [443371186] 成功解析入库暂存区 -> Sanity Tuner (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 09:18:54] Worker [3785686885] 过滤拦截: Hande (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 09:20:03] Worker [3761589309] 成功解析入库暂存区 -> 【唐小可】【附魔-强化】 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 09:21:03] Worker [3741050541] 过滤拦截: Folk Cat (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 09:21:30] Worker [3370672620] 成功解析入库暂存区 -> 灵魂罐修改 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 09:22:29] Worker [3645179905] 成功解析入库暂存区 -> charge_control (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 09:22:29] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 09:22:29] Reducer: 成功将 Mod 3370672620 (灵魂罐修改) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 09:22:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 09:22:29] Reducer: 成功将 Mod 3645179905 (charge_control) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 09:22:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 09:22:29] Reducer: 成功将 Mod 3761589309 (【唐小可】【附魔-强化】) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 09:22:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 09:22:29] Reducer: 成功将 Mod 443371186 (Sanity Tuner) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 09:22:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md

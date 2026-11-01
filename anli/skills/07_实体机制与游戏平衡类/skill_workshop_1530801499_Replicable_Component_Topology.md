@@ -7538,3 +7538,113 @@ end)
 
 ```
 
+
+
+### 变体演进：灵魂罐修改 (Mod 3370672620)
+- **变体场景与切面**：收录来自工坊 Mod 3370672620 (`灵魂罐修改`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3370672620)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wortox_souljar
+if Souljar and Souljar == "default" then
+    AddPrefabPostInit("wortox_souljar", function(inst)
+    if inst.components.container ~= nil then
+        inst.components.container:EnableInfiniteStackSize(true)
+        inst.leaksoulstaskstopper = true
+        inst:RemoveComponent("finiteuses")
+    end
+
+    local _UpdatePercent = inst.UpdatePercent or nil-- 保存原始逻辑
+    local function UpdatePercent(inst)--矫正灵魂计数
+        if _UpdatePercent then
+            _UpdatePercent(inst)
+        end
+        local count = 0
+        inst.components.container:ForEachItem(function(item)
+            if item and item.prefab == "wortox_soul" then
+                count = count + (item.components.stackable and item.components.stackable:StackSize() or 1)
+            end
+        end)
+        inst.soulcount = count
+    end
+    inst.UpdatePercent = UpdatePercent
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox_reviver
+if NoSpoilage then
+    AddPrefabPostInit("wortox_reviver", function(inst)
+        if inst.components.perishable ~= nil then
+            inst:RemoveComponent("perishable")
+            inst:RemoveTag("show_spoilage")
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox_nabbag
+if InfinitNabbag then 
+    AddPrefabPostInit("wortox_nabbag", function(inst)
+        if inst.components.finiteuses ~= nil then
+            inst:RemoveComponent("finiteuses")
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox_soul
+
+    AddPrefabPostInit("wortox_soul", function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+        inst:AddComponent("tradable")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:nabbag
+
+    AddComponentPostInit("nabbag", function(self)
+        -- Hook 进原来的 DoNabFromAct()，替换 finiteuses:Use(1) 逻辑
+        local Old_DoNabFromAct = self.DoNabFromAct  -- 备份原函数
+        function self:DoNabFromAct(act)
+            local fueled = self.inst.components.fueled
+            local success, reason = Old_DoNabFromAct(self, act)  -- 调用原来的 DoNabFromAct()
+            if success and fueled then
+                fueled:DoDelta(-5)  -- 每次拾取消耗 5 点燃料
+            end
+            return success, reason
+        end
+    end)
+
+```
+
+
+
+### 变体演进：Sanity Tuner (Mod 443371186)
+- **变体场景与切面**：收录来自工坊 Mod 443371186 (`Sanity Tuner`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 443371186)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:flower_evil
+	if evilFlowerSanityChange ~= -GLOBAL.TUNING.SANITY_TINY then
+		AddPrefabPostInit("flower_evil", function(inst)
+			local oldonpickedfn = inst.components.pickable.onpickedfn
+			inst.components.pickable.onpickedfn = function(inst, picker)
+				if oldonpickedfn then
+					oldonpickedfn(inst, picker)
+				end
+				if picker ~= nil and picker.components.sanity ~= nil then
+					picker.components.sanity:DoDelta(evilFlowerSanityChange + TUNING.SANITY_TINY)
+				end
+			end
+		end)
+
+```
+
