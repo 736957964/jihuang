@@ -6069,8 +6069,17 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 09:06:04",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2995319954",
+      "name": "SHOWTEMPERATURE",
+      "author": "rezecib, Kiopho, Soilworker, hotmatrixx, penguin0616",
+      "version": "1.9.1.01",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 09:08:35",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 09:06:06"
+  "lastUpdated": "2026-11-01 09:08:35"
 }

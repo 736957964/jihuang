@@ -3475,3 +3475,56 @@ end)
 
 ```
 
+
+
+### 变体演进：SHOWTEMPERATURE (Mod 2995319954)
+- **变体场景与切面**：收录来自工坊 Mod 2995319954 (`SHOWTEMPERATURE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2995319954)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+if (CSW or HML or HAS_MOD.TROPICAL) and SHOWSTATNUMBERS then
+	AddPrefabPostInit("world", function()
+		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:kramped
+if SHOWNAUGHTINESS and not DST then
+	AddComponentPostInit('kramped', KrampedPostInit)
+end
+
+local function StatusPostConstruct(self)
+	self.brain:SetPosition(0, SHOWSEASONCLOCK and 35 or 10)
+	self.stomach:SetPosition(-62, 35)
+	self.heart:SetPosition(62, 35)
+	if DST then
+		self.heart.effigyanim:SetPosition(45, 50)
+		self.resurrectbutton:SetPosition(0, 25)
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:clock
+	end
+	AddComponentPostInit("clock", ClockPostInit)
+end
+
+AddClassPostConstruct("screens/playerhud", function(self)
+	if GLOBAL.softresolvefilepath("scripts/widgets/beefalowidget.lua") then
+		AddClassPostConstruct("widgets/beefalowidget", function(self)
+			if self.health and self.hunger and self.hunger.anim then
+				self.health:SetScale(1,1,1)
+				self.health:SetPosition(80, 164)
+				self.hunger:SetScale(1,1,1)
+				self.hunger:SetPosition(-3, 164)
+				self.hunger.anim:SetPosition(0, -2)
+			end
+		end)
+	end
+
+```
+
