@@ -5853,8 +5853,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 08:26:32",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3723296222",
+      "name": "受到任何伤害都被击飞！",
+      "author": "whaaaatfne",
+      "version": "1.0.1",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 08:33:32",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "3803049217",
+      "name": "Mountain Scream",
+      "author": "Milanjorim, luigi.m.mario, 你要帮帮威吊",
+      "version": "1.0.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:33:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3817117428",
+      "name": "星契纪行",
+      "author": "stella",
+      "version": "1.1.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 08:33:32",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3822982881",
+      "name": "movement_speed_limit",
+      "author": "Scam, MCpurple2",
+      "version": "1.0.1M",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:33:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:26:32"
+  "lastUpdated": "2026-11-01 08:33:32"
 }

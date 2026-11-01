@@ -28791,3 +28791,603 @@ end)
 
 ```
 
+
+
+### 变体演进：Mountain Scream (Mod 3803049217)
+- **变体场景与切面**：收录来自工坊 Mod 3803049217 (`Mountain Scream`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3803049217)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+end
+AddPrefabPostInit("forest", EnsurePlatformCtrl)
+AddPrefabPostInit("cave", EnsurePlatformCtrl)
+AddSimPostInit(function()
+	if TheWorld ~= nil then
+		EnsurePlatformCtrl(TheWorld)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+AddPrefabPostInit("forest", EnsurePlatformCtrl)
+AddPrefabPostInit("cave", EnsurePlatformCtrl)
+AddSimPostInit(function()
+	if TheWorld ~= nil then
+		EnsurePlatformCtrl(TheWorld)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", PatchHasIngredients)
+AddClassPostConstruct("components/builder_replica", PatchHasIngredients)
+
+------------------------------------------------------------------------------------------------------------------------
+-- 制作栏材料栏：显示方块当前合计耐久 / 所需耐久，不足时标红
+--
+-- 关键因：PopulateRecipeDetailPanel 里是
+--   root_right:AddChild(CraftingMenuIngredients(owner, 4, recipe))
+-- 构造函数会立刻 SetRecipe，此时 ingredients 还没有 parent。
+-- 在未入树时创建的 Text 常常不渲染；拿起/放下物品会走「已入树」的
+-- SetRecipe 刷新，所以百分比才出现。切换配方会重新构造，问题再现。
+-- 修复：入树后再刷一次；未入树则 DoTaskInTime(0) 延迟刷。
+
+local Text = require("widgets/text")
+
+local function UpdateCubeIngredientDisplay(ingredients_widget, recipe)
+	if ingredients_widget == nil or recipe == nil then
+		return
+	end
+	local cost = RECIPE_COST[recipe.name]
+	if cost == nil or ingredients_widget.ingredient_widgets == nil then
+		return
+	end
+
+	local have = GetTotalCubePercent(ingredients_widget.owner)
+	local has_enough = have + 1e-4 >= cost
+	local have_pct = math.floor(have * 100 + 0.5)
+	local cost_pct = math.floor(cost * 100 + 0.5)
+
+	local num = ingredients_widget.num_items or 1
+	local scale = math.min(1, (ingredients_widget.max_ingredients_wide or 4) / math.max(1, num))
+	local quant_text_scale = math.max(1, 1 / (scale * 1.125))
+	if ingredients_widget.extra_quantity_scale ~= nil then
+		quant_text_scale = quant_text_scale * ingredients_widget.extra_quantity_scale
+	end
+
+	for _, ing in ipairs(ingredients_widget.ingredient_widgets) do
+		if ing.recipe_type == CUBE_PREFAB and ing.inst:IsValid() then
+			ing.has_enough = has_enough
+			ing:Enable()
+			ing:SetClickable(false)
+
+			local atlas = resolvefilepath("images/hud.xml")
+			local tex = has_enough and "inv_slot.tex" or "resource_needed.tex"
+			ing:SetTextures(atlas, tex, tex, tex, tex, tex)
+
+			if ing.quant ~= nil then
+				ing.quant:Kill()
+				ing.quant = nil
+			end
+			ing.quant = ing:AddChild(Text(SMALLNUMBERFONT, JapaneseOnPS4() and 30 or 24))
+			ing.quant:SetPosition(7, -32, 0)
+			ing.quant:SetScale(quant_text_scale, quant_text_scale)
+			ing.quant:SetString(string.format("%d%%/%d%%", have_pct, cost_pct))
+			ing.quant:Show()
+			ing.quant:MoveToFront()
+			if has_enough then
+				ing.quant:SetColour(1, 1, 1, 1)
+			else
+				ing.quant:SetColour(255 / 255, 155 / 255, 155 / 255, 1)
+			end
+
+			local tip = STRINGS.NAMES.MOUNTAIN_TRANSFORMATION_CUBE or CUBE_PREFAB
+			if not has_enough then
+				tip = tip.."\n"..(STRINGS.UI.CRAFTING.MOUNTAIN_CUBE or "")
+			end
+			ing:SetTooltip(tip)
+		end
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- （官方只在 busy 时走这条；我们不加 busy 以保留右键取消）
+AddComponentPostInit("playercontroller", function(self)
+	local _OnUpdate = self.OnUpdate
+	function self:OnUpdate(dt, ...)
+		_OnUpdate(self, dt, ...)
+		if self.ismastersim or self.handler == nil or self.classified == nil then
+			return
+		end
+		if not self.inst:HasTag("ms_tornado_active") then
+			self._ms_tornado_override_locomote_tick = nil
+			return
+		end
+		if not self.classified.busyremoteoverridelocomote:value() then
+			return
+		end
+		local isenabled, ishudblocking = self:IsEnabled()
+		if not (isenabled or ishudblocking) then
+			return
+		end
+		local dir = GetWorldControllerVector()
+		local tick = GetTick()
+		if dir ~= nil then
+			self._ms_tornado_override_locomote_tick = tick
+			self:RemotePredictOverrideLocomote(math.atan2(-dir.z, dir.x) * RADIANS)
+		elseif self._ms_tornado_override_locomote_tick == tick - 1 then
+			self:RemotePredictOverrideLocomote(nil, false)
+			self._ms_tornado_override_locomote_tick = nil
+		end
+	end
+end)
+
+------------------------------------------------------------------------------------------------------------------------
+-- Stategraphs
+------------------------------------------------------------------------------------------------------------------------
+
+local SPIN_LOOP_ANIM_SPEED = 3
+local SPIN_LOOP_COUNT = 3
+
+local function ResetAnimSpeed(inst)
+	inst.AnimState:SetDeltaTimeMultiplier(1)
+end
+
+local function StartSpinLoops(inst, play_sound)
+	inst.sg.statemem.phase = "spin"
+	inst.sg.statemem.spin_loops_left = SPIN_LOOP_COUNT
+	inst.AnimState:SetDeltaTimeMultiplier(SPIN_LOOP_ANIM_SPEED)
+	inst.AnimState:PlayAnimation("wx_spin_attack_loop")
+	if play_sound then
+		inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+	end
+end
+
+-- animover 时调用：若还需继续转则返回 true
+local function ContinueSpinLoops(inst)
+	local left = (inst.sg.statemem.spin_loops_left or 1) - 1
+	inst.sg.statemem.spin_loops_left = left
+	if left > 0 then
+		inst.AnimState:PlayAnimation("wx_spin_attack_loop")
+		return true
+	end
+	return false
+end
+
+AddStategraphState("wilson", State{
+	name = "ms_tornado_pre",
+	tags = { "busy", "nopredict", "nomorph", "ms_tornado" },
+
+	onenter = function(inst)
+		EnsureSpinAnimBuild(inst)
+		inst.components.locomotor:Stop()
+		inst:PerformBufferedAction()
+		-- 抬手 → 加速多播几轮旋转 loop → 再换成龙卷风外观
+		inst.sg.statemem.phase = "pre"
+		inst.AnimState:PlayAnimation("chop_pre")
+	end,
+
+	events =
+	{
+		EventHandler("animover", function(inst)
+			if not inst.AnimState:AnimDone() then
+				return
+			end
+			if inst.sg.statemem.phase == "pre" then
+				StartSpinLoops(inst, true)
+			elseif inst.sg.statemem.phase == "spin" then
+				if ContinueSpinLoops(inst) then
+					return
+				end
+				ResetAnimSpeed(inst)
+				inst.sg.statemem.tornadoing = true
+				SetupTornadoVisual(inst)
+				inst.sg:GoToState("ms_tornado_loop")
+			end
+		end),
+	},
+
+	onexit = function(inst)
+		ResetAnimSpeed(inst)
+		if not inst.sg.statemem.tornadoing then
+			ClearTornadoVisual(inst, false)
+		end
+	end,
+})
+
+AddStategraphState("wilson_client", State{
+	name = "ms_tornado_pre",
+	tags = { "busy", "nopredict", "nomorph", "ms_tornado" },
+	server_states = { "ms_tornado_pre", "ms_tornado_loop" },
+
+	onenter = function(inst)
+		EnsureSpinAnimBuild(inst)
+		inst.components.locomotor:Stop()
+		inst.sg.statemem.phase = "pre"
+		inst.AnimState:PlayAnimation("chop_pre")
+		inst:PerformPreviewBufferedAction()
+		inst.sg:SetTimeout(5)
+	end,
+
+	events =
+	{
+		EventHandler("animover", function(inst)
+			if not inst.AnimState:AnimDone() then
+				return
+			end
+			if inst.sg.statemem.phase == "pre" then
+				StartSpinLoops(inst, false)
+			elseif inst.sg.statemem.phase == "spin" then
+				ContinueSpinLoops(inst)
+			end
+		end),
+	},
+
+	onupdate = function(inst)
+		if inst.sg:ServerStateMatches() then
+			if inst.entity:FlattenMovementPrediction() then
+				ResetAnimSpeed(inst)
+				-- 服务端已进 loop 时切到客户端 loop，便于保留 overridelocomote
+				if inst:HasTag("ms_tornado_active") then
+					inst.sg:GoToState("ms_tornado_loop")
+				else
+					inst.sg:GoToState("idle", "noanim")
+				end
+			end
+		elseif inst.bufferedaction == nil then
+			inst.sg:GoToState("idle")
+		end
+	end,
+
+	ontimeout = function(inst)
+		inst:ClearBufferedAction()
+		inst.sg:GoToState("idle")
+	end,
+
+	onexit = function(inst)
+		ResetAnimSpeed(inst)
+	end,
+})
+
+AddStategraphState("wilson", State{
+	name = "ms_tornado_loop",
+	-- 不加 busy：否则右键自身无法取消；nointerrupt 防止被全局 hit 抢走
+	tags = { "nopredict", "nomorph", "ms_tornado", "canrotate", "overridelocomote", "nointerrupt" },
+
+	onenter = function(inst)
+		inst.sg.statemem.tornadoing = true
+		inst.sg.statemem.aoe_dt = 0
+		inst.sg.statemem.remotedir = nil
+		inst.components.locomotor:Stop()
+		inst.components.locomotor:Clear()
+		if inst._ms_tornado_fx == nil then
+			SetupTornadoVisual(inst)
+		end
+		SetTornadoRemoteOverride(inst, true)
+		inst.sg:SetTimeout(TUNING.MOUNTAIN_TORNADO_SORBET.FORM_DURATION)
+		DestroyStuff(inst)
+	end,
+
+	onupdate = function(inst)
+		local speed = inst.components.locomotor:GetRunSpeed()
+		local dir = GetLocalAnalogDir(inst)
+		if dir ~= nil then
+			inst.Transform:SetRotation(math.atan2(-dir.z, dir.x) * RADIANS)
+			inst.Physics:SetMotorVel(speed, 0, 0)
+		elseif inst.sg.statemem.remotedir ~= nil then
+			inst.Transform:SetRotation(inst.sg.statemem.remotedir)
+			inst.Physics:SetMotorVel(speed, 0, 0)
+		else
+			inst.Physics:Stop()
+		end
+
+		inst.sg.statemem.aoe_dt = inst.sg.statemem.aoe_dt + FRAMES
+		if inst.sg.statemem.aoe_dt >= 0.25 then
+			inst.sg.statemem.aoe_dt = 0
+			DestroyStuff(inst)
+		end
+	end,
+
+	ontimeout = function(inst)
+		inst.sg.statemem.exiting_to_pst = true
+		inst.sg:GoToState("ms_tornado_pst")
+	end,
+
+	events =
+	{
+		EventHandler("locomote", function(inst, data)
+			if data ~= nil and data.remoteoverridelocomote then
+				inst.sg.statemem.remotedir = data.dir
+			end
+			return true
+		end),
+		EventHandler("attacked", function(inst)
+			if not inst.components.health:IsDead() then
+				inst.sg.statemem.exiting_to_pst = true
+				inst.sg:GoToState("ms_tornado_pst")
+				return true
+			end
+		end),
+	},
+
+	onexit = function(inst)
+		inst.Physics:Stop()
+		SetTornadoRemoteOverride(inst, false)
+		-- 正常进 pst 时留给收招状态处理外观；异常离开则立刻清掉
+		if not inst.sg.statemem.exiting_to_pst then
+			ClearTornadoVisual(inst, false)
+		end
+		-- 退出即进 CD，避免客户端在解除瞬间再次点到「化为龙卷风」
+		StartCooldown(inst)
+	end,
+})
+
+AddStategraphState("wilson_client", State{
+	name = "ms_tornado_loop",
+	tags = { "nopredict", "nomorph", "ms_tornado", "canrotate", "overridelocomote", "nointerrupt" },
+	server_states = { "ms_tornado_loop" },
+
+	onenter = function(inst)
+		inst.components.locomotor:Stop()
+		inst.components.locomotor:Clear()
+		inst.entity:SetIsPredictingMovement(false)
+	end,
+
+	onupdate = function(inst)
+		if inst.sg:ServerStateMatches() then
+			inst.entity:FlattenMovementPrediction()
+		else
+			inst.sg:GoToState("idle", "noanim")
+		end
+	end,
+
+	events =
+	{
+		EventHandler("locomote", function()
+			return true
+		end),
+	},
+})
+
+AddStategraphState("wilson", State{
+	name = "ms_tornado_pst",
+	tags = { "busy", "nopredict", "nomorph" },
+
+	onenter = function(inst)
+		-- 显形后：加速多转几轮 → 正常速度播 wx_spin_attack_pst → 虚弱
+		EnsureSpinAnimBuild(inst)
+		inst.components.locomotor:Stop()
+		inst.Physics:Stop()
+		ClearTornadoVisual(inst, true)
+		StartCooldown(inst)
+		StartSpinLoops(inst, true)
+	end,
+
+	events =
+	{
+		EventHandler("animover", function(inst)
+			if not inst.AnimState:AnimDone() then
+				return
+			end
+			if inst.sg.statemem.phase == "spin" then
+				if ContinueSpinLoops(inst) then
+					return
+				end
+				inst.sg.statemem.phase = "pst"
+				ResetAnimSpeed(inst)
+				inst.AnimState:PlayAnimation("wx_spin_attack_pst")
+			elseif inst.sg.statemem.phase == "pst" then
+				if inst.components.grogginess ~= nil then
+					inst.components.grogginess:AddGrogginess(1, 0)
+				end
+				inst.sg:GoToState("idle")
+			end
+		end),
+	},
+
+	onexit = function(inst)
+		ResetAnimSpeed(inst)
+	end,
+})
+
+AddStategraphState("wilson_client", State{
+	name = "ms_tornado_pst",
+	tags = { "busy", "nopredict", "nomorph" },
+	server_states = { "ms_tornado_pst" },
+
+	onenter = function(inst)
+		EnsureSpinAnimBuild(inst)
+		inst.components.locomotor:Stop()
+		StartSpinLoops(inst, false)
+		inst:PerformPreviewBufferedAction()
+		inst.sg:SetTimeout(4)
+	end,
+
+	events =
+	{
+		EventHandler("animover", function(inst)
+			if not inst.AnimState:AnimDone() then
+				return
+			end
+			if inst.sg.statemem.phase == "spin" then
+				if ContinueSpinLoops(inst) then
+					return
+				end
+				inst.sg.statemem.phase = "pst"
+				ResetAnimSpeed(inst)
+				inst.AnimState:PlayAnimation("wx_spin_attack_pst")
+			end
+		end),
+	},
+
+	onupdate = function(inst)
+		if inst.sg:ServerStateMatches() then
+			if inst.entity:FlattenMovementPrediction() then
+				ResetAnimSpeed(inst)
+				inst.sg:GoToState("idle", "noanim")
+			end
+		elseif inst.bufferedaction == nil then
+			inst.sg:GoToState("idle")
+		end
+	end,
+
+	ontimeout = function(inst)
+		inst:ClearBufferedAction()
+		ResetAnimSpeed(inst)
+		inst.sg:GoToState("idle")
+	end,
+
+	onexit = function(inst)
+		ResetAnimSpeed(inst)
+	end,
+})
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:savedrotation
+
+AddComponentPostInit("savedrotation", function(self)
+	local old_onsave = self.OnSave
+	function self:OnSave(...)
+		SanitizeRotation(self.inst)
+		if old_onsave ~= nil then
+			return old_onsave(self, ...)
+		end
+		return { rotation = self.inst.Transform:GetRotation() }
+	end
+
+	local old_onload = self.OnLoad
+	function self:OnLoad(data, ...)
+		if old_onload ~= nil then
+			old_onload(self, data, ...)
+		elseif data ~= nil and data.rotation ~= nil and not IsBadRotation(data.rotation) then
+			self.inst.Transform:SetRotation(data.rotation)
+		end
+		SanitizeRotation(self.inst)
+	end
+
+	self.inst:DoTaskInTime(0, function(inst)
+		if inst:IsValid() then
+			SanitizeRotation(inst)
+		end
+	end)
+end)
+
+-- Fix entities already in the running world before the next autosave
+AddSimPostInit(function()
+	if TheWorld ~= nil and TheWorld.ismastersim then
+		TheWorld:DoTaskInTime(0, SanitizeAllSavedRotations)
+		TheWorld:DoTaskInTime(1, SanitizeAllSavedRotations)
+	end
+end)
+
+```
+
+
+
+### 变体演进：movement_speed_limit (Mod 3822982881)
+- **变体场景与切面**：收录来自工坊 Mod 3822982881 (`movement_speed_limit`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3822982881)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:cursable
+
+AddComponentPostInit("cursable", function(self)
+    local OldForceOntoOwner = self.ForceOntoOwner
+    function self:ForceOntoOwner(item, ...)
+        local owner = self.inst
+        if item == nil
+            or not item:IsValid()
+            or owner == nil
+            or not owner:IsValid()
+            or owner.components == nil
+            or owner.components.inventory == nil
+            or owner.components.health ~= nil and owner.components.health:IsDead()
+        then
+            return
+        end
+
+        if not self:IsCursable(item) then
+            return
+        end
+
+        return OldForceOntoOwner(self, item, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_lunarplant
+
+AddPrefabPostInit("armor_lunarplant", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_lunarplant_husk", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_voidcloth", KeepArmorSlotAfterForgeRepair)
+
+local function SnapshotOwnerListeners(owner, event, listener)
+    local snapshot = {}
+    local listeners = owner ~= nil and owner.event_listeners ~= nil
+        and owner.event_listeners[event] or nil
+    local callbacks = listeners ~= nil and listeners[listener] or nil
+    if callbacks ~= nil then
+        for _, fn in G.ipairs(callbacks) do
+            snapshot[fn] = true
+        end
+    end
+    return snapshot
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_lunarplant_husk
+AddPrefabPostInit("armor_lunarplant", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_lunarplant_husk", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_voidcloth", KeepArmorSlotAfterForgeRepair)
+
+local function SnapshotOwnerListeners(owner, event, listener)
+    local snapshot = {}
+    local listeners = owner ~= nil and owner.event_listeners ~= nil
+        and owner.event_listeners[event] or nil
+    local callbacks = listeners ~= nil and listeners[listener] or nil
+    if callbacks ~= nil then
+        for _, fn in G.ipairs(callbacks) do
+            snapshot[fn] = true
+        end
+    end
+    return snapshot
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_voidcloth
+AddPrefabPostInit("armor_lunarplant_husk", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_voidcloth", KeepArmorSlotAfterForgeRepair)
+
+local function SnapshotOwnerListeners(owner, event, listener)
+    local snapshot = {}
+    local listeners = owner ~= nil and owner.event_listeners ~= nil
+        and owner.event_listeners[event] or nil
+    local callbacks = listeners ~= nil and listeners[listener] or nil
+    if callbacks ~= nil then
+        for _, fn in G.ipairs(callbacks) do
+            snapshot[fn] = true
+        end
+    end
+    return snapshot
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bushhat
+
+AddPrefabPostInit("bushhat", function(inst)
+    PatchSelfTrackedUseableHat(inst, "hide")
+end)
+
+```
+

@@ -5727,3 +5727,37 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：星契纪行 (Mod 3817117428)
+- **变体场景与切面**：收录来自工坊 Mod 3817117428 (`星契纪行`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3817117428)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:daywalker
+    end
+    env.AddPrefabPostInit("daywalker", Attach)
+    env.AddPrefabPostInit("daywalker2", Attach)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:daywalker2
+    env.AddPrefabPostInit("daywalker", Attach)
+    env.AddPrefabPostInit("daywalker2", Attach)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+    env.AddComponentPostInit("builder", function(self)
+        local has, get = self.HasIngredients, self.GetIngredients
+        self.HasIngredients = function(builder, recipe, ...) return Craft.Check(builder, recipe, has, ...) end
+        self.GetIngredients = function(builder, name, ...) return Craft.Ingredients(builder, name, get, ...) end
+    end)
+
+```
+

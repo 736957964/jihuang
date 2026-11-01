@@ -5552,3 +5552,28 @@
 [2026-11-01 08:26:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 08:26:32] Reducer: 成功将 Mod 3809778115 (language) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 08:26:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:26:38] Git 自动提交并推送成功！
+[2026-11-01 08:26:38] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 08:26:38] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 08:27:08] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3817117428', '3822982881', '2331539898', '3723296222', '3803049217', '817161265']
+[2026-11-01 08:27:09] SteamCMD 下载 3817117428 ...
+[2026-11-01 08:27:09] SteamCMD 下载 3822982881 ...
+[2026-11-01 08:27:09] SteamCMD 下载 3723296222 ...
+[2026-11-01 08:27:09] SteamCMD 下载 2331539898 ...
+[2026-11-01 08:27:09] SteamCMD 下载 3803049217 ...
+[2026-11-01 08:27:09] SteamCMD 下载 817161265 ...
+[2026-11-01 08:27:57] Worker [3817117428] 成功解析入库暂存区 -> 星契纪行 (类别: 03_网络通信RPC与数据同步类)
+[2026-11-01 08:28:46] Worker [3822982881] 成功解析入库暂存区 -> movement_speed_limit (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:29:41] Worker [3723296222] 成功解析入库暂存区 -> 受到任何伤害都被击飞！ (类别: 05_战斗AI行为树与Boss机制类)
+[2026-11-01 08:31:02] Worker [2331539898] 过滤拦截: [Music Mod]Russian bosses (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 08:32:17] Worker [3803049217] 成功解析入库暂存区 -> Mountain Scream (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:33:32] Worker [817161265] 过滤拦截: Instant Drop (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 08:33:32] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 08:33:32] Reducer: 成功将 Mod 3723296222 (受到任何伤害都被击飞！) 增量归约合入既有权威母本 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md
+[2026-11-01 08:33:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md
+[2026-11-01 08:33:32] Reducer: 成功将 Mod 3803049217 (Mountain Scream) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:33:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:33:32] Reducer: 成功将 Mod 3817117428 (星契纪行) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 08:33:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md
+[2026-11-01 08:33:32] Reducer: 成功将 Mod 3822982881 (movement_speed_limit) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:33:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md

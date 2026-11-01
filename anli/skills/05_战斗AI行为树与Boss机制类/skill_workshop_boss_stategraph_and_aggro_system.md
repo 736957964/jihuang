@@ -686,3 +686,40 @@ end)
 
 ```
 
+
+
+### 变体演进：受到任何伤害都被击飞！ (Mod 3723296222)
+- **变体场景与切面**：收录来自工坊 Mod 3723296222 (`受到任何伤害都被击飞！`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3723296222)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+    -- 新版普通攻击直接调用内部入口；仅包装一层，避免外层转发时重复击飞。
+    AddComponentPostInit('combat', function(self)
+        local getAttackedName = self.GetAttacked_Internal ~= nil and "GetAttacked_Internal" or "GetAttacked"
+        local _GetAttacked = self[getAttackedName]
+        self[getAttackedName] = function(self, attacker, damage, weapon, stimuli, spdamage, ...)
+            KOO_knockover(attacker, self.inst)
+            return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+    --hook health 的dodelta函数
+    AddComponentPostInit('health', function(self)
+        local _DoDelta = self.DoDelta
+        function self:DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
+            if amount < 0 and cause ~= "drowning" and self.inst:IsValid() then
+                KOO_knockover(afflicter, self.inst)
+            end
+            return _DoDelta(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
+        end
+    end)
+
+```
+
