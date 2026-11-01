@@ -6564,8 +6564,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 10:14:16",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2496419772",
+      "name": "Samurai Jack",
+      "author": "Sümi",
+      "version": "1.0.2.",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:16:12",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3697073747",
+      "name": "[DST]绯/Hinora",
+      "author": "雨荧",
+      "version": "0.0.1.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:16:12",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3719338967",
+      "name": "[DST]Musha: Maintained Fork",
+      "author": "Sunnyyyyholic、Code_xu",
+      "version": "T 14.2.4-maint.14",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 10:16:12",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 10:14:16"
+  "lastUpdated": "2026-11-01 10:16:12"
 }

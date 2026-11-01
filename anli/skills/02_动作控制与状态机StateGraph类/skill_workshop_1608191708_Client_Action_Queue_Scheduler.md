@@ -36217,3 +36217,440 @@ end
 
 ```
 
+
+
+### 变体演进：Samurai Jack (Mod 2496419772)
+- **变体场景与切面**：收录来自工坊 Mod 2496419772 (`Samurai Jack`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2496419772)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    local old_attack = sg.states["attack"]
+    local old_onenter = old_attack.onenter
+    old_attack.onenter = function(inst)
+        if inst:HasTag("foolish") then
+            local action = inst:GetBufferedAction()
+            local target = action and action.target or nil
+            
+            if target and target.components.combat then
+                if target.components.combat:HasTarget() or target:HasTag("hostile") or target:HasTag("hive") or target:HasTag("wall") or target:HasTag("tentacle_pillar") then
+                    old_onenter(inst)
+                else
+                    inst:ClearBufferedAction()
+                    inst.sg:GoToState("idle", true)
+                    inst.components.talker:Say("I cannot harm the innocent.")
+                end
+            end
+        else -- forgot about this else...
+            old_onenter(inst)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+local Damage_Mult = -0.25
+AddComponentPostInit("combat",function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    local oldbonusdamagefn = inst.bonusdamagefn
+    inst.bonusdamagefn = function(attacker, target, damage, weapon)
+        local bonus = 0
+        if oldbonusdamagefn then
+            bonus = oldbonusdamagefn(attacker, target, damage, weapon) or 0
+        end
+        if target.prefab == Character and (attacker:HasTag("shadowcreature")) then
+            bonus = bonus - (damage + bonus) * Damage_Mult
+        end
+        return bonus
+    end
+end)
+
+```
+
+
+
+### 变体演进：[DST]绯/Hinora (Mod 3697073747)
+- **变体场景与切面**：收录来自工坊 Mod 3697073747 (`[DST]绯/Hinora`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3697073747)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+------------------ 主机 ---------------------------
+AddStategraphPostInit("wilson", function(sg)
+    for name, value in pairs(AttackSGList) do
+        if sg.states[name] ~= nil then
+            local old_attack_onenter = sg.states[name].onenter
+            sg.states[name].onenter = function(inst)
+                if old_attack_onenter ~= nil then
+                    old_attack_onenter(inst)
+                end
+                if Check_Hinora(inst) then
+                    if not (inst.components.rider ~= nil and inst.components.rider:IsRiding()) then
+                        inst.sg.hinora_attackspeed = value
+                        local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                        if Check_Entity(weapon) and weapon:HasOneOfTags({"whip", "pocketwatch"}) then
+                            inst.sg.hinora_attackspeed = Hinora_WhipAttackSpeedMult
+                        end
+                        inst.AnimState:SetDeltaTimeMultiplier(inst.sg.hinora_attackspeed)
+                        local hinora_timeline = inst.sg.currentstate ~= nil and inst.sg.currentstate.timeline
+                        if hinora_timeline ~= nil then
+                            for _, v in pairs(hinora_timeline) do
+                                v.hinora_time = v.time
+                                v.time = v.time / inst.sg.hinora_attackspeed
+                            end
+                        end
+                        if inst.sg.timeout ~= nil then
+                            inst.sg:SetTimeout(inst.sg.timeout / inst.sg.hinora_attackspeed)
+                        end
+                    end
+                    inst.sg.hinora_attackspeed = nil
+                end
+            end
+
+            local old_attack_onexit = sg.states[name].onexit
+            sg.states[name].onexit = function(inst)
+                if old_attack_onexit ~= nil then
+                    old_attack_onexit(inst)
+                end
+                if Check_Hinora(inst) then
+                    inst.AnimState:SetDeltaTimeMultiplier(1)
+                    local hinora_timeline = inst.sg.currentstate and inst.sg.currentstate.timeline
+                    if hinora_timeline ~= nil then
+                        for _, v in pairs(hinora_timeline) do
+                            v.time = v.hinora_time or v.time
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+------------------ 客机 ---------------------------
+AddStategraphPostInit("wilson_client", function(sg)
+    for name, value in pairs(AttackSGList) do
+        if sg.states[name] ~= nil then
+            local old_attack_onenter = sg.states[name].onenter
+            sg.states[name].onenter = function(inst)
+                if old_attack_onenter ~= nil then
+                    old_attack_onenter(inst)
+                end
+                if Check_Hinora(inst) and inst.sg.hinora_attackspeed ~= nil then
+                    if not (inst.replica.rider ~= nil and inst.replica.rider:IsRiding()) then
+                        inst.sg.hinora_attackspeed = value
+                        local weapon = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                        if Check_Entity(weapon) and weapon:HasOneOfTags({"whip", "pocketwatch"}) then
+                            inst.sg.hinora_attackspeed = Hinora_WhipAttackSpeedMult
+                        end
+                        inst.AnimState:SetDeltaTimeMultiplier(inst.sg.hinora_attackspeed)
+                        local hinora_timeline = inst.sg.currentstate ~= nil and inst.sg.currentstate.timeline
+                        if hinora_timeline ~= nil then
+                            for _, v in pairs(hinora_timeline) do
+                                v.hinora_time = v.time
+                                v.time = v.time / inst.sg.hinora_attackspeed
+                            end
+                        end
+                        if inst.sg.timeout ~= nil then
+                            inst.sg:SetTimeout(inst.sg.timeout / inst.sg.hinora_attackspeed)
+                        end
+                    end
+                    inst.sg.hinora_attackspeed = nil
+                end
+            end
+
+            local old_attack_onexit = sg.states[name].onexit
+            sg.states[name].onexit = function(inst)
+                if old_attack_onexit ~= nil then
+                    old_attack_onexit(inst)
+                end
+                if Check_Hinora(inst) then
+                    inst.AnimState:SetDeltaTimeMultiplier(1)
+                    local hinora_timeline = inst.sg.currentstate and inst.sg.currentstate.timeline
+                    if hinora_timeline ~= nil then
+                        for _, v in pairs(hinora_timeline) do
+                            v.time = v.hinora_time or v.time
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+
+AddComponentPostInit("builder", function(builder)
+    local old_HasIngredients = builder.HasIngredients
+    builder.HasIngredients = function(self, recipe, ...)
+        if type(recipe) == "string" then 
+            recipe = GetValidRecipe(recipe)
+        end
+        self.hinora_old_hasrecipe = deepcopy(recipe)
+        if Check_ShadowHalveBuild(self.inst) and self.hinora_old_hasrecipe ~= nil
+        and ShouldHalveList[self.hinora_old_hasrecipe.name] and not NoHalveList[self.hinora_old_hasrecipe.name] then
+            for i, v in ipairs(self.hinora_old_hasrecipe.ingredients) do
+                v.amount = math.max(1, RoundBiasedUp(v.amount * TUNING.HINORA_HALVEBUILD_MULT))
+            end
+            for i, v in ipairs(self.hinora_old_hasrecipe.character_ingredients) do
+                v.amount = math.max(1, RoundBiasedUp(v.amount * TUNING.HINORA_HALVEBUILD_MULT))
+            end
+        end
+        return old_HasIngredients(self, self.hinora_old_hasrecipe, ...)
+    end
+
+    local old_GetIngredients = builder.GetIngredients
+    builder.GetIngredients = function(self, recname, ...)
+        local recipe = AllRecipes[recname]
+        self.hinora_old_getrecipe = deepcopy(recipe)
+        if Check_ShadowHalveBuild(self.inst) and recipe ~= nil
+        and ShouldHalveList[recipe.name] and not NoHalveList[recipe.name] then
+            for i, v in ipairs(recipe.ingredients) do
+                v.amount = math.max(1, RoundBiasedUp(v.amount * TUNING.HINORA_HALVEBUILD_MULT))
+            end
+            for i, v in ipairs(recipe.character_ingredients) do
+                v.amount = math.max(1, RoundBiasedUp(v.amount * TUNING.HINORA_HALVEBUILD_MULT))
+            end
+        end
+        local ingredients, discounted = old_GetIngredients(self, recname, ...)
+        AllRecipes[recname] = self.hinora_old_getrecipe
+        return ingredients, discounted
+    end
+
+    local old_RemoveIngredients = builder.RemoveIngredients
+    builder.RemoveIngredients = function(self, ingredients, recname, discounted, ...)
+        if self.freebuildmode then
+            return
+        end
+        local recipe = AllRecipes[recname]
+        self.hinora_old_removerecipe = deepcopy(recipe)
+        if Check_ShadowHalveBuild(self.inst) and recipe ~= nil
+        and ShouldHalveList[recipe.name] and not NoHalveList[recipe.name] then
+            for i, v in ipairs(recipe.ingredients) do
+                v.amount = math.max(1, RoundBiasedUp(v.amount * TUNING.HINORA_HALVEBUILD_MULT))
+            end
+            for i, v in ipairs(recipe.character_ingredients) do
+                v.amount = math.max(1, RoundBiasedUp(v.amount * TUNING.HINORA_HALVEBUILD_MULT))
+            end
+        end
+        old_RemoveIngredients(self, ingredients, recname, discounted, ...)
+        AllRecipes[recname] = self.hinora_old_removerecipe
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+
+AddPrefabPostInit("inventory_classified", function(inst)
+    if not TheWorld.ismastersim then
+        local old_RemoveIngredients = inst.RemoveIngredients
+        inst.RemoveIngredients = function(inst, recipe, ingredientmod, ...)
+            local hinora_old_getremoverecipe = deepcopy(recipe)
+            if Check_ShadowHalveBuild(inst._parent) and hinora_old_getremoverecipe ~= nil
+            and ShouldHalveList[hinora_old_getremoverecipe.name] and not NoHalveList[hinora_old_getremoverecipe.name] then
+                for i, v in ipairs(hinora_old_getremoverecipe.ingredients) do
+                    v.amount = math.max(1, RoundBiasedUp(v.amount * TUNING.HINORA_HALVEBUILD_MULT))
+                end
+            end
+            return old_RemoveIngredients(inst, hinora_old_getremoverecipe, ingredientmod, ...)
+        end
+        return inst
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tophat
+--------------------------------------------------------------------------------------------------------
+AddPrefabPostInit("tophat", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    local old_onPreBuilt = inst.onPreBuilt
+    inst.onPreBuilt = function(inst, builder, materials, recipe, ...)
+        if old_onPreBuilt ~= nil then
+            old_onPreBuilt(inst, builder, materials, recipe, ...)
+        end
+        if recipe ~= nil and recipe.name == "hinora_tophat_magician" and inst.ConvertToMagician ~= nil then
+			inst:ConvertToMagician()
+		end
+    end
+end)
+
+```
+
+
+
+### 变体演进：[DST]Musha: Maintained Fork (Mod 3719338967)
+- **变体场景与切面**：收录来自工坊 Mod 3719338967 (`[DST]Musha: Maintained Fork`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3719338967)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:armor_mushaa
+if Tropical == 1 then
+AddPrefabPostInit( "armor_mushaa", Tropical)
+AddPrefabPostInit( "armor_mushab", Tropical)
+AddPrefabPostInit( "broken_frosthammer", Tropical)
+AddPrefabPostInit( "pirateback", Tropical)
+end]]
+
+
+local container_widget_params = {}
+local container_widgetsetup_custom = nil
+local container_max_item_slots = containers.MAXITEMSLOTS or 0
+
+local widget_prefab_aliases =
+{
+	bowm = "slingshot",
+	armor_mushaa = "backpack",
+	broken_frosthammer = "backpack",
+	armor_mushab = "piggyback",
+	pirateback = "krampus_sack",
+	musha_tall3 = "chester",
+	musha_tallrrr1 = "chester",
+	musha_tallrrr2 = "chester",
+	musha_tallrrr3 = "chester",
+	musha_tallrrr4 = "chester",
+	musha_tallrrr5 = "chester",
+	musha_tallrrrice = "chester",
+	musha_small_super = "chester",
+}
+
+local function ApplyContainerWidget(container, data)
+	for k, v in pairs(data) do
+		container[k] = v
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_mushab
+AddPrefabPostInit( "armor_mushaa", Tropical)
+AddPrefabPostInit( "armor_mushab", Tropical)
+AddPrefabPostInit( "broken_frosthammer", Tropical)
+AddPrefabPostInit( "pirateback", Tropical)
+end]]
+
+
+local container_widget_params = {}
+local container_widgetsetup_custom = nil
+local container_max_item_slots = containers.MAXITEMSLOTS or 0
+
+local widget_prefab_aliases =
+{
+	bowm = "slingshot",
+	armor_mushaa = "backpack",
+	broken_frosthammer = "backpack",
+	armor_mushab = "piggyback",
+	pirateback = "krampus_sack",
+	musha_tall3 = "chester",
+	musha_tallrrr1 = "chester",
+	musha_tallrrr2 = "chester",
+	musha_tallrrr3 = "chester",
+	musha_tallrrr4 = "chester",
+	musha_tallrrr5 = "chester",
+	musha_tallrrrice = "chester",
+	musha_small_super = "chester",
+}
+
+local function ApplyContainerWidget(container, data)
+	for k, v in pairs(data) do
+		container[k] = v
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:broken_frosthammer
+AddPrefabPostInit( "armor_mushab", Tropical)
+AddPrefabPostInit( "broken_frosthammer", Tropical)
+AddPrefabPostInit( "pirateback", Tropical)
+end]]
+
+
+local container_widget_params = {}
+local container_widgetsetup_custom = nil
+local container_max_item_slots = containers.MAXITEMSLOTS or 0
+
+local widget_prefab_aliases =
+{
+	bowm = "slingshot",
+	armor_mushaa = "backpack",
+	broken_frosthammer = "backpack",
+	armor_mushab = "piggyback",
+	pirateback = "krampus_sack",
+	musha_tall3 = "chester",
+	musha_tallrrr1 = "chester",
+	musha_tallrrr2 = "chester",
+	musha_tallrrr3 = "chester",
+	musha_tallrrr4 = "chester",
+	musha_tallrrr5 = "chester",
+	musha_tallrrrice = "chester",
+	musha_small_super = "chester",
+}
+
+local function ApplyContainerWidget(container, data)
+	for k, v in pairs(data) do
+		container[k] = v
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pirateback
+AddPrefabPostInit( "broken_frosthammer", Tropical)
+AddPrefabPostInit( "pirateback", Tropical)
+end]]
+
+
+local container_widget_params = {}
+local container_widgetsetup_custom = nil
+local container_max_item_slots = containers.MAXITEMSLOTS or 0
+
+local widget_prefab_aliases =
+{
+	bowm = "slingshot",
+	armor_mushaa = "backpack",
+	broken_frosthammer = "backpack",
+	armor_mushab = "piggyback",
+	pirateback = "krampus_sack",
+	musha_tall3 = "chester",
+	musha_tallrrr1 = "chester",
+	musha_tallrrr2 = "chester",
+	musha_tallrrr3 = "chester",
+	musha_tallrrr4 = "chester",
+	musha_tallrrr5 = "chester",
+	musha_tallrrrice = "chester",
+	musha_small_super = "chester",
+}
+
+local function ApplyContainerWidget(container, data)
+	for k, v in pairs(data) do
+		container[k] = v
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world_network
+
+AddPrefabPostInit("world_network", function(inst)
+	if containers.widgetsetup ~= container_widgetsetup_custom then
+		InstallContainerWidgetSetup(containers.widgetsetup)
+	end
+	if containers.MAXITEMSLOTS < container_max_item_slots then
+		containers.MAXITEMSLOTS = container_max_item_slots
+	end
+end)
+
+```
+
