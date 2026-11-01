@@ -3401,3 +3401,77 @@ end
 
 ```
 
+
+
+### 变体演进：Shadow Armory (Mod 3372658001)
+- **变体场景与切面**：收录来自工坊 Mod 3372658001 (`Shadow Armory`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3372658001)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:waxwell
+
+AddPrefabPostInit("waxwell", function(inst)
+	if inst.components.builder then 
+		inst.components.builder.magic_bonus = 1
+	end 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:researchlab4
+
+AddRecipePostInit("researchlab4", function(self)
+	self.level = require"techtree".Create{ MAGIC = 1 }
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadowhelm
+
+AddPrefabPostInit("shadowhelm", function(inst)
+	inst.lastmainshield = 0
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+	local ApplyDamage = self.ApplyDamage
+	self.ApplyDamage = function(self, damage, attacker, ...)
+	
+		if self.inst.shadowhelm and self.inst.components.sanity 
+		and damage and (damage > TUNING.SHADOWHELM.LEFTOVER_DAMAGE_AGAINST_SHADOWS)
+		and attacker and attacker:HasTag"shadow_aligned" then
+			
+			local reduction = damage - TUNING.SHADOWHELM.LEFTOVER_DAMAGE_AGAINST_SHADOWS
+			self.inst.components.sanity:DoDelta(reduction * 
+				TUNING.SHADOWHELM.SHADOW_DAMAGE_TO_SANITY)
+				
+			if self.inst.shadowhelm.components.armor then 
+				self.inst.shadowhelm.components.armor.condition = 
+					self.inst.shadowhelm.components.armor.condition - reduction
+			end 
+			
+			local fx = SpawnPrefab("shadow_shield"..tostring(
+				PickShield(self.inst.shadowhelm)))
+				
+			fx.entity:SetParent(self.inst.entity)
+				
+			damage = TUNING.SHADOWHELM.LEFTOVER_DAMAGE_AGAINST_SHADOWS
+		end 
+		
+		return ApplyDamage(self, damage, attacker, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruinsnightmare
+
+AddPrefabPostInit("ruinsnightmare", function(inst)
+	inst:ListenForEvent('death', ruinsnightmare_death)
+end)
+
+```
+

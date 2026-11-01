@@ -5789,3 +5789,162 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Craft From Chest [DST] Fixed (Mod 2797670225)
+- **变体场景与切面**：收录来自工坊 Mod 2797670225 (`Craft From Chest [DST] Fixed`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2797670225)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+	-- if TheNet:GetIsServer() then
+		-- inst._found = _G.net_bool(inst.GUID, "_found")
+        -- inst._found:set(false)
+        -- inst._itype = _G.net_string(inst.GUID, "_itype")
+        -- inst._itype:set("0")
+        -- inst._amount = _G.net_shortint(inst.GUID, "_amount", "amountDirty")
+        -- inst._amount:set(0)
+        inst._itemTable = {}
+        inst._items = _G.net_string(inst.GUID, "_items", "itemsDirty")
+        inst._items:set("")
+        inst:ListenForEvent("itemsDirty", itemsDirty)
+        -- inst:ListenForEvent("amountDirty", amountDirty)
+        -- inst:ListenForEvent("itemget", itemDirty)
+        -- inst:ListenForEvent("itemlose", itemDirty)
+        -- inst._chest = _G.net_bool(inst.GUID, "_chest", "chestDirty")
+        -- inst._chest:set(true)
+        -- inst:ListenForEvent("chestDirty", chestDirty)
+
+        -- inst.setFound = setFound
+        -- inst.chestChange = chestChange
+        inst.allItemUpdate = allItemUpdate
+        if _G.TheWorld.ismastersim then
+            inst.smashtask = inst:DoPeriodicTask(.5, allItemUpdate)
+        end
+	-- end
+end)
+
+```
+
+
+
+### 变体演进：坐着轮椅玩勋章2 (Mod 3786404160)
+- **变体场景与切面**：收录来自工坊 Mod 3786404160 (`坐着轮椅玩勋章2`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3786404160)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:health
+
+AddComponentPostInit("health", function(self)
+	local inst = self.inst
+	if inst == nil or not inst:HasTag("player") or inst.helper_fataldamage_hooked then return end
+	inst.helper_fataldamage_hooked = true
+	local oldSetVal = self.SetVal
+	self.SetVal = function(self, val, cause, afflicter, ...)
+		local old_health, min_health = self.currenthealth, self.minhealth or 0
+		if val <= min_health and old_health > min_health then
+			TryFatalDamageAutoEquip(self.inst)
+		end
+		return oldSetVal and oldSetVal(self, val, cause, afflicter, ...) or nil
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:medal_childishness_chest
+--照伪动作流水线：先换装+记应佩戴，再用 RunWithEquipAlign 包原函数(缺佩剥假标签)
+AddPrefabPostInit("medal_childishness_chest", function(inst)
+	if not GLOBAL.TheNet:GetIsServer() then return end
+	if inst.exchangeGift == nil or inst.helper_exchangegift_hooked then return end
+	inst.helper_exchangegift_hooked = true
+	local old_exchange = inst.exchangeGift
+	inst.exchangeGift = function(self, player, ...)
+		local expected = PseudoActionEquip(player, "MEDALEXCHANGEGIFT", self)
+		if expected ~= nil and GLOBAL.RunWithEquipAlign ~= nil then
+			return GLOBAL.RunWithEquipAlign(player, expected, "MEDALEXCHANGEGIFT", "fn", old_exchange, self, player, ...)
+		end
+		return old_exchange(self, player, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playerprox
+--故用伪动作 NEARFIRENETTLE 承接，照普通动作流水线：先 TryAutoEquip 换装+记应佩戴，再用 RunWithEquipAlign 包原回调(缺佩剥假标签)
+AddComponentPostInit("playerprox", function(self)
+	if self.inst == nil or self.inst.prefab ~= "weed_firenettle" then return end
+	local oldSetOnPlayerNear = self.SetOnPlayerNear
+	if oldSetOnPlayerNear == nil then return end
+	self.SetOnPlayerNear = function(self, fn, ...)
+		local wrapped = function(inst_, player_, ...)
+			--与动作fn层捕获同款：先换装(伪动作流水线)，再在对齐窗口内执行原回调(缺佩剥假标签)
+			local expected = PseudoActionEquip(player_, "NEARFIRENETTLE", inst_)
+			if expected ~= nil and GLOBAL.RunWithEquipAlign ~= nil then
+				return GLOBAL.RunWithEquipAlign(player_, expected, "NEARFIRENETTLE", "fn", fn, inst_, player_, ...)
+			end
+			return fn(inst_, player_, ...)
+		end
+		return oldSetOnPlayerNear(self, wrapped, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+--故用伪动作 NEAREYEPLANT 承接：重锁前把范围内玩家走一遍流水线，装备后成真plantkin即不被锁定
+AddComponentPostInit("combat", function(self)
+	--注意：引擎要等 prefab.fn() 返回后才设 inst.prefab(mainfunctions.lua:366)，而眼球草的 combat 是在 fn 内加的
+	--(eyeplant.lua:116)，此刻 prefab 名还是 nil，故只能用标签判(eyeplant.lua:96 已先打"eyeplant"标签)
+	if self.inst == nil or not self.inst:HasTag("eyeplant") then return end
+	local oldSetRetargetFunction = self.SetRetargetFunction
+	if oldSetRetargetFunction == nil then return end
+	self.SetRetargetFunction = function(self, period, fn, ...)
+		if fn == nil then return oldSetRetargetFunction(self, period, fn, ...) end
+		local wrapped = function(inst, ...)
+			local x, y, z = inst.Transform:GetWorldPosition()
+			local targets
+			for _, player in ipairs(TheSim:FindEntities(x, y, z, TUNING.EYEPLANT_ATTACK_DIST or 2.5, { "player" })) do
+				local expected = PseudoActionEquip(player, "NEAREYEPLANT", inst)
+				if expected ~= nil then
+					targets = targets or {}
+					table.insert(targets, { player = player, expected = expected })
+				end
+			end
+			if targets ~= nil and GLOBAL.RunWithEquipAlignAll ~= nil then
+				return GLOBAL.RunWithEquipAlignAll(targets, "NEAREYEPLANT", "fn", fn, inst, ...)
+			end
+			return fn(inst, ...)
+		end
+		return oldSetRetargetFunction(self, period, wrapped, ...)
+	end
+end)
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:debuffable
+if GLOBAL.TheNet:GetIsServer() then
+	AddComponentPostInit("debuffable", function(self)
+		local oldRemoveDebuff = self.RemoveDebuff
+		self.RemoveDebuff = function(self, name, ...)
+			local r = oldRemoveDebuff and oldRemoveDebuff(self, name, ...) or nil
+			if name == "buff_medal_prophesy" and self.inst ~= nil then
+				local p = self.inst
+				if p.medal_group_enabled ~= nil and p.medal_group_enabled["seer"] == true
+					and not p:HasTag("infinite_prophecy") then
+					p:AddTag("infinite_prophecy")
+					p:PushEvent("refreshcrafting")
+				end
+			end
+			return r
+		end
+	end)
+
+```
+

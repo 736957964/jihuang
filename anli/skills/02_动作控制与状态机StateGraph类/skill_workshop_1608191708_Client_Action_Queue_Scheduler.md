@@ -31723,3 +31723,171 @@ end)
 
 ```
 
+
+
+### 变体演进：movement_speed_limit (Mod 3776018992)
+- **变体场景与切面**：收录来自工坊 Mod 3776018992 (`movement_speed_limit`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3776018992)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:cursable
+
+AddComponentPostInit("cursable", function(self)
+    local OldForceOntoOwner = self.ForceOntoOwner
+    function self:ForceOntoOwner(item, ...)
+        local owner = self.inst
+        if item == nil
+            or not item:IsValid()
+            or owner == nil
+            or not owner:IsValid()
+            or owner.components == nil
+            or owner.components.inventory == nil
+            or owner.components.health ~= nil and owner.components.health:IsDead()
+        then
+            return
+        end
+
+                                          
+        if not self:IsCursable(item) then
+            return
+        end
+
+        return OldForceOntoOwner(self, item, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+                                   
+    AddComponentPostInit("playercontroller", function(self)
+        if self._lazy_nine_actionbutton_backpack_route_patched then
+            return
+        end
+        self._lazy_nine_actionbutton_backpack_route_patched = true
+
+        local OldGetActionButtonAction = self.GetActionButtonAction
+        function self:GetActionButtonAction(force_target)
+            local buffered = OldGetActionButtonAction(self, force_target)
+            local resolved = buffered ~= nil and buffered.action or nil
+            if resolved ~= G.ACTIONS.PICKUP and resolved ~= G.ACTIONS.EQUIP then
+                return buffered
+            end
+
+            local item = buffered.target
+            if not IsGroundEnhancedBackpack(item) then
+                item = buffered.invobject
+            end
+            local inventory = GetNineBackpackPickupInventory(self.inst, item)
+            if inventory == nil then
+                return buffered
+            end
+
+            local equipped = inventory:GetEquippedItem(SLOT.BACKPACK)
+            local occupied = equipped ~= nil
+            local resolved_name = resolved == G.ACTIONS.EQUIP and "EQUIP" or "PICKUP"
+            
+
+            if not occupied then
+                return buffered
+            end
+
+                                                                
+            buffered.action = NineBackpackPickupAction
+            buffered.target = item
+            buffered.initialtargetowner = item.components ~= nil
+                and item.components.inventoryitem ~= nil
+                and item.components.inventoryitem.owner or nil
+            if buffered.invobject == item then
+                buffered.invobject = nil
+                buffered.doerownsobject = false
+            end
+            buffered.distance = NineBackpackPickupAction.distance
+            buffered.arrivedist = NineBackpackPickupAction.arrivedist
+            return buffered
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_lunarplant
+
+AddPrefabPostInit("armor_lunarplant", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_lunarplant_husk", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_voidcloth", KeepArmorSlotAfterForgeRepair)
+
+                                                                          
+           
+                                          
+                                         
+                                
+                                                                          
+
+local function SnapshotOwnerListeners(owner, event, listener)
+    local snapshot = {}
+    local listeners = owner ~= nil and owner.event_listeners ~= nil
+        and owner.event_listeners[event] or nil
+    local callbacks = listeners ~= nil and listeners[listener] or nil
+    if callbacks ~= nil then
+        for _, fn in G.ipairs(callbacks) do
+            snapshot[fn] = true
+        end
+    end
+    return snapshot
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_lunarplant_husk
+AddPrefabPostInit("armor_lunarplant", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_lunarplant_husk", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_voidcloth", KeepArmorSlotAfterForgeRepair)
+
+                                                                          
+           
+                                          
+                                         
+                                
+                                                                          
+
+local function SnapshotOwnerListeners(owner, event, listener)
+    local snapshot = {}
+    local listeners = owner ~= nil and owner.event_listeners ~= nil
+        and owner.event_listeners[event] or nil
+    local callbacks = listeners ~= nil and listeners[listener] or nil
+    if callbacks ~= nil then
+        for _, fn in G.ipairs(callbacks) do
+            snapshot[fn] = true
+        end
+    end
+    return snapshot
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_voidcloth
+AddPrefabPostInit("armor_lunarplant_husk", KeepArmorSlotAfterForgeRepair)
+AddPrefabPostInit("armor_voidcloth", KeepArmorSlotAfterForgeRepair)
+
+                                                                          
+           
+                                          
+                                         
+                                
+                                                                          
+
+local function SnapshotOwnerListeners(owner, event, listener)
+    local snapshot = {}
+    local listeners = owner ~= nil and owner.event_listeners ~= nil
+        and owner.event_listeners[event] or nil
+    local callbacks = listeners ~= nil and listeners[listener] or nil
+    if callbacks ~= nil then
+        for _, fn in G.ipairs(callbacks) do
+            snapshot[fn] = true
+        end
+    end
+    return snapshot
+end
+
+```
+

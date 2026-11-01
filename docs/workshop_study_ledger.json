@@ -6015,8 +6015,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 08:53:19",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2797670225",
+      "name": "Craft From Chest [DST] Fixed",
+      "author": "Editor & Monti",
+      "version": "1.1.20",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 08:59:58",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3372658001",
+      "name": "Shadow Armory",
+      "author": "Felix the Judge & Willow",
+      "version": "2.2",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 08:59:58",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3776018992",
+      "name": "movement_speed_limit",
+      "author": "Scam",
+      "version": "0.8.86",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:59:58",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3786404160",
+      "name": "坐着轮椅玩勋章2",
+      "author": "哇唧唧哇",
+      "version": "0.0.8.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 08:59:58",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:53:19"
+  "lastUpdated": "2026-11-01 08:59:58"
 }
