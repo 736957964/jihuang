@@ -29,8 +29,7 @@ end
 -------------------------------------
 
 local function ToggleMimeBehaviour(inst)
-`
-
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

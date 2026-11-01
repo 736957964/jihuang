@@ -37,8 +37,7 @@ local GLOBAL = GLOBAL
         -- You will have to make this icon if it doesn't exist (see other minimap icon mods)
         GLOBAL._GLOBALPOSITIONS_MAP_ICONS.some_mod_prefab = "some_mod_prefab.tex"
     end)
-`
-
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

@@ -25,8 +25,7 @@ local GLOBAL = GLOBAL
 AddPrefabPostInit("world", function(inst)
     inst:WatchWorldState("season", CleanUp)
 end)
-`
-
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

@@ -37,8 +37,7 @@ AddComponentPostInit("playercontroller", function(self)
             act = drop_action
         end
         self.LMBaction = act
-`
-
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 
