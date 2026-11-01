@@ -31969,3 +31969,138 @@ local function InitSkeletonPlayerPostInit()
 
 ```
 
+
+
+### 变体演进：Thulecite Equipment Enhance_beta (Mod 3713906356)
+- **变体场景与切面**：收录来自工坊 Mod 3713906356 (`Thulecite Equipment Enhance_beta`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3713906356)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:thulecite_kit
+---------------------------------------------------------------------
+AddPrefabPostInit("thulecite_kit", function(inst)
+    if not _G.TheWorld.ismastersim then return inst end
+
+    if inst.components.finiteuses ~= nil then inst:RemoveComponent("finiteuses") end
+    if inst.components.stackable == nil then inst:AddComponent("stackable") end
+    inst.components.stackable.maxsize = 10
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armorruins
+
+AddPrefabPostInit("armorruins", function(inst) 
+    EnhanceArmor(inst, TUNING.ARMOR_RUINS_ABSORPTION or 0.9, armor_speed, armor_sanity, armor_planar, armor_rain, 1800) 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ruinshat
+
+AddPrefabPostInit("ruinshat", function(inst) 
+    EnhanceArmor(inst, TUNING.ARMOR_RUINSHAT_ABSORPTION or 0.9, crown_speed, crown_sanity, crown_planar, crown_rain, 2160) 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armormarble
+
+AddPrefabPostInit("armormarble", function(inst)
+    if not _G.TheWorld.ismastersim then return inst end
+    if inst.components.equippable ~= nil then
+        inst.components.equippable.walkspeedmult = 1.0
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:multitool_axe_pickaxe
+---------------------------------------------------------------------
+AddPrefabPostInit("multitool_axe_pickaxe", function(inst)
+    if not _G.TheWorld.ismastersim then return inst end
+    if inst.components.tool ~= nil then
+        inst.components.tool:SetAction(ACTIONS.CHOP, 3.5) 
+        inst.components.tool:SetAction(ACTIONS.MINE, 3.5)
+    end
+    if inst.components.finiteuses ~= nil then
+        local new_uses = TUNING.MULTITOOL_AXE_PICKAXE_USES * 3
+        inst.components.finiteuses:SetMaxUses(new_uses)
+        inst.components.finiteuses:SetUses(new_uses)
+    end
+end)
+
+```
+
+
+
+### 变体演进：喵喵魔法棒·索尔 (Mod 3714529731)
+- **变体场景与切面**：收录来自工坊 Mod 3714529731 (`喵喵魔法棒·索尔`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3714529731)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:goldnugget
+AddPrefabPostInit("goldnugget", function(inst)
+	inst.catstaff_repair_percent = 0.2
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+}
+AddStategraphPostInit("wilson", function(self)
+	for k, v in pairs(actionlist) do
+		local oldhandlers = self.actionhandlers[k].deststate
+		self.actionhandlers[k].deststate = function(inst, action)
+			local oldresult = oldhandlers(inst, action)
+			local newresult = v(inst, action, oldresult)
+			if newresult then
+				return newresult
+			end
+			return oldresult
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+}
+AddStategraphPostInit("wilson_client", function(self)
+	for k, v in pairs(actionlist_client) do
+		local oldhandlers = self.actionhandlers[k].deststate
+		self.actionhandlers[k].deststate = function(inst, action)
+			local oldresult = oldhandlers(inst, action)
+			local newresult = v(inst, action, oldresult)
+			if newresult then
+				return newresult
+			end
+			return oldresult
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:skinner
+    -- 人物皮肤的init_fn 和 clear_fn
+    AddComponentPostInit("skinner", function(self)
+        local oldfn = self.SetSkinName
+        if oldfn then
+            function self.SetSkinName(s, skinname, ...)
+                local old = s.skin_name
+                local new = skinname
+                if characterskins[old] and characterskins[old].clear_fn then
+                    characterskins[old].clear_fn(s.inst, old)
+                end
+                if characterskins[new] and characterskins[new].init_fn then
+                    characterskins[new].init_fn(s.inst, new)
+                end
+                oldfn(s, skinname, ...)
+            end
+        end
+    end)
+
+```
+

@@ -122,3 +122,30 @@ return {
    - 每次调用 `TheSim:LoadFont` 后，必须紧跟 `TheSim:SetupFontFallbacks`。若遗漏回退表设置，当文本中出现特殊标点、希腊字母或冷僻字时，整个字符串会静默变成完全不渲染的空白，极其隐蔽！
 2. **点分路径断言防御**：
    - 官方游戏在小版本更新后可能会重命名局部变量。在生产代码中使用 `ClosurePath.Set` 之前，必须对返回值 `parent` 和 `idx` 做严格的 `if parent and idx then` 断言，严禁无检查调用 `debug.setupvalue` 导致游戏在启动阶段死锁。
+
+
+## 五、进阶拓扑演进与变体分支
+
+### 变体演进：LANGUAGE (Mod 3736719605)
+- **变体场景与切面**：收录来自工坊 Mod 3736719605 (`LANGUAGE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3736719605)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:talker
+
+AddComponentPostInit('talker', function(Talker)
+    local _ShutUp = Talker.ShutUp
+    function Talker:ShutUp(...)
+        if self.inst.components.wordplayer then
+            self.inst.components.wordplayer:Stop()
+        end
+        return _ShutUp(self, ...)
+    end
+end)
+
+```
+
