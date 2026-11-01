@@ -11142,3 +11142,206 @@ end)
 
 ```
 
+
+
+### 变体演进：Ultimate Backpack Settings (Mod 1242915898)
+- **变体场景与切面**：收录来自工坊 Mod 1242915898 (`Ultimate Backpack Settings`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1242915898)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:backpack
+end
+AddPrefabPostInit("backpack", UpdateBackpack)
+
+------------------------------------------------------------------------------------------
+--Backpack Waterproofness
+local Backpack_Water = GetModConfigData("Backpack_Water")
+
+local function UpdateBackpackWaterproofness(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	
+	if Backpack_Water == 1 then --Waterproof
+		inst:AddTag("waterproofer")
+		inst:AddComponent("waterproofer")
+		inst.components.waterproofer:SetEffectiveness(0)
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:piggyback
+end
+AddPrefabPostInit("piggyback", UpdatePiggyback)
+
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+--Icepack Inventory
+local Icepack_Inventory = GetModConfigData("Icepack_Inventory")
+
+local function UpdateIcepack(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	
+	if inst.components.inventoryitem == nil then
+		inst:AddComponent("inventoryitem")
+	end
+	if Icepack_Inventory == 1 then --Storeable
+		inst.components.inventoryitem.cangoincontainer = true
+	else
+		inst.components.inventoryitem.cangoincontainer = false
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:icepack
+end
+AddPrefabPostInit("icepack", UpdateIcepack)
+
+------------------------------------------------------------------------------------------
+--Icepack Waterproofness
+local Icepack_Water = GetModConfigData("Icepack_Water")
+
+local function UpdateIcepackWaterproofness(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	
+	if Icepack_Water == 1 then --Waterproof
+		inst:AddTag("waterproofer")
+		inst:AddComponent("waterproofer")
+		inst.components.waterproofer:SetEffectiveness(0)
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+end
+AddPrefabPostInit("krampus_sack", UpdateKrampusSack)
+
+------------------------------------------------------------------------------------------
+--Krampus Sack Preserver
+local Krampus_Sack_Preserver = GetModConfigData("Krampus_Sack_Preserver")
+
+local function KrampusSackAddPreserver(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	
+	inst:AddTag("fridge")
+    inst:AddComponent("preserver")
+    inst.components.preserver:SetPerishRateMultiplier(Krampus_Sack_Preserver)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beargerfur_sack
+end
+AddPrefabPostInit("beargerfur_sack", UpdateBinWaterproofness)
+
+------------------------------------------------------------------------------------------
+--Bin Cooling
+local Bin_Cool = GetModConfigData("Bin_Cool")
+
+local function UpdateBinCool(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	
+	if Bin_Cool == 1 then --Cool
+		inst:AddTag("fridge")
+		inst:RemoveTag("nocool")
+	else
+		inst:RemoveTag("fridge")
+	end
+end
+
+```
+
+
+
+### 变体演进：种植计算器 | Crop Calculator (Mod 3504806755)
+- **变体场景与切面**：收录来自工坊 Mod 3504806755 (`种植计算器 | Crop Calculator`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3504806755)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+end
+AddPrefabPostInit("forest", OnWorldPostInit)
+AddPrefabPostInit("cave", OnWorldPostInit)
+AddPrefabPostInit("shipwrecked", OnWorldPostInit)
+AddPrefabPostInit("volcano", OnWorldPostInit)
+AddPrefabPostInit("porkland", OnWorldPostInit)
+
+local valid_screens = table.invert({ "HUD", "ServerListingScreen", "MultiplayerMainScreen", "MainScreen", "LobbyScreen" })
+
+local function GetActiveScreen()
+    local frontend = GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd:GetActiveScreen()
+    return frontend and frontend.name or ""
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+AddPrefabPostInit("forest", OnWorldPostInit)
+AddPrefabPostInit("cave", OnWorldPostInit)
+AddPrefabPostInit("shipwrecked", OnWorldPostInit)
+AddPrefabPostInit("volcano", OnWorldPostInit)
+AddPrefabPostInit("porkland", OnWorldPostInit)
+
+local valid_screens = table.invert({ "HUD", "ServerListingScreen", "MultiplayerMainScreen", "MainScreen", "LobbyScreen" })
+
+local function GetActiveScreen()
+    local frontend = GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd:GetActiveScreen()
+    return frontend and frontend.name or ""
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shipwrecked
+AddPrefabPostInit("cave", OnWorldPostInit)
+AddPrefabPostInit("shipwrecked", OnWorldPostInit)
+AddPrefabPostInit("volcano", OnWorldPostInit)
+AddPrefabPostInit("porkland", OnWorldPostInit)
+
+local valid_screens = table.invert({ "HUD", "ServerListingScreen", "MultiplayerMainScreen", "MainScreen", "LobbyScreen" })
+
+local function GetActiveScreen()
+    local frontend = GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd:GetActiveScreen()
+    return frontend and frontend.name or ""
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:volcano
+AddPrefabPostInit("shipwrecked", OnWorldPostInit)
+AddPrefabPostInit("volcano", OnWorldPostInit)
+AddPrefabPostInit("porkland", OnWorldPostInit)
+
+local valid_screens = table.invert({ "HUD", "ServerListingScreen", "MultiplayerMainScreen", "MainScreen", "LobbyScreen" })
+
+local function GetActiveScreen()
+    local frontend = GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd:GetActiveScreen()
+    return frontend and frontend.name or ""
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:porkland
+AddPrefabPostInit("volcano", OnWorldPostInit)
+AddPrefabPostInit("porkland", OnWorldPostInit)
+
+local valid_screens = table.invert({ "HUD", "ServerListingScreen", "MultiplayerMainScreen", "MainScreen", "LobbyScreen" })
+
+local function GetActiveScreen()
+    local frontend = GLOBAL.TheFrontEnd and GLOBAL.TheFrontEnd:GetActiveScreen()
+    return frontend and frontend.name or ""
+end
+
+```
+

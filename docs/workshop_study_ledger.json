@@ -7491,8 +7491,44 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 12:30:17",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "1242915898",
+      "name": "Ultimate Backpack Settings",
+      "author": "NABI",
+      "version": "1.44",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:34:53",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2124814847",
+      "name": "Spinel",
+      "author": "Sümi",
+      "version": "1.4.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 12:34:53",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "2706972372",
+      "name": "Auto-Unequip on 1-20% (2026 Update)",
+      "author": "Kevindevm, John Watson original idea",
+      "version": "6.03",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 12:34:53",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "3504806755",
+      "name": "种植计算器 | Crop Calculator",
+      "author": "DOGRAIN",
+      "version": "1.1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:34:53",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 12:30:17"
+  "lastUpdated": "2026-11-01 12:34:53"
 }

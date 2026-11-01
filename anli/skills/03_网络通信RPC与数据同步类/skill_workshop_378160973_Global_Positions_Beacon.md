@@ -8602,3 +8602,55 @@ end
 
 ```
 
+
+
+### 变体演进：Spinel (Mod 2124814847)
+- **变体场景与切面**：收录来自工坊 Mod 2124814847 (`Spinel`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2124814847)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:butterfly
+	-- Sanity mobs
+AddPrefabPostInit("butterfly", function(inst) -- I checked all of these and it works
+	inst:AddComponent("sanityaura")
+	inst.components.sanityaura.aurafn = PositiveSanity
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:perd
+
+AddPrefabPostInit("perd", function(inst) -- I checked all of these and it works
+	inst:AddComponent("sanityaura")
+	inst.components.sanityaura.aurafn = PositiveSanity
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:rabbit
+
+AddPrefabPostInit("rabbit", function(inst) -- I checked all of these and it works
+	inst:AddComponent("sanityaura")
+	inst.components.sanityaura.aurafn = PositiveSanity
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigman
+
+AddPrefabPostInit("pigman", function(inst) -- I checked all of these and it works
+	inst:AddComponent("sanityaura")
+	inst.components.sanityaura.aurafn = PositiveSanity
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bunnyman
+
+AddPrefabPostInit("bunnyman", function(inst) -- I checked all of these and it works
+	inst:AddComponent("sanityaura")
+	inst.components.sanityaura.aurafn = PositiveSanity
+end)
+
+```
+
