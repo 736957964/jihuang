@@ -11645,3 +11645,100 @@ end)]]
 
 ```
 
+
+
+### 变体演进：Spamton G. Spamton (Mod 3041634437)
+- **变体场景与切面**：收录来自工坊 Mod 3041634437 (`Spamton G. Spamton`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3041634437)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:reviver
+
+AddPrefabPostInit("reviver", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.tradable then
+			inst:AddComponent("tradable")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pipis
+
+AddPrefabPostInit("pipis", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.tradable then
+			inst:AddComponent("tradable")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:kromer
+
+AddPrefabPostInit("kromer", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if not inst.components.tradable then
+			inst:AddComponent("tradable")
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:heartattack
+
+AddPrefabPostInit("heartattack", function(inst)	
+	if GLOBAL.TheWorld.ismastersim then
+		inst.entity:AddSoundEmitter()
+		
+		if not inst.components.trader then
+			inst:AddComponent("trader")
+		end
+		
+		local function onattackother(self)
+			inst.components.finiteuses:Use(1) 
+		end
+		
+		local function onfinished(inst, owner)
+					if inst.components.equippable ~= nil then
+	inst.components.weapon:SetDamage(1)
+			end
+		end
+		
+		local function AbleToAcceptTest(inst, item)
+			return item ~= nil and item.prefab == "reviver" or item.tag == "reviver"  or item.prefab == "kromer" or item.tag == "kromer" or item.prefab == "pipis" or item.tag == "pipis"
+		end
+		
+		local function OnAccept(inst, giver, item)
+			local fuelvalue =
+			{
+				["reviver"] = 150,
+				["kromer"] = 37.5,
+				["pipis"] = 50,
+			}
+			if inst.components.finiteuses then
+				inst.components.finiteuses:SetUses(inst.components.finiteuses:GetUses() + fuelvalue[item.prefab])
+				if inst.components.finiteuses:GetPercent() > 1 then
+					inst.components.finiteuses:SetPercent(1)
+				end
+			end
+			if not 	inst.components.weapon:SetDamage(69) then
+					inst.components.weapon:SetDamage(69)
+			end
+		end
+		
+		if inst.components.finiteuses ~= nil then
+			inst.components.finiteuses:SetOnFinished(onfinished)
+		end
+		
+		inst.components.trader:SetAbleToAcceptTest(AbleToAcceptTest)
+		inst.components.trader.onaccept = OnAccept
+	end
+end)
+
+```
+

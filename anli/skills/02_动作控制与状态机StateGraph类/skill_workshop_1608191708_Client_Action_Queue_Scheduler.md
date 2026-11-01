@@ -52644,3 +52644,2662 @@ end)
 
 ```
 
+
+
+### 变体演进：Beefalo Info HUD (Mod 3439927311)
+- **变体场景与切面**：收录来自工坊 Mod 3439927311 (`Beefalo Info HUD`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3439927311)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:periodicspawner
+--不拉屎
+AddComponentPostInit("periodicspawner", function(self)
+	if not TheWorld.ismastersim then return end
+	if not d.wrap and not d.no_poop then return end
+
+	local old_DoSpawn = self.DoSpawn
+	function self:DoSpawn()
+		local inst = self.inst
+		if inst:HasTag("bihud_hide") then	--打包状态
+			return
+		end
+		if d.no_poop then
+			local saddle = inst.components.rideable and inst.components.rideable.saddle
+			if saddle and self.prefab == "poop" then	--限粪肥
+				return
+			end
+		end
+		return old_DoSpawn(self)
+	end
+
+	local old_TrySpawn = self.TrySpawn
+	function self:TrySpawn(prefab)
+		local inst = self.inst
+		if inst:HasTag("bihud_hide") then	--打包状态
+			return
+		end
+		if d.no_poop then
+			local saddle = inst.components.rideable and inst.components.rideable.saddle
+			if saddle and (self.prefab == "poop" or prefab == "poop") then	--限粪肥
+				return
+			end
+		end
+		return old_TrySpawn(self, prefab)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+	inst.bihud_domesticated_total = {}
+	--{prefab = 0,...}
+    if not TheWorld.ismastersim then return end
+
+	-- inst:DoTaskInTime(0, function ()
+	-- 	for k,v in pairs(Ents) do
+	-- 		--猪王/岩石巢穴/湖泊/大门/龙蝇生成
+	-- 		if v.prefab == "pigking" or v.prefab == "critterlab" or v.prefab == "oasislake" or v.prefab == "multiplayer_portal" or v.prefab == "dragonfly_spawner" then
+	-- 			local pos = v:GetPosition()
+	-- 			fns.mark_point[v.prefab] = pos
+	-- 		end
+	-- 	end
+	-- end)
+
+	--防灭绝
+	if d.spawn ~= "close" and d.spawn ~= false and inst:HasTag("forest") then
+		local day = TUNING.TOTAL_DAY_TIME
+		local time = day * 5 - 20
+		--牛，生成在草原（兔洞），其次岩石巢穴，草原有牛群，或草原上的牛多于3头
+		--兔洞：10地皮范围内无建筑，远离大门20个地皮
+		inst.bihud_spawn_task = inst:DoPeriodicTask(time,function()
+			local herd = nil
+			local count = 0
+
+			local rabbithole = nil
+			local distance = nil
+			local portal = fns.mark_point.multiplayer_portal
+			local num = 0
+			local max_num = 10
+			for k,v in pairs(Ents) do
+				if v.prefab == "beefaloherd" then
+					local member = v.components.herd and v.components.herd.membercount
+					if member and member > 1 then
+						local pos = v:GetPosition()
+						local tile = TheWorld.Map:GetTileAtPoint(pos:Get())
+						if tile == WORLD_TILES.SAVANNA then
+							herd = true
+							break
+						end
+					end
+				elseif v.prefab == "beefalo" then
+					local leader = v.components.follower and v.components.follower.leader
+					if not leader then
+						local pos = v:GetPosition()
+						local tile = TheWorld.Map:GetTileAtPoint(pos:Get())
+						if tile == WORLD_TILES.SAVANNA then
+							count = count + 1
+							if count > 2 then
+								herd = true
+								break
+							end
+						end
+					end
+				elseif v.prefab == "rabbithole" and portal and num < max_num then
+					local pos = v:GetPosition()
+					local dist = VecUtil_Dist(pos.x, pos.z, portal.x, portal.z)
+					if dist > 80 then
+						local tile = TheWorld.Map:GetTileAtPoint(pos:Get())
+						if tile == WORLD_TILES.SAVANNA then
+							if distance == nil or distance > dist and distance - dist > 40 then
+								num = num + 1
+
+								local ent = FindEntity(v, 40, function (i)
+									if i:HasOneOfTags({"player","wall","structure","beefalo"}) then
+										return true
+									end
+								end)
+								if not ent then
+									distance = dist
+									rabbithole = pos
+								elseif num == max_num and rabbithole == nil then
+									rabbithole = pos
+								end
+							end
+						end
+					end
+				end
+			end
+
+			local spawn_point = rabbithole or fns.mark_point.critterlab
+			if not herd and spawn_point then
+				local beefalos = TheSim:FindEntities(spawn_point.x,0,spawn_point.z, 80, {"beefalo"}, {"bihud_hide"})
+				if #beefalos < 10 then
+					local i = 0
+					while i < (10 - #beefalos) do
+						local random_x = spawn_point.x + math.random(-10,10)
+						local random_z = spawn_point.z + math.random(-10,10)
+						if TheWorld.Map:IsPassableAtPoint(random_x, 0, random_z) then
+							i = i + 1
+							local beefalo = SpawnPrefab("beefalo")
+							if beefalo then
+								beefalo.Transform:SetPosition(random_x,0,random_z)
+							end
+						end
+					end
+				end
+			end
+		end, day - 20)
+
+		if d.spawn == "open" or d.spawn == true then
+			local time_2 = day * 5 - 10
+			--羊，优先生成在仙人掌附近，其次绿洲
+			inst:DoPeriodicTask(time_2,function()
+				local oasis_cactus = nil
+				local lightninggoatherd = nil		--羊群
+				for k,v in pairs(Ents) do
+					if v.prefab == "lightninggoatherd" or v.prefab == "lightninggoat" then
+						lightninggoatherd = true
+						break
+
+					elseif v.prefab == "oasis_cactus" and oasis_cactus == nil then
+						local pos = v:GetPosition()
+						local tile = TheWorld.Map:GetTileAtPoint(pos:Get())
+						if tile == WORLD_TILES.DESERT_DIRT then
+							local ent = FindEntity(v, 40, function (i)
+								if i:HasOneOfTags({"player","wall","structure"}) then
+									return true
+								end
+							end)
+							if not ent then
+								oasis_cactus = pos
+							end
+						end
+					end
+				end
+
+				local spawn_point = oasis_cactus or fns.mark_point.oasislake
+				if not lightninggoatherd and spawn_point then
+					local offset = oasis_cactus ~= nil and 1 or 6
+					for i = 1,2 do
+						local goat = SpawnPrefab("lightninggoat")
+						if goat then
+							goat.Transform:SetPosition(spawn_point.x + offset,0,spawn_point.z + offset)
+						end
+					end
+				end
+			end, day - 10)
+		end
+	end
+
+	--猎犬提示
+	if d.hound_tip then
+		local function to_tip(data, time)
+			for _,v in ipairs(AllPlayers) do
+				local prefab = mymod.beefalo_owner[v.userid]
+				if prefab then
+					-- tip(v.userid, data)
+					if time then
+						local key = inst:HasTag("forest") and "hound_tip" or "worm_tip"
+						data = to_data(key, {time, STRINGS.NAMES[string.upper(prefab)] or prefab})
+					end
+					SendModRPCToClient(CLIENT_MOD_RPC["BIHUD"]["send_str"],v.userid,json.encode(data))
+				end
+			end
+		end
+
+		inst:WatchWorldState("cycles",function ()
+			inst:DoTaskInTime(1,function ()
+				local hound = TheWorld.components.hounded
+				if hound then
+					local time = hound:GetTimeToAttack()
+					if time and time > 0 and time <= TUNING.TOTAL_DAY_TIME then
+						local min = math.floor(time / 60)..":"..string.format("%02d",(time % 60))
+						to_tip(nil, min)
+					end
+				end
+			end)
+		end)
+
+		-- inst:ListenForEvent("nightmarephasechanged", function(inst, data)
+		-- 	inst:DoTaskInTime(.1,function ()
+		-- 		if data then
+		-- 			if inst.bihud_wild_locked then
+		-- 				data = "locked"
+		-- 			end
+
+		-- 			local data_ = to_data("cave_"..data)
+		-- 			to_tip(data_)
+		-- 		end
+		-- 	end)
+		-- end)
+
+		-- inst:ListenForEvent("ms_locknightmarephase", function(inst, data)
+		-- 	if data then
+		-- 		inst.bihud_wild_locked = true
+		-- 	else
+		-- 		inst.bihud_wild_locked = nil
+		-- 	end
+
+		-- end)
+	end
+
+	local old_onsave = inst.OnSave
+	local old_onload = inst.OnLoad
+
+    inst.OnSave = function(inst, data)
+        if old_onsave then
+            old_onsave(inst, data)
+        end
+		data.bihud_domesticated_total = inst.bihud_domesticated_total
+    end
+
+    inst.OnLoad = function(inst, data)
+        if old_onload then
+            old_onload(inst, data)
+        end
+        if data then
+			inst.bihud_domesticated_total = data.bihud_domesticated_total or {}
+            for k,v in pairs(inst.bihud_domesticated_total) do
+				local name = STRINGS.NAMES[string.upper(k)]
+				if name == nil then		--去除mod时，重置
+					inst.bihud_domesticated_total[k] = 0
+				end
+			end
+			if inst.bihud_domesticated_total.beefalo == nil then	--老档数据
+				inst.bihud_domesticated_total.beefalo = data.beefaloinfohud_total or 0
+			end
+			if inst.bihud_domesticated_total.beefalo == 0 then
+				local total = inst.meta and inst.meta.bihud_domesticated_total
+				if total then
+					inst.bihud_domesticated_total.beefalo = total.beefalo or 0
+				end
+			end
+        end
+    end
+end)
+
+--添加hud
+fns.controller = function ()
+	return TheInput:ControllerAttached()
+end
+
+local BIHUD = require("widgets/BIHUD")	--信息，客机设置
+local BIHUD_CONFIG = require("widgets/BIHUD_CONFIG")	--服务器设置
+AddClassPostConstruct("screens/playerhud", function(self)
+	-- self.BIHUD = self.root:AddChild(BIHUD(self))
+	-- self.BIHUD:Hide()
+
+	-- self.BIHUD_CONFIG = self.root:AddChild(BIHUD_CONFIG(self))
+	-- self.BIHUD_CONFIG:Hide()
+
+	--手柄支持
+	local old_OnControl = self.OnControl
+	function self:OnControl(control, down)
+		if TheInput:ControllerAttached() then
+			local hud = self.owner.HUD and self.owner.HUD.controls and self.owner.HUD.controls.BIHUD
+			if hud and hud.shown and down then
+				local RT = control == CONTROL_OPEN_INVENTORY	--61 45 86
+				local LT = control == CONTROL_OPEN_CRAFTING		--60 46 85
+				local pressed = TheInput:IsControlPressed(CONTROL_OPEN_CRAFTING)
+				if pressed and RT then
+					self:ClearFocus()
+					hud:set_focus()
+					-- say(self.owner, show.focus_gained)
+					chat_history(show.focus_gained)
+					return true
+				elseif (RT or LT) and hud.focus then
+					hud:clear_focus()
+					-- say(self.owner, show.focus_lost)
+					chat_history(show.focus_lost)
+				end
+			end
+		end
+		return old_OnControl(self, control, down)
+	end
+
+	--提示/隐藏焦点获取方式
+	local old_OpenControllerInventory = self.OpenControllerInventory
+	function self:OpenControllerInventory()
+		if TheInput:ControllerAttached() then
+			local hud = self.owner.HUD and self.owner.HUD.controls and self.owner.HUD.controls.BIHUD
+			if hud and hud.shown then
+				hud:focus_tip(true)
+			end
+		end
+		return old_OpenControllerInventory(self)
+	end
+
+	local old_CloseControllerInventory = self.CloseControllerInventory
+	function self:CloseControllerInventory()
+		if TheInput:ControllerAttached() then
+			local hud = self.owner.HUD and self.owner.HUD.controls and self.owner.HUD.controls.BIHUD
+			if hud and hud.shown then
+				hud:focus_tip(false)
+			end
+		end
+		return old_CloseControllerInventory(self)
+	end
+
+end)
+
+--ThePlayer.HUD.controls.
+AddClassPostConstruct("widgets/controls", function(self)
+	self.BIHUD = self:AddChild(BIHUD(self))
+	self.BIHUD:Hide()
+	self.BIHUD_CONFIG = self:AddChild(BIHUD_CONFIG(self))
+end)
+
+--处理选择器与物品栏光标同时响应
+AddClassPostConstruct("widgets/inventorybar", function(self, owner)
+	local old_OnUpdate = self.OnUpdate
+	function self:OnUpdate(dt)
+		if TheInput:ControllerAttached() then
+			local hud = self.owner.HUD and self.owner.HUD.controls and self.owner.HUD.controls.BIHUD
+			if hud and hud.shown and hud.set_root and hud.set_root.shown then
+				return true
+			end
+		end
+		return old_OnUpdate(self, dt)
+	end
+end)
+
+--控制调整
+AddComponentPostInit("playercontroller", function(self)
+	--hud获得焦点后禁用移动，手柄
+	local old_IsEnabled = self.IsEnabled
+	function self:IsEnabled()
+		if TheInput:ControllerAttached() then
+			local hud = self.inst.HUD and self.inst.HUD.controls and self.inst.HUD.controls.BIHUD
+			if hud and hud.shown and hud.focus then
+				return false
+			end
+		end
+		return old_IsEnabled(self)
+	end
+
+	--配置页打开禁用缩放
+	local old_DoCameraControl = self.DoCameraControl
+	function self:DoCameraControl()
+		local hud = self.inst.HUD and self.inst.HUD.controls and self.inst.HUD.controls.BIHUD_CONFIG
+		if hud and hud.focus and hud.config_root and hud.config_root.shown then
+			return
+		end
+		return old_DoCameraControl(self)
+	end
+end)
+
+--显隐hud,客机
+local function show_hud(inst)
+	local hud = inst.HUD and inst.HUD.controls and inst.HUD.controls.BIHUD
+	if hud then
+		local type = inst.bihud_showhud_netvar:value()
+		if type ~= 0 then
+			hud:showhud(type)
+		else
+			hud:hidehud()
+		end
+	end
+end
+--骑牛显示HUD，提示铃铛不在身上
+local function mounted(player, data)
+	if d.quick_mount and player.sg then
+		player.sg:GoToState("idle")
+	end
+
+	local mount = data and data.target
+	if mount and mount.bihud_bell_netvar then
+		fns.cancel_stake(mount)
+
+		player:AddTag("bihud_riding")
+
+		local bell = mount.bihud_bell_netvar:value()
+		if not bell then
+			local data_ = to_data("need_binding")
+			tip(player.userid, data_, nil, true)
+		else
+			local set = fns.tip_done("open_hud_set", player.userid, player)
+			if not set then
+				local data_ = to_data("open_hud_set")
+				tip(player.userid, data_)
+			end
+
+			local saddle = mount.components.rideable and mount.components.rideable.saddle
+			if saddle then
+				fns.saddle_data(saddle, mount)
+
+				if player.bihud_saddle_tip == nil then
+					player.bihud_saddle_tip = true
+
+					local prefab = d.saddle_plus
+					if prefab and (prefab == "all" or prefab == saddle.prefab) then
+						local data_3 = to_data("saddle_plus")
+						tip(player.userid, data_3)
+					end
+				end
+			end
+
+			mount.bihud_food_netvar:set(json.encode(mount.bihud_food_last or {}))
+			mount.bihud_rider_netvar:set(player)
+
+			local isdomesticated = mount.bihud_domesticated_netvar:value()
+			local type = isdomesticated and 3 or 2		--用于切换hud是否显示详细驯势值
+			player.bihud_showhud_netvar:set(type)
+
+			--铃铛不在身上
+			local owner = bell.components.inventoryitem:GetGrandOwner()
+			local beefalo_name = mount.bihud_data.beefalo_name or mount.name
+			if owner == nil or owner ~= player then
+				local name = to_name(bell)
+				local data_2 = to_data("rider_without_bell", {name}, beefalo_name)
+				tip(player.userid, data_2)
+
+				--fx_book_light	charlie_snap_solid
+				SpawnAt("fx_book_light", bell, {1.5,1.5,1.5}, Vector3(0, 0, 0))
+			end
+
+			--非主人骑牛添加标签，方便主人召回
+			local owner_id = mount.bihud_data.owner_id
+			if owner_id and owner_id ~= player.userid then
+				player:AddTag(owner_id.."_bihud_recall")
+				player.bihud_recall_tag = owner_id.."_bihud_recall"
+
+				local data_2 = to_data("other_ride", {player.name, beefalo_name})
+				tip(owner_id, data_2)
+			elseif not owner_id and not d.close_all then
+				local done = fns.tip_done("no_binding_data", player.userid)
+				if not done then
+					local data_ = to_data("no_binding_data")
+					tip(player.userid, data_)
+				end
+ 			end
+
+			if d.box and mount.prefab == "beefalo" then	--更新共享按钮
+				local shared = mount.bihud_box_shared and true or false
+				SendModRPCToClient(CLIENT_MOD_RPC["BIHUD"]["server_data"],player.userid,"box_shared", shared)
+			end
+
+			if d.light then	--更新发光颜色选项
+				local num = mount.bihud_data.light_colour or 1
+				SendModRPCToClient(CLIENT_MOD_RPC["BIHUD"]["server_data"],player.userid,"light_colour", num)
+			end
+
+			add_owner_tag(mount)
+		end
+
+		phase(mount)
+
+		player:ListenForEvent("locomote", fns.siton_moving)
+	end
+end
+
+--下牛
+local function dismounted(player, data)
+	player.bihud_showhud_netvar:set(0)
+
+	local mount = data and data.target
+	if mount and mount.bihud_ridingtime_netvar then
+		player:RemoveTag("bihud_riding")
+
+		mount.bihud_rider_netvar:set(nil)
+
+		if mount.bihud_buck_timer then
+			mount.bihud_buck_timer:Cancel()
+			mount.bihud_buck_timer = nil
+		end
+
+		phase(mount)
+	end
+
+	if player.bihud_recall_tag then
+		player:RemoveTag(player.bihud_recall_tag)
+		player.bihud_recall_tag = nil
+	end
+
+	if mount and player.bihud_label then
+		player.bihud_label.entity:SetParent(mount.entity)
+		player.bihud_label = nil
+	end
+
+	fns.siton_over(player, mount)
+	player:RemoveEventCallback("locomote", fns.siton_moving)
+
+end
+
+--高亮牛，开启牛箱高亮拥有相同物品的牛
+local function highlight_beefalo(beefalo, inst)
+	if not beefalo or not beefalo.entity:IsVisible() then
+		return
+	end
+	inst.bihud_highlight_beefalo = inst.bihud_highlight_beefalo or {}
+	inst.bihud_highlight_beefalo[beefalo] = true
+
+    if not beefalo.components.highlight then
+        beefalo:AddComponent("highlight")
+    end
+    beefalo.components.highlight:Highlight(math.random(), math.random(), math.random())
+end
+
+local function highlight(inst, data)
+	if inst.bihud_highlight then
+		local item = data and data.item
+		if item then
+			local beefalo = item.bihud_beefalo_netvar and item.bihud_beefalo_netvar:value()
+			if beefalo then
+				highlight_beefalo(beefalo, inst)
+			elseif d.box then
+				local pos = inst:GetPosition()
+				local beefalos = TheSim:FindEntities(pos.x, 0, pos.z, 40, {"beefalo"}, {"bihud_hide"})
+				for _, beef in ipairs(beefalos) do
+					local items = beef.bihud_box_items
+					if items and items[item.prefab] then
+						highlight_beefalo(beef, inst)
+					end
+				end
+			end
+		else
+			local beefalos = inst.bihud_highlight_beefalo
+			if beefalos then
+				for beefalo, v in pairs(beefalos) do
+					if beefalo:IsValid() and beefalo.components.highlight then
+						beefalo.components.highlight:UnHighlight()
+					end
+				end
+				inst.bihud_highlight_beefalo = nil
+			end
+		end
+	end
+end
+--护主，被攻击，身上铃铛绑定的牛主动攻击
+local function player_attacked(inst, data)
+	if inst.bihud_attacked_cd == nil then
+		inst.bihud_attacked_cd = true
+		inst:DoTaskInTime(1, function ()
+			inst.bihud_attacked_cd = nil
+		end)
+
+		local attacker = data and data.attacker
+		if attacker and attacker.components.combat then
+			local inventory = inst.components.inventory
+			if inventory then
+				local bells = inventory:FindItems(function (v)
+					local beefalo = v.bihud_beefalo_netvar and v.bihud_beefalo_netvar:value()
+					if beefalo then
+						return true
+					end
+				end)
+				for _,bell in ipairs(bells) do
+					if bell and bell.components.leader then
+						local beefalo = bell.bihud_beefalo
+						if beefalo and beefalo.entity:IsVisible() and attacker ~= beefalo and beefalo:IsNear(inst, 40)  then
+							if beefalo.components.rideable and not beefalo.components.rideable:GetRider() then
+								local issleep = beefalo.components.sleeper and beefalo.components.sleeper:IsAsleep()
+								if issleep then
+									beefalo.components.sleeper:WakeUp()
+								end
+								if beefalo.components.combat then
+									beefalo.components.combat:SetTarget(attacker)
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+--投票指令
+local maxplayers = TheNet:GetDefaultMaxPlayers() or 6
+AddUserCommand("bihud_vote", {
+    prettyname = show.vote.name,
+    desc = show.vote.desc,
+    permission = COMMAND_PERMISSION.ADMIN,
+    confirm = true,
+    slash = true,
+    usermenu = false,
+    servermenu = false,
+    params = {},
+    -- paramsoptional = {},
+    vote = true,
+    votetimeout = 30,
+    voteminstartage = 1,
+    voteminpasscount = 1,	--maxplayers / 2
+    votecountvisible = true,
+    voteallownotvoted = true,
+    voteoptions = {show.vote.yes, show.vote.no},
+    votetitlefmt = function ()
+		local str = show.vote.title
+		local data = mymod.vote.info
+		if data and data.key ~= nil then
+			local player_lang = ThePlayer and ThePlayer.bihud_language
+			if player_lang then
+				show = languages[player_lang]
+				show_config = languages_config[player_lang]
+			end
+
+			local name = show_config[data.key] or "unknown"
+			local info = data.text or "unknown"
+			str = string.format(show.tip.vote_data_tip_s, name, info)
+		end
+		return str
+	end,
+    votenamefmt = function ()
+		return show.vote.name
+	end,
+    votepassedfmt = function ()
+		return show.vote.success
+	end,
+    votecanstartfn = function (command, caller, targetid)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+--控制调整
+AddComponentPostInit("playercontroller", function(self)
+	--hud获得焦点后禁用移动，手柄
+	local old_IsEnabled = self.IsEnabled
+	function self:IsEnabled()
+		if TheInput:ControllerAttached() then
+			local hud = self.inst.HUD and self.inst.HUD.controls and self.inst.HUD.controls.BIHUD
+			if hud and hud.shown and hud.focus then
+				return false
+			end
+		end
+		return old_IsEnabled(self)
+	end
+
+	--配置页打开禁用缩放
+	local old_DoCameraControl = self.DoCameraControl
+	function self:DoCameraControl()
+		local hud = self.inst.HUD and self.inst.HUD.controls and self.inst.HUD.controls.BIHUD_CONFIG
+		if hud and hud.focus and hud.config_root and hud.config_root.shown then
+			return
+		end
+		return old_DoCameraControl(self)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:worldmigrator
+--[[游历洞穴掉落铃铛
+AddComponentPostInit("worldmigrator", function(self)
+	if not TheWorld.ismastersim then return end
+
+	local old_Activate = self.Activate
+	function self:Activate(doer)
+		local result = old_Activate(self, doer)
+
+		if result and doer then
+			local inv = doer.components.inventory
+			if inv then
+				inv:FindItems(function (ent)
+					local owner_id = ent.bihud_owner_id
+					if owner_id and owner_id ~= doer.userid then
+						inv:DropItem(ent)
+						local drop = ent.bihud_drop_pos
+						if drop and drop.world == TheShard:GetShardId() then
+							local pos = drop.pos
+							ent.Transform:SetPosition(pos.x,0,pos.z)
+						end
+					end
+				end)
+			end
+		end
+	end
+end)]]
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:writeable
+--记录绑定者信息，命名
+AddComponentPostInit("writeable", function(self)
+	if not TheWorld.ismastersim then return end
+
+	local old_EndWriting = self.EndWriting
+	function self:EndWriting()
+		local inst = self.inst
+		local doer = self.writer
+		local str = self.text
+		old_EndWriting(self)
+
+		if doer and str and inst.components.domesticatable then
+			local name = doer.name
+			if name:utf8len() > 18 then
+				name = name:utf8sub(1, 15).."..."
+			end
+
+			if str:utf8len() > 23 then
+				str = str:utf8sub(1, 20).."..."
+			end
+
+			inst.bihud_data.owner_name = name
+			inst.bihud_data.owner_id = doer.userid
+			inst.bihud_data.beefalo_name = str
+			inst.bihud_data_netvar:set(json.encode(inst.bihud_data))
+
+			if d.box and inst.prefab == "beefalo" then
+				local container = inst.components.container
+				if container then
+					container.restrictedtag = "player_"..doer.userid
+				end
+			end
+			inst.bihud_box_owner = doer.userid
+
+			inst:AddTag(doer.userid.."_bihud_recall")
+
+			local leader = inst.components.follower and inst.components.follower.leader
+			if leader and leader.components.useabletargeteditem then
+				if leader.components.named then
+					leader.components.named:SetName(str)
+				end
+
+				leader.bihud_owner_id = doer.userid
+				leader.bihud_owner_name = name
+				leader.bihud_beefalo_name = str
+
+				if leader.bihud_beefalo_netvar then
+					leader.bihud_beefalo_netvar:set(inst)
+				end
+
+				if leader.bihud_bell_info then
+					leader.bihud_bell_info.owner_id = inst.bihud_data.owner_id
+					leader.bihud_bell_info.owner_name = inst.bihud_data.owner_name
+					leader.bihud_bell_info.beefalo_name = inst.bihud_data.beefalo_name
+
+					if leader.bihud_bell_info_netvar then
+						leader.bihud_bell_info_netvar:set(json.encode(leader.bihud_bell_info))
+					end
+				end
+			end
+		end
+		if inst.bihud_skin and inst.components.skinner_beefalo and inst.sg then
+			inst.sg:GoToState("skin_change", function()
+				inst.components.skinner_beefalo:ApplyTargetSkins(inst.bihud_skin, doer)
+				inst.bihud_skin = nil
+			end)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：rana_lang (Mod 3797282687)
+- **变体场景与切面**：收录来自工坊 Mod 3797282687 (`rana_lang`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3797282687)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:talker
+
+AddComponentPostInit("talker", function(self)
+    local old_say = self.Say
+    function self:Say(script, time, noanim, force, nobroadcast, colour, ...)
+        -- Keep all Rana speech (including dialogue emitted by other systems)
+        -- in the same matcha-green colour.
+        if self.inst:HasTag("rana") then
+            colour = RANA_TALKER_COLOUR
+        end
+        if TheWorld.ismastersim and nobroadcast == true and self.inst:HasTag("player")
+            and IsMatchaMessage(script) then
+            for _, player in ipairs(AllPlayers) do
+                if player ~= self.inst and player:HasTag("rana") then
+                    player._rana_matcha_target = self.inst
+                    player._rana_matcha_expires = GetTime() + 30
+                end
+            end
+        end
+        return old_say(self, script, time, noanim, force, nobroadcast, colour, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:critter_kitten
+
+AddPrefabPostInit("critter_kitten", ConfigureKittenTransportName)
+
+local function IsOwnedKitten(kitten, player)
+    if not IsKitten(kitten) or player == nil or not player:IsValid() then
+        return false
+    end
+
+    -- Rock Den pets are tracked by petleash as well as follower/leader.  Check
+    -- every representation so this works both on the server and in the client
+    -- action picker.
+    local petleash = player.components ~= nil and player.components.petleash or nil
+    if petleash ~= nil and petleash:IsPet(kitten) then
+        return true
+    end
+    local leader = player.components ~= nil and player.components.leader or nil
+    if leader ~= nil and leader:IsFollower(kitten) then
+        return true
+    end
+    local follower = kitten.components ~= nil and kitten.components.follower or nil
+    if follower ~= nil and follower:GetLeader() == player then
+        return true
+    end
+    local follower_replica = kitten.replica ~= nil and kitten.replica.follower or nil
+    return follower_replica ~= nil and follower_replica:GetLeader() == player
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:rana_box
+
+AddPrefabPostInit("rana_box", ConfigureBoxTransportVisual)
+AddPrefabPostInit("rana_black_box", ConfigureBoxTransportVisual)
+AddPrefabPostInit("rana_white_box", ConfigureBoxTransportVisual)
+
+StopBoxTransport = function(box, position)
+    if box == nil or not box:IsValid() or box._rana_transport_stopping then
+        return
+    end
+    box._rana_transport_stopping = true
+    local kitcoon = box._rana_carrier
+    local owner = box._rana_transport_owner
+    local x, y, z
+    if position ~= nil then
+        x, y, z = position:Get()
+    elseif kitcoon ~= nil and kitcoon:IsValid() then
+        x, y, z = kitcoon.Transform:GetWorldPosition()
+    elseif owner ~= nil and owner:IsValid() then
+        x, y, z = owner.Transform:GetWorldPosition()
+    else
+        x, y, z = box.Transform:GetWorldPosition()
+    end
+    if box._rana_transport_task ~= nil then
+        box._rana_transport_task:Cancel()
+        box._rana_transport_task = nil
+    end
+    if kitcoon ~= nil then
+        if kitcoon._rana_carried_box == box then
+            kitcoon._rana_carried_box = nil
+        end
+        if kitcoon._rana_transporting_net ~= nil then
+            kitcoon._rana_transporting_net:set(false)
+        end
+    end
+    if kitcoon ~= nil and box._rana_on_carrier_removed ~= nil then
+        box:RemoveEventCallback("onremove", box._rana_on_carrier_removed, kitcoon)
+    end
+    box._rana_on_carrier_removed = nil
+    if kitcoon ~= nil and box._rana_on_carrier_fall ~= nil then
+        box:RemoveEventCallback("onsink", box._rana_on_carrier_fall, kitcoon)
+        box:RemoveEventCallback("onfallinvoid", box._rana_on_carrier_fall, kitcoon)
+    end
+    box._rana_on_carrier_fall = nil
+    if box.parent ~= nil then
+        box.parent:RemoveChild(box)
+    end
+    box.Transform:SetPosition(x, y, z)
+    box._rana_carrier = nil
+    box._rana_transport_owner = nil
+    -- While attached to a kitten the box is stored through the owner's save
+    -- record (see HookRanaPlayerDespawn below).  Once it is detached it is a
+    -- normal world/inventory entity again and must be persisted independently.
+    box.persists = true
+    box:RemoveTag("rana_box_carried")
+    SetBoxTransportVisual(box, false)
+    if box._rana_transport_net ~= nil then
+        box._rana_transport_net:set(false)
+    end
+    SetBoxPhysicsActive(box, true)
+    if box.components.inventoryitem ~= nil then
+        box.components.inventoryitem.canbepickedup = true
+        if box.components.container ~= nil then
+            local empty = true
+            for slot = 1, box.components.container:GetNumSlots() do
+                if box.components.container:GetItemInSlot(slot) ~= nil then
+                    empty = false
+                    break
+                end
+            end
+            box.components.inventoryitem.cangoincontainer = empty
+        elseif box.components.container_proxy ~= nil then
+            local master = box.components.container_proxy:GetMaster()
+            local container = master ~= nil and master.components.container or nil
+            if container == nil then
+                box.components.inventoryitem.cangoincontainer = false
+            else
+                local empty = true
+                for slot = 1, container:GetNumSlots() do
+                    if container:GetItemInSlot(slot) ~= nil then
+                        empty = false
+                        break
+                    end
+                end
+                box.components.inventoryitem.cangoincontainer = empty
+            end
+        end
+    end
+    if owner ~= nil and owner._rana_transport_box == box then
+        owner._rana_transport_box = nil
+        if not box._rana_transport_migrating then
+            owner._rana_transport_saved_record = nil
+            owner._rana_transport_saved_references = nil
+            owner._rana_transport_saved_position = nil
+        end
+    end
+    if kitcoon ~= nil and not box._rana_transport_migrating then
+        kitcoon._rana_transport_saved_record = nil
+        kitcoon._rana_transport_saved_references = nil
+        kitcoon._rana_transport_saved_position = nil
+        kitcoon._rana_saved_transport_box = nil
+        kitcoon._rana_saved_transport_box_position = nil
+    end
+    box._rana_transport_stopping = nil
+end
+
+local function GetEmergencyTransportDropPosition(box, owner, carrier, data)
+    if owner ~= nil and owner:IsValid() then
+        local x, y, z = owner.Transform:GetWorldPosition()
+        if owner:GetCurrentPlatform() ~= nil
+            or TheWorld.Map:IsVisualGroundAtPoint(x, y, z) then
+            return Vector3(x, y, z)
+        end
+    end
+
+    local recovery_point = data ~= nil
+        and (data.shore_pt or data.teleport_pt) or nil
+    if recovery_point ~= nil and recovery_point.Get ~= nil then
+        return Vector3(recovery_point:Get())
+    end
+
+    local drownable = carrier ~= nil and carrier:IsValid()
+        and carrier.components ~= nil and carrier.components.drownable or nil
+    if drownable ~= nil and drownable.GetWashingAshoreTeleportSpot ~= nil then
+        local x, y, z = drownable:GetWashingAshoreTeleportSpot()
+        if x ~= nil then
+            return Vector3(x, y, z)
+        end
+    end
+
+    return box:GetPosition()
+end
+
+local function ReleaseBoxFromFallingCarrier(box, carrier, data)
+    if box == nil or not box:IsValid() or box._rana_transport_migrating
+        or box._rana_carrier ~= carrier then
+        return
+    end
+
+    local position = GetEmergencyTransportDropPosition(
+        box,
+        box._rana_transport_owner,
+        carrier,
+        data
+    )
+    StopBoxTransport(box, position)
+
+    -- Finish the normal world-drop lifecycle after detaching. This restores
+    -- landed/platform handling and keeps a full case recoverable at the owner.
+    if box:IsValid() and box.components.inventoryitem ~= nil then
+        box.components.inventoryitem:OnDropped(false)
+    end
+end
+
+AttachBoxTransport = function(box, player, kitcoon)
+    if box == nil or not box:IsValid() or player == nil or not player:IsValid()
+        or not IsOwnedKitten(kitcoon, player) then
+        return false
+    end
+
+    local carried = kitcoon._rana_carried_box
+    if carried ~= nil and carried:IsValid() and carried ~= box then
+        return false
+    end
+    local existing = player._rana_transport_box
+    if existing ~= nil and existing:IsValid() and existing ~= box then
+        return false
+    end
+
+    if box.components.container ~= nil then
+        box.components.container:Close(player)
+    elseif box.components.container_proxy ~= nil then
+        local master = box.components.container_proxy:GetMaster()
+        if master ~= nil then
+            box.components.container_proxy:Close(player)
+        end
+    end
+
+    box._rana_transport_migrating = nil
+    box:AddTag("rana_box_carried")
+    box._rana_carrier = kitcoon
+    box._rana_transport_owner = player
+    player._rana_transport_box = box
+    kitcoon._rana_carried_box = box
+    kitcoon._rana_saved_transport_box = nil
+    kitcoon._rana_saved_transport_box_position = nil
+    -- Do not cache a snapshot of the box at attach time. Its container can
+    -- change while it is being transported, so an eager copy can restore stale
+    -- contents on rollback. The live entity is serialized by OnSave; raw
+    -- records are cached only by OnLoad while a snapshot player is temporary.
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    kitcoon._rana_transport_saved_record = nil
+    kitcoon._rana_transport_saved_references = nil
+    kitcoon._rana_transport_saved_position = nil
+    if kitcoon._rana_transporting_net ~= nil then
+        kitcoon._rana_transporting_net:set(true)
+    end
+    -- The complete box record is stored in the owner save while it is being
+    -- transported.  Keeping the attached entity out of world persistence
+    -- prevents rollback and shard migration from producing a second copy.
+    box.persists = false
+    SetBoxTransportVisual(box, true)
+    if box._rana_transport_net ~= nil then
+        box._rana_transport_net:set(true)
+    end
+    if box.components.inventoryitem ~= nil then
+        box.components.inventoryitem.canbepickedup = false
+    end
+    SetBoxPhysicsActive(box, false)
+    kitcoon:AddChild(box)
+    box.Transform:SetPosition(0, .55, 0)
+    box._rana_on_carrier_removed = function()
+        -- During shard migration the serialized copy belongs to the player
+        -- session.  Let removal of the old kitten retire this source entity
+        -- and all of its children instead of detaching a duplicate box into
+        -- the source world.
+        if not box._rana_transport_migrating then
+            StopBoxTransport(box)
+        end
+    end
+    box:ListenForEvent("onremove", box._rana_on_carrier_removed, kitcoon)
+    box._rana_on_carrier_fall = function(carrier, data)
+        ReleaseBoxFromFallingCarrier(box, carrier, data)
+    end
+    box:ListenForEvent("onsink", box._rana_on_carrier_fall, kitcoon)
+    box:ListenForEvent("onfallinvoid", box._rana_on_carrier_fall, kitcoon)
+
+    box._rana_transport_task = box:DoPeriodicTask(.5, function(inst)
+        local carrier = inst._rana_carrier
+        if carrier == nil or inst.parent ~= carrier
+            or not IsOwnedKitten(carrier, player) then
+            if not inst._rana_transport_migrating then
+                StopBoxTransport(inst)
+            end
+        end
+    end)
+    return true
+end
+
+local function GetSavedBoxStorageEmpty(box, record)
+    local container = box.components ~= nil and box.components.container or nil
+    if container == nil and box.components ~= nil and box.components.container_proxy ~= nil then
+        local master = box.components.container_proxy:GetMaster()
+        container = master ~= nil and master.components ~= nil and master.components.container or nil
+    end
+    if container ~= nil then
+        for slot = 1, container:GetNumSlots() do
+            if container:GetItemInSlot(slot) ~= nil then
+                return false
+            end
+        end
+        return true
+    end
+
+    -- Proxy boxes can be restored before the shared master is registered.
+    -- Use the serialized local container data when available; otherwise let
+    -- the caller retry after the proxy has had time to attach.
+    local record_data = record ~= nil and record.data or nil
+    local container_data = record_data ~= nil and record_data.container or nil
+    if container_data ~= nil then
+        return container_data.items == nil or next(container_data.items) == nil
+    end
+    return nil
+end
+
+
+local function DiscardStaleTransportBox(player, box)
+    if box == nil or not box:IsValid() then
+        player._rana_transport_box = nil
+        return
+    end
+
+    if box._rana_transport_task ~= nil then
+        box._rana_transport_task:Cancel()
+        box._rana_transport_task = nil
+    end
+    local carrier = box._rana_carrier
+    if carrier ~= nil and carrier:IsValid() then
+        if box._rana_on_carrier_removed ~= nil then
+            box:RemoveEventCallback("onremove", box._rana_on_carrier_removed, carrier)
+        end
+        if box._rana_on_carrier_fall ~= nil then
+            box:RemoveEventCallback("onsink", box._rana_on_carrier_fall, carrier)
+            box:RemoveEventCallback("onfallinvoid", box._rana_on_carrier_fall, carrier)
+        end
+        if carrier._rana_carried_box == box then
+            carrier._rana_carried_box = nil
+        end
+        if carrier._rana_transporting_net ~= nil then
+            carrier._rana_transporting_net:set(false)
+        end
+        carrier._rana_transport_saved_record = nil
+        carrier._rana_transport_saved_references = nil
+        carrier._rana_transport_saved_position = nil
+        carrier._rana_saved_transport_box = nil
+        carrier._rana_saved_transport_box_position = nil
+    end
+    if box.parent ~= nil then
+        box.parent:RemoveChild(box)
+    end
+    if player._rana_transport_box == box then
+        player._rana_transport_box = nil
+    end
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    box:Remove()
+end
+
+local function RestoreSavedTransportBox(player, savedata, newents, attempts)
+    player._rana_transport_restore_task = nil
+    -- RestoreSnapshotUserSession creates a temporary player, calls SetPersistData
+    -- and immediately serializes/removes it in the same tick. Spawning a live
+    -- case here cannot complete before that player disappears; its raw record
+    -- is already copied by OnLoad/OnSave below, so leave this path untouched.
+    if not player:IsValid() or player.is_snapshot_user_session
+        or player._rana_transport_restore_done then
+        return
+    end
+
+    savedata = savedata or {}
+    attempts = attempts or 0
+    local existing = player._rana_transport_box
+    local existing_valid = existing ~= nil and existing:IsValid()
+        and existing:HasTag("rana_box_carried")
+    -- The Attach cache is a save fallback, not evidence that this load needs
+    -- to replace the live case. Only data read by the current OnLoad (or the
+    -- explicit in-transit flag) may start a restoration.
+    local loaded_record = player._rana_transport_loaded_record
+    local restore_transport = savedata.rana_transport_box_in_transit == true
+        or loaded_record ~= nil
+    -- During snapshot rollback the old kitten can still be registered in the
+    -- petleash while it is carrying the old case. Include it when looking for
+    -- the destination carrier; the old implementation skipped it and then
+    -- discarded the only recoverable case.
+    local kitten = restore_transport and FindLeashedKitten(player, true) or nil
+    if kitten == nil then
+        -- Pet data is also a valid rollback source when a later player OnSave
+        -- wrapper failed to preserve our player-side record.
+        local candidate = FindLeashedKitten(player, true)
+        if candidate ~= nil and candidate._rana_saved_transport_box ~= nil then
+            kitten = candidate
+            restore_transport = true
+        end
+    end
+    local box_record = savedata.rana_transport_box
+        or loaded_record
+        or kitten ~= nil and kitten._rana_saved_transport_box or nil
+
+    -- Never remove the currently carried entity before a valid replacement
+    -- record has been found. Snapshot rollback can legitimately call this
+    -- function with an empty/partial player data table; deleting the old case
+    -- in that situation was the direct cause of reported disappearances.
+    if box_record == nil then
+        if existing_valid then
+            -- The old entity is still usable. Keep it attached and let the
+            -- normal transport watcher continue to own it.
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if attempts < 20 then
+            player._rana_transport_restore_task = player:DoTaskInTime(
+                .25,
+                RestoreSavedTransportBox,
+                savedata,
+                newents,
+                attempts + 1
+            )
+        end
+        return
+    end
+
+    if restore_transport and kitten == nil and attempts < 20 then
+        -- petleash normally restores migration pets before player OnLoad, but
+        -- leave a short retry window for mods that defer pet initialization.
+        -- Do not create the box until its destination carrier is available.
+        player._rana_transport_restore_task = player:DoTaskInTime(
+            .25,
+            RestoreSavedTransportBox,
+            savedata,
+            newents,
+            attempts + 1
+        )
+        return
+    end
+    if box_record == nil then
+        return
+    end
+
+    local box = player._rana_transport_restore_box
+    if box == nil or not box:IsValid() then
+        -- A malformed record should not be allowed to destroy the existing
+        -- case. SpawnSaveRecord can fail for a missing reference on old
+        -- snapshots, so protect the recovery path and keep the old entity as
+        -- a fallback.
+        local ok, restored = pcall(SpawnSaveRecord, box_record, newents or {})
+        box = ok and restored or nil
+    end
+    if box == nil or not box:IsValid() then
+        if existing_valid then
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if attempts < 20 then
+            player._rana_transport_restore_task = player:DoTaskInTime(
+                .25,
+                RestoreSavedTransportBox,
+                savedata,
+                newents,
+                attempts + 1
+            )
+        end
+        return
+    end
+
+    if existing ~= nil and not existing:IsValid() then
+        player._rana_transport_box = nil
+    end
+
+    local storage_empty = GetSavedBoxStorageEmpty(box, box_record)
+    if not restore_transport and storage_empty == nil and attempts < 20 then
+        -- Wait for rana_black_box/rana_white_box to attach the shared
+        -- pocket container before deciding whether the box may enter an
+        -- inventory. Keep this temporary copy out of world saves.
+        box.persists = false
+        player._rana_transport_restore_box = box
+        player._rana_transport_restore_task = player:DoTaskInTime(
+            .25,
+            RestoreSavedTransportBox,
+            savedata,
+            newents,
+            attempts + 1
+        )
+        return
+    end
+    player._rana_transport_restore_box = nil
+    player._rana_transport_restore_done = true
+
+    if restore_transport and kitten ~= nil then
+        -- Keep the old live case recoverable until the replacement has been
+        -- attached successfully. This matters when a pet was restored late
+        -- or another mod temporarily rejects the attach action.
+        local stale_existing = existing_valid and existing ~= box and existing or nil
+        if stale_existing ~= nil then
+            local stale_position = player:GetPosition()
+            StopBoxTransport(stale_existing, stale_position)
+            if stale_existing:IsValid() and stale_existing.components.inventoryitem ~= nil then
+                stale_existing.components.inventoryitem:OnDropped(false)
+            end
+        end
+        if AttachBoxTransport(box, player, kitten) then
+            if stale_existing ~= nil and stale_existing:IsValid() then
+                stale_existing:Remove()
+            end
+            kitten._rana_saved_transport_box = nil
+            kitten._rana_saved_transport_box_position = nil
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if stale_existing ~= nil and stale_existing:IsValid() then
+            -- The old case is already a normal persistent world item. Remove
+            -- the duplicate temporary copy and leave the old one available.
+            box.persists = true
+            box:Remove()
+            player._rana_transport_box = nil
+            kitten._rana_saved_transport_box = nil
+            kitten._rana_saved_transport_box_position = nil
+            player._rana_transport_saved_record = nil
+            player._rana_transport_saved_references = nil
+            player._rana_transport_saved_position = nil
+            player._rana_transport_loaded_record = nil
+            return
+        end
+    end
+
+    box.persists = true
+    local drop_position
+    if restore_transport then
+        -- If a third-party mod prevents the migration pet from being
+        -- restored, keep the suitcase recoverable in the destination shard.
+        -- Source-shard coordinates are not meaningful here.
+        drop_position = player:GetPosition()
+    else
+        local position = savedata.rana_transport_box_position
+            or kitten ~= nil and kitten._rana_saved_transport_box_position or nil
+        if position == nil then
+            position = {
+                x = box_record.x or 0,
+                y = box_record.y or 0,
+                z = box_record.z or 0,
+            }
+        end
+        drop_position = Vector3(position.x or 0, position.y or 0, position.z or 0)
+    end
+    local inventory = player.components.inventory
+    if box.components.inventoryitem ~= nil then
+        -- Keep the inventory flag consistent even when the box was restored
+        -- before its normal itemget/itemlose callbacks ran.
+        box.components.inventoryitem.cangoincontainer = storage_empty == true
+    end
+    local restored = not restore_transport and storage_empty == true and inventory ~= nil
+        and inventory:GiveItem(box, nil, drop_position, true)
+    if not restored then
+        box.Transform:SetPosition(drop_position:Get())
+        if box.components.inventoryitem ~= nil then
+            box.components.inventoryitem:OnDropped(false)
+        end
+    end
+    if kitten ~= nil then
+        kitten._rana_saved_transport_box = nil
+        kitten._rana_saved_transport_box_position = nil
+    end
+    -- The restored entity is now persistent (or in the player's inventory),
+    -- so the raw OnLoad copy has been consumed and must not be serialized as
+    -- a second suitcase on a later save.
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    player._rana_transport_loaded_record = nil
+end
+
+local function MarkPlayerBoxTransportMigrating(player)
+    if player == nil then
+        return
+    end
+    player._rana_box_migrating = true
+    local box = player._rana_transport_box
+    if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+        box._rana_transport_migrating = true
+    end
+end
+
+local function ReleasePlayerBoxTransport(player)
+    if player == nil then
+        return
+    end
+
+    if player._rana_box_migrating then
+        return
+    end
+
+    local box = player._rana_transport_box
+    if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+        -- Detach before the player's followers are removed. Otherwise the
+        -- kitten can take the box with it when the player entity despawns.
+        local position = player:IsValid() and player:GetPosition() or nil
+        StopBoxTransport(box, position)
+    else
+        player._rana_transport_box = nil
+    end
+end
+
+local function HookRanaPlayerDespawn(inst)
+    if not TheWorld.ismastersim or inst._rana_box_despawn_hooked then
+        return
+    end
+    inst._rana_box_despawn_hooked = true
+
+    -- A transported case is deliberately removed from the player's
+    -- inventory while the kitten carries it.  Children of a follower are not
+    -- guaranteed to survive rollback, so serialize the complete case record
+    -- through the player's save data and restore it on load.  The case is
+    -- marked non-persistent while carried to prevent a second world copy.
+    if not inst._rana_transport_persistence_hooked then
+        inst._rana_transport_persistence_hooked = true
+        local old_save = inst.OnSave
+        inst.OnSave = function(player, data)
+            local references = old_save ~= nil and old_save(player, data) or nil
+            local box = player._rana_transport_box
+            local record, box_references, position
+            if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+                record, box_references = CaptureTransportSaveRecord(box)
+                local x, y, z = box.Transform:GetWorldPosition()
+                position = { x = x, y = y, z = z }
+                if record == nil then
+                    record = player._rana_transport_saved_record
+                    box_references = player._rana_transport_saved_references
+                    position = player._rana_transport_saved_position
+                end
+            else
+                record = player._rana_transport_saved_record
+                box_references = player._rana_transport_saved_references
+                position = player._rana_transport_saved_position
+            end
+            if record ~= nil then
+                data.rana_transport_box = record
+                data.rana_transport_box_position = position
+                data.rana_transport_box_in_transit = true
+                references = AppendSaveReferences(references, box_references)
+            end
+            return references
+        end
+
+        local old_load = inst.OnLoad
+        inst.OnLoad = function(player, data, newents)
+            if old_load ~= nil then
+                old_load(player, data, newents)
+            end
+            player._rana_box_migrating = nil
+            -- Rollback may reload data into an existing player instance.
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:rana_black_box
+AddPrefabPostInit("rana_box", ConfigureBoxTransportVisual)
+AddPrefabPostInit("rana_black_box", ConfigureBoxTransportVisual)
+AddPrefabPostInit("rana_white_box", ConfigureBoxTransportVisual)
+
+StopBoxTransport = function(box, position)
+    if box == nil or not box:IsValid() or box._rana_transport_stopping then
+        return
+    end
+    box._rana_transport_stopping = true
+    local kitcoon = box._rana_carrier
+    local owner = box._rana_transport_owner
+    local x, y, z
+    if position ~= nil then
+        x, y, z = position:Get()
+    elseif kitcoon ~= nil and kitcoon:IsValid() then
+        x, y, z = kitcoon.Transform:GetWorldPosition()
+    elseif owner ~= nil and owner:IsValid() then
+        x, y, z = owner.Transform:GetWorldPosition()
+    else
+        x, y, z = box.Transform:GetWorldPosition()
+    end
+    if box._rana_transport_task ~= nil then
+        box._rana_transport_task:Cancel()
+        box._rana_transport_task = nil
+    end
+    if kitcoon ~= nil then
+        if kitcoon._rana_carried_box == box then
+            kitcoon._rana_carried_box = nil
+        end
+        if kitcoon._rana_transporting_net ~= nil then
+            kitcoon._rana_transporting_net:set(false)
+        end
+    end
+    if kitcoon ~= nil and box._rana_on_carrier_removed ~= nil then
+        box:RemoveEventCallback("onremove", box._rana_on_carrier_removed, kitcoon)
+    end
+    box._rana_on_carrier_removed = nil
+    if kitcoon ~= nil and box._rana_on_carrier_fall ~= nil then
+        box:RemoveEventCallback("onsink", box._rana_on_carrier_fall, kitcoon)
+        box:RemoveEventCallback("onfallinvoid", box._rana_on_carrier_fall, kitcoon)
+    end
+    box._rana_on_carrier_fall = nil
+    if box.parent ~= nil then
+        box.parent:RemoveChild(box)
+    end
+    box.Transform:SetPosition(x, y, z)
+    box._rana_carrier = nil
+    box._rana_transport_owner = nil
+    -- While attached to a kitten the box is stored through the owner's save
+    -- record (see HookRanaPlayerDespawn below).  Once it is detached it is a
+    -- normal world/inventory entity again and must be persisted independently.
+    box.persists = true
+    box:RemoveTag("rana_box_carried")
+    SetBoxTransportVisual(box, false)
+    if box._rana_transport_net ~= nil then
+        box._rana_transport_net:set(false)
+    end
+    SetBoxPhysicsActive(box, true)
+    if box.components.inventoryitem ~= nil then
+        box.components.inventoryitem.canbepickedup = true
+        if box.components.container ~= nil then
+            local empty = true
+            for slot = 1, box.components.container:GetNumSlots() do
+                if box.components.container:GetItemInSlot(slot) ~= nil then
+                    empty = false
+                    break
+                end
+            end
+            box.components.inventoryitem.cangoincontainer = empty
+        elseif box.components.container_proxy ~= nil then
+            local master = box.components.container_proxy:GetMaster()
+            local container = master ~= nil and master.components.container or nil
+            if container == nil then
+                box.components.inventoryitem.cangoincontainer = false
+            else
+                local empty = true
+                for slot = 1, container:GetNumSlots() do
+                    if container:GetItemInSlot(slot) ~= nil then
+                        empty = false
+                        break
+                    end
+                end
+                box.components.inventoryitem.cangoincontainer = empty
+            end
+        end
+    end
+    if owner ~= nil and owner._rana_transport_box == box then
+        owner._rana_transport_box = nil
+        if not box._rana_transport_migrating then
+            owner._rana_transport_saved_record = nil
+            owner._rana_transport_saved_references = nil
+            owner._rana_transport_saved_position = nil
+        end
+    end
+    if kitcoon ~= nil and not box._rana_transport_migrating then
+        kitcoon._rana_transport_saved_record = nil
+        kitcoon._rana_transport_saved_references = nil
+        kitcoon._rana_transport_saved_position = nil
+        kitcoon._rana_saved_transport_box = nil
+        kitcoon._rana_saved_transport_box_position = nil
+    end
+    box._rana_transport_stopping = nil
+end
+
+local function GetEmergencyTransportDropPosition(box, owner, carrier, data)
+    if owner ~= nil and owner:IsValid() then
+        local x, y, z = owner.Transform:GetWorldPosition()
+        if owner:GetCurrentPlatform() ~= nil
+            or TheWorld.Map:IsVisualGroundAtPoint(x, y, z) then
+            return Vector3(x, y, z)
+        end
+    end
+
+    local recovery_point = data ~= nil
+        and (data.shore_pt or data.teleport_pt) or nil
+    if recovery_point ~= nil and recovery_point.Get ~= nil then
+        return Vector3(recovery_point:Get())
+    end
+
+    local drownable = carrier ~= nil and carrier:IsValid()
+        and carrier.components ~= nil and carrier.components.drownable or nil
+    if drownable ~= nil and drownable.GetWashingAshoreTeleportSpot ~= nil then
+        local x, y, z = drownable:GetWashingAshoreTeleportSpot()
+        if x ~= nil then
+            return Vector3(x, y, z)
+        end
+    end
+
+    return box:GetPosition()
+end
+
+local function ReleaseBoxFromFallingCarrier(box, carrier, data)
+    if box == nil or not box:IsValid() or box._rana_transport_migrating
+        or box._rana_carrier ~= carrier then
+        return
+    end
+
+    local position = GetEmergencyTransportDropPosition(
+        box,
+        box._rana_transport_owner,
+        carrier,
+        data
+    )
+    StopBoxTransport(box, position)
+
+    -- Finish the normal world-drop lifecycle after detaching. This restores
+    -- landed/platform handling and keeps a full case recoverable at the owner.
+    if box:IsValid() and box.components.inventoryitem ~= nil then
+        box.components.inventoryitem:OnDropped(false)
+    end
+end
+
+AttachBoxTransport = function(box, player, kitcoon)
+    if box == nil or not box:IsValid() or player == nil or not player:IsValid()
+        or not IsOwnedKitten(kitcoon, player) then
+        return false
+    end
+
+    local carried = kitcoon._rana_carried_box
+    if carried ~= nil and carried:IsValid() and carried ~= box then
+        return false
+    end
+    local existing = player._rana_transport_box
+    if existing ~= nil and existing:IsValid() and existing ~= box then
+        return false
+    end
+
+    if box.components.container ~= nil then
+        box.components.container:Close(player)
+    elseif box.components.container_proxy ~= nil then
+        local master = box.components.container_proxy:GetMaster()
+        if master ~= nil then
+            box.components.container_proxy:Close(player)
+        end
+    end
+
+    box._rana_transport_migrating = nil
+    box:AddTag("rana_box_carried")
+    box._rana_carrier = kitcoon
+    box._rana_transport_owner = player
+    player._rana_transport_box = box
+    kitcoon._rana_carried_box = box
+    kitcoon._rana_saved_transport_box = nil
+    kitcoon._rana_saved_transport_box_position = nil
+    -- Do not cache a snapshot of the box at attach time. Its container can
+    -- change while it is being transported, so an eager copy can restore stale
+    -- contents on rollback. The live entity is serialized by OnSave; raw
+    -- records are cached only by OnLoad while a snapshot player is temporary.
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    kitcoon._rana_transport_saved_record = nil
+    kitcoon._rana_transport_saved_references = nil
+    kitcoon._rana_transport_saved_position = nil
+    if kitcoon._rana_transporting_net ~= nil then
+        kitcoon._rana_transporting_net:set(true)
+    end
+    -- The complete box record is stored in the owner save while it is being
+    -- transported.  Keeping the attached entity out of world persistence
+    -- prevents rollback and shard migration from producing a second copy.
+    box.persists = false
+    SetBoxTransportVisual(box, true)
+    if box._rana_transport_net ~= nil then
+        box._rana_transport_net:set(true)
+    end
+    if box.components.inventoryitem ~= nil then
+        box.components.inventoryitem.canbepickedup = false
+    end
+    SetBoxPhysicsActive(box, false)
+    kitcoon:AddChild(box)
+    box.Transform:SetPosition(0, .55, 0)
+    box._rana_on_carrier_removed = function()
+        -- During shard migration the serialized copy belongs to the player
+        -- session.  Let removal of the old kitten retire this source entity
+        -- and all of its children instead of detaching a duplicate box into
+        -- the source world.
+        if not box._rana_transport_migrating then
+            StopBoxTransport(box)
+        end
+    end
+    box:ListenForEvent("onremove", box._rana_on_carrier_removed, kitcoon)
+    box._rana_on_carrier_fall = function(carrier, data)
+        ReleaseBoxFromFallingCarrier(box, carrier, data)
+    end
+    box:ListenForEvent("onsink", box._rana_on_carrier_fall, kitcoon)
+    box:ListenForEvent("onfallinvoid", box._rana_on_carrier_fall, kitcoon)
+
+    box._rana_transport_task = box:DoPeriodicTask(.5, function(inst)
+        local carrier = inst._rana_carrier
+        if carrier == nil or inst.parent ~= carrier
+            or not IsOwnedKitten(carrier, player) then
+            if not inst._rana_transport_migrating then
+                StopBoxTransport(inst)
+            end
+        end
+    end)
+    return true
+end
+
+local function GetSavedBoxStorageEmpty(box, record)
+    local container = box.components ~= nil and box.components.container or nil
+    if container == nil and box.components ~= nil and box.components.container_proxy ~= nil then
+        local master = box.components.container_proxy:GetMaster()
+        container = master ~= nil and master.components ~= nil and master.components.container or nil
+    end
+    if container ~= nil then
+        for slot = 1, container:GetNumSlots() do
+            if container:GetItemInSlot(slot) ~= nil then
+                return false
+            end
+        end
+        return true
+    end
+
+    -- Proxy boxes can be restored before the shared master is registered.
+    -- Use the serialized local container data when available; otherwise let
+    -- the caller retry after the proxy has had time to attach.
+    local record_data = record ~= nil and record.data or nil
+    local container_data = record_data ~= nil and record_data.container or nil
+    if container_data ~= nil then
+        return container_data.items == nil or next(container_data.items) == nil
+    end
+    return nil
+end
+
+
+local function DiscardStaleTransportBox(player, box)
+    if box == nil or not box:IsValid() then
+        player._rana_transport_box = nil
+        return
+    end
+
+    if box._rana_transport_task ~= nil then
+        box._rana_transport_task:Cancel()
+        box._rana_transport_task = nil
+    end
+    local carrier = box._rana_carrier
+    if carrier ~= nil and carrier:IsValid() then
+        if box._rana_on_carrier_removed ~= nil then
+            box:RemoveEventCallback("onremove", box._rana_on_carrier_removed, carrier)
+        end
+        if box._rana_on_carrier_fall ~= nil then
+            box:RemoveEventCallback("onsink", box._rana_on_carrier_fall, carrier)
+            box:RemoveEventCallback("onfallinvoid", box._rana_on_carrier_fall, carrier)
+        end
+        if carrier._rana_carried_box == box then
+            carrier._rana_carried_box = nil
+        end
+        if carrier._rana_transporting_net ~= nil then
+            carrier._rana_transporting_net:set(false)
+        end
+        carrier._rana_transport_saved_record = nil
+        carrier._rana_transport_saved_references = nil
+        carrier._rana_transport_saved_position = nil
+        carrier._rana_saved_transport_box = nil
+        carrier._rana_saved_transport_box_position = nil
+    end
+    if box.parent ~= nil then
+        box.parent:RemoveChild(box)
+    end
+    if player._rana_transport_box == box then
+        player._rana_transport_box = nil
+    end
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    box:Remove()
+end
+
+local function RestoreSavedTransportBox(player, savedata, newents, attempts)
+    player._rana_transport_restore_task = nil
+    -- RestoreSnapshotUserSession creates a temporary player, calls SetPersistData
+    -- and immediately serializes/removes it in the same tick. Spawning a live
+    -- case here cannot complete before that player disappears; its raw record
+    -- is already copied by OnLoad/OnSave below, so leave this path untouched.
+    if not player:IsValid() or player.is_snapshot_user_session
+        or player._rana_transport_restore_done then
+        return
+    end
+
+    savedata = savedata or {}
+    attempts = attempts or 0
+    local existing = player._rana_transport_box
+    local existing_valid = existing ~= nil and existing:IsValid()
+        and existing:HasTag("rana_box_carried")
+    -- The Attach cache is a save fallback, not evidence that this load needs
+    -- to replace the live case. Only data read by the current OnLoad (or the
+    -- explicit in-transit flag) may start a restoration.
+    local loaded_record = player._rana_transport_loaded_record
+    local restore_transport = savedata.rana_transport_box_in_transit == true
+        or loaded_record ~= nil
+    -- During snapshot rollback the old kitten can still be registered in the
+    -- petleash while it is carrying the old case. Include it when looking for
+    -- the destination carrier; the old implementation skipped it and then
+    -- discarded the only recoverable case.
+    local kitten = restore_transport and FindLeashedKitten(player, true) or nil
+    if kitten == nil then
+        -- Pet data is also a valid rollback source when a later player OnSave
+        -- wrapper failed to preserve our player-side record.
+        local candidate = FindLeashedKitten(player, true)
+        if candidate ~= nil and candidate._rana_saved_transport_box ~= nil then
+            kitten = candidate
+            restore_transport = true
+        end
+    end
+    local box_record = savedata.rana_transport_box
+        or loaded_record
+        or kitten ~= nil and kitten._rana_saved_transport_box or nil
+
+    -- Never remove the currently carried entity before a valid replacement
+    -- record has been found. Snapshot rollback can legitimately call this
+    -- function with an empty/partial player data table; deleting the old case
+    -- in that situation was the direct cause of reported disappearances.
+    if box_record == nil then
+        if existing_valid then
+            -- The old entity is still usable. Keep it attached and let the
+            -- normal transport watcher continue to own it.
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if attempts < 20 then
+            player._rana_transport_restore_task = player:DoTaskInTime(
+                .25,
+                RestoreSavedTransportBox,
+                savedata,
+                newents,
+                attempts + 1
+            )
+        end
+        return
+    end
+
+    if restore_transport and kitten == nil and attempts < 20 then
+        -- petleash normally restores migration pets before player OnLoad, but
+        -- leave a short retry window for mods that defer pet initialization.
+        -- Do not create the box until its destination carrier is available.
+        player._rana_transport_restore_task = player:DoTaskInTime(
+            .25,
+            RestoreSavedTransportBox,
+            savedata,
+            newents,
+            attempts + 1
+        )
+        return
+    end
+    if box_record == nil then
+        return
+    end
+
+    local box = player._rana_transport_restore_box
+    if box == nil or not box:IsValid() then
+        -- A malformed record should not be allowed to destroy the existing
+        -- case. SpawnSaveRecord can fail for a missing reference on old
+        -- snapshots, so protect the recovery path and keep the old entity as
+        -- a fallback.
+        local ok, restored = pcall(SpawnSaveRecord, box_record, newents or {})
+        box = ok and restored or nil
+    end
+    if box == nil or not box:IsValid() then
+        if existing_valid then
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if attempts < 20 then
+            player._rana_transport_restore_task = player:DoTaskInTime(
+                .25,
+                RestoreSavedTransportBox,
+                savedata,
+                newents,
+                attempts + 1
+            )
+        end
+        return
+    end
+
+    if existing ~= nil and not existing:IsValid() then
+        player._rana_transport_box = nil
+    end
+
+    local storage_empty = GetSavedBoxStorageEmpty(box, box_record)
+    if not restore_transport and storage_empty == nil and attempts < 20 then
+        -- Wait for rana_black_box/rana_white_box to attach the shared
+        -- pocket container before deciding whether the box may enter an
+        -- inventory. Keep this temporary copy out of world saves.
+        box.persists = false
+        player._rana_transport_restore_box = box
+        player._rana_transport_restore_task = player:DoTaskInTime(
+            .25,
+            RestoreSavedTransportBox,
+            savedata,
+            newents,
+            attempts + 1
+        )
+        return
+    end
+    player._rana_transport_restore_box = nil
+    player._rana_transport_restore_done = true
+
+    if restore_transport and kitten ~= nil then
+        -- Keep the old live case recoverable until the replacement has been
+        -- attached successfully. This matters when a pet was restored late
+        -- or another mod temporarily rejects the attach action.
+        local stale_existing = existing_valid and existing ~= box and existing or nil
+        if stale_existing ~= nil then
+            local stale_position = player:GetPosition()
+            StopBoxTransport(stale_existing, stale_position)
+            if stale_existing:IsValid() and stale_existing.components.inventoryitem ~= nil then
+                stale_existing.components.inventoryitem:OnDropped(false)
+            end
+        end
+        if AttachBoxTransport(box, player, kitten) then
+            if stale_existing ~= nil and stale_existing:IsValid() then
+                stale_existing:Remove()
+            end
+            kitten._rana_saved_transport_box = nil
+            kitten._rana_saved_transport_box_position = nil
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if stale_existing ~= nil and stale_existing:IsValid() then
+            -- The old case is already a normal persistent world item. Remove
+            -- the duplicate temporary copy and leave the old one available.
+            box.persists = true
+            box:Remove()
+            player._rana_transport_box = nil
+            kitten._rana_saved_transport_box = nil
+            kitten._rana_saved_transport_box_position = nil
+            player._rana_transport_saved_record = nil
+            player._rana_transport_saved_references = nil
+            player._rana_transport_saved_position = nil
+            player._rana_transport_loaded_record = nil
+            return
+        end
+    end
+
+    box.persists = true
+    local drop_position
+    if restore_transport then
+        -- If a third-party mod prevents the migration pet from being
+        -- restored, keep the suitcase recoverable in the destination shard.
+        -- Source-shard coordinates are not meaningful here.
+        drop_position = player:GetPosition()
+    else
+        local position = savedata.rana_transport_box_position
+            or kitten ~= nil and kitten._rana_saved_transport_box_position or nil
+        if position == nil then
+            position = {
+                x = box_record.x or 0,
+                y = box_record.y or 0,
+                z = box_record.z or 0,
+            }
+        end
+        drop_position = Vector3(position.x or 0, position.y or 0, position.z or 0)
+    end
+    local inventory = player.components.inventory
+    if box.components.inventoryitem ~= nil then
+        -- Keep the inventory flag consistent even when the box was restored
+        -- before its normal itemget/itemlose callbacks ran.
+        box.components.inventoryitem.cangoincontainer = storage_empty == true
+    end
+    local restored = not restore_transport and storage_empty == true and inventory ~= nil
+        and inventory:GiveItem(box, nil, drop_position, true)
+    if not restored then
+        box.Transform:SetPosition(drop_position:Get())
+        if box.components.inventoryitem ~= nil then
+            box.components.inventoryitem:OnDropped(false)
+        end
+    end
+    if kitten ~= nil then
+        kitten._rana_saved_transport_box = nil
+        kitten._rana_saved_transport_box_position = nil
+    end
+    -- The restored entity is now persistent (or in the player's inventory),
+    -- so the raw OnLoad copy has been consumed and must not be serialized as
+    -- a second suitcase on a later save.
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    player._rana_transport_loaded_record = nil
+end
+
+local function MarkPlayerBoxTransportMigrating(player)
+    if player == nil then
+        return
+    end
+    player._rana_box_migrating = true
+    local box = player._rana_transport_box
+    if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+        box._rana_transport_migrating = true
+    end
+end
+
+local function ReleasePlayerBoxTransport(player)
+    if player == nil then
+        return
+    end
+
+    if player._rana_box_migrating then
+        return
+    end
+
+    local box = player._rana_transport_box
+    if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+        -- Detach before the player's followers are removed. Otherwise the
+        -- kitten can take the box with it when the player entity despawns.
+        local position = player:IsValid() and player:GetPosition() or nil
+        StopBoxTransport(box, position)
+    else
+        player._rana_transport_box = nil
+    end
+end
+
+local function HookRanaPlayerDespawn(inst)
+    if not TheWorld.ismastersim or inst._rana_box_despawn_hooked then
+        return
+    end
+    inst._rana_box_despawn_hooked = true
+
+    -- A transported case is deliberately removed from the player's
+    -- inventory while the kitten carries it.  Children of a follower are not
+    -- guaranteed to survive rollback, so serialize the complete case record
+    -- through the player's save data and restore it on load.  The case is
+    -- marked non-persistent while carried to prevent a second world copy.
+    if not inst._rana_transport_persistence_hooked then
+        inst._rana_transport_persistence_hooked = true
+        local old_save = inst.OnSave
+        inst.OnSave = function(player, data)
+            local references = old_save ~= nil and old_save(player, data) or nil
+            local box = player._rana_transport_box
+            local record, box_references, position
+            if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+                record, box_references = CaptureTransportSaveRecord(box)
+                local x, y, z = box.Transform:GetWorldPosition()
+                position = { x = x, y = y, z = z }
+                if record == nil then
+                    record = player._rana_transport_saved_record
+                    box_references = player._rana_transport_saved_references
+                    position = player._rana_transport_saved_position
+                end
+            else
+                record = player._rana_transport_saved_record
+                box_references = player._rana_transport_saved_references
+                position = player._rana_transport_saved_position
+            end
+            if record ~= nil then
+                data.rana_transport_box = record
+                data.rana_transport_box_position = position
+                data.rana_transport_box_in_transit = true
+                references = AppendSaveReferences(references, box_references)
+            end
+            return references
+        end
+
+        local old_load = inst.OnLoad
+        inst.OnLoad = function(player, data, newents)
+            if old_load ~= nil then
+                old_load(player, data, newents)
+            end
+            player._rana_box_migrating = nil
+            -- Rollback may reload data into an existing player instance.
+            player._rana_transport_restore_done = nil
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:rana_white_box
+AddPrefabPostInit("rana_black_box", ConfigureBoxTransportVisual)
+AddPrefabPostInit("rana_white_box", ConfigureBoxTransportVisual)
+
+StopBoxTransport = function(box, position)
+    if box == nil or not box:IsValid() or box._rana_transport_stopping then
+        return
+    end
+    box._rana_transport_stopping = true
+    local kitcoon = box._rana_carrier
+    local owner = box._rana_transport_owner
+    local x, y, z
+    if position ~= nil then
+        x, y, z = position:Get()
+    elseif kitcoon ~= nil and kitcoon:IsValid() then
+        x, y, z = kitcoon.Transform:GetWorldPosition()
+    elseif owner ~= nil and owner:IsValid() then
+        x, y, z = owner.Transform:GetWorldPosition()
+    else
+        x, y, z = box.Transform:GetWorldPosition()
+    end
+    if box._rana_transport_task ~= nil then
+        box._rana_transport_task:Cancel()
+        box._rana_transport_task = nil
+    end
+    if kitcoon ~= nil then
+        if kitcoon._rana_carried_box == box then
+            kitcoon._rana_carried_box = nil
+        end
+        if kitcoon._rana_transporting_net ~= nil then
+            kitcoon._rana_transporting_net:set(false)
+        end
+    end
+    if kitcoon ~= nil and box._rana_on_carrier_removed ~= nil then
+        box:RemoveEventCallback("onremove", box._rana_on_carrier_removed, kitcoon)
+    end
+    box._rana_on_carrier_removed = nil
+    if kitcoon ~= nil and box._rana_on_carrier_fall ~= nil then
+        box:RemoveEventCallback("onsink", box._rana_on_carrier_fall, kitcoon)
+        box:RemoveEventCallback("onfallinvoid", box._rana_on_carrier_fall, kitcoon)
+    end
+    box._rana_on_carrier_fall = nil
+    if box.parent ~= nil then
+        box.parent:RemoveChild(box)
+    end
+    box.Transform:SetPosition(x, y, z)
+    box._rana_carrier = nil
+    box._rana_transport_owner = nil
+    -- While attached to a kitten the box is stored through the owner's save
+    -- record (see HookRanaPlayerDespawn below).  Once it is detached it is a
+    -- normal world/inventory entity again and must be persisted independently.
+    box.persists = true
+    box:RemoveTag("rana_box_carried")
+    SetBoxTransportVisual(box, false)
+    if box._rana_transport_net ~= nil then
+        box._rana_transport_net:set(false)
+    end
+    SetBoxPhysicsActive(box, true)
+    if box.components.inventoryitem ~= nil then
+        box.components.inventoryitem.canbepickedup = true
+        if box.components.container ~= nil then
+            local empty = true
+            for slot = 1, box.components.container:GetNumSlots() do
+                if box.components.container:GetItemInSlot(slot) ~= nil then
+                    empty = false
+                    break
+                end
+            end
+            box.components.inventoryitem.cangoincontainer = empty
+        elseif box.components.container_proxy ~= nil then
+            local master = box.components.container_proxy:GetMaster()
+            local container = master ~= nil and master.components.container or nil
+            if container == nil then
+                box.components.inventoryitem.cangoincontainer = false
+            else
+                local empty = true
+                for slot = 1, container:GetNumSlots() do
+                    if container:GetItemInSlot(slot) ~= nil then
+                        empty = false
+                        break
+                    end
+                end
+                box.components.inventoryitem.cangoincontainer = empty
+            end
+        end
+    end
+    if owner ~= nil and owner._rana_transport_box == box then
+        owner._rana_transport_box = nil
+        if not box._rana_transport_migrating then
+            owner._rana_transport_saved_record = nil
+            owner._rana_transport_saved_references = nil
+            owner._rana_transport_saved_position = nil
+        end
+    end
+    if kitcoon ~= nil and not box._rana_transport_migrating then
+        kitcoon._rana_transport_saved_record = nil
+        kitcoon._rana_transport_saved_references = nil
+        kitcoon._rana_transport_saved_position = nil
+        kitcoon._rana_saved_transport_box = nil
+        kitcoon._rana_saved_transport_box_position = nil
+    end
+    box._rana_transport_stopping = nil
+end
+
+local function GetEmergencyTransportDropPosition(box, owner, carrier, data)
+    if owner ~= nil and owner:IsValid() then
+        local x, y, z = owner.Transform:GetWorldPosition()
+        if owner:GetCurrentPlatform() ~= nil
+            or TheWorld.Map:IsVisualGroundAtPoint(x, y, z) then
+            return Vector3(x, y, z)
+        end
+    end
+
+    local recovery_point = data ~= nil
+        and (data.shore_pt or data.teleport_pt) or nil
+    if recovery_point ~= nil and recovery_point.Get ~= nil then
+        return Vector3(recovery_point:Get())
+    end
+
+    local drownable = carrier ~= nil and carrier:IsValid()
+        and carrier.components ~= nil and carrier.components.drownable or nil
+    if drownable ~= nil and drownable.GetWashingAshoreTeleportSpot ~= nil then
+        local x, y, z = drownable:GetWashingAshoreTeleportSpot()
+        if x ~= nil then
+            return Vector3(x, y, z)
+        end
+    end
+
+    return box:GetPosition()
+end
+
+local function ReleaseBoxFromFallingCarrier(box, carrier, data)
+    if box == nil or not box:IsValid() or box._rana_transport_migrating
+        or box._rana_carrier ~= carrier then
+        return
+    end
+
+    local position = GetEmergencyTransportDropPosition(
+        box,
+        box._rana_transport_owner,
+        carrier,
+        data
+    )
+    StopBoxTransport(box, position)
+
+    -- Finish the normal world-drop lifecycle after detaching. This restores
+    -- landed/platform handling and keeps a full case recoverable at the owner.
+    if box:IsValid() and box.components.inventoryitem ~= nil then
+        box.components.inventoryitem:OnDropped(false)
+    end
+end
+
+AttachBoxTransport = function(box, player, kitcoon)
+    if box == nil or not box:IsValid() or player == nil or not player:IsValid()
+        or not IsOwnedKitten(kitcoon, player) then
+        return false
+    end
+
+    local carried = kitcoon._rana_carried_box
+    if carried ~= nil and carried:IsValid() and carried ~= box then
+        return false
+    end
+    local existing = player._rana_transport_box
+    if existing ~= nil and existing:IsValid() and existing ~= box then
+        return false
+    end
+
+    if box.components.container ~= nil then
+        box.components.container:Close(player)
+    elseif box.components.container_proxy ~= nil then
+        local master = box.components.container_proxy:GetMaster()
+        if master ~= nil then
+            box.components.container_proxy:Close(player)
+        end
+    end
+
+    box._rana_transport_migrating = nil
+    box:AddTag("rana_box_carried")
+    box._rana_carrier = kitcoon
+    box._rana_transport_owner = player
+    player._rana_transport_box = box
+    kitcoon._rana_carried_box = box
+    kitcoon._rana_saved_transport_box = nil
+    kitcoon._rana_saved_transport_box_position = nil
+    -- Do not cache a snapshot of the box at attach time. Its container can
+    -- change while it is being transported, so an eager copy can restore stale
+    -- contents on rollback. The live entity is serialized by OnSave; raw
+    -- records are cached only by OnLoad while a snapshot player is temporary.
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    kitcoon._rana_transport_saved_record = nil
+    kitcoon._rana_transport_saved_references = nil
+    kitcoon._rana_transport_saved_position = nil
+    if kitcoon._rana_transporting_net ~= nil then
+        kitcoon._rana_transporting_net:set(true)
+    end
+    -- The complete box record is stored in the owner save while it is being
+    -- transported.  Keeping the attached entity out of world persistence
+    -- prevents rollback and shard migration from producing a second copy.
+    box.persists = false
+    SetBoxTransportVisual(box, true)
+    if box._rana_transport_net ~= nil then
+        box._rana_transport_net:set(true)
+    end
+    if box.components.inventoryitem ~= nil then
+        box.components.inventoryitem.canbepickedup = false
+    end
+    SetBoxPhysicsActive(box, false)
+    kitcoon:AddChild(box)
+    box.Transform:SetPosition(0, .55, 0)
+    box._rana_on_carrier_removed = function()
+        -- During shard migration the serialized copy belongs to the player
+        -- session.  Let removal of the old kitten retire this source entity
+        -- and all of its children instead of detaching a duplicate box into
+        -- the source world.
+        if not box._rana_transport_migrating then
+            StopBoxTransport(box)
+        end
+    end
+    box:ListenForEvent("onremove", box._rana_on_carrier_removed, kitcoon)
+    box._rana_on_carrier_fall = function(carrier, data)
+        ReleaseBoxFromFallingCarrier(box, carrier, data)
+    end
+    box:ListenForEvent("onsink", box._rana_on_carrier_fall, kitcoon)
+    box:ListenForEvent("onfallinvoid", box._rana_on_carrier_fall, kitcoon)
+
+    box._rana_transport_task = box:DoPeriodicTask(.5, function(inst)
+        local carrier = inst._rana_carrier
+        if carrier == nil or inst.parent ~= carrier
+            or not IsOwnedKitten(carrier, player) then
+            if not inst._rana_transport_migrating then
+                StopBoxTransport(inst)
+            end
+        end
+    end)
+    return true
+end
+
+local function GetSavedBoxStorageEmpty(box, record)
+    local container = box.components ~= nil and box.components.container or nil
+    if container == nil and box.components ~= nil and box.components.container_proxy ~= nil then
+        local master = box.components.container_proxy:GetMaster()
+        container = master ~= nil and master.components ~= nil and master.components.container or nil
+    end
+    if container ~= nil then
+        for slot = 1, container:GetNumSlots() do
+            if container:GetItemInSlot(slot) ~= nil then
+                return false
+            end
+        end
+        return true
+    end
+
+    -- Proxy boxes can be restored before the shared master is registered.
+    -- Use the serialized local container data when available; otherwise let
+    -- the caller retry after the proxy has had time to attach.
+    local record_data = record ~= nil and record.data or nil
+    local container_data = record_data ~= nil and record_data.container or nil
+    if container_data ~= nil then
+        return container_data.items == nil or next(container_data.items) == nil
+    end
+    return nil
+end
+
+
+local function DiscardStaleTransportBox(player, box)
+    if box == nil or not box:IsValid() then
+        player._rana_transport_box = nil
+        return
+    end
+
+    if box._rana_transport_task ~= nil then
+        box._rana_transport_task:Cancel()
+        box._rana_transport_task = nil
+    end
+    local carrier = box._rana_carrier
+    if carrier ~= nil and carrier:IsValid() then
+        if box._rana_on_carrier_removed ~= nil then
+            box:RemoveEventCallback("onremove", box._rana_on_carrier_removed, carrier)
+        end
+        if box._rana_on_carrier_fall ~= nil then
+            box:RemoveEventCallback("onsink", box._rana_on_carrier_fall, carrier)
+            box:RemoveEventCallback("onfallinvoid", box._rana_on_carrier_fall, carrier)
+        end
+        if carrier._rana_carried_box == box then
+            carrier._rana_carried_box = nil
+        end
+        if carrier._rana_transporting_net ~= nil then
+            carrier._rana_transporting_net:set(false)
+        end
+        carrier._rana_transport_saved_record = nil
+        carrier._rana_transport_saved_references = nil
+        carrier._rana_transport_saved_position = nil
+        carrier._rana_saved_transport_box = nil
+        carrier._rana_saved_transport_box_position = nil
+    end
+    if box.parent ~= nil then
+        box.parent:RemoveChild(box)
+    end
+    if player._rana_transport_box == box then
+        player._rana_transport_box = nil
+    end
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    box:Remove()
+end
+
+local function RestoreSavedTransportBox(player, savedata, newents, attempts)
+    player._rana_transport_restore_task = nil
+    -- RestoreSnapshotUserSession creates a temporary player, calls SetPersistData
+    -- and immediately serializes/removes it in the same tick. Spawning a live
+    -- case here cannot complete before that player disappears; its raw record
+    -- is already copied by OnLoad/OnSave below, so leave this path untouched.
+    if not player:IsValid() or player.is_snapshot_user_session
+        or player._rana_transport_restore_done then
+        return
+    end
+
+    savedata = savedata or {}
+    attempts = attempts or 0
+    local existing = player._rana_transport_box
+    local existing_valid = existing ~= nil and existing:IsValid()
+        and existing:HasTag("rana_box_carried")
+    -- The Attach cache is a save fallback, not evidence that this load needs
+    -- to replace the live case. Only data read by the current OnLoad (or the
+    -- explicit in-transit flag) may start a restoration.
+    local loaded_record = player._rana_transport_loaded_record
+    local restore_transport = savedata.rana_transport_box_in_transit == true
+        or loaded_record ~= nil
+    -- During snapshot rollback the old kitten can still be registered in the
+    -- petleash while it is carrying the old case. Include it when looking for
+    -- the destination carrier; the old implementation skipped it and then
+    -- discarded the only recoverable case.
+    local kitten = restore_transport and FindLeashedKitten(player, true) or nil
+    if kitten == nil then
+        -- Pet data is also a valid rollback source when a later player OnSave
+        -- wrapper failed to preserve our player-side record.
+        local candidate = FindLeashedKitten(player, true)
+        if candidate ~= nil and candidate._rana_saved_transport_box ~= nil then
+            kitten = candidate
+            restore_transport = true
+        end
+    end
+    local box_record = savedata.rana_transport_box
+        or loaded_record
+        or kitten ~= nil and kitten._rana_saved_transport_box or nil
+
+    -- Never remove the currently carried entity before a valid replacement
+    -- record has been found. Snapshot rollback can legitimately call this
+    -- function with an empty/partial player data table; deleting the old case
+    -- in that situation was the direct cause of reported disappearances.
+    if box_record == nil then
+        if existing_valid then
+            -- The old entity is still usable. Keep it attached and let the
+            -- normal transport watcher continue to own it.
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if attempts < 20 then
+            player._rana_transport_restore_task = player:DoTaskInTime(
+                .25,
+                RestoreSavedTransportBox,
+                savedata,
+                newents,
+                attempts + 1
+            )
+        end
+        return
+    end
+
+    if restore_transport and kitten == nil and attempts < 20 then
+        -- petleash normally restores migration pets before player OnLoad, but
+        -- leave a short retry window for mods that defer pet initialization.
+        -- Do not create the box until its destination carrier is available.
+        player._rana_transport_restore_task = player:DoTaskInTime(
+            .25,
+            RestoreSavedTransportBox,
+            savedata,
+            newents,
+            attempts + 1
+        )
+        return
+    end
+    if box_record == nil then
+        return
+    end
+
+    local box = player._rana_transport_restore_box
+    if box == nil or not box:IsValid() then
+        -- A malformed record should not be allowed to destroy the existing
+        -- case. SpawnSaveRecord can fail for a missing reference on old
+        -- snapshots, so protect the recovery path and keep the old entity as
+        -- a fallback.
+        local ok, restored = pcall(SpawnSaveRecord, box_record, newents or {})
+        box = ok and restored or nil
+    end
+    if box == nil or not box:IsValid() then
+        if existing_valid then
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if attempts < 20 then
+            player._rana_transport_restore_task = player:DoTaskInTime(
+                .25,
+                RestoreSavedTransportBox,
+                savedata,
+                newents,
+                attempts + 1
+            )
+        end
+        return
+    end
+
+    if existing ~= nil and not existing:IsValid() then
+        player._rana_transport_box = nil
+    end
+
+    local storage_empty = GetSavedBoxStorageEmpty(box, box_record)
+    if not restore_transport and storage_empty == nil and attempts < 20 then
+        -- Wait for rana_black_box/rana_white_box to attach the shared
+        -- pocket container before deciding whether the box may enter an
+        -- inventory. Keep this temporary copy out of world saves.
+        box.persists = false
+        player._rana_transport_restore_box = box
+        player._rana_transport_restore_task = player:DoTaskInTime(
+            .25,
+            RestoreSavedTransportBox,
+            savedata,
+            newents,
+            attempts + 1
+        )
+        return
+    end
+    player._rana_transport_restore_box = nil
+    player._rana_transport_restore_done = true
+
+    if restore_transport and kitten ~= nil then
+        -- Keep the old live case recoverable until the replacement has been
+        -- attached successfully. This matters when a pet was restored late
+        -- or another mod temporarily rejects the attach action.
+        local stale_existing = existing_valid and existing ~= box and existing or nil
+        if stale_existing ~= nil then
+            local stale_position = player:GetPosition()
+            StopBoxTransport(stale_existing, stale_position)
+            if stale_existing:IsValid() and stale_existing.components.inventoryitem ~= nil then
+                stale_existing.components.inventoryitem:OnDropped(false)
+            end
+        end
+        if AttachBoxTransport(box, player, kitten) then
+            if stale_existing ~= nil and stale_existing:IsValid() then
+                stale_existing:Remove()
+            end
+            kitten._rana_saved_transport_box = nil
+            kitten._rana_saved_transport_box_position = nil
+            player._rana_transport_loaded_record = nil
+            return
+        end
+        if stale_existing ~= nil and stale_existing:IsValid() then
+            -- The old case is already a normal persistent world item. Remove
+            -- the duplicate temporary copy and leave the old one available.
+            box.persists = true
+            box:Remove()
+            player._rana_transport_box = nil
+            kitten._rana_saved_transport_box = nil
+            kitten._rana_saved_transport_box_position = nil
+            player._rana_transport_saved_record = nil
+            player._rana_transport_saved_references = nil
+            player._rana_transport_saved_position = nil
+            player._rana_transport_loaded_record = nil
+            return
+        end
+    end
+
+    box.persists = true
+    local drop_position
+    if restore_transport then
+        -- If a third-party mod prevents the migration pet from being
+        -- restored, keep the suitcase recoverable in the destination shard.
+        -- Source-shard coordinates are not meaningful here.
+        drop_position = player:GetPosition()
+    else
+        local position = savedata.rana_transport_box_position
+            or kitten ~= nil and kitten._rana_saved_transport_box_position or nil
+        if position == nil then
+            position = {
+                x = box_record.x or 0,
+                y = box_record.y or 0,
+                z = box_record.z or 0,
+            }
+        end
+        drop_position = Vector3(position.x or 0, position.y or 0, position.z or 0)
+    end
+    local inventory = player.components.inventory
+    if box.components.inventoryitem ~= nil then
+        -- Keep the inventory flag consistent even when the box was restored
+        -- before its normal itemget/itemlose callbacks ran.
+        box.components.inventoryitem.cangoincontainer = storage_empty == true
+    end
+    local restored = not restore_transport and storage_empty == true and inventory ~= nil
+        and inventory:GiveItem(box, nil, drop_position, true)
+    if not restored then
+        box.Transform:SetPosition(drop_position:Get())
+        if box.components.inventoryitem ~= nil then
+            box.components.inventoryitem:OnDropped(false)
+        end
+    end
+    if kitten ~= nil then
+        kitten._rana_saved_transport_box = nil
+        kitten._rana_saved_transport_box_position = nil
+    end
+    -- The restored entity is now persistent (or in the player's inventory),
+    -- so the raw OnLoad copy has been consumed and must not be serialized as
+    -- a second suitcase on a later save.
+    player._rana_transport_saved_record = nil
+    player._rana_transport_saved_references = nil
+    player._rana_transport_saved_position = nil
+    player._rana_transport_loaded_record = nil
+end
+
+local function MarkPlayerBoxTransportMigrating(player)
+    if player == nil then
+        return
+    end
+    player._rana_box_migrating = true
+    local box = player._rana_transport_box
+    if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+        box._rana_transport_migrating = true
+    end
+end
+
+local function ReleasePlayerBoxTransport(player)
+    if player == nil then
+        return
+    end
+
+    if player._rana_box_migrating then
+        return
+    end
+
+    local box = player._rana_transport_box
+    if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+        -- Detach before the player's followers are removed. Otherwise the
+        -- kitten can take the box with it when the player entity despawns.
+        local position = player:IsValid() and player:GetPosition() or nil
+        StopBoxTransport(box, position)
+    else
+        player._rana_transport_box = nil
+    end
+end
+
+local function HookRanaPlayerDespawn(inst)
+    if not TheWorld.ismastersim or inst._rana_box_despawn_hooked then
+        return
+    end
+    inst._rana_box_despawn_hooked = true
+
+    -- A transported case is deliberately removed from the player's
+    -- inventory while the kitten carries it.  Children of a follower are not
+    -- guaranteed to survive rollback, so serialize the complete case record
+    -- through the player's save data and restore it on load.  The case is
+    -- marked non-persistent while carried to prevent a second world copy.
+    if not inst._rana_transport_persistence_hooked then
+        inst._rana_transport_persistence_hooked = true
+        local old_save = inst.OnSave
+        inst.OnSave = function(player, data)
+            local references = old_save ~= nil and old_save(player, data) or nil
+            local box = player._rana_transport_box
+            local record, box_references, position
+            if box ~= nil and box:IsValid() and box:HasTag("rana_box_carried") then
+                record, box_references = CaptureTransportSaveRecord(box)
+                local x, y, z = box.Transform:GetWorldPosition()
+                position = { x = x, y = y, z = z }
+                if record == nil then
+                    record = player._rana_transport_saved_record
+                    box_references = player._rana_transport_saved_references
+                    position = player._rana_transport_saved_position
+                end
+            else
+                record = player._rana_transport_saved_record
+                box_references = player._rana_transport_saved_references
+                position = player._rana_transport_saved_position
+            end
+            if record ~= nil then
+                data.rana_transport_box = record
+                data.rana_transport_box_position = position
+                data.rana_transport_box_in_transit = true
+                references = AppendSaveReferences(references, box_references)
+            end
+            return references
+        end
+
+        local old_load = inst.OnLoad
+        inst.OnLoad = function(player, data, newents)
+            if old_load ~= nil then
+                old_load(player, data, newents)
+            end
+            player._rana_box_migrating = nil
+            -- Rollback may reload data into an existing player instance.
+            player._rana_transport_restore_done = nil
+            player._rana_transport_loaded_record = nil
+
+```
+
