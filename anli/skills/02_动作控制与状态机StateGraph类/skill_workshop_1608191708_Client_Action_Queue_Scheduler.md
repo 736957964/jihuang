@@ -24711,3 +24711,2256 @@ end)
 
 ```
 
+
+
+### 变体演进：WX78 (Mod 3608751276)
+- **变体场景与切面**：收录来自工坊 Mod 3608751276 (`WX78`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3608751276)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+Kraken:IndexGlobals(env)
+AddPrefabPostInit("world", function() Kraken:IndexPostInitGlobals(env) end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78
+
+AddPrefabPostInit("wx78", function(inst)
+    local function BecomeOverhauled()
+        inst:AddTag("robot")
+        inst:RemoveTag("upgrademoduleowner")
+        inst:RemoveTag("batteryuser")
+        inst:AddTag("insomniac")
+
+        if inst.components.smokeemitter == nil then
+            inst:AddComponent("smokeemitter")
+        end
+
+        if not TheWorld.ismastersim then
+            return
+        end
+
+        inst.components.health:SetMaxHealth(TUNING.WX78_MAXHUNGER_NEW)
+        inst.components.hunger:SetMax(TUNING.WX78_MAXHUNGER_NEW)
+        inst.components.sanity:SetMax(TUNING.WX78_MAXHUNGER_NEW)
+
+        inst:ListenForEvent("newstate", function(_, data)
+            if data ~= nil and data.statename == "changetomonkey" then
+                PrepareForUnOverhaul(inst)
+            end
+        end)
+
+        --Remove electric damage immunity and ability to eat gears/spoiled food.
+        inst:RemoveTag(FOODTYPE.GEARS .. "_eater")
+        table.removearrayvalue(inst.components.eater.preferseating, FOODTYPE.GEARS)
+        table.removearrayvalue(inst.components.eater.caneat, FOODTYPE.GEARS)
+        inst.components.eater.ignoresspoilage = false
+        inst:RemoveTag("electricdamageimmune")
+        inst.components.preserver:SetPerishRateMultiplier(1)
+
+        if inst.components.systems == nil then
+            inst:AddComponent("systems")
+        end
+
+        inst.components.systems:UpdateEnergyDrain()
+
+        --Only active when Giga Battery is installed.
+        inst.components.batteryuser.onbatteryused = function(inst, battery)
+            inst.components.hunger:DoDelta(TUNING.UPGRADES.GIGA_BATTERY_RECHARGE_ENERGY)
+
+            if not inst.components.inventory:IsInsulated() then
+                inst.sg:GoToState("electrocute")
+            end
+
+            return true
+        end
+
+        --Apply new lightning effects.
+        local function onlightingstrike(inst)
+            if inst.components.health ~= nil and not (inst.components.health:IsDead() or inst.components.health:IsInvincible()) then
+                if inst.components.inventory:IsInsulated() then
+                    inst.components.talker:Say("CIRCUIT INCOMPLETE. NO SYSTEMS DAMAGED.")
+                else
+                    inst.sg:GoToState("electrocute")
+                    local any_fixed = false
+                    for _, system in pairs(WX78UPGRADETYPES) do
+                        if inst.components.systems:IsSystemFixed(system) then
+                            any_fixed = true
+                            break
+                        end
+                    end
+                    if any_fixed then
+                        local nums = TUNING.NUM_SYSTEMS_BROKEN_ON_LIGHTNING[inst.components.systems.difficulty]
+                        local broken_systems = inst.components.systems:BreakRandomSystems(math.random() < 0.5 and nums
+                            [2] or
+                            nums[1])
+                        if #broken_systems == 1 then
+                            inst.components.talker:Say(tostring(broken_systems[1]) .. " SYSTEM DAMAGED")
+                        elseif #broken_systems > 1 then
+                            inst.components.talker:Say("WARNING: MULTIPLE SYSTEMS DAMAGED")
+                        end
+                        --inst.components.hunger:SetPercent(math.random())
+                    else
+                        inst.components.health:DoDelta(-inst.components.health.currenthealth, false, "lightning")
+                    end
+                end
+            end
+        end
+
+        inst.newOnStrikeFn = onlightingstrike
+        inst.components.playerlightningtarget:SetOnStrikeFn(onlightingstrike)
+
+        local entity_symbols =
+        {
+            hound = "hound_body",
+            frog = "frogsack",
+        }
+
+        local function OnAttacked(player, data)
+            if player.components.systems.plating then
+                SpawnPrefab("wx78_discharge").entity:AddFollower():FollowSymbol(player.GUID, "swap_body", 0, 0, 0)
+
+                local config = TUNING.WX78_FIXUP_CONFIG.STABILIZER_2_SHOCK
+
+                -- Original mod setting:
+                if config <= 1 then
+                    if data.attacker and data.attacker.components.hauntable and data.attacker.components.hauntable.panicable then
+                        local attack_period = data.attacker.components.combat.min_attack_period
+
+                        local panic_time = attack_period ~= nil and attack_period + TUNING.UPGRADES.DISCHARGE_PANIC_TIME or
+                            TUNING.UPGRADES.DISCHARGE_PANIC_TIME
+
+                        local panic_time = math.clamp(panic_time, TUNING.UPGRADES.DISCHARGE_PANIC_TIME_MIN,
+                            TUNING.UPGRADES.DISCHARGE_PANIC_TIME_MAX)
+
+                        data.attacker.components.hauntable:Panic(panic_time)
+
+                        local symbol = data.attacker.components.combat.hiteffectsymbol
+                        symbol = (symbol ~= nil and symbol ~= "marker") and symbol or "body"
+
+                        local prefab = data.attacker:HasTag("hound") and "hound" or data.attacker.prefab
+                        if entity_symbols[prefab] ~= nil then symbol = entity_symbols[prefab] end
+
+                        local fx = SpawnPrefab("mossling_spin_fx")
+                        local scale = data.attacker:HasTag("largecreature") and 1.2 or 0.6
+                        fx.Transform:SetScale(scale, scale, scale)
+                        fx.entity:AddFollower():FollowSymbol(data.attacker.GUID, symbol, 0, 100, 0)
+                    end
+                elseif data.attacker ~= nil and config > 1 and data.attacker.components.combat ~= nil then
+                    local damage = math.abs(TUNING.WX78_FIXUP_STABILIZER_2_SHOCK_DAMAGE[config])
+                    local damageMult = 1
+
+                    if not IsEntityElectricImmune(data.attacker) then
+                        damageMult = TUNING.ELECTRIC_DAMAGE_MULT + TUNING.ELECTRIC_WET_DAMAGE_MULT
+                            * data.attacker:GetWetMultiplier()
+                    end
+
+                    data.attacker:PushEvent("electrocute", { attacker = player, stimuli = "electric" })
+                    data.attacker.components.combat:GetAttacked(player, damage * damageMult, nil, "electric")
+                end
+            else
+                player:DoSparks()
+            end
+        end
+
+        inst:ListenForEvent("attacked", OnAttacked)
+
+        local sanity = inst.components.sanity
+        local _SanityDoDelta = sanity.DoDelta
+        function sanity:DoDelta(delta, overtime, data)
+            if overtime or not (data and (data.fromhunger or data.shadowmagic)) then return end
+
+            if not (data and (data.ignore_invincible or data.fromhunger)) and inst.components.health:IsInvincible() then
+                return
+            end
+
+            if delta < 0 and not (data and data.fromhunger) then
+                inst.components.hunger:DoDelta(delta, overtime, data ~= nil and data.ignore_invincible,
+                    { fromsanity = true })
+            end
+
+            overtime = true --this ensures the sound doesn't play
+            _SanityDoDelta(sanity, delta, overtime)
+        end
+
+        function sanity:SetPercent(per, overtime, data)
+            per = sanity:IsInsanityMode() and 1 or 0 --Always max sanity/ 0 lunacy
+            local target = per * sanity.max
+            local delta = target - sanity.current
+            sanity:DoDelta(delta, overtime, data)
+        end
+
+        inst:ListenForEvent("sanitymodechanged",
+            function(inst) inst.components.sanity:SetPercent(nil, nil, { fromhunger = true }) end)
+
+        --No need to waste resources updating sanity.
+        inst:StopUpdatingComponent(sanity)
+        sanity.LongUpdate = function(dt) return end
+
+        --Prevent healing hrough traditional means
+        inst.components.health.canheal = false
+        inst:ListenForEvent("ms_respawnedfromghost", function(inst) inst.components.health.canheal = false end)
+
+        local Health = inst.components.health
+        local _HealthDoDelta = Health.DoDelta
+        function Health:DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, data)
+            if amount > 0 and not (data and data.fromhunger) then return end
+            if amount < 0 and not (data and data.fromhunger) then
+                Health.inst.components.hunger:DoDelta(amount, overtime, ignore_invincible, { fromhealth = true })
+            end
+            overtime = true
+            _HealthDoDelta(Health, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+        end
+
+        function Health:SetPercent(percent, overtime, cause, data)
+            if not (data and data.fromhunger) then return end
+            local currenthealth = Health.currenthealth
+            Health:SetVal(Health.maxhealth * percent, cause)
+            Health:DoDelta(0, overtime, cause, true, nil, true, data)
+            --Hack for bleed compatability, since this won't push a healthdelta event with an amount
+            if Health.inst.components.bleeder and Health.inst.components.bleeder.bleeding then
+                local target = percent * Health.maxhealth
+                local delta = target - currenthealth
+                if delta >= TUNING.STOP_BLEEDING_HEAL then
+                    Health.inst.components.bleeder:StopBleeding()
+                end
+            end
+        end
+
+        --Disable max health reduction.
+        inst.components.health.disable_penalty = true
+
+        local Hunger = inst.components.hunger
+        function Hunger:DoDelta(delta, overtime, ignore_invincible, data)
+            if Hunger.redirect ~= nil then
+                Hunger.redirect(Hunger.inst, delta, overtime)
+                return
+            end
+
+            if not ignore_invincible and Hunger.inst.components.health and Hunger.inst.components.health:IsInvincible() or Hunger.inst.is_teleporting then
+                return
+            end
+
+            local old = Hunger.current
+            Hunger.current = math.clamp(Hunger.current + delta, 0, Hunger.max)
+
+            local fromsanity = data and data.fromsanity or nil
+            local fromhealth = data and data.fromhealth or nil
+            Hunger.inst:PushEvent("hungerdelta",
+                {
+                    oldpercent = old / Hunger.max,
+                    newpercent = Hunger.current / Hunger.max,
+                    overtime = overtime,
+                    delta = Hunger.current - old,
+                    fromsanity = fromsanity,
+                    fromhealth = fromhealth,
+                    ignore_invincible = ignore_invincible
+                })
+        end
+
+        --We do need this, though.
+        inst:StartUpdatingComponent(Hunger)
+
+        function Hunger:OnUpdate(dt)
+            --Shadow magic items still cause sanity drain.
+            local total_drain = 0
+            for k, v in pairs(Hunger.inst.components.inventory.equipslots) do
+                local equippable = v.components.equippable
+                if equippable ~= nil then
+                    if equippable.is_magic_dapperness then
+                        local item_drain = math.min(equippable:GetDapperness(Hunger.inst, true), 0) --Only NEGATIVE drain.
+                        total_drain = total_drain + item_drain
+                    end
+                end
+            end
+            Hunger.inst.components.hunger:DoDelta(total_drain * dt, true)
+            --Might as well hijack the sanity ratescale instead of having to implement another, not like it's being used.
+            Hunger.inst.components.sanity.ratescale =
+                (total_drain < -.3 and RATE_SCALE.DECREASE_HIGH) or
+                (total_drain < -.1 and RATE_SCALE.DECREASE_MED) or
+                (total_drain < -.02 and RATE_SCALE.DECREASE_LOW) or
+                RATE_SCALE.NEUTRAL
+        end
+
+        local function OnHungerDelta(player, data)
+            if data then
+                if not data.fromsanity then
+                    --Make sure sanity resets after dying.
+                    if player.components.sanity.ignore and player.components.health:IsDead() then
+                        player.components.sanity.ignore = false
+                        player.components.sanity:SetPercent(data.newpercent, nil,
+                            { fromhunger = true, ignore_invincible = data.ignore_invincible })
+                        player.components.sanity.ignore = true
+                    else
+                        player.components.sanity:SetPercent(data.newpercent, nil,
+                            { fromhunger = true, ignore_invincible = data.ignore_invincible })
+                    end
+                end
+                if not data.fromhealth then
+                    player.components.health:SetPercent(data.newpercent, nil, "energy", { fromhunger = true })
+                end
+                --print(player.components.hunger.current, player.components.health.currenthealth, player.components.sanity.current)
+            end
+        end
+
+        inst:ListenForEvent("hungerdelta", OnHungerDelta)
+
+
+        local function HungerOnDeath(inst)
+            inst.components.hunger:SetPercent(TUNING.WX78_REVIVE_ENERGY / inst.components.hunger.max, true)
+        end
+
+        inst:ListenForEvent("ms_becameghost", HungerOnDeath)
+
+        --This will let us maintain sanity/energy costs for using staves. --Currently unused but whatever.
+        inst:AddComponent("staffsanity")
+        local StaffSanity = inst.components.staffsanity
+        function StaffSanity:DoCastingDelta(amount)
+            if StaffSanity.inst.components.sanity then
+                StaffSanity.inst.components.sanity:DoDelta(amount * (StaffSanity.multiplier or 1), nil,
+                    { shadowmagic = true })
+            end
+        end
+
+        --Hack to make sure crafting with sanity subtracts the cost properly
+        local Builder = inst.components.builder
+        local _RemoveIngredients = Builder.RemoveIngredients
+        function Builder:RemoveIngredients(ingredients, recname)
+            if Builder.freebuildmode then
+                return
+            end
+
+            local recipe = AllRecipes[recname]
+            if recipe then
+                for k, v in pairs(recipe.character_ingredients) do
+                    if v.type == CHARACTER_INGREDIENT.SANITY then
+                        Builder.inst.components.sanity:DoDelta(-v.amount, nil, { shadowmagic = true })
+                    end
+                end
+            end
+            _RemoveIngredients(Builder, ingredients, recname)
+        end
+
+        --WX78 can't activate magic prototypers
+        table.insert(Builder.exclude_tags, "magic")
+        local _UsePrototyper = Builder.UsePrototyper
+        function Builder:UsePrototyper(prototyper)
+            if prototyper ~= nil then
+                if prototyper:HasTag("magic") then
+                    return false, "MAGIC"
+                end
+            end
+            return _UsePrototyper(Builder, prototyper)
+        end
+
+        --Remove positive health and sanity values from food for WX78, subtract negative vlues from hunger.
+        inst.components.eater.custom_stats_mod_fn = function(eater, health_val, hunger_val, sanity_val, food, feeder)
+            if health_val < 0 then hunger_val = hunger_val + health_val end
+            health_val = 0
+            --if sanity_val < 0 then hunger_val = hunger_val + sanity_val end
+            sanity_val = 0
+            if food:HasTag("monstermeat") and not eater.components.eater.strongstomach and hunger_val > 0 then
+                hunger_val = hunger_val * TUNING.WX78_MONSTER_FOOD_MOD
+            end
+            if eater.components.systems.metabolic then
+                if food.prefab == "spoiled_food" or food.prefab == "spoiled_fish" or food.prefab == "spoiled_fish_small" then
+                    hunger_val = TUNING.UPGRADES.METABOLIZER_ROT_ENERGY
+                elseif hunger_val > 0 then
+                    local mod = food.components.perishable and
+                        (food.components.perishable:IsSpoiled() and TUNING.UPGRADES.METABOLIZER_SPOILED_BONUS.SPOILED
+                            or food.components.perishable:IsStale() and TUNING.UPGRADES.METABOLIZER_SPOILED_BONUS.STALE) or
+                        1
+                    hunger_val = hunger_val * mod
+                end
+            end
+            return health_val, hunger_val, sanity_val
+        end
+
+        local function DoSparks(inst)
+            local x, y, z = inst.Transform:GetWorldPosition()
+            local fx = SpawnPrefab("winona_battery_sparks")
+            fx.Transform:SetScale(0.8, 0.8, 0.8)
+            fx.Transform:SetPosition(x + (-1 + math.random() * 2), y + math.random() * 2.5, z + (-1 + math.random() * 2))
+            inst.SoundEmitter:PlaySound("WX_rework/shock/big")
+        end
+
+        inst.DoSparks = DoSparks
+
+        inst:DoTaskInTime(0, function()
+            if inst.components.bleeder then
+                inst:RemoveComponent("bleeder")
+            end
+        end)
+
+        inst:ListenForEvent("hungerdelta",
+            function(inst, data)
+                if data.newpercent <= TUNING.WX89_GLITCH.START.THRESHOLD and data.oldpercent > TUNING.WX89_GLITCH.START.THRESHOLD then
+                    inst.components.talker:Say(GetString(inst, "ANNOUNCE_ENERGY_LOW"))
+                end
+                if data.newpercent <= TUNING.WX89_GLITCH.CAP.THRESHOLD and data.oldpercent > TUNING.WX89_GLITCH.CAP.THRESHOLD then
+                    inst.components.talker:Say(GetString(inst, "ANNOUNCE_ENERGY_CRITICAL"))
+                end
+            end)
+
+        local meltdown_aura =
+        {
+            name = "Meltdown Aura",
+            --increase temperature?
+            testfn = function(ent)
+                return ent ~= inst
+            end,
+        }
+
+        local function MeltdownFinished(inst)
+            if inst.meltdown_task ~= nil then inst.meltdown_task:Cancel() end
+            if inst.meltdown_aura ~= nil then
+                inst.meltdown_aura.SoundEmitter:KillSound("meltdown")
+                inst.meltdown_aura:Remove()
+            end
+            inst.components.bloomer:PopBloom("meltdown")
+            if inst.ghostenabled then
+                inst.AnimState:SetDeltaTimeMultiplier(1)
+                inst:RemoveEventCallback("makeplayerghost", MeltdownFinished)
+            end
+        end
+
+        local function meltdown_spark(pos)
+            local sparkpos = GetRandomSpawnPoint(pos, 1, TUNING.WX78_MELTDOWN_RANGE)
+            if sparkpos ~= nil then
+                SpawnPrefab("electrichitsparks").Transform:SetPosition(sparkpos:Get())
+            end
+        end
+
+        local function MeltdownWarning(inst)
+            local pos = inst:GetPosition()
+            inst.meltdown_task = inst:DoPeriodicTask(0.1, function() meltdown_spark(pos) end)
+            inst.meltdown_aura = SpawnPrefab("rangeindicator")
+            inst.meltdown_aura.Transform:SetPosition(pos.x, pos.y, pos.z)
+            inst.meltdown_aura.SoundEmitter:PlaySound("grotto/common/archive_resonator/locating_LP", "meltdown")
+            inst.meltdown_aura:ConfigureRange(TUNING.WX78_MELTDOWN_RANGE, nil, 10, meltdown_aura,
+                { color = WEBCOLOURS.RED, time = 0.25 })
+            inst.components.bloomer:PushBloom("meltdown", "shaders/anim.ksh")
+            if inst.ghostenabled then
+                inst:ListenForEvent("makeplayerghost", MeltdownFinished)
+                inst:DoTaskInTime(1.5, function()
+                    inst.AnimState:SetDeltaTimeMultiplier(1 / 5) --Stretch out the death animation a bit
+                end)
+            else
+                inst.MeltdownFinished = MeltdownFinished --called directly on death
+            end
+        end
+
+        inst:ListenForEvent("death", MeltdownWarning)
+    end
+
+    inst:AddTag("wx78_fixup")
+
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    inst:AddComponent("wx78_fixup_modeltracker")
+
+    local saveForRerollComponents = { "wx78_fixup_modeltracker", "skinner" }
+    local saveForRerollOverhaulComponents = { "systems" }
+
+    local function OnPlayerPostReroll()
+        local swapData = inst.components.seamlessplayerswapper.swap_data
+        if swapData.wx78_fixup_data == nil then return end
+
+        for _, cmp in ipairs(saveForRerollComponents) do
+            local data = swapData.wx78_fixup_data[cmp]
+            if data ~= nil then inst.components[cmp]:OnLoad(data) end
+        end
+
+        local isOverhauled = inst.components.wx78_fixup_modeltracker:IsOverhauled()
+        if isOverhauled then
+            BecomeOverhauled()
+
+            for _, cmp in ipairs(saveForRerollOverhaulComponents) do
+                local data = swapData.wx78_fixup_data[cmp]
+                if data ~= nil then
+                    if inst.components[cmp] == nil then inst:AddComponent(cmp) end
+                    inst.components[cmp]:OnLoad(data)
+                end
+            end
+        elseif inst.components.upgrademoduleowner ~= nil then
+            inst.components.upgrademoduleowner:SetChargeLevel(0)
+        end
+
+        if not swapData.wx78_fixup_data.wx78_fixup_rerollIsLoad then
+            local string = isOverhauled and "WX78_FIXUP_ANNOUNCE_SWAP_OVERHAUL" or "WX78_FIXUP_ANNOUNCE_SWAP_VANILLA"
+            inst:DoTaskInTime(0.25, function()
+                if inst.components.talker ~= nil then inst.components.talker:Say(GetString(inst, string)) end
+            end)
+
+            inst.components.skinner:ClearMonkeyCurse()
+        end
+    end
+
+    local function OnPlayerPreReroll()
+        local swapData = inst.components.seamlessplayerswapper.swap_data
+        swapData.wx78_fixup_data = {}
+
+        for _, cmp in ipairs(saveForRerollComponents) do
+            if inst.components[cmp] ~= nil then
+                swapData.wx78_fixup_data[cmp] = inst.components[cmp]:OnSave()
+            end
+        end
+
+        for _, cmp in ipairs(saveForRerollOverhaulComponents) do
+            if inst.components[cmp] ~= nil then
+                swapData.wx78_fixup_data[cmp] = inst.components[cmp]:OnSave()
+            end
+        end
+
+        swapData.wx78_fixup_data.wx78_fixup_rerollIsLoad = inst.wx78_fixup_rerollIsLoad
+    end
+
+    local _OnPreLoad = inst.OnPreLoad or function() end
+    inst.OnPreLoad = function(_, data, newents, ...)
+        local modelTracker = inst.components.wx78_fixup_modeltracker
+        if data.wx78_fixup_modeltracker ~= nil then
+            modelTracker:OnLoad(data.wx78_fixup_modeltracker, newents)
+        end
+
+        if modelTracker:IsOverhauled() then
+            inst.wx78_fixup_preLoading = true
+            for _, cmp in ipairs(saveForRerollOverhaulComponents) do
+                if data ~= nil and data[cmp] ~= nil then
+                    if inst.components[cmp] == nil then inst:AddComponent(cmp) end
+                    inst.components[cmp]:OnLoad(data[cmp], newents)
+                end
+            end
+            inst.wx78_fixup_preLoading = nil
+        end
+
+        return _OnPreLoad(_, data, newents, ...)
+    end
+
+    local _OnLoad = inst.OnLoad or function() end
+    inst.OnLoad = function(...)
+        if inst.components.wx78_fixup_modeltracker:IsOverhauled() then
+            inst:DoTaskInTime(1, function()
+                inst.wx78_fixup_rerollIsLoad = true
+                inst.components.seamlessplayerswapper:_StartSwap("wx78")
+            end)
+        end
+        return _OnLoad(...)
+    end
+
+    local _OnNewSpawn = inst.OnNewSpawn or function() end
+    inst.OnNewSpawn = function(...)
+        inst:DoTaskInTime(0, OnPlayerPostReroll)
+        return _OnNewSpawn(...)
+    end
+
+    inst:ListenForEvent("ms_playerseamlessswaped", OnPlayerPostReroll)
+    inst:ListenForEvent("ms_playerreroll", OnPlayerPreReroll)
+end)
+
+--Remove charge tag from initial state of lightning rod, and set special inspection strings.
+AddPrefabPostInit('lightning_rod', function(inst)
+    if not TheWorld.ismastersim then return end
+    inst:RemoveTag("battery")
+    inst.components.inspectable.getstatus = function(inst, viewer)
+        if viewer:HasTag("batteryuser") then
+            return inst.charged and "BATTERY_CHARGED" or "BATTERY_NOCHARGE"
+        else
+            return inst.charged and "CHARGED" or nil
+        end
+    end
+end)
+
+--Prevent WX from equipping items that slow hunger drain, heal, or induce insanity.
+local NOT_FOR_ROBOTS =
+{
+    "armorslurper",
+    "beargervest",
+    "blue_mushroomhat",
+    "green_mushroomhat",
+    "red_mushroomhat",
+    "purpleamulet",
+    "amulet",
+    "blueamulet",
+    "greenamulet",
+    "yellowamulet",
+    "orangeamulet",
+    "firestaff",
+    "icestaff",
+    "telestaff",
+    "orangestaff",
+    "greenstaff",
+    "yellowstaff",
+    "opalstaff",
+    "armor_sanity",
+    "nightsword",
+    "onemanband",
+    "batbat",
+    --"skeletonhat", Not blocking this due to it being a super late game item.
+}
+for _, item in ipairs(NOT_FOR_ROBOTS) do
+    AddPrefabPostInit(item, function(inst)
+        if TheWorld.ismastersim then
+            inst.components.equippable.canthavetag = "robot"
+        end
+    end)
+end
+
+AddPrefabPostInit("world", function()
+    --Must disable spell cast point/inventory actions, staves can still be used from the mouse.
+    local COMPONENT_ACTIONS = UpvalueHacker.GetUpvalue(EntityScript.CollectActions, "COMPONENT_ACTIONS")
+    local _fn = COMPONENT_ACTIONS.POINT.spellcaster
+    COMPONENT_ACTIONS.POINT.spellcaster = function(inst, doer, pos, actions, right)
+        if not doer:HasTag("robot") then
+            _fn(inst, doer, pos, actions, right)
+        end
+    end
+
+    local _fn = COMPONENT_ACTIONS.INVENTORY.spellcaster
+    COMPONENT_ACTIONS.INVENTORY.spellcaster = function(inst, doer, actions)
+        if not doer:HasTag("robot") then
+            _fn(inst, doer, actions)
+        end
+    end
+
+    local _fn = COMPONENT_ACTIONS.POINT.blinkstaff
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lightning_rod
+--Remove charge tag from initial state of lightning rod, and set special inspection strings.
+AddPrefabPostInit('lightning_rod', function(inst)
+    if not TheWorld.ismastersim then return end
+    inst:RemoveTag("battery")
+    inst.components.inspectable.getstatus = function(inst, viewer)
+        if viewer:HasTag("batteryuser") then
+            return inst.charged and "BATTERY_CHARGED" or "BATTERY_NOCHARGE"
+        else
+            return inst.charged and "CHARGED" or nil
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonbase
+
+AddPrefabPostInit("moonbase", function(inst)
+    if not TheWorld.ismastersim then return end
+
+    local _HideColdStar = UpvalueHacker.GetUpvalue(GLOBAL.Prefabs.moonbase.fn, "OnStaffGiven", "HideColdStar")
+    local ToggleMoonCharge = UpvalueHacker.GetUpvalue(GLOBAL.Prefabs.moonbase.fn, "OnStaffGiven", "ToggleMoonCharge")
+    local deconstructize_time = TUNING.WX78_FIXUP_DECONSTRUCTIZE_TIME
+
+    local function DeconstructizeFinished(inst, data)
+        if data.name == "deconstructize" then
+            if inst.deconstructize_task ~= nil then
+                inst.deconstructize_task:Cancel()
+            end
+
+            if inst.deconstructize_range ~= nil then
+                inst.deconstructize_range.SoundEmitter:KillSound("meltdown")
+                inst.deconstructize_range:Remove()
+            end
+
+            inst.components.bloomer:PopBloom("deconstructize")
+
+            local pickable = inst.components.pickable
+            local loot = pickable ~= nil
+                and pickable.product ~= nil
+                and TUNING.WX78_FIXUP_MOONBASE_DECONSTRUCTIZABLES[pickable.product]
+                or nil
+
+            inst.components.pickable.product = loot
+
+            if inst._staffinst then
+                inst._staffinst:Remove()
+                inst._staffinst = nil
+            end
+
+            inst.components.workable:SetWorkLeft(0)
+            inst.components.pickable.caninteractwith = true
+            ToggleMoonCharge(inst)
+            SpawnPrefab("green_sparkexplosion").Transform:SetPosition(inst.Transform:GetWorldPosition())
+            inst.sparkle:Remove()
+            inst.sparkle = nil
+            inst.Light:Enable(false)
+            inst.Light:SetColour(128 / 255, 128 / 255, 255 / 255)
+            inst.components.workable:WorkedBy(inst, TUNING.MOONBASE_COMPLETE_WORK)
+        end
+    end
+
+    local function deconstructize_spark(pos)
+        local sparkpos = GetRandomSpawnPoint(pos, 1, TUNING.WX78_MELTDOWN_RANGE)
+        if sparkpos ~= nil then
+            SpawnPrefab("green_electrichitsparks").Transform:SetPosition(sparkpos:Get())
+        end
+    end
+
+    local function DeconstructizeWarning(inst)
+        _HideColdStar(inst)
+        local pos = inst:GetPosition()
+        local players = FindPlayersInRange(pos.x, pos.y, pos.z, TUNING.WX78_MELTDOWN_RANGE * 2, true)
+        for _, player in pairs(players) do
+            if player.components.talker then
+                player.components.talker:Say(GetString(player, "ANNOUNCE_DECONSTRUCTIZE"))
+            end
+        end
+        inst.deconstructize_task = inst:DoPeriodicTask(0.1, function() deconstructize_spark(pos) end)
+        inst.deconstructize_range = SpawnPrefab("rangeindicator")
+        inst.deconstructize_range.Transform:SetPosition(pos.x, pos.y, pos.z)
+        inst.deconstructize_range.SoundEmitter:PlaySound("grotto/common/archive_resonator/locating_LP", "meltdown")
+
+        inst.deconstructize_range:ConfigureRange(TUNING.WX78_MELTDOWN_RANGE, nil, 10, nil, {
+            color = WEBCOLOURS.RED,
+            time = 0.25
+        })
+
+        inst:AddComponent("bloomer")
+        inst.components.bloomer:PushBloom("deconstructize", "shaders/anim.ksh")
+        inst.sparkle = SpawnPrefab("capacitor_sparkle_green")
+        inst.sparkle.Transform:SetScale(1.5, 1.5, 1.5)
+        inst.sparkle.Transform:SetPosition(pos:Get())
+        inst.Light:SetColour(0, 255 / 255, 0)
+        inst.Light:Enable(true)
+    end
+
+    local function Deconstructize(inst, doer)
+        SpawnPrefab("capacitor_activatefx_green").Transform:SetPosition(inst.Transform:GetWorldPosition())
+        inst.SoundEmitter:PlaySound("grotto/common/archive_security_desk/appear")
+        inst.components.pickable.caninteractwith = false
+        inst.components.trader:Disable()
+        inst:RemoveTag("NPC_workable")
+        if inst.components.timer:TimerExists("deconstructize") then
+            inst.components.timer:StopTimer("deconstructize")
+        end
+        inst.components.timer:StartTimer("deconstructize", deconstructize_time)
+        DeconstructizeWarning(inst)
+
+        inst.components.workable:SetWorkLeft(TUNING.MOONBASE_COMPLETE_WORK)
+        inst:DoTaskInTime(deconstructize_time * (1 / 3), function()
+            if inst then
+                inst.components.workable:WorkedBy(inst, TUNING.MOONBASE_COMPLETE_WORK * (1 / 3))
+                inst:DoTaskInTime(deconstructize_time * (1 / 3), function()
+                    if inst then
+                        inst.components.workable:WorkedBy(inst, TUNING.MOONBASE_COMPLETE_WORK * (1 / 3))
+                    end
+                end)
+            end
+        end)
+
+        inst:RemoveTag("wx78_deconstructize_ready")
+    end
+
+    local _OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data)
+        _OnLoad(inst, data)
+
+        local pickable = inst.components.pickable
+        local staffPrefab = inst._staffinst ~= nil and inst._staffinst.prefab
+            or pickable ~= nil and pickable.product
+            or nil
+
+        if inst.components.timer:TimerExists("deconstructize") then
+            inst:Deconstructize()
+        elseif staffPrefab ~= nil and TUNING.WX78_FIXUP_MOONBASE_DECONSTRUCTIZABLES[staffPrefab] ~= nil then
+            inst:AddTag("wx78_deconstructize_ready")
+            pickable.product = staffPrefab
+        end
+    end
+
+    local _OnStaffGiven = inst.components.trader.onaccept
+    local function OnStaffGiven(_, giver, item, ...)
+        local ret = { _OnStaffGiven(_, giver, item, ...) }
+
+        local staffInst = inst._staffinst or item
+        if TUNING.WX78_FIXUP_MOONBASE_DECONSTRUCTIZABLES[staffInst.prefab] ~= nil then
+            print("waht")
+            inst:AddTag("wx78_deconstructize_ready")
+            inst.components.pickable.product = staffInst.prefab
+        end
+
+        return unpack(ret)
+    end
+
+    inst.components.trader.onaccept = OnStaffGiven
+
+    inst.Deconstructize = Deconstructize
+
+    inst:ListenForEvent("timerdone", DeconstructizeFinished)
+end)
+
+AddAction("DECONSTRUCTIZE", "Deconstructize", function(act)
+    if act.target:HasTag("wx78_deconstructize_ready") and act.target.Deconstructize then
+        local gem = act.doer.components.inventory:RemoveItem(act.invobject)
+
+        if gem and not act.target:IsInLimbo() then
+            act.target:Deconstructize(act.doer)
+            gem:Remove()
+            return true
+        end
+    end
+
+    return false
+end)
+
+ACTIONS.DECONSTRUCTIZE.priority = 10
+
+AddComponentAction("USEITEM", "capacitor", function(inst, doer, target, actions, right)
+    if doer:HasTag("robot") and inst.prefab == "greengem_capacitor" and target and target:HasTag("wx78_deconstructize_ready") and not target:HasTag("INLIMBO") then
+        table.insert(actions, ACTIONS.DECONSTRUCTIZE)
+    end
+end)
+
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.DECONSTRUCTIZE, "dolongaction"))
+
+AddAction("WX78_FIXUP_CHANGEMODEL_PRE", "Change Model", function(act)
+    if act.doer.components.wx78_fixup_modeltracker == nil then return end
+
+    if act.doer.components.timer ~= nil and act.doer.components.timer:TimerExists("wx78_fixup_model_changed") then
+        return false, "ON_COOLDOWN"
+    end
+
+    act.doer:PushBufferedAction(BufferedAction(act.doer, nil, ACTIONS.WX78_FIXUP_CHANGEMODEL, act.invobject))
+    return true
+end)
+
+AddAction("WX78_FIXUP_CHANGEMODEL_PRE_FAIL", "Change Model", function(act)
+    local inst = act.doer
+
+    local energyReq = TUNING.WX78_FIXUP_MODEL_CHANGE_ENERGY_PERCENT_REQ
+    if inst.components.talker then
+        local str = ((inst.replica.sanity ~= nil and inst.replica.sanity:GetPercent() < energyReq
+                    or inst.replica.hunger ~= nil and inst.replica.hunger:GetPercent() < energyReq
+                    or inst.replica.health ~= nil and inst.replica.health:GetPercent() < energyReq)
+                and "NO_ENERGY" or nil)
+            or "ON_COOLDOWN"
+
+        inst.components.talker:Say(GetActionFailString(inst, "WX78_FIXUP_CHANGEMODEL_PRE", str))
+    end
+end)
+
+ACTIONS.WX78_FIXUP_CHANGEMODEL_PRE_FAIL.instant = true
+
+AddComponentAction("INVENTORY", "wx78_fixup_modelconverter", function(inst, doer, actions)
+    if doer.prefab ~= "wx78" then return end
+
+    local energyReq = TUNING.WX78_FIXUP_MODEL_CHANGE_ENERGY_PERCENT_REQ
+    if doer:HasTag("wx78_fixup_model_change_ready")
+        and (doer.replica.sanity == nil or doer.replica.sanity:GetPercent() >= energyReq)
+        and (doer.replica.hunger == nil or doer.replica.hunger:GetPercent() >= energyReq)
+        and (doer.replica.health == nil or doer.replica.health:GetPercent() >= energyReq)
+    then
+        table.insert(actions, ACTIONS.WX78_FIXUP_CHANGEMODEL_PRE)
+    else
+        table.insert(actions, ACTIONS.WX78_FIXUP_CHANGEMODEL_PRE_FAIL)
+    end
+end)
+
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.WX78_FIXUP_CHANGEMODEL_PRE, "dolongestaction"))
+
+local function DoModelChange(inst)
+    if inst.components.wx78_fixup_modeltracker == nil then return end
+
+    if inst.components.timer ~= nil then
+        inst.components.timer:StartTimer("wx78_fixup_model_changed", TUNING.WX78_FIXUP_MODEL_CHANGE_COOLDOWN)
+    end
+
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local fx = SpawnPrefab("electrichitsparks_electricimmune")
+    inst.SoundEmitter:PlaySound("dontstarve/common/together/battery/up")
+    fx.Transform:SetPosition(x, y, z)
+
+    if inst.components.inventory ~= nil then
+        local toDrop = {}
+
+        inst.components.inventory:ForEachEquipment(function(item)
+            if item.components.equippable and item.components.equippable.canthavetag == "robot" then
+                table.insert(toDrop, item)
+            end
+        end)
+
+        for _, item in ipairs(toDrop) do
+            inst.components.inventory:DropItem(item, true, true)
+        end
+    end
+
+    inst:ScreenFade(true, 0.5)
+    inst.components.wx78_fixup_modeltracker:Toggle()
+    inst.components.seamlessplayerswapper:_StartSwap("wx78")
+end
+
+AddAction("WX78_FIXUP_CHANGEMODEL", "Change Model", function()
+    -- Doing this in the task below to ensure we never get stuck.
+    return true
+end)
+
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.WX78_FIXUP_CHANGEMODEL, function(inst)
+    inst:DoTaskInTime(0, function()
+        if inst.sg ~= nil and inst.sg.currentstate.name == "applyupgrademodule" then
+            inst.sg:AddStateTag("nointerrupt")
+            inst:ShowHUD(false)
+            inst:ScreenFade(false, 1.667)
+
+            PrepareForUnOverhaul(inst)
+            inst:DoTaskInTime(2, DoModelChange)
+        end
+    end)
+
+    return "applyupgrademodule"
+end))
+
+STRINGS.ACTIONS.CHARGE_FROM = "Harvest Energy"
+
+AddPrefabPostInit("researchlab3", function(inst)
+    if not TheWorld.ismastersim then return end
+    inst:AddTag("magic")
+end)
+AddPrefabPostInit("researchlab4", function(inst)
+    if not TheWorld.ismastersim then return end
+    inst:AddTag("magic")
+end)
+
+local ignore_recipes =
+{
+    researchlab4 = true,
+    greenamulet = true,
+    yellowamulet = true,
+    orangeamulet = true,
+    greenstaff = true,
+    --yellowstaff = true, --Need to be able to craft in order to get the Iridiscent Gem
+    orangestaff = true,
+}
+
+for name, recipe in pairs(AllRecipes) do
+    if recipe.level == TECH.MAGIC_TWO or recipe.level == TECH.MAGIC_THREE then
+        ignore_recipes[name] = true
+    end
+end
+
+local function IgnoreRecipes(self)
+    self.inst:DoTaskInTime(0, function()
+        if self.inst and self.inst:HasTag("robot") then
+            local old_CanLearn = self.CanLearn
+            function self:CanLearn(recname)
+                return old_CanLearn(self, recname) and ignore_recipes[recname] == nil
+            end
+        end
+    end)
+end
+
+AddClassPostConstruct("components/builder_replica", IgnoreRecipes)
+AddComponentPostInit("builder", IgnoreRecipes)
+
+--Communicate waterproofness to WX78 client
+AddClassPostConstruct("components/moisture_replica", function(self)
+    --This netvar is added to everybody due to timing issues. Currently only used for WX.
+    self.waterproofness = net_smallbyte(self.inst.GUID, "moisture.waterproofness", "waterproofness_dirty")
+    self.waterproofness:set(0)
+    function self:GetWaterproofness()
+        if self.inst.components.moisture then
+            return self.inst.components.moisture:GetWaterproofness()
+        else
+            return self.waterproofness:value() / 63
+        end
+    end
+end)
+
+AddComponentPostInit("moisture", function(self)
+    self.inst:DoTaskInTime(0, function()
+        if not self.inst:HasTag("robot") then return end
+
+        local function onwaterproofness(self, val)
+            if self.inst.replica.moisture ~= nil then
+                val = math.ceil(math.clamp(val, 0, 1) * 63)
+                self.inst.replica.moisture.waterproofness:set(val)
+            end
+        end
+        self._.waterproofness = { nil, onwaterproofness }
+
+        --Lower WX78's maximum moisture and modify exponential increase in drying speed.
+
+        self.maxmoisture = TUNING.WX78_MAX_MOISTURE
+
+        function self:GetDryingRate(moisturerate)
+            -- Don't dry if it's raining
+            if (moisturerate or self:GetMoistureRate()) > 0 then
+                return 0
+            end
+
+            local heaterPower = self.inst.components.temperature ~= nil and
+                math.clamp(self.inst.components.temperature.externalheaterpower, 0, 1) or 0
+
+            local rate = self.baseDryingRate
+                + easing.linear(heaterPower, self.minPlayerTempDrying, self:GetSegs() < 3 and 2 or 5, 1)
+                + easing.linear(TheWorld.state.temperature, self.minDryingRate, self.maxDryingRate,
+                    self.optimalDryingTemp)
+                + easing.inExpo(self:GetMoisture(), 0, self.maxmoisture / 100, self.maxmoisture)
+
+            return math.clamp(rate, 0, self.maxDryingRate + self.maxPlayerTempDrying)
+        end
+
+        local _GetMoistureRate = self.GetMoistureRate
+        function self:GetMoistureRate(...)
+            if TheWorld.state.israining and self.inst.components.rainimmunity == nil and self.inst.components.systems.insulatordisabled then
+                return TUNING.DISABLED_REGULATOR_FORCED_RAIN_RATE
+            end
+            return _GetMoistureRate(self, ...)
+        end
+
+        function self:RecalculateWaterproofness()
+            self.waterproofness =
+                (self.inst.components.sheltered ~= nil and
+                    self.inst.components.sheltered.sheltered and
+                    self.inst.components.sheltered.waterproofness or 0
+                ) +
+                (self.inst.components.inventory ~= nil and
+                    self.inst.components.inventory:GetWaterproofness() or 0
+                ) +
+                (self.inherentWaterproofness or 0
+                ) +
+                (
+                    self.waterproofnessmodifiers:Get() or 0
+                )
+        end
+
+        function self:SetInherentWaterproofness(waterproofness)
+            self.inherentWaterproofness = waterproofness
+            self:RecalculateWaterproofness()
+        end
+
+        self.inst:ListenForEvent("equip", function() self:RecalculateWaterproofness() end)
+        self.inst:ListenForEvent("unequip", function() self:RecalculateWaterproofness() end)
+        self.inst:ListenForEvent("sheltered", function() self:RecalculateWaterproofness() end)
+        self.inst:ListenForEvent("systemdirty", function() self:RecalculateWaterproofness() end)
+
+        self:RecalculateWaterproofness()
+
+        function self:GetWaterproofness()
+            return self.waterproofness
+        end
+    end)
+end)
+
+--Prevent player decoys from being attacked by other players if PVP is disabled.
+AddClassPostConstruct("components/combat_replica", function(self)
+    local _CanBeAttacked = self.CanBeAttacked
+    function self:CanBeAttacked(attacker, ...)
+        if self.inst.prefab == "playerdecoy" and attacker ~= nil and attacker:HasTag("player") and not TheNet:GetPVPEnabled() then
+            return false
+        end
+        return _CanBeAttacked(self, attacker, ...)
+    end
+end)
+
+local containers = require("containers")
+local _itemtestfn = containers.params.icebox.itemtestfn
+function containers.params.icebox.itemtestfn(container, item, slot, ...)
+    if item:HasTag("capacitor") then
+        return false
+    end
+    return _itemtestfn(container, item, slot, ...)
+end
+
+--Prevent electrogems from being affected by normal perish modifiers.
+local perishable_overwritten = false
+AddComponentPostInit("perishable", function(self)
+    if perishable_overwritten or not TheWorld.ismastersim then return end
+    perishable_overwritten = true
+
+    local _Update = UpvalueHacker.GetUpvalue(self.LongUpdate, "Update")
+    local function Update(inst, dt)
+        if inst:HasTag("capacitor") then
+            local self = inst.components.perishable
+            if self ~= nil then
+                dt = self.start_dt or dt
+                self.start_dt = nil
+
+                local modifier = 1
+
+                local old_val = self.perishremainingtime
+                local delta = dt or (10 + math.random() * FRAMES * 8)
+                if self.perishremainingtime then
+                    self.perishremainingtime = math.min(self.perishtime, self.perishremainingtime - delta * modifier)
+                    if math.floor(old_val * 100) ~= math.floor(self.perishremainingtime * 100) then
+                        inst:PushEvent("perishchange", { percent = self:GetPercent() })
+                    end
+                end
+
+                --trigger the next callback
+                if self.perishremainingtime and self.perishremainingtime <= 0 then
+                    self:Perish()
+                end
+            end
+        else
+            _Update(inst, dt)
+        end
+    end
+
+    UpvalueHacker.SetUpvalue(self.LongUpdate, Update, "Update")
+end)
+
+AddPrefabPostInit("wx78", function(inst)
+    local self = inst.components.walkableplatformplayer
+
+    function self:GetOnPlatform(platform)
+        if self.inst.replica.systems ~= nil and self.inst.replica.systems:IsTelescopicVision() then return end --this keeps the boat meter active for WX during telescopic vision.
+
+        self.platform = platform
+        self.inst.Transform:SetIsOnPlatform(true)
+
+        if TheWorld.ismastersim then
+            platform.components.walkableplatform:AddPlayerOnPlatform(self.inst)
+        end
+
+        if self.movement_prediction_enabled then
+            platform.components.walkableplatform:SpawnPlayerCollision()
+        end
+
+        if not TheNet:IsDedicated() and self.inst == ThePlayer then
+            self.inst:PushEvent("got_on_platform", platform)
+
+            self:StartBoatMusicTest()
+            if self.boat_camera_enabled then
+                self:StartBoatCameraZooms()
+                self:StartBoatCamera()
+            end
+        end
+    end
+
+    function self:GetOffPlatform()
+        if self.inst.replica.systems ~= nil and self.inst.replica.systems:IsTelescopicVision() then return end --this keeps the boat meter active for WX during telescopic vision.
+
+        if not TheNet:IsDedicated() and self.inst == ThePlayer then
+            if self.boat_camera_enabled then
+                self:StopBoatCamera()
+                self:StopBoatCameraZooms()
+            end
+            self:StopBoatMusicTest()
+
+
+            self.inst:PushEvent("got_off_platform", self.platform)
+        end
+
+        if self.movement_prediction_enabled then
+            self.platform.components.walkableplatform:DespawnPlayerCollision()
+        end
+
+        if TheWorld.ismastersim then
+            self.platform.components.walkableplatform:RemovePlayerOnPlatform(self.inst)
+        end
+
+        self.inst.Transform:SetIsOnPlatform(false)
+        self.platform = nil
+    end
+end)
+
+--Splashes only take waterproofing directly from equipment, no inherent waterproofness or other modifiers. This fixes that.
+local function GetActualWaterproofness(ent)
+    return math.clamp(
+        (ent.components.inventory ~= nil and
+            ent.components.inventory:GetWaterproofness() or 0
+        ) +
+        (ent.components.moisture.inherentWaterproofness or 0
+        ) +
+        (
+            ent.components.moisture.waterproofnessmodifiers:Get() or 0
+        )
+        , -1, 1)
+end
+
+AddComponentPostInit("oar", function(self)
+    function self:RowFail(doer)
+        if not TheWorld.ismastersim then return end
+
+        self.fail_idx = (self.fail_idx + 1) % self.fail_string_count
+
+        local doer_x, doer_y, doer_z = doer.Transform:GetWorldPosition()
+
+        local ents = TheSim:FindEntities(doer_x, doer_y, doer_z, 2)
+        for k, v in pairs(ents) do
+            local moisture = v.components.moisture
+            if moisture ~= nil then
+                local waterproofness = GetActualWaterproofness(v)
+                moisture:DoDelta(self.fail_wetness * (1 - waterproofness))
+            end
+        end
+
+        return "BAD_TIMING" .. tostring(self.fail_idx)
+    end
+end)
+
+AddComponentPostInit("wateryprotection", function(self)
+    function self:SpreadProtectionAtPoint(x, y, z, dist, noextinguish)
+        if not TheWorld.ismastersim then return end
+
+        local ents = TheSim:FindEntities(x, y, z, dist or self.protection_dist or 4, nil, self.ignoretags)
+        for i, v in ipairs(ents) do
+            if v.components.burnable ~= nil then
+                if self.witherprotectiontime > 0 and v.components.witherable ~= nil then
+                    v.components.witherable:Protect(self.witherprotectiontime)
+                end
+                if not noextinguish and self.extinguish then
+                    if v.components.burnable:IsBurning() or v.components.burnable:IsSmoldering() then
+                        v.components.burnable:Extinguish(true, self.extinguishheatpercent)
+                    end
+                end
+            end
+            if self.addcoldness > 0 and v.components.freezable ~= nil then
+                v.components.freezable:AddColdness(self.addcoldness)
+            end
+            if self.temperaturereduction > 0 and v.components.temperature ~= nil then
+                v.components.temperature:SetTemperature(v.components.temperature:GetCurrent() -
+                    self.temperaturereduction)
+            end
+            if self.addwetness > 0 and v.components.moisture ~= nil then
+                local waterproofness = GetActualWaterproofness(v)
+                v.components.moisture:DoDelta(self.addwetness * (1 - waterproofness))
+            end
+        end
+
+        if self.addwetness and TheWorld.components.farming_manager ~= nil then
+            TheWorld.components.farming_manager:AddSoilMoistureAtPoint(x, y, z, self.addwetness)
+        end
+
+        if self.onspreadprotectionfn ~= nil then
+            self.onspreadprotectionfn(self.inst, x, y, z)
+        end
+    end
+end)
+
+AddPrefabPostInit("world", function()
+    if not TheWorld.ismastersim then return end
+
+    local SPLASH_WETNESS = UpvalueHacker.GetUpvalue(GLOBAL.Prefabs.wave_med.fn, "oncollidewave", "DoSplash",
+        "SPLASH_WETNESS")
+    local function DoSplash(inst)
+        local wave_splash = SpawnPrefab("wave_splash")
+        local pos = inst:GetPosition()
+        TintByOceanTile(wave_splash)
+        wave_splash.Transform:SetPosition(pos.x, pos.y, pos.z)
+        wave_splash.Transform:SetRotation(inst.Transform:GetRotation())
+
+        local ents = TheSim:FindEntities(pos.x, pos.y, pos.z, 4)
+        for _, v in pairs(ents) do
+            local moisture = v.components.moisture
+            if moisture ~= nil then
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:researchlab3
+
+AddPrefabPostInit("researchlab3", function(inst)
+    if not TheWorld.ismastersim then return end
+    inst:AddTag("magic")
+end)
+
+```
+
+
+
+### 变体演进：千恋＊万花 丛雨 (Mod 3813042753)
+- **变体场景与切面**：收录来自工坊 Mod 3813042753 (`千恋＊万花 丛雨`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3813042753)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:builder
+    local SHENLI_TAG = "shenli_user"
+    AddComponentPostInit("builder", function(self)
+        local inst = self.inst
+        if inst == nil or not inst:HasTag(SHENLI_TAG) then
+            return
+        end
+
+        local vanilla_HasCharacterIngredient = self.HasCharacterIngredient
+        self.HasCharacterIngredient = function(builder, ingredient, ...)
+            if ingredient.type == CHARACTER_INGREDIENT.SHENLI then
+                local cmp = builder.inst.components.shenli
+                local current = cmp ~= nil and cmp:GetCurrent() or 0
+                return current >= ingredient.amount, current
+            end
+            return vanilla_HasCharacterIngredient(builder, ingredient, ...)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer", function(stewer)
+    local OldHarvest = stewer.Harvest
+    stewer.Harvest = function(self, harvester, ...)
+        -- id 23 收锅双倍：煮多少给多少 ×2。
+        -- 官方 Harvest（stewer.lua:276-320）本身会按 recipe.stacksize 给一份（默认 1，个别料理 3）。
+        -- 这里在官方收锅之前额外再给同样数量的一份，两份相加 = 成品数量 ×2。
+        if harvester ~= nil and harvester:HasTag("shenli_amulet_pot_two") and self.done and self.product ~= nil then
+            local rec = cooking and cooking.GetRecipe(self.inst.prefab, self.product)
+            local stacksize = rec and rec.stacksize or 1
+            local loot = SpawnPrefab(self.product)
+            if loot ~= nil then
+                if stacksize > 1 and loot.components.stackable ~= nil then
+                    loot.components.stackable:SetStackSize(stacksize)
+                end
+                if harvester.components.inventory ~= nil then
+                    if not harvester.components.inventory:GiveItem(loot, nil, self.inst:GetPosition()) then
+                        LaunchAt(loot, self.inst, nil, 1, 1)
+                    end
+                else
+                    LaunchAt(loot, self.inst, nil, 1, 1)
+                end
+            end
+        end
+        return OldHarvest(self, harvester, ...)
+    end
+
+    local OldStartCooking = stewer.StartCooking
+    stewer.StartCooking = function(self, doer, ...)
+        if doer ~= nil and doer:HasTag("shenli_amulet_instant_cook") then
+            self.cooktimemult = 0
+        end
+        return OldStartCooking(self, doer, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:fishingrod
+
+AddComponentPostInit("fishingrod", function(fishingrod)
+    local DoNibble = function(inst)
+        local fr = inst.components.fishingrod
+        if fr ~= nil and fr.fisherman ~= nil then
+            inst:PushEvent("fishingnibble")
+            fr.fisherman:PushEvent("fishingnibble")
+            fr.fishtask = nil
+        end
+    end
+
+    local oldWaitForFish = fishingrod.WaitForFish
+    fishingrod.WaitForFish = function(self, ...)
+        local fr = self.inst ~= nil and self.inst.components.fishingrod or nil
+        if fr ~= nil and fr.fisherman ~= nil and fr.fisherman.medal_fishing_time_mult then
+            if self.target ~= nil and self.target.components.fishable ~= nil then
+                local fishleft = self.target.components.fishable:GetFishPercent()
+                local nibbletime = nil
+                if fishleft > 0 then
+                    local time_mult = fr.fisherman.medal_fishing_time_mult or 1
+                    nibbletime = math.max((self.minwaittime + (1.0 - fishleft) * (self.maxwaittime - self.minwaittime)) * time_mult, 1)
+                end
+                self:CancelFishTask()
+                if nibbletime ~= nil then
+                    self.fishtask = self.inst:DoTaskInTime(nibbletime, DoNibble)
+                end
+            end
+        else
+            return oldWaitForFish(self, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:freezable
+
+AddComponentPostInit("freezable", function(self)
+    local old_AddColdness = self.AddColdness
+    self.AddColdness = function(self, coldness, freezetime, nofreeze, ...)
+        if self.inst._shenli_amulet_freezeimmune then
+            return
+        end
+        return old_AddColdness(self, coldness, freezetime, nofreeze, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+end
+AddStategraphPostInit("wilson", SetupShenliNoStun)
+AddStategraphPostInit("wilson_client", SetupShenliNoStun)
+
+
+
+local SHENLI_TELEPORT_TAG = "shenli_amulet_teleport"
+local SHENLI_TELEPORT_COST = 75
+
+local function CanShenliTeleport(doer)
+    return doer ~= nil and doer:HasTag(SHENLI_TELEPORT_TAG)
+end
+
+```
+
+
+
+### 变体演进：__header_ (Mod 3817537568)
+- **变体场景与切面**：收录来自工坊 Mod 3817537568 (`__header_`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3817537568)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:container
+
+-- 修复（2026-10-03 根因）：原实现挂 AddComponentPostInit("container")，但引擎在 prefab
+-- 构造函数返回之后才给 inst.prefab 赋值，组件 postinit 触发时 inst.prefab 仍为 nil，
+-- BOX_PREFABS 判断永远不命中 → FbArrange / 自动归类 / 开箱修正整套逻辑从未安装，
+-- 点任何一页「整理」都会报 attempt to call method 'FbArrange' (a nil value)。
+-- 改用 AddPrefabPostInit：它在构造函数返回、prefab 名赋值之后执行，判断可靠命中。
+local function SetupBoxPaging(inst)
+    if not (TheWorld ~= nil and TheWorld.ismastersim) then
+        return ;
+    end
+
+    local container = inst.components.container
+    if container == nil then
+        return ;
+    end
+
+    -- 建筑形态标志（2026-10-11）：地上建筑（fb_chest_*_build）不做任何页限制——
+    -- 所有物品可随意放入所有页；随身形态维持「食物/战斗页严格分区」。
+    -- 判断走 BOX_PREFABS 表里的 true / "build" 双值，拆除后 swapTo 重新生成
+    -- 随身 prefab 并重新 postinit，恢复原规则（内容无损转移，原状态不残留）。
+    local is_build_form = BOX_PREFABS[inst.prefab] == "build"
+
+    -- 放入时间戳（2026-10-12）：记录每个槽位物品的最后一次放入时间，
+    -- 整理合并时以"最后放入的格"为锚点——槽号大小 ≠ 放入顺序
+    --（页3槽241 < 页2槽121，但用户可能先放页3再放页2）。
+    container.fb_place_time = {}
+
+    -- 开箱整理脏标记（2026-10-13 性能优化）：
+    -- 旧实现每次 Open 都无条件执行 FixCategoryPages（最多 600 轮、每轮全量扫描
+    -- 600 槽），箱子已整理好时也每开必扫，是开箱卡顿的服务端来源。
+    -- 现在：初始（含新放置/拆除重建的箱子、读档）为 true，仅在「非整理动作」的
+    -- 外部 itemget 时重新置脏；FixCategoryPages / DistributeAll 跑到不动点后清掉。
+    -- 已整理好的箱子再次开箱直接跳过整个扫描，零成本。
+    container.fb_fix_dirty = true
+    inst:ListenForEvent("itemget", function(_, data)
+        if data ~= nil and data.slot ~= nil and not container.fb_arranging then
+            container.fb_place_time[data.slot] = GetTime()
+            container.fb_fix_dirty = true
+        end
+    end)
+    inst:ListenForEvent("itemlose", function(_, data)
+        if data ~= nil and data.slot ~= nil and not container.fb_arranging then
+            container.fb_place_time[data.slot] = nil
+        end
+    end)
+
+    -- 新物品自动入箱（快捷移动 Shift 入箱、拾取入袋、掉落入包都走这里）
+    -- 槽位优先级：
+    --   1) 玩家当前正在查看的页（fb_viewpage，由 set_page RPC 实时同步）。
+    --      击杀/砍伐/挖掘/销毁/铲除掉落物路由（fb_loot_route=true）时跳过此项，
+    --      纯按分类落页——用户要求这些掉落物默认进第 1 页。
+    --   2) 食物/战斗 → 各自分类页；通用类物品 → 第 1 页
+    --   3) 分类页满 → 第 1 页（通用页）兜底；仍无空位返回 nil 交引擎全局搜索
+    --   归集：散落在分类页的通用类物品由通用页「整理」统一收回第 1 页。
+    -- 建筑形态（is_build_form）：禁止分类——所有物品（含食物/战斗）一律按随身箱
+    --   「通用第 1 页」规则入箱（见函数内 want=1 分支）：当前页 → 第 1 页，每页先
+    --   向后寻找同名非满堆叠合并、再取空槽，找不到交引擎全箱兜底，绝不落分类页。
+    container.GetSpecificSlotForItem = function(self, item)
+        local want = CategoryOf(item)          -- 分类号（1/2/3）
+
+        -- 建筑形态「禁止分类」：建筑也拥有随身箱通用第 1 页的「向后寻找相同项堆叠」
+        -- 能力，但不做任何食物/战斗分区——把分类号强制改成通用类，下面的落页顺序
+        -- （当前查看页 → 第 1 页；每页先向后扫描同名非满堆叠合并、再取空槽；全满交
+        -- 引擎全箱兜底）对所有物品一视同仁，食物/战斗品绝不会被塞进各自分类页。
+        -- CanTakeItemInSlot 在建筑形态本就全页放行，两处行为保持一致。
+        if is_build_form then
+            want = 1;
+        end
+
+        local order = {}
+        local function addpage(p)
+            if p == nil then
+                return
+            end
+            for _, v in ipairs(order) do
+                if v == p then return end
+            end
+            order[#order + 1] = p
+        end
+        if not self.fb_loot_route then
+            local vp = self.fb_viewpage
+            if vp ~= nil and vp > TOTAL_PAGES then vp = TOTAL_PAGES end
+            addpage(vp)                        -- 当前页优先（掉落物路由时跳过）
+        end
+        addpage(PageForCategory(want))      -- 通用页 或 食物/战斗分类页
+        if want ~= 1 then
+            addpage(1)                     -- 分类页满时兜底通用页（通用页恒从第 1 页起）
+        end
+
+        for _, page in ipairs(order) do
+            -- page 是页码；这里取该页对应的槽区间（通用页第 1 页…，食物/战斗页各自一页）
+            local lo, hi = PageBounds(page)
+
+            if item.components.stackable ~= nil and self.acceptsstacks then
+                for k = lo, hi do
+                    local other = self.slots[k]
+                    if other ~= nil
+                            and other.components.stackable ~= nil
+                            and other.components.stackable:CanStackWith(item)
+                            and not other.components.stackable:IsFull()
+                            and self:CanTakeItemInSlot(item, k) then
+                        -- 堆叠分支同样要过分页校验：当前页优先返回的槽可能属于
+                        -- 不接受该物品的分类页，引擎 GiveItem 入口处会再次校验并
+                        -- 整体拒绝，物品反而进不了箱，故在此提前过滤。
+                        return k
+                    end
+                end
+            end
+
+            for k = lo, hi do
+                if self.slots[k] == nil and self:CanTakeItemInSlot(item, k) then
+                    return k
+                end
+            end
+        end
+
+        return nil -- 全箱已满：交给引擎兜底路径，物品不会丢
+    end
+
+    -- 放置限制：通用面板（页1..GENERIC_PAGES）接受一切；食物面板只收带新鲜度的物品
+    -- （含高脚鸟蛋显式白名单），战斗面板只收战斗装备
+    --（slot 为 nil 的自动入箱路径同样受此限制，由 GetSpecificSlotForItem 预过滤）
+    -- ⚠ fb_internal：模组内部整理（arrangePass 直接改槽、或先整段取出再逐格放回）期间
+    --   绕过页匹配限制。没有这个绕过时，错放在本页的异类物品（如旧存档里食物页中的
+    --   树枝）会在「取出→放回」时因放回被拒而滞留 limbo —— 这正是开箱/整理后
+    --   物品消失的根因。
+    local OldCanTakeItemInSlot = container.CanTakeItemInSlot
+    container.CanTakeItemInSlot = function(self, item, slot, ...)
+        if self.fb_internal then
+            return OldCanTakeItemInSlot(self, item, slot, ...)
+        end
+        if not OldCanTakeItemInSlot(self, item, slot, ...) then
+            return false
+        end
+        -- 建筑形态（2026-10-11）：所有物品可随意进入所有页，不做分区限制
+        if is_build_form then
+            return true
+        end
+        if slot ~= nil and not PageAcceptsCategory(PageOfSlot(slot), CategoryOf(item)) then
+            return false
+        end
+        return true
+    end
+
+    -- 存档/分片迁移恢复（2026-10-19 修复「开洞穴后箱内物品消失」）：
+    -- 引擎 Container:OnLoad 按原槽号逐件 GiveItem(inst, k)，且不带 drop_on_fail
+    -- （components/container.lua:996-1005、447-450）。恢复期间 fb_internal 为 false，
+    -- 物品一旦被上方页匹配校验拒绝——旧存档分类口径变化、mod 版本交替（便携收纳箱
+    -- →五页版）、开洞穴重启集群后玩家重新登录时的存档恢复——实体已被 SpawnSaveRecord
+    -- 生成却不入箱、不落地，悬空实体在下次存档时被引擎清除 = 物品永久丢失。
+    -- 故恢复期间置 fb_internal 绕过页匹配，无条件按原槽号放回；错页物品随后由开箱
+    -- 时的 FixCategoryPages（fb_internal 包裹、直接换槽、绝不丢弃）安全归位。
+    local OldOnLoad = container.OnLoad
+    container.OnLoad = function(self, data, newents)
+        local old_internal = self.fb_internal
+        self.fb_internal = true
+        local ok, err = pcall(OldOnLoad, self, data, newents)
+        self.fb_internal = old_internal
+        if not ok then
+            error(err, 2)
+        end
+    end
+
+    -- 同容器内槽位搬迁/交换：直接改槽并推 itemlose/itemget，客户端据此同步
+    local function Relocate(s, t)
+        local a = container.slots[s]
+        local b = container.slots[t]
+        container.slots[s] = b
+        container.slots[t] = a
+
+        inst:PushEvent("itemlose", { slot = s })
+        if b ~= nil then
+            inst:PushEvent("itemget", { slot = s, item = b })
+        end
+        inst:PushEvent("itemlose", { slot = t })
+        if a ~= nil then
+            inst:PushEvent("itemget", { slot = t, item = a })
+        end
+    end
+
+    -- 整堆合并：把 s 槽物品并入 t 槽同类堆。复用引擎 Stackable:Put——
+    -- 无限堆叠下 maxsize 视为无穷，源堆整量吸收后由引擎自行销毁；
+    -- 腐烂/温湿度稀释与 stacksizechange 事件也都由引擎负责，两端表现一致。
+    local function MergeStacks(s, t)
+        local a = container.slots[s]
+        local b = container.slots[t]
+        if a == nil or b == nil or a == b then
+            return false
+        end
+        local sa = a.components.stackable
+        local sb = b.components.stackable
+        if sa == nil or sb == nil or not sb:CanStackWith(a) or sb:IsFull() then
+            return false
+        end
+
+        local size_before = sa:StackSize()
+        container.slots[s] = nil
+        local leftover = sb:Put(a)
+        if leftover == nil then
+            -- 引擎已把 a 整个销毁（无限堆叠恒为此分支）
+            inst:PushEvent("itemlose", { slot = s, prev_item = a })
+        else
+            container.slots[s] = leftover
+            if leftover.components.stackable ~= nil
+                    and leftover.components.stackable:StackSize() == size_before then
+                -- 目标堆一点都没吸收（仅有限堆叠才可能）：视作无法合并，避免空转
+                return false
+            end
+            -- 源堆数量变了：强制客户端重刷该格
+            inst:PushEvent("itemlose", { slot = s, prev_item = leftover })
+            inst:PushEvent("itemget", { slot = s, item = leftover })
+        end
+        inst:PushEvent("itemget", { slot = t, item = b })
+        return true
+    end
+
+    -- 通用页 2..GENERIC_PAGES「物品锁定」判定（2026-10-10）：
+    -- 已正确落在锁定页（通用页2~3）上的通用类物品，在任何跨页整理（第1页的
+    -- 全箱分发、开箱修正）中都按「已归位」处理——只做分类，绝不搬出本页；
+    -- 锁定页自己的「整理」按钮只做本页内的压实排序（arrangeContainerRange
+    -- 天然不跨页，不会经过这里）。食物/战斗物品错放在锁定页时仍要修正，
+    -- 故锁定只认通用类物品。
+    -- 建筑形态（2026-10-11）：不做页限制，全部物品视为未锁定，页内随意归并。
+    local function IsGenericSlotLocked(slot, item)
+        if item == nil or is_build_form then
+            return false
+        end
+        local page = PageOfSlot(slot)
+        return CategoryOf(item) == 1 and page >= 2 and page <= GENERIC_PAGES
+    end
+
+    -- 开箱/整理修正：把「错放在扫描范围内、且目标分类页有空位」的物品逐类收敛。
+    local function arrangePass(s_lo, s_hi)
+        local moved = false
+
+        -- 1) 同类合并（固定锚点算法，2026-10-12 重写）：
+        --    旧实现两处缺陷：
+        --      a)「repeat … until true」中 until 条件恒真，循环体实际只执行一次，
+        --         一个源堆只能并一个目标；
+        --      b) 目标取扫描到的第一个同类槽，合并后锚点随源槽不断向后跳，
+        --         锁页内的后续同类堆（作为源被锁定跳过）再也找不到它。
+        --    新算法：先为每种物品选出【固定锚点】，所有同类源堆一律并入锚点，
+        --    锚点自身不动——
+        --      · 通用页2~3 的锁定堆优先当锚点（随身箱历史规则：页1 新采的同类
+        --        物品并入页2 已有堆）；锁定源堆只并入【本页】锚点，绝不跨页移动；
+        --      · 无锁定堆时，锚点 = 分类范围内最早的同类槽，N 个同类堆全部向上并入；
+        --      · 建筑形态：无分类/锁定概念，锚点 = 全箱最早同类槽。
+        local function stack_key(ent)
+            return ent.prefab .. "\0" .. tostring(ent.skinname)
+        end
+
+        -- 锚点选择（2026-10-21 分形态）——
+        -- 槽号大小不等于放入顺序，必须用真实时间戳；读档恢复的物品无时间戳，
+        -- 以 0 参与（天然视为最早放入的老堆）：
+        --   · 随身形态取「最晚放入」槽：通用页2~3锁定堆优先当锚点的历史规则不变；
+        --   · 建筑形态取「最早放入」槽：新进入的物品向后并入箱内已有同类堆，
+        --     而不是反过来把老堆搬到新物品落下的槽位（用户反馈的归类方向颠倒）。
+        local pt = container.fb_place_time or {}
+        local prefer_latest = not is_build_form
+        local function anchor_better(a_ts, b_ts)
+            if prefer_latest then
+                return a_ts > b_ts
+            end
+            return a_ts < b_ts
+        end
+        local locked_anchor = {} -- key -> 放入时间最晚的锁定同类槽（仅随身形态）
+        local free_anchor = {}   -- key -> 随身=最晚/建筑=最早放入的同类槽
+        for t = 1, container.numslots do
+            local it = container.slots[t]
+            if it ~= nil and it.components.stackable ~= nil then
+                local key = stack_key(it)
+                local pg = PageOfSlot(t)
+                local ts = pt[t] or 0
+                if not is_build_form
+                        and CategoryOf(it) == 1 and pg >= 2 and pg <= GENERIC_PAGES then
+                    if locked_anchor[key] == nil or ts > locked_anchor[key].ts then
+                        locked_anchor[key] = { slot = t, ts = ts }
+                    end
+                else
+                    local in_range = is_build_form == true
+                    if not in_range then
+                        local rlo, rhi = PageRangeForCategory(CategoryOf(it))
+                        in_range = pg >= rlo and pg <= rhi
+                    end
+                    if in_range then
+                        if free_anchor[key] == nil or anchor_better(ts, free_anchor[key].ts) then
+                            free_anchor[key] = { slot = t, ts = ts }
+                        end
+                    end
+                end
+            end
+        end
+
+        -- find_merge_target：随身形态按放入时间从最晚到最早找可并入目标；
+        -- 建筑形态反过来（从最早到最晚），与新物品并入老堆的方向一致。
+        local function find_merge_target(s, lo, hi)
+            local src = container.slots[s]
+            if src == nil then
+                return nil
+            end
+            -- 收集范围内所有可并入的同类槽，按锚点方向排序
+            local cands = {}
+            for t = lo, hi do
+                local other = container.slots[t]
+                if t ~= s and other ~= nil and other.components.stackable ~= nil
+                        and other.components.stackable:CanStackWith(src)
+                        and not other.components.stackable:IsFull() then
+                    table.insert(cands, { slot = t, ts = pt[t] or 0 })
+                end
+            end
+            if prefer_latest then
+                table.sort(cands, function(a, b) return a.ts > b.ts end)
+            else
+                table.sort(cands, function(a, b) return a.ts < b.ts end)
+            end
+            return cands[1] and cands[1].slot or nil
+        end
+
+        for s = s_lo, s_hi do
+            local item = container.slots[s]
+            if item ~= nil and item.components.stackable ~= nil then
+                local locked = IsGenericSlotLocked(s, item)
+                local key = stack_key(item)
+                local anchor_slot  -- 锚点槽号（从 {slot,ts} 表中提取）
+                local lo, hi
+                if is_build_form then
+                    local fa = free_anchor[key]
+                    anchor_slot = fa and fa.slot or nil
+                    lo, hi = 1, container.numslots
+                elseif locked then
+                    -- 锁定源：跨页2~3 合并，锚点 = 最后放入的锁定同类槽
+                    local la = locked_anchor[key]
+                    anchor_slot = la and la.slot or nil
+                    lo, hi = SlotBoundsForPages(2, GENERIC_PAGES)
+                else
+                    -- 自由源：锁定堆优先，其次分类页最后放入的同类槽
+                    local a = locked_anchor[key] or free_anchor[key]
+                    anchor_slot = a and a.slot or nil
+                    lo, hi = SlotBoundsForPages(PageRangeForCategory(CategoryOf(item)))
+                end
+
+                -- 本槽就是锚点（最后放入的格）时：它只作合并目标，
+                -- 绝不作源被并入他处，否则方向颠倒、物品反而离锚点而去
+                local is_anchor_self = (anchor_slot == s)
+
+                -- 锁定源无锚点兜底：在全部锁定页范围内扫描可并入目标
+                if anchor_slot == nil and locked then
+                    anchor_slot = find_merge_target(s, lo, hi)
+                end
+
+                if anchor_slot ~= nil and not is_anchor_self then
+                    -- 源堆持续并入直到清空（无限堆叠一次即空；有限堆叠残留时
+                    -- 继续在范围内寻找下一个可并同类槽）
+                    while container.slots[s] ~= nil do
+                        local t = anchor_slot
+                        local other = t ~= nil and container.slots[t] or nil
+                        if t == nil or t == s or other == nil
+                                or other.components.stackable == nil
+                                or not other.components.stackable:CanStackWith(container.slots[s])
+                                or other.components.stackable:IsFull() then
+                            t = find_merge_target(s, lo, hi)
+                        end
+                        if t == nil or not MergeStacks(s, t) then
+                            break
+                        end
+                        moved = true
+                    end
+                end
+            end
+        end
+
+        -- 2) 目标页空槽直移（阶段1合并腾出的空位在这里会被利用）
+        --    建筑形态：无页分类概念，跳过整段直移（物品在哪页都算归位）。
+        if not is_build_form then
+            for s = s_lo, s_hi do
+                local item = container.slots[s]
+                if item ~= nil then
+                    local want = CategoryOf(item)
+                    if IsGenericSlotLocked(s, item) then
+                        -- 通用页2~3锁定：只分类不搬出，跳过直移
+                    elseif PageForCategory(want) ~= PageOfSlot(s) then
+                        local lo, hi = SlotBoundsForPages(PageRangeForCategory(want))
+                        for t = lo, hi do
+                            if container.slots[t] == nil then
+                                Relocate(s, t)
+                                moved = true
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- 3) 目标页已满：互补错放交换，一次让两个物品同时归位
+        --    建筑形态：无错放概念，跳过整段交换。
+        if not moved and not is_build_form then
+            for s = s_lo, s_hi do
+                local item = container.slots[s]
+                if item ~= nil then
+                    local cur = PageOfSlot(s)
+                    local want = CategoryOf(item)
+                    if PageForCategory(want) ~= cur then
+                        local lo, hi = SlotBoundsForPages(PageRangeForCategory(want))
+                        for t = lo, hi do
+                            local other = container.slots[t]
+                            -- 锁定页2~3中已归位的通用物品不参与交换（不会被换出本页）；
+                            -- 错放进来的食物/战斗物品未锁定，仍可作为交换伙伴
+                            if other ~= nil
+                                    and not IsGenericSlotLocked(t, other)
+                                    and PageForCategory(CategoryOf(other)) == cur then
+                                Relocate(s, t)
+                                moved = true
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        return moved
+    end
+
+    -- 搬运期公共包裹：绕过分页放置校验（fb_internal）+ 禁止拆散超限堆
+    -- （ignoreoverstacked），出错也必须复位。
+    local function withInternalArrange(fn)
+        local old_internal = container.fb_internal
+        local old_ignore = container.ignoreoverstacked
+        local old_arranging = container.fb_arranging
+        container.fb_internal = true
+        container.ignoreoverstacked = true
+        container.fb_arranging = true   -- 禁止时间戳更新（2026-10-12）
+        local ok, err = pcall(fn)
+        container.fb_internal = old_internal
+        container.ignoreoverstacked = old_ignore
+        container.fb_arranging = old_arranging
+        if not ok then
+            error(err, 2)
+        end
+    end
+
+    -- 通用页1整理（唯一的全箱归位参考页）：散落在分类页的通用类物品收回通用页，
+    -- 通用页上的食物/战斗物品分发到对应分类页，同时修正分类页错放；
+    -- 通用类物品（want==1）本就属于通用页，cur==want 直接跳过，不再乒乓空转；
+    -- 通用页2~3上已归位的通用物品被「锁定」，IsGenericSlotLocked 让其保持原位。
+    local function DistributeAll()
+        withInternalArrange(function()
+            for _ = 1, container.numslots do
+                if not arrangePass(1, container.numslots) then
+                    break
+                end
+            end
+        end)
+        -- 全箱分发已是完整的归位不动点，开箱修正无需再跑一遍
+        container.fb_fix_dirty = false
+    end
+
+    -- 开箱修正：修正食物/战斗面板以及锁定通用页（2..GENERIC_PAGES）的全部错放——
+    -- 食物页中的非食物、战斗页中的非战斗物品各归其位，旧存档遗留在分类页/锁定页的
+    -- 食物/战斗物品同样被分拣出去；已正确落在锁定页的通用物品保持锁定不动。
+    --
+    -- 性能（2026-10-13）：脏标记门控——箱子没有任何外部物品变动时（重复开箱、
+    -- 多个玩家轮流打开）直接跳过，不再每次开箱都执行最多 600 轮全量扫描。
+    -- 只有初始/读档、外部物品进入（itemget 非整理动作）后才真正执行，
+    -- 跑到 arrangePass 连续一轮无动作（归位不动点）后清掉脏标记。
+    local function FixCategoryPages()
+        if not container.fb_fix_dirty then
+            return
+        end
+        withInternalArrange(function()
+            for _ = 1, container.numslots do
+                if not arrangePass(PAGE_SLOT_COUNT + 1, container.numslots) then
+                    break
+                end
+            end
+        end)
+        container.fb_fix_dirty = false
+    end
+
+    -- 整理入口（由面板按钮触发，page 为当前面板）
+    container.FbArrange = function(self, page)
+        if page == nil then
+            return
+        end
+        -- 「按钮开关」=关：第 2~5 页整理停用。整理按钮已在客户端隐藏，这里拦截
+        -- arrange_page RPC 等旁路调用；第 1 页全箱归类不受影响。
+        if page > 1 and not PAGE_BUTTONS_ON then
+            return
+        end
+        if page == 1 then
+            -- 通用页1（参考基准页）：全箱归类分发（收回散落通用物品 + 分发食物/战斗）
+            DistributeAll()
+        else
+            -- 通用页2~3（物品锁定）+ 食物/战斗页：只在该页槽位范围内分类压实排序，
+            -- 绝不把物品搬出本页。
+            -- 本页内整理不改变跨页对错状态，但它内部的 GiveItem 会触发 itemget
+            -- 把脏标记误置为 true；这里保存/恢复整理前的脏状态，避免下一次开箱
+            -- 白白跑一遍全量修正。
+            local lo, hi = PageBounds(page)
+            local was_dirty = container.fb_fix_dirty
+            local ok, err = pcall(API.arrangeContainerRange, inst, lo, hi)
+            if ok then
+                container.fb_fix_dirty = was_dirty
+            else
+                -- 整理中途异常：保守置脏，下次开箱做一次全量修正
+                container.fb_fix_dirty = true
+                print("[fusion_bigbox] page arrange failed: " .. tostring(err))
+            end
+        end
+    end
+
+    local OldOpen = container.Open
+    container.Open = function(self, doer, ...)
+        local r1, r2, r3 = OldOpen(self, doer, ...)
+        FixCategoryPages()
+        return r1, r2, r3
+    end
+
+    -- 关箱时重置「当前查看页」：面板关闭后所有页都不存在可见与否，
+    -- 若沿用最后一次浏览的页号，关闭期间的自动入箱（拾取入袋/掉落入包）
+    -- 可能把物品塞进一个下次开箱时并不展示的页，重演「进箱即隐身」。
+    -- 重置为 nil 后，自动入箱回退按分类规则落页（基础材料 → 第 1 页）。
+    -- 注意（2026-10-12）：UI 层的「恢复上次查看页」由客户端本地表
+    -- last_viewed_pages 实现（见客户端 HookGeneralClass("widgets/containerwidget")），
+    -- 服务端仍重置 fb_viewpage——两者职责不同：fb_viewpage 只影响自动入箱落页，
+    -- 影响的是「关箱后塞进来的东西去哪」；开箱恢复的只是客户端视角的显示页。
+    local OldCloseFn = container.onclosefn
+    container.onclosefn = function(inst2, ...)
+        container.fb_viewpage = nil
+        if OldCloseFn ~= nil then
+            return OldCloseFn(inst2, ...)
+        end
+    end
+end
+
+env.AddPrefabPostInit("fb_chest_bag", SetupBoxPaging)
+-- 建筑形态（2026-10-11 修复）：此前未注册，地上建筑打开后 FbArrange/自动归类/
+-- 严格分区放置/开箱修正整套服务端逻辑从未安装，与随身形态行为不一致。
+env.AddPrefabPostInit("fb_chest_bag_build", SetupBoxPaging)
+
+-- 远端客户端整理请求（房主客户端直接调组件方法，不走此 RPC）
+env.AddModRPCHandler("fusion_box", "arrange_page", function(player, target, page)
+    local container = target ~= nil and target.components.container or nil
+    -- 防御：目标实体可能已被回收或不是收纳箱，FbArrange 不存在时直接忽略本次请求
+    if container ~= nil and container.FbArrange ~= nil and container:IsOpenedBy(player) then
+        container:FbArrange(tonumber(page))
+    end
+end)
+
+-- 页号同步：客户端切换分页时上报，服务端记录「当前查看页」，
+-- 供 GetSpecificSlotForItem 实现「快捷入箱优先进当前页」（2026-10-03 规则调整）
+env.AddModRPCHandler("fusion_box", "set_page", function(player, target, page)
+    local container = target ~= nil and target.components.container or nil
+    page = tonumber(page)
+    -- 只接受收纳箱本体、且必须由该玩家打开中，防误报/伪造
+    if container ~= nil
+            and target.prefab ~= nil and BOX_PREFABS[target.prefab]
+            and page ~= nil and page >= 1 and page <= TOTAL_PAGES
+            and container:IsOpenedBy(player) then
+        container.fb_viewpage = page
+    end
+end)
+
+-- 虚化保持（2026-10-14）：客户端按 G 开启虚化时，请求服务端把该箱子登记为该玩家的
+-- 「虚化保持」容器（per-player 集合 player.fb_ghost_pins）。这样玩家随后去打开别的
+-- 箱子 / 晾肉架时，引擎 Container:Open 里「同 prefab / 同 type 容器互斥关闭」循环不会
+-- 把虚化箱子关掉，虚化面板得以与新容器并存、作为玻璃背景层留在最底层；关闭虚化或
+-- 箱子关闭时解除登记。用集合而非单值，支持连续虚化多个箱子时一并保持。
+-- enable 用字符串 "1"/"0" 传，和 set_page 一致（避开 ModRPC 布尔参数的兼容差异）。
+env.AddModRPCHandler("fusion_box", "ghost_pin", function(player, target, enable)
+    if player == nil or player.components.inventory == nil then
+        return
+    end
+    local container = target ~= nil and target.components.container or nil
+    if container == nil or target.prefab == nil or BOX_PREFABS[target.prefab] == nil then
+        return
+    end
+    player.fb_ghost_pins = player.fb_ghost_pins or {}
+    if enable == "1" then
+        -- 仅当箱子确实由该玩家打开中才登记，防止伪造
+        if container:IsOpenedBy(player) then
+            player.fb_ghost_pins[target] = true
+        end
+    else
+        player.fb_ghost_pins[target] = nil
+    end
+end)
+
+-- 服务端容器开关包装：保护「虚化保持」中的箱子不被同 prefab / type 的互斥关闭循环关掉。
+-- 做法：在引擎 Open 遍历 inventory.opencontainers 关闭旧容器之前，临时把被保护的虚化
+-- 箱子从 opencontainers 摘出，引擎循环自然跳过它；Open 完成后再把仍然打开的箱子补回
+-- 记账。整个过程不调用 Close，箱子自身 openlist / opencount 不变，对客户端而言它始终
+-- 处于打开状态，面板与物品数据都不失效（虚化期间入箱、刷新照常）。
+HookGeneralClass("components/container", function(Container)
+    local old_Open = Container.Open
+    local old_Close = Container.Close
+
+    Container.Open = function(self, doer, ...)
+        local inv = doer ~= nil and doer.components.inventory or nil
+        local pins = doer ~= nil and doer.fb_ghost_pins or nil
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:fb_chest_bag
+
+env.AddPrefabPostInit("fb_chest_bag", SetupBoxPaging)
+-- 建筑形态（2026-10-11 修复）：此前未注册，地上建筑打开后 FbArrange/自动归类/
+-- 严格分区放置/开箱修正整套服务端逻辑从未安装，与随身形态行为不一致。
+env.AddPrefabPostInit("fb_chest_bag_build", SetupBoxPaging)
+
+-- 远端客户端整理请求（房主客户端直接调组件方法，不走此 RPC）
+env.AddModRPCHandler("fusion_box", "arrange_page", function(player, target, page)
+    local container = target ~= nil and target.components.container or nil
+    -- 防御：目标实体可能已被回收或不是收纳箱，FbArrange 不存在时直接忽略本次请求
+    if container ~= nil and container.FbArrange ~= nil and container:IsOpenedBy(player) then
+        container:FbArrange(tonumber(page))
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:fb_chest_bag_build
+-- 严格分区放置/开箱修正整套服务端逻辑从未安装，与随身形态行为不一致。
+env.AddPrefabPostInit("fb_chest_bag_build", SetupBoxPaging)
+
+-- 远端客户端整理请求（房主客户端直接调组件方法，不走此 RPC）
+env.AddModRPCHandler("fusion_box", "arrange_page", function(player, target, page)
+    local container = target ~= nil and target.components.container or nil
+    -- 防御：目标实体可能已被回收或不是收纳箱，FbArrange 不存在时直接忽略本次请求
+    if container ~= nil and container.FbArrange ~= nil and container:IsOpenedBy(player) then
+        container:FbArrange(tonumber(page))
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+--------------------------------------------------------------------------
+env.AddComponentPostInit("inventory", function(self)
+    if not (TheWorld ~= nil and TheWorld.ismastersim) then
+        return
+    end
+
+    local OldFindItems = self.FindItems
+    if type(OldFindItems) ~= "function" then
+        return
+    end
+
+    self.FindItems = function(self, fn, ...)
+        local items = OldFindItems(self, fn, ...)
+        local player = self.inst
+
+        if not IsGateOpen(player) or type(fn) ~= "function" then
+            return items
+        end
+
+        for _, box in ipairs(FindPortableBoxes(player)) do
+            for _, item in ipairs(box.components.container:FindItems(fn)) do
+                table.insert(items, item)
+            end
+        end
+        return items
+    end
+end)
+
+--------------------------------------------------------------------------
+-- 链路 1：包装馨食记 diary_finditem:Update，扫描计数期间开「扫描门」
+-- Update 内部对 player.inventory:FindItems 的调用即会把箱内食材一并计入。
+--------------------------------------------------------------------------
+env.AddComponentPostInit("diary_finditem", function(cmp)
+    if not (TheWorld ~= nil and TheWorld.ismastersim) then
+        return
+    end
+
+    local OldUpdate = cmp.Update
+    if type(OldUpdate) ~= "function" then
+        return
+    end
+
+    cmp.Update = function(self, player, range, ...)
+        if not isValid(player) then
+            return OldUpdate(self, player, range, ...)
+        end
+
+        player[SCAN_GATE] = true
+        local ok, err = pcall(OldUpdate, self, player, range, ...)
+        player[SCAN_GATE] = nil
+        if not ok then
+            error(err, 0)
+        end
+    end
+end)
+
+--------------------------------------------------------------------------
+-- 链路 2：包装馨食记挂在 cookbook 上的 aoespell 法术（自动做饭入口）
+-- 馨食记在自己的 cookbook PrefabPostInit 里 AddComponent("aoespell"):SetSpellFn(AutoCook)。
+-- 各 mod 的 PrefabPostInit 在同一次 SpawnPrefab 内同步执行完，延迟一帧再包裹，
+-- 即可稳定拿到馨食记设置的 spellfn；原版 cookbook 没有 aoespell，缺省即馨食记未启用。
+--------------------------------------------------------------------------
+local function StartAutoCookGate(caster)
+    if not isValid(caster) then
+        return
+    end
+
+    caster[AUTO_GATE] = true
+
+    if caster[WATCH_TASK] ~= nil then
+        caster[WATCH_TASK]:Cancel()
+        caster[WATCH_TASK] = nil
+    end
+
+    local start_time = GetTime()
+    caster[WATCH_TASK] = caster:DoPeriodicTask(WATCH_PERIOD, function()
+        if not isValid(caster) then
+            return
+        end
+
+        -- 线程在每口锅之间是无 Sleep 的同步续跑，看门狗只能在线程 Sleep（投料间隔）时介入，
+        -- 此刻能观察到「无锁定食材」只会发生在线程真正结束/提前失败时，关门是安全的。
+        if not HasLockedIngredient(caster) or (GetTime() - start_time) >= WATCH_HARD_TIMEOUT then
+            caster[AUTO_GATE] = nil
+            if caster[WATCH_TASK] ~= nil then
+                caster[WATCH_TASK]:Cancel()
+                caster[WATCH_TASK] = nil
+            end
+        end
+    end, WATCH_INITIAL_DELAY)
+end
+
+env.AddPrefabPostInit("cookbook", function(inst)
+    if not (TheWorld ~= nil and TheWorld.ismastersim) then
+        return
+    end
+
+    inst:DoTaskInTime(0, function()
+        if not isValid(inst) then
+            return
+        end
+
+        local aoespell = inst.components.aoespell
+        -- 注意：spellfn 是函数值，Lua 函数不能被索引，包装标记必须打在 aoespell 组件表上，
+        -- 不能写成 aoespell.spellfn.xxx（会报 attempt to index field 'spellfn' (a function value)）。
+        if aoespell == nil
+                or type(aoespell.spellfn) ~= "function"
+                or aoespell._fb_diary_wrapped == true then
+            return
+        end
+
+        local OldSpell = aoespell.spellfn
+        local WrappedSpell = function(book, caster, pos, ...)
+            StartAutoCookGate(caster)
+            return OldSpell(book, caster, pos, ...)
+        end
+
+        if type(aoespell.SetSpellFn) == "function" then
+            aoespell:SetSpellFn(WrappedSpell)
+        else
+            aoespell.spellfn = WrappedSpell
+        end
+        aoespell._fb_diary_wrapped = true
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:diary_finditem
+--------------------------------------------------------------------------
+env.AddComponentPostInit("diary_finditem", function(cmp)
+    if not (TheWorld ~= nil and TheWorld.ismastersim) then
+        return
+    end
+
+    local OldUpdate = cmp.Update
+    if type(OldUpdate) ~= "function" then
+        return
+    end
+
+    cmp.Update = function(self, player, range, ...)
+        if not isValid(player) then
+            return OldUpdate(self, player, range, ...)
+        end
+
+        player[SCAN_GATE] = true
+        local ok, err = pcall(OldUpdate, self, player, range, ...)
+        player[SCAN_GATE] = nil
+        if not ok then
+            error(err, 0)
+        end
+    end
+end)
+
+--------------------------------------------------------------------------
+-- 链路 2：包装馨食记挂在 cookbook 上的 aoespell 法术（自动做饭入口）
+-- 馨食记在自己的 cookbook PrefabPostInit 里 AddComponent("aoespell"):SetSpellFn(AutoCook)。
+-- 各 mod 的 PrefabPostInit 在同一次 SpawnPrefab 内同步执行完，延迟一帧再包裹，
+-- 即可稳定拿到馨食记设置的 spellfn；原版 cookbook 没有 aoespell，缺省即馨食记未启用。
+--------------------------------------------------------------------------
+local function StartAutoCookGate(caster)
+    if not isValid(caster) then
+        return
+    end
+
+    caster[AUTO_GATE] = true
+
+    if caster[WATCH_TASK] ~= nil then
+        caster[WATCH_TASK]:Cancel()
+        caster[WATCH_TASK] = nil
+    end
+
+    local start_time = GetTime()
+    caster[WATCH_TASK] = caster:DoPeriodicTask(WATCH_PERIOD, function()
+        if not isValid(caster) then
+            return
+        end
+
+        -- 线程在每口锅之间是无 Sleep 的同步续跑，看门狗只能在线程 Sleep（投料间隔）时介入，
+        -- 此刻能观察到「无锁定食材」只会发生在线程真正结束/提前失败时，关门是安全的。
+        if not HasLockedIngredient(caster) or (GetTime() - start_time) >= WATCH_HARD_TIMEOUT then
+            caster[AUTO_GATE] = nil
+            if caster[WATCH_TASK] ~= nil then
+                caster[WATCH_TASK]:Cancel()
+                caster[WATCH_TASK] = nil
+            end
+        end
+    end, WATCH_INITIAL_DELAY)
+end
+
+env.AddPrefabPostInit("cookbook", function(inst)
+    if not (TheWorld ~= nil and TheWorld.ismastersim) then
+        return
+    end
+
+    inst:DoTaskInTime(0, function()
+        if not isValid(inst) then
+            return
+        end
+
+        local aoespell = inst.components.aoespell
+        -- 注意：spellfn 是函数值，Lua 函数不能被索引，包装标记必须打在 aoespell 组件表上，
+        -- 不能写成 aoespell.spellfn.xxx（会报 attempt to index field 'spellfn' (a function value)）。
+        if aoespell == nil
+                or type(aoespell.spellfn) ~= "function"
+                or aoespell._fb_diary_wrapped == true then
+            return
+        end
+
+        local OldSpell = aoespell.spellfn
+        local WrappedSpell = function(book, caster, pos, ...)
+            StartAutoCookGate(caster)
+            return OldSpell(book, caster, pos, ...)
+        end
+
+        if type(aoespell.SetSpellFn) == "function" then
+            aoespell:SetSpellFn(WrappedSpell)
+        else
+            aoespell.spellfn = WrappedSpell
+        end
+        aoespell._fb_diary_wrapped = true
+    end)
+end)
+
+```
+

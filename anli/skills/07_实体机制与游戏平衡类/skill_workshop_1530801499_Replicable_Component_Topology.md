@@ -6759,3 +6759,326 @@ end)
 
 ```
 
+
+
+### 变体演进：The Shadow Curse (Mod 3422203784)
+- **变体场景与切面**：收录来自工坊 Mod 3422203784 (`The Shadow Curse`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3422203784)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:armordreadstone
+AddPrefabPostInit("armordreadstone", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        local _onequip = inst.components.equippable.onequipfn
+        local _onunequip = inst.components.equippable.onunequipfn
+
+        local function onequip(inst, owner)
+            if _onequip ~= nil then
+                _onequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = true
+end
+        end
+
+        local function onunequip(inst, owner)
+            if _onunequip ~= nil then
+                _onunequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = false
+end
+        end
+
+        inst.components.equippable:SetOnEquip(onequip)
+        inst.components.equippable:SetOnUnequip(onunequip)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armorruins
+AddPrefabPostInit("armorruins", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        local _onequip = inst.components.equippable.onequipfn
+        local _onunequip = inst.components.equippable.onunequipfn
+
+        local function onequip(inst, owner)
+            if _onequip ~= nil then
+                _onequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = true
+end
+        end
+
+        local function onunequip(inst, owner)
+            if _onunequip ~= nil then
+                _onunequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = false
+end
+        end
+
+        inst.components.equippable:SetOnEquip(onequip)
+        inst.components.equippable:SetOnUnequip(onunequip)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_sanity
+AddPrefabPostInit("armor_sanity", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        local _onequip = inst.components.equippable.onequipfn
+        local _onunequip = inst.components.equippable.onunequipfn
+
+        local function onequip(inst, owner)
+            if _onequip ~= nil then
+                _onequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = true
+end
+        end
+
+        local function onunequip(inst, owner)
+            if _onunequip ~= nil then
+                _onunequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = false
+end
+        end
+
+        inst.components.equippable:SetOnEquip(onequip)
+        inst.components.equippable:SetOnUnequip(onunequip)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_voidcloth
+AddPrefabPostInit("armor_voidcloth", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        local _onequip = inst.components.equippable.onequipfn
+        local _onunequip = inst.components.equippable.onunequipfn
+
+        local function onequip(inst, owner)
+            if _onequip ~= nil then
+                _onequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = true
+end
+        end
+
+        local function onunequip(inst, owner)
+            if _onunequip ~= nil then
+                _onunequip(inst, owner)
+            end
+    if owner.components.curse ~= nil then
+        owner.components.curse.absorbed = false
+end
+        end
+
+        inst.components.equippable:SetOnEquip(onequip)
+        inst.components.equippable:SetOnUnequip(onunequip)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:crawlinghorror
+
+AddPrefabPostInit("crawlinghorror", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    inst:ListenForEvent("onattackother", OnAttackOther)
+end)
+
+```
+
+
+
+### 变体演进：Bielarusizatar DST (Mod 3508511660)
+- **变体场景与切面**：收录来自工坊 Mod 3508511660 (`Bielarusizatar DST`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3508511660)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:skeleton_player
+-- Жуть какая. Столько кода просто для перевода скелета
+-- AddPrefabPostInit("skeleton_player", function(inst)
+-- 	local function reassignfn(inst) --функція переопределяет функцію. Туповато, но менять лень
+-- 		inst.components.inspectable.Oldgetspecialdescription=inst.components.inspectable.getspecialdescription
+-- 		function inst.components.inspectable.getspecialdescription(inst, viewer, ...)
+-- 			local oldGetDescription=GetDescription
+-- 			GetDescription=function(viewer1, inst1, tag)
+-- 				local ret=oldGetDescription(viewer1, inst1, tag)
+-- 				ret=t.ParseTranslationTags(ret, inst1.cause, nil, nil)
+-- 				return ret
+-- 			end
+-- 			local message=inst.components.inspectable.Oldgetspecialdescription(inst, viewer, ...)
+-- 			GetDescription=oldGetDescription
+-- 			if not message then return message end
+
+-- 			local player=ThePlayer
+-- 			local key=player and player.prefab:upper() or "GENERIC"
+-- --				local key=inst.char:upper()
+-- 			local deadgender=GetGenderStrings(inst.char)
+-- 			local m=STRINGS.CHARACTERS[key] and STRINGS.CHARACTERS[key].DESCRIBE and STRINGS.CHARACTERS[key].DESCRIBE.SKELETON_PLAYER and STRINGS.CHARACTERS[key].DESCRIBE.SKELETON_PLAYER[deadgender] or STRINGS.CHARACTERS.GENERIC.DESCRIBE.SKELETON_PLAYER[deadgender]
+-- 			m=t.ParseTranslationTags(m, inst.cause, nil, nil)
+-- 			if not m then return message end
+-- 			local dead,killer=string.match(message,(string.gsub(m,"%%s","(.*)"))) --вытасківаем імена із сообщенія
+-- 			if not (m and dead and killer) then return message end
+
+-- 			dead=inst.playername or t.SpeechHashTbl.NAMES.Be2Eng[dead] or dead --переводім на англійскій імя убітого
+-- 			if t.SpeechHashTbl.NAMES.Be2Eng[killer] and inst.pkname == nil then
+-- 				local mentions=t.SpeechHashTbl.NAMES.Be2Eng[killer]
+-- 				local killerkey=t.SpeechHashTbl.NAMES.Eng2Key[mentions] --Получаем ключ імені убійцы
+-- 				t.print("[BLR DEBUG] 2302 "..killerkey)
+
+-- 				if not killerkey and key=="WX78" then --тут только полный перебор, т.к. он говоріт всё в верхнем регістре
+-- 					for eng, key in pairs(t.SpeechHashTbl.NAMES.Eng2Key) do
+-- 						if eng:upper()==mentions then killerkey = key break end
+-- 					end
+-- 				end
+
+-- 				mentions=killerkey and STRINGS.NAMES[killerkey] or mentions
+-- 				if killerkey then
+-- 					mentions=t.BelarusianNames[mentions] and t.BelarusianNames[mentions]["KILL"] or rebuildname(mentions,"KILL",killerkey) or mentions
+-- 					if not t.ShouldBeCapped[killerkey:lower()] and not table.contains(GetActiveCharacterList(), killerkey:lower()) then
+-- 						mentions=firsttolower(mentions)
+-- 					end
+
+-- 					killerkey=killerkey:lower()
+-- 					if table.contains(GetActiveCharacterList(), killerkey) then
+-- 						killerkey=nil
+-- 					end
+-- 				end
+
+-- 				killer=mentions
+-- 			else
+-- 				killer=t.SpeechHashTbl.NAMES.Be2Eng[killer] or killer --Переводім на англійскій імя убійцы
+-- 			end
+
+-- 			message=string.format(m,dead,killer)
+-- 			return message
+-- 		end
+-- 	end
+-- 	if inst.SetSkeletonDescription and not inst.OldSetSkeletonDescription then
+-- 		inst.OldSetSkeletonDescription=inst.SetSkeletonDescription
+-- 		function inst.SetSkeletonDescription(inst, ...)
+-- 			inst.OldSetSkeletonDescription(inst, ...)
+-- 			reassignfn(inst)
+-- 		end
+-- 	end
+-- 	if inst.OnLoad and not inst.OldOnLoad then
+-- 		inst.OldOnLoad=inst.OnLoad
+-- 		function inst.OnLoad(inst, ...)
+-- 			inst.OldOnLoad(inst, ...)
+-- 			reassignfn(inst)
+-- 		end
+-- 	end
+-- end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:blueprint
+-- TODO: проверіть работу AddPrefabPostInit
+AddPrefabPostInit("blueprint", function(inst)
+	local function reassignfn(inst)
+		if inst.recipetouse then
+			local name = STRINGS.NAMES[string.upper(inst.recipetouse)] or STRINGS.NAMES[inst.recipetouse]
+			if name then
+				name = t.SpeechHashTbl.NAMES.Be2Eng[name] or name
+				inst.components.named:SetName(name.." Blueprint")
+			end
+		end
+	end
+	if inst.OnLoad and not inst.OldOnLoad then
+		inst.OldOnLoad=inst.OnLoad
+		function inst.OnLoad(inst, data)
+			if data and data.recipetouse and not STRINGS.NAMES[string.upper(data.recipetouse)] then
+				STRINGS.NAMES[string.upper(data.recipetouse)]="Прадмет з адключанай мадыфікаці"
+				inst.OldOnLoad(inst, data)
+				STRINGS.NAMES[string.upper(data.recipetouse)]=nil
+			else
+				inst.OldOnLoad(inst, data)
+end
+			reassignfn(inst)
+		end
+	end
+	reassignfn(inst)
+end)
+
+```
+
+
+
+### 变体演进：쿠사나기 네네 (Mod 3599144580)
+- **变体场景与切面**：收录来自工坊 Mod 3599144580 (`쿠사나기 네네`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3599144580)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:emu
+
+AddPrefabPostInit("emu", AddSanityAura)
+
+-- 스킨 모드 설정
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+-- 튜닝 값 설정
+_G.TUNING.NENE_BATTLEBORN_BONUS = _G.TUNING.WATHGRITHR_BATTLEBORN_BONUS or 0.25
+_G.TUNING.NENE_DAMAGE_MULT = _G.TUNING.WATHGRITHR_DAMAGE_MULT or 1.25
+_G.TUNING.NENE_ABSORPTION = _G.TUNING.WATHGRITHR_ABSORPTION or 0.10
+
+-- 캐릭터 추가
+AddModCharacter("nene", "FEMALE", skin_modes)
+
+-- ========================================
+-- HUD에 영감 게이지 추가 (클라이언트만)
+-- ========================================
+if not _G.TheNet:IsDedicated() then
+    AddClassPostConstruct("widgets/statusdisplays", function(self)
+        local _base_init = self.OnUpdate
+        
+        function self:OnUpdate(dt, ...)
+            if _base_init ~= nil then
+                _base_init(self, dt, ...)
+            end
+            
+            if self.owner and self.owner:HasTag("battlesinger") and self.owner.prefab == "nene" then
+                if self.inspirationbadge == nil then
+                    local InspirationBadge = require("widgets/inspirationbadge")
+                    self.inspirationbadge = self:AddChild(InspirationBadge(self.owner))
+                    self.inspirationbadge:SetPosition(-120, -40, 0)
+                    
+                    table.insert(self.statuses, self.inspirationbadge)
+                    
+                    print("[NENE MOD] Inspiration badge successfully added")
+                end
+            end
+        end
+    end)
+end
+
+```
+

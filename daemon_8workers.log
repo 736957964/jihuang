@@ -5412,3 +5412,32 @@
 [2026-11-01 08:05:06] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 08:05:06] Reducer: 成功将 Mod 3807808423 (lol_attack_speed_limit) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 08:05:06] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:05:12] Git 自动提交并推送成功！
+[2026-11-01 08:05:13] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 08:05:13] 【批次结算】：本批归约出 5 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 08:05:43] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3813042753', '3508511660', '3817537568', '3608751276', '3599144580', '3422203784']
+[2026-11-01 08:05:43] SteamCMD 下载 3813042753 ...
+[2026-11-01 08:05:43] SteamCMD 下载 3508511660 ...
+[2026-11-01 08:05:43] SteamCMD 下载 3608751276 ...
+[2026-11-01 08:05:43] SteamCMD 下载 3817537568 ...
+[2026-11-01 08:05:43] SteamCMD 下载 3599144580 ...
+[2026-11-01 08:05:43] SteamCMD 下载 3422203784 ...
+[2026-11-01 08:06:00] Worker [3813042753] 成功解析入库暂存区 -> 千恋＊万花 丛雨 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:06:51] Worker [3508511660] 成功解析入库暂存区 -> Bielarusizatar DST (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 08:07:24] Worker [3817537568] 成功解析入库暂存区 -> __header_ (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:07:36] Worker [3608751276] 成功解析入库暂存区 -> WX78 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 08:07:49] Worker [3599144580] 成功解析入库暂存区 -> 쿠사나기 네네 (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 08:08:28] Worker [3422203784] 成功解析入库暂存区 -> The Shadow Curse (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 08:08:28] Reducer Worker 7: 发现 6 份待存草稿，执行母本仲裁归约...
+[2026-11-01 08:08:28] Reducer: 成功将 Mod 3422203784 (The Shadow Curse) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 08:08:28] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 08:08:28] Reducer: 成功将 Mod 3508511660 (Bielarusizatar DST) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 08:08:28] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 08:08:29] Reducer: 成功将 Mod 3599144580 (쿠사나기 네네) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 08:08:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 08:08:29] Reducer: 成功将 Mod 3608751276 (WX78) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:08:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:08:29] Reducer: 成功将 Mod 3813042753 (千恋＊万花 丛雨) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:08:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:08:29] Reducer: 成功将 Mod 3817537568 (__header_) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 08:08:29] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
