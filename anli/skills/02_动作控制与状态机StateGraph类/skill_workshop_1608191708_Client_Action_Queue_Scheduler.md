@@ -37160,3 +37160,1560 @@ AddStategraphPostInit("wilson_client", AddControlImmunity)
 
 ```
 
+
+
+### 变体演进：󰀉姐妹再次团聚 (2026)\n 󰀉Sisters reunited again (2026) (Mod 3691480285)
+- **变体场景与切面**：收录来自工坊 Mod 3691480285 (`󰀉姐妹再次团聚 (2026)\n 󰀉Sisters reunited again (2026)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3691480285)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:abigail_human
+
+AddPrefabPostInit("abigail_human", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+	inst:ListenForEvent("MandrakePicked", function(inst)
+	    UnlockAchivement(inst, "mandrake")
+	end)
+	inst:ListenForEvent("Lory", function(inst)
+	    UnlockAchivement(inst, "lory")
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:leif
+
+AddPrefabPostInit("leif", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+	inst:DoTaskInTime(0, function()	
+	    inst.abbies_killers = {}
+        inst:ListenForEvent("attacked", OnAttacked)
+		inst:ListenForEvent("death", OnDeath)
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragonfly
+
+AddPrefabPostInit("dragonfly", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+	inst:DoTaskInTime(0, function()	
+	    inst.abbies_killers = {}
+        inst:ListenForEvent("attacked", OnAttacked)
+		inst:ListenForEvent("death", OnDeath)
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:deerclops
+
+AddPrefabPostInit("deerclops", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+	inst:DoTaskInTime(0, function()	
+	    inst.abbies_killers = {}
+        inst:ListenForEvent("attacked", OnAttacked)
+		inst:ListenForEvent("death", OnDeath)
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+-- ========== 容器等级持久化（服务端） ==========
+AddComponentPostInit("container", function(self)
+    if not self.inst then return end
+    if self.inst.prefab ~= "abigail_human" and not self.inst:HasTag("abi") then
+        return
+    end
+
+    -- ===== OnSave: 记录超堆叠物品的真实数量 =====
+    local old_OnSave = self.OnSave
+    self.OnSave = function(self)
+        local data, references = old_OnSave(self)
+        if not data then data = {} end
+
+        if data.items and self.slots then
+            for k, v in pairs(data.items) do
+                if v then
+                    local item = self.slots[k]
+                    if item and item:IsValid() and item.components.stackable then
+                        local stacksize = item.components.stackable:StackSize()
+                        local maxsize = item.components.stackable.originalmaxsize
+                            or item.components.stackable.maxsize
+                            or 1
+                        if stacksize > maxsize then
+                            v.overstacked_size = stacksize
+                        end
+                    end
+                end
+            end
+        end
+
+        if self.inst._backpack_level and self.inst._backpack_level > 0 then
+            data._backpack_level = self.inst._backpack_level
+        end
+        return data, references
+    end
+
+    -- ===== OnLoad: 先走原版加载，再恢复超堆叠数量 =====
+    local old_OnLoad = self.OnLoad
+    self.OnLoad = function(self, data, newents)
+        if data and data._backpack_level
+            and data._backpack_level > (self.inst._backpack_level or 0)
+            and self.inst.ApplyBackpackLevel then
+            self.inst:ApplyBackpackLevel(data._backpack_level)
+        end
+
+        -- 加载期间禁止超堆叠物品被丢出去
+        local old_ignore = self.ignoreoverstacked
+        self.ignoreoverstacked = true
+
+        if old_OnLoad then
+            old_OnLoad(self, data, newents)
+        end
+
+        -- 恢复真实堆叠数量
+        if data and data.items then
+            for k, v in pairs(data.items) do
+                if v and v.overstacked_size then
+                    local item = self:GetItemInSlot(k)
+                    if item and item.components.stackable then
+                        item.components.stackable:SetIgnoreMaxSize(true)
+                        item.components.stackable:SetStackSize(v.overstacked_size)
+                    end
+                end
+            end
+        end
+
+        self.ignoreoverstacked = old_ignore
+    end
+
+    -- ===== 移除物品时禁止丢出超堆叠 =====
+    local old_RemoveItem_Internal = self.RemoveItem_Internal
+    self.RemoveItem_Internal = function(self, item, slot, wholestack, keepoverstacked)
+        local old_ignore = self.ignoreoverstacked
+        self.ignoreoverstacked = true
+        local result = old_RemoveItem_Internal(self, item, slot, wholestack, keepoverstacked)
+        self.ignoreoverstacked = old_ignore
+        return result
+    end
+end)
+
+```
+
+
+
+### 变体演进：让韦伯再次伟大 (Make Webber Great Again) (Mod 3740753241)
+- **变体场景与切面**：收录来自工坊 Mod 3740753241 (`让韦伯再次伟大 (Make Webber Great Again)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3740753241)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddBrainPostInit:spiderqueenbrain
+    -- 蜘蛛女王驯服专属行为树 (提前注册，以便后续被驻守节点覆盖优先级)
+    AddBrainPostInit("spiderqueenbrain", function(brain)
+        local GetLeader = function()
+            return brain.inst.components.follower and brain.inst.components.follower.leader
+        end
+        
+        local CanSpawnChild = function()
+            local inst = brain.inst
+            local leader = GetLeader()
+            local is_auto_spawn = leader and leader._spider_queen_spawn_mode or false
+            return is_auto_spawn
+                and not inst.sg:HasStateTag("busy")
+                and inst.components.incrementalproducer 
+                and inst.components.incrementalproducer:CanProduce()
+        end
+
+        local tamed_behavior = GLOBAL.WhileNode(function() return GetLeader() ~= nil end, "Is Tamed",
+            GLOBAL.PriorityNode({
+                GLOBAL.IfNode(CanSpawnChild, "spawn in combat",
+                    GLOBAL.ActionNode(function() brain.inst.sg:GoToState("poop_pre") return GLOBAL.SUCCESS end, "make child")
+                ),
+                GLOBAL.ChaseAndAttack(brain.inst, 15),
+                GLOBAL.Follow(brain.inst, GetLeader, 4, 7, 12),
+                GLOBAL.FaceEntity(brain.inst, GetLeader, GetLeader)
+            }, 0.25)
+        )
+
+        if brain.bt and brain.bt.root and brain.bt.root.children then
+            table.insert(brain.bt.root.children, 1, tamed_behavior)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+AddStategraphPostInit("wilson", function(sg)
+    local baton_command = GLOBAL.State{
+        name = "webber_baton_command",
+        tags = { "canrotate", "notalking" },
+
+        onenter = function(inst)
+            -- ControllerAttackButton 在服务端生成的是原版 ATTACK 缓冲动作；
+            -- 进入这个表现状态时立即结算一次，由 actions.lua 转成蜘蛛指挥。
+            if inst.components and inst.components.inventory then
+                inst:PerformBufferedAction()
+            end
+            inst.AnimState:PlayAnimation("atk_pre")
+            inst.AnimState:PushAnimation("atk", false)
+        end,
+
+        events = {
+            GLOBAL.EventHandler("locomote", function(inst, data)
+                local should_move = inst.components.locomotor:WantsToMoveForward()
+                if should_move then
+                    if data and data.dir then
+                        inst.components.locomotor:SetMoveDir(data.dir)
+                    end
+                    inst.sg:GoToState("run_start")
+                else
+                    inst.sg:GoToState("idle")
+                end
+            end),
+            GLOBAL.EventHandler("animqueueover", function(inst)
+                if inst.AnimState:AnimDone() then
+                    inst.sg:GoToState("idle")
+                end
+            end),
+            GLOBAL.EventHandler("equip", function(inst) inst.sg:GoToState("idle") end),
+            GLOBAL.EventHandler("unequip", function(inst) inst.sg:GoToState("idle") end),
+        },
+    }
+    sg.states["webber_baton_command"] = baton_command
+
+    if sg.actionhandlers[GLOBAL.ACTIONS.ATTACK] then
+        local old_attack = sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate
+        sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate = function(inst, action)
+            local inventory = inst.components and inst.components.inventory
+                or (inst.replica and inst.replica.inventory)
+            local equip = inventory and inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+            if GetModConfigData("cfg_spider_commander") and equip and equip:HasTag("spider_baton") then
+                return "webber_baton_command"
+            end
+            return type(old_attack) == "function" and old_attack(inst, action) or old_attack
+        end
+    end
+
+    -- 创建一个蜘蛛女王专用的攻击状态
+    local spiderqueen_attack = GLOBAL.State{
+        name = "attack_spiderqueen",
+        tags = { "attack", "notalking", "abouttoattack", "autopredict", "nointerrupt", "busy" },
+
+        onenter = function(inst)
+            if inst.components.combat:InCooldown() then
+                inst.sg:RemoveStateTag("abouttoattack")
+                inst:ClearBufferedAction()
+                inst.sg:GoToState("idle", true)
+                return
+            end
+
+            -- 动态加速攻击动画，利用网络变量客户端也能正确读取
+            local multiplier = 1.0
+            if inst.replica.rider and inst.replica.rider:IsRiding() then
+                local mount = inst.replica.rider:GetMount()
+                if mount and mount.prefab == "spiderqueen" then
+                    local tu = mount._sq_net_upgrades ~= nil and mount._sq_net_upgrades:value() or 0
+                    multiplier = 1.0 + (tu * 0.01)
+                end
+            end
+            inst.AnimState:SetDeltaTimeMultiplier(multiplier)
+
+            -- 核心：通知客户端记录起手时间，阻止左键无限鬼畜重置动作
+            if inst.components.combat.StartAttack then
+                inst.components.combat:StartAttack()
+            elseif inst.replica.combat then
+                inst.replica.combat:StartAttack()
+            end
+
+            -- 播放攻击动作
+            inst.AnimState:PlayAnimation("atk_pre")
+            inst.AnimState:PushAnimation("atk", false)
+
+            -- 播放女王咬人的巨兽音效
+            inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/attack")
+            -- 补上女王的嘶吼声
+            inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/attack_grunt")
+            inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
+
+            -- 设置状态机超时时间（控制了你可以多快进行下一次攻击）
+            -- 我们强制锁死在大概 1 秒多（35帧），展现巨兽的重量感
+            inst.sg:SetTimeout(35 * GLOBAL.FRAMES)
+        end,
+
+        timeline =
+        {
+            -- 核心：在第 20 帧时强制结算伤害！完美对齐你的动画！
+            GLOBAL.TimeEvent(20 * GLOBAL.FRAMES, function(inst)
+                inst:PerformBufferedAction()
+                inst.sg:RemoveStateTag("abouttoattack")
+            end),
+        },
+
+        onexit = function(inst)
+            inst.AnimState:SetDeltaTimeMultiplier(1.0)
+        end,
+
+        ontimeout = function(inst)
+            inst.sg:RemoveStateTag("attack")
+            inst.sg:AddStateTag("idle")
+        end,
+
+        events =
+        {
+            GLOBAL.EventHandler("equip", function(inst) inst.sg:GoToState("idle") end),
+            GLOBAL.EventHandler("unequip", function(inst) inst.sg:GoToState("idle") end),
+            GLOBAL.EventHandler("animqueueover", function(inst)
+                if inst.AnimState:AnimDone() then
+                    inst.sg:GoToState("idle")
+                end
+            end),
+        },
+    }
+    
+    -- 把我们写的状态塞进主角的脑子里
+    sg.states["attack_spiderqueen"] = spiderqueen_attack
+    
+    -- 劫持主角的攻击判定逻辑
+    if sg.actionhandlers[GLOBAL.ACTIONS.ATTACK] then
+        local old_attack = sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate
+        sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate = function(inst, action)
+            -- 检查是不是骑着蜘蛛女王
+            if not inst.sg:HasStateTag("abouttoattack") then
+                if inst.replica.rider ~= nil and inst.replica.rider:IsRiding() then
+                    local mount = inst.replica.rider:GetMount()
+                    if mount and mount.prefab == "spiderqueen" then
+                        -- 检查是否在冷却中，如果在冷却，千万不要切状态，否则会导致抽搐！
+                        local in_cooldown = false
+                        if inst.components.combat then
+                            in_cooldown = inst.components.combat:InCooldown()
+                        elseif inst.replica.combat then
+                            in_cooldown = inst.replica.combat:InCooldown()
+                        end
+                        
+                        if not in_cooldown then
+                            return "attack_spiderqueen"
+                        else
+                            -- 还在冷却，直接吞掉这个动作，防止动作被重置
+                            return nil
+                        end
+                    end
+                end
+            end
+            -- 如果不是，就原封不动交还给官方逻辑处理
+            return type(old_attack) == "function" and old_attack(inst, action) or old_attack
+        end
+    end
+end)
+
+-- 客户端使用独立状态图，同样注册可移动打断的挥棒表现状态。
+AddStategraphPostInit("wilson_client", function(sg)
+    if sg.states["webber_baton_command"] == nil then
+        local baton_command = GLOBAL.State{
+            name = "webber_baton_command",
+            tags = { "canrotate", "notalking" },
+            onenter = function(inst)
+                inst.AnimState:PlayAnimation("atk_pre")
+                inst.AnimState:PushAnimation("atk", false)
+            end,
+            events = {
+                GLOBAL.EventHandler("locomote", function(inst, data)
+                    if inst.components.locomotor:WantsToMoveForward() then
+                        if data and data.dir then inst.components.locomotor:SetMoveDir(data.dir) end
+                        inst.sg:GoToState("run_start")
+                    else
+                        inst.sg:GoToState("idle")
+                    end
+                end),
+                GLOBAL.EventHandler("animqueueover", function(inst)
+                    if inst.AnimState:AnimDone() then inst.sg:GoToState("idle") end
+                end),
+                GLOBAL.EventHandler("equip", function(inst) inst.sg:GoToState("idle") end),
+                GLOBAL.EventHandler("unequip", function(inst) inst.sg:GoToState("idle") end),
+            },
+        }
+        sg.states["webber_baton_command"] = baton_command
+    end
+
+    if sg.actionhandlers[GLOBAL.ACTIONS.ATTACK] then
+        local old_attack = sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate
+        sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate = function(inst, action)
+            local inventory = inst.replica and inst.replica.inventory
+                or (inst.components and inst.components.inventory)
+            local equip = inventory and inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+            if GetModConfigData("cfg_spider_commander") and equip and equip:HasTag("spider_baton") then
+                return "webber_baton_command"
+            end
+            return type(old_attack) == "function" and old_attack(inst, action) or old_attack
+        end
+    end
+end)
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+-- 客户端使用独立状态图，同样注册可移动打断的挥棒表现状态。
+AddStategraphPostInit("wilson_client", function(sg)
+    if sg.states["webber_baton_command"] == nil then
+        local baton_command = GLOBAL.State{
+            name = "webber_baton_command",
+            tags = { "canrotate", "notalking" },
+            onenter = function(inst)
+                inst.AnimState:PlayAnimation("atk_pre")
+                inst.AnimState:PushAnimation("atk", false)
+            end,
+            events = {
+                GLOBAL.EventHandler("locomote", function(inst, data)
+                    if inst.components.locomotor:WantsToMoveForward() then
+                        if data and data.dir then inst.components.locomotor:SetMoveDir(data.dir) end
+                        inst.sg:GoToState("run_start")
+                    else
+                        inst.sg:GoToState("idle")
+                    end
+                end),
+                GLOBAL.EventHandler("animqueueover", function(inst)
+                    if inst.AnimState:AnimDone() then inst.sg:GoToState("idle") end
+                end),
+                GLOBAL.EventHandler("equip", function(inst) inst.sg:GoToState("idle") end),
+                GLOBAL.EventHandler("unequip", function(inst) inst.sg:GoToState("idle") end),
+            },
+        }
+        sg.states["webber_baton_command"] = baton_command
+    end
+
+    if sg.actionhandlers[GLOBAL.ACTIONS.ATTACK] then
+        local old_attack = sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate
+        sg.actionhandlers[GLOBAL.ACTIONS.ATTACK].deststate = function(inst, action)
+            local inventory = inst.replica and inst.replica.inventory
+                or (inst.components and inst.components.inventory)
+            local equip = inventory and inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+            if GetModConfigData("cfg_spider_commander") and equip and equip:HasTag("spider_baton") then
+                return "webber_baton_command"
+            end
+            return type(old_attack) == "function" and old_attack(inst, action) or old_attack
+        end
+    end
+end)
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:bedazzlement
+if GetModConfigData("cfg_den_bedazzlement") then
+    AddComponentPostInit("bedazzlement", function(self)
+        local old_Stop = self.Stop
+        self.Stop = function(self)
+            -- 如果蜘蛛巢正在被刮胡刀降级，或者是被摧毁，则允许正常卸下装饰
+            if self.inst.shaving or (self.inst.components.health and self.inst.components.health:IsDead()) then
+                return old_Stop(self)
+            end
+            -- 否则（比如受到玩家或怪物的普通攻击时），拦截卸下装饰的逻辑
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+    AddComponentPostInit("combat", function(self)
+        local old_ShouldAggro = self.ShouldAggro
+        self.ShouldAggro = function(self, target, ignore_forbidden)
+            if self.inst:HasTag("spider")
+                and GetModConfigData("cfg_spider_attack_shadow")
+                and target and target:HasTag("shadow")
+                and self.inst.components.follower
+                and self.inst.components.follower.leader
+                and target.entity and target.entity:IsValid()
+                and target.components.health
+                and not target.components.health:IsDead() then
+                return true
+            end
+            return old_ShouldAggro(self, target, ignore_forbidden)
+        end
+
+        -- 1. 允许暗影生物被蜘蛛“判定为可被攻击”
+        local old_CanBeAttacked = self.CanBeAttacked
+        self.CanBeAttacked = function(self, attacker)
+            if GetModConfigData("cfg_spider_attack_shadow") and self.inst:HasTag("shadow") and attacker and attacker:HasTag("spider") then
+                local leader = attacker.components.follower and attacker.components.follower.leader
+                if leader ~= nil then
+                    return true
+                end
+            end
+            if old_CanBeAttacked then
+                return old_CanBeAttacked(self, attacker)
+            end
+            return true
+        end
+
+        -- 2. 拦截合法目标判定（处理暗影生物免检与小弟被动防御姿态）
+        local old_IsValidTarget = self.IsValidTarget
+        self.IsValidTarget = function(self, target)
+            if self.inst:HasTag("spider") then
+                local stance = 2
+                local leader = self.inst.components.follower and self.inst.components.follower.leader
+                -- Wild den defenders must use native targeting, not follower stances.
+                if leader == nil then
+                    return old_IsValidTarget and old_IsValidTarget(self, target) or false
+                end
+                if leader then
+                    stance = self.inst._spider_stance_override
+                    if stance == nil then stance = leader._spider_stance or 2 end
+                    
+                    -- 防止蜘蛛（尤其是女王的 RetargetFn）误伤友军 (如切斯特、小高脚鸟等)
+                    if target and target ~= self.inst._baton_target then
+                        if target == leader then return false end
+                        if self:IsAlly(target) then
+                            -- 除非主人正在亲自打它，或者它正在打主人/自己，否则绝对不主动咬它
+                            local leader_combat = leader.components.combat
+                            if not (leader_combat and leader_combat.target == target) then
+                                local target_combat = target.components.combat
+                                if not (target_combat and (target_combat.target == leader or target_combat.target == self.inst)) then
+                                    return false
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- 如果当前指挥特定兵种，未选中的兵种直接罢工不参与主动攻击
+                if leader and target ~= self.inst._baton_target and leader._spider_command_group ~= "all" and not GLOBAL.IsSpiderInCommandGroup(self.inst, leader) then
+                    if target then
+                        local target_combat = target.components.combat
+                        -- 只有当目标正在打我或者打主人的时候，才允许还击
+                        if not (target_combat and (target_combat.target == self.inst or target_combat.target == leader)) then
+                            return false
+                        end
+                    else
+                        return false
+                    end
+                end
+
+                -- 驻守距离限制：如果蜘蛛在驻守点，且目标距离自己过远（超过 30 距离），则忽略由于主人挨打带来的仇恨共享
+                -- 除非目标直接在攻击这只蜘蛛自己
+                if self.inst._rally_pos ~= nil and target and target ~= self.inst._baton_target then
+                    local target_combat = target.components.combat
+                    if self.inst:GetDistanceSqToInst(target) > 900 then
+                        if not (target_combat and target_combat.target == self.inst) then
+                            return false
+                        end
+                    end
+                end
+
+                -- 如果主人的姿态是 1（被动），除非是明确用指挥棒指派的目标，否则一律不打
+                if stance == 1 then
+                    if not target or (self.target ~= target and self.inst._baton_target ~= target) then
+                        return false
+                    end
+                end
+
+                -- 姿态 2 是中立：不主动索敌，但允许反击，以及协助主人当前
+                -- 正在亲自攻击的目标。指挥棒明确指定的目标始终放行。
+                if stance == 2 and target and self.inst._baton_target ~= target
+                    and self.inst._webber_retaliation_target ~= target
+                    and self.inst._webber_target_request_source ~= "retaliation"
+                    and self.inst._webber_target_request_source ~= "assist" then
+                    local target_combat = target.components and target.components.combat
+                    local is_retaliating = target_combat and (target_combat.target == self.inst or target_combat.target == leader)
+                    local is_assisting_leader = leader and leader.components.combat
+                        and leader.components.combat.target == target
+                    -- 已由指挥棒建立并保留的当前目标允许继续完成，不会因中立姿态被下一次校验打断。
+                    if not is_retaliating and not is_assisting_leader and self.target ~= target then
+                        return false
+                    end
+                end
+
+                -- R键召回和右键驻守附加的 2秒 强制免战期，在此期间被打了也不会还手，方便拉脱仇恨
+                if self.inst._force_passive_time and GLOBAL.GetTime() < self.inst._force_passive_time then
+                    if not target or (self.target ~= target and self.inst._baton_target ~= target) then
+                        return false
+                    end
+                end
+
+                -- 暗影生物的特判：如果是被指挥去打，或者是中立/主动姿态且锁定了它，则绕过精神值检测
+                if GetModConfigData("cfg_spider_attack_shadow") and target and target:HasTag("shadow") then
+                    if target.entity:IsValid() and target.components.health and not target.components.health:IsDead() then
+                        if self.inst.components.follower
+                            and self.inst.components.follower.leader ~= nil then
+                            return true
+                        end
+                    end
+                end
+            end
+            if old_IsValidTarget then
+                return old_IsValidTarget(self, target)
+            end
+            return false
+        end
+
+        -- 3. 拦截仇恨保持逻辑，防止蜘蛛在驻守时因为离玩家太远而强制丢失目标
+        local old_SetKeepTargetFunction = self.SetKeepTargetFunction
+        if old_SetKeepTargetFunction then
+            self.SetKeepTargetFunction = function(self, fn)
+                if self.inst:HasTag("spider") then
+                    local old_fn = fn
+                    fn = function(inst, target)
+                        -- 指挥棒明确点名的目标不受原版跟随距离限制影响，
+                        -- 否则部分蜘蛛在接敌后会被原版 keep-target 判定拉回主人身边。
+                        if inst._baton_target == target then
+                            if GetModConfigData("cfg_spider_attack_shadow")
+                                and target:HasTag("shadow")
+                                and inst.components.follower
+                                and inst.components.follower.leader then
+                                return inst.components.combat:IsValidTarget(target)
+                            end
+                            return inst.components.combat:CanTarget(target)
+                        end
+                        if inst._rally_pos ~= nil then
+                            -- 如果正在驻守，只要没追出驻守点太远（距离平方<900，即30格内），就死咬不放，忽略主人的距离限制
+                            return inst.components.combat:CanTarget(target) and inst:GetDistanceSqToPoint(inst._rally_pos:Get()) <= 900
+                        end
+                        if old_fn then
+                            return old_fn(inst, target)
+                        end
+                        return inst.components.combat:CanTarget(target)
+                    end
+                end
+                return old_SetKeepTargetFunction(self, fn)
+            end
+        end
+
+        -- All native and mod targeting paths share the same order arbitration.
+        local old_SetTarget = self.SetTarget
+        self.SetTarget = function(self, target, ...)
+            return GLOBAL.SetWebberSpiderCombatTarget(self, target, old_SetTarget, ...)
+        end
+
+        -- 指挥棒目标期间暂停原版自动重选目标，避免蜘蛛在攻击过程中
+        -- 被附近的小怪、召唤物或 RetargetFn 抢走目标。
+        local old_TryRetarget = self.TryRetarget
+        if old_TryRetarget then
+            self.TryRetarget = function(self, ...)
+                local forced = self.inst._baton_target
+                if forced and forced:IsValid()
+                    and not (forced.components.health and forced.components.health:IsDead()) then
+                    if self.target ~= forced then
+                        self:SetTarget(forced)
+                    end
+                    return
+                end
+                local previous = self.inst._webber_target_request_source
+                self.inst._webber_target_request_source = "auto"
+                local result = old_TryRetarget(self, ...)
+                self.inst._webber_target_request_source = previous
+                return result
+            end
+        end
+    end)
+
+```
+
+
+
+### 变体演进：[Arknights]明日方舟-艾丽妮Irene (Mod 3774324796)
+- **变体场景与切面**：收录来自工坊 Mod 3774324796 (`[Arknights]明日方舟-艾丽妮Irene`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3774324796)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddBrainPostInit:birdbrain
+end
+AddBrainPostInit("birdbrain", function(brain)
+    local root = PriorityNode({
+        WhileNode(function() return brain.inst.components.hauntable ~= nil and brain.inst.components.hauntable.panic end, "PanicHaunted",
+            ActionNode(function() return FlyAway(brain.inst) end)),
+        IfNode(function() return ShouldFlyAway(brain.inst) end, "Threat Near",
+            ActionNode(function() return FlyAway(brain.inst) end)),
+        EventNode(brain.inst, "threatnear",
+            ActionNode(function() return FlyAway(brain.inst) end)),
+        EventNode(brain.inst, "gohome",
+            ActionNode(function() return FlyAway(brain.inst) end)),
+    }, 0.25)
+
+    brain.bt = BT(brain.inst, root)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:birdspawner
+--艾丽妮附近的鸟在通过birdspawner生成时有25%概率被替换为雪雀
+AddComponentPostInit("birdspawner", function(self)
+    local oldSpawnBird = self.SpawnBird
+    self.SpawnBird = function(self, spawnpoint, ignorebait, ...)
+        local irene = FindIreneInRange(spawnpoint, 16)
+        if spawnpoint ~= nil and TheWorld.Map:IsPassableAtPoint(spawnpoint:Get()) and irene ~= nil and math.random() < 0.25 then
+            local prefab = "robin_winter"
+
+            local bird = SpawnPrefab(prefab)
+            if math.random() < .5 then
+                bird.Transform:SetRotation(180)
+            end
+
+            if bird:HasTag("bird") then
+                spawnpoint.y = 15
+            end
+
+            --see if there's bait nearby that we might spawn into
+            --but if it's a corpse, i don't think they'll care for any bait :)
+            local found_bait = false
+            if bird.components.eater and not ignorebait then
+                local bait = TheSim:FindEntities(spawnpoint.x, 0, spawnpoint.z, 15, nil, BAIT_CANT_TAGS)
+                for k, v in pairs(bait) do
+                    local x, y, z = v.Transform:GetWorldPosition()
+                    if bird.components.eater:CanEat(v) and not v:IsInLimbo() and
+                        v.components.bait and
+                        not (v.components.inventoryitem and v.components.inventoryitem:IsHeld()) and
+                        not IsDangerNearby(x, y, z) and
+                        (bird.components.floater ~= nil or TheWorld.Map:IsPassableAtPoint(x, y, z)) then
+                        spawnpoint.x, spawnpoint.z = x, z
+                        bird.bufferedaction = BufferedAction(bird, v, ACTIONS.EAT)
+                        found_bait = true
+                        break
+                    elseif v.components.trap and
+                        v.components.trap.isset and
+                        (not v.components.trap.targettag or bird:HasTag(v.components.trap.targettag)) and
+                        not v.components.trap.issprung and
+                        math.random() < TUNING.BIRD_TRAP_CHANCE and
+                        not IsDangerNearby(x, y, z) then
+                        spawnpoint.x, spawnpoint.z = x, z
+                        found_bait = true
+                        break
+                    end
+                end
+            end
+            
+            bird.Physics:Teleport(spawnpoint:Get())
+
+            return bird
+        end
+
+        return oldSpawnBird(self, spawnpoint, ignorebait, ...)
+    end
+end)
+
+-- 只有玩家可以拾取艾丽妮的物品
+local OldPickupFn = ACTIONS.PICKUP.fn
+ACTIONS.PICKUP.fn = function(act)
+    if act.doer and act.target and not act.doer:HasTag("player") and act.target:HasTag("irene_item") then
+        return false
+    end
+    return OldPickupFn(act)
+end
+
+--[[local OldAttackFn = ACTIONS.ATTACK.fn
+ACTIONS.ATTACK.fn = function(act)
+	if act.doer and act.doer:HasTag("irene") then
+		local doer = act.doer 
+        
+	end
+    return OldAttackFn(act)
+end]]
+
+for _,v in pairs({"arknights_originium_shard"}) do
+    AddPrefabPostInit(v, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+    
+        if not inst.components.tradable then
+            inst:AddComponent("tradable")
+        end
+    end)
+end
+
+for _,v in pairs({"arknights_originium_shard", "nightmarefuel"}) do
+    AddPrefabPostInit(v, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+    
+        inst:AddComponent("irene_fuel")
+        inst.components.irene_fuel:SetFuelValue(inst.prefab == "nightmarefuel" and 45 or 60)
+    end)
+end
+
+--这里，是为了艾丽妮的天赋无视部分减伤
+local Health = require "components/health"
+local oldDoDelta = Health.DoDelta
+local function deltamodifierfn(inst, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+    local self = inst.components.health
+    if not self then return amount end
+    local attacker = self.temp_attacker
+    if not attacker then return amount end
+    if amount and amount >= 0 then return amount end
+    local percent = attacker.irene_attack_ignore_absorb or 0.1
+    if self.origin_amount then --amount<0 -1 self.origin_amount = -2  delta - 1
+        local delta = self.origin_amount - amount
+        return amount + percent * delta
+    end
+    return amount
+end
+function Health:DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+    local attacker = afflicter and type(afflicter) == "table" and afflicter or nil
+    if attacker and attacker.irene_attack_ignore_absorb then
+        ignore_invincible = true
+        local olddeltamodifierfn = self.deltamodifierfn
+        self.deltamodifierfn = deltamodifierfn
+        self.origin_amount = amount
+        self.temp_attacker = attacker
+        local result = oldDoDelta(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+        self.temp_attacker = nil
+        self.deltamodifierfn = olddeltamodifierfn
+        return result
+    end
+
+    return oldDoDelta(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+end
+
+local cooking = require("cooking")
+
+local function dospoil(inst, self)
+    self.task = nil
+    self.targettime = nil
+    self.spoiltime = nil
+
+    if self.onspoil ~= nil then
+        self.onspoil(inst)
+    end
+end
+
+local function dostew(inst, self)
+    self.task = nil
+    self.targettime = nil
+    self.spoiltime = nil
+
+    if self.ondonecooking ~= nil then
+        self.ondonecooking(inst)
+    end
+
+    if self.product == self.spoiledproduct then
+        if self.onspoil ~= nil then
+            self.onspoil(inst)
+        end
+    elseif self.product ~= nil then
+        local recipe = cooking.GetRecipe(inst.prefab, self.product)
+        local prep_perishtime = (recipe ~= nil and (recipe.cookpot_perishtime or recipe.perishtime)) or 0
+        if prep_perishtime > 0 then
+			local prod_spoil = self.product_spoilage or 1
+			self.spoiltime = prep_perishtime * prod_spoil
+			self.targettime =  GetTime() + self.spoiltime
+			self.task = self.inst:DoTaskInTime(self.spoiltime, dospoil, self)
+		end
+    end
+
+    self.done = true
+end
+
+AddComponentPostInit("stewer", function(self)
+    local OldStartCooking = self.StartCooking
+    function self:StartCooking(doer)
+        if doer and doer:HasTag("irene") then
+            if self.targettime == nil and self.inst.components.container ~= nil then
+                self.chef_id = (doer ~= nil and doer.player_classified ~= nil) and doer.userid
+                self.ingredient_prefabs = {}
+
+                self.done = nil
+                self.spoiltime = nil
+
+                if self.onstartcooking ~= nil then
+                    self.onstartcooking(self.inst)
+                end
+
+                for k, v in pairs (self.inst.components.container.slots) do
+                    table.insert(self.ingredient_prefabs, v.prefab)
+                end
+
+                local cooktime = 1
+                self.product, cooktime = cooking.CalculateRecipe(self.inst.prefab, self.ingredient_prefabs)
+                local productperishtime = cooking.GetRecipe(self.inst.prefab, self.product).perishtime or 0
+
+                if productperishtime > 0 then
+                    local spoilage_total = 0
+                    local spoilage_n = 0
+                    for k, v in pairs (self.inst.components.container.slots) do
+                        if v.components.perishable ~= nil then
+                            spoilage_n = spoilage_n + 1
+                            spoilage_total = spoilage_total + v.components.perishable:GetPercent()
+                        end
+                    end
+                    self.product_spoilage =
+                        (spoilage_n <= 0 and 1) or
+                        (self.keepspoilage and spoilage_total / spoilage_n) or
+                        1 - (1 - spoilage_total / spoilage_n) * .5
+                else
+                    self.product_spoilage = nil
+                end
+
+                cooktime = TUNING.BASE_COOK_TIME * cooktime * self.cooktimemult
+                cooktime = math.max(0, cooktime - (doer:HasTag("irene_buildermax") and 7.5 or 5))
+                self.targettime = GetTime() + cooktime
+                if self.task ~= nil then
+                    self.task:Cancel()
+                end
+                self.task = self.inst:DoTaskInTime(cooktime, dostew, self)
+
+                self.inst.components.container:Close()
+                self.inst.components.container:DestroyContents()
+                self.inst.components.container.canbeopened = false
+            end
+        else
+            return OldStartCooking(self, doer)
+        end 
+    end
+    local OldHarvest = self.Harvest
+    function self:Harvest(harvester)
+        if harvester and harvester:HasTag("irene") and math.random() <= (harvester:HasTag("irene_buildermax") and .35 or .15) then
+            if self.done then
+                if self.onharvest ~= nil then
+                    self.onharvest(self.inst)
+                end
+
+                if self.product ~= nil then
+                    local loot = SpawnPrefab(self.product)
+                    if loot ~= nil then
+                        local recipe = cooking.GetRecipe(self.inst.prefab, self.product)
+
+                        if harvester ~= nil and
+                            self.chef_id == harvester.userid and
+                            recipe ~= nil and
+                            recipe.cookbook_category ~= nil and
+                            cooking.cookbook_recipes[recipe.cookbook_category] ~= nil and
+                            cooking.cookbook_recipes[recipe.cookbook_category][self.product] ~= nil then
+                            harvester:PushEvent("learncookbookrecipe", {product = self.product, ingredients = self.ingredient_prefabs})
+                        end
+
+                        local stacksize = recipe and recipe.stacksize or 1
+                        local lootcount = loot.components.stackable ~= nil and 1 or 2
+
+                        local function FinishLoot(item)
+                            if item == nil then
+                                return
+                            end
+                            if item.components.stackable ~= nil then
+                                item.components.stackable:SetStackSize(stacksize * 2)
+                            end
+                            if self.spoiltime ~= nil and item.components.perishable ~= nil then
+                                local spoilpercent = self:GetTimeToSpoil() / self.spoiltime
+                                item.components.perishable:SetPercent(self.product_spoilage * spoilpercent)
+                                item.components.perishable:StartPerishing()
+                            end
+                            if harvester ~= nil and harvester.components.inventory ~= nil then
+                                harvester.components.inventory:GiveItem(item, nil, self.inst:GetPosition())
+                            else
+                                LaunchAt(item, self.inst, nil, 1, 1)
+                            end
+                        end
+
+                        FinishLoot(loot)
+                        for i = 2, lootcount do
+                            FinishLoot(SpawnPrefab(self.product))
+                        end
+                    end
+                    self.product = nil
+                end
+
+                if self.task ~= nil then
+                    self.task:Cancel()
+                    self.task = nil
+                end
+                self.targettime = nil
+                self.done = nil
+                self.spoiltime = nil
+                self.product_spoilage = nil
+
+                if self.inst.components.container ~= nil then
+                    self.inst.components.container.canbeopened = true
+                end
+
+                return true
+            end
+        else
+            return OldHarvest(self, harvester)
+        end
+    end
+end)
+
+local oceancreatures_prefabs = {"gnarwail", "penguin", "lightcrab", "merm", "merm_lunar", "merm_shadow", "merm_king", "shark", "crabking", "otter", "wavyjones", "waveyjones_hand", "waterplant", "frog", "squid", "cookiecutter"}
+for i, oceancrature in pairs(oceancreatures_prefabs) do
+    AddPrefabPostInit(oceancrature,function(inst)
+        inst:AddTag("irene_oceancreature")
+    end)
+end
+
+local function ResetDamage(inst, force)
+    if inst.components.weapon then
+        if inst.components.weapon._irene_old_damage or (force and type(inst.components.weapon.damage) == "number") then
+            inst.components.weapon.damage = inst.components.weapon._irene_old_damage or inst.components.weapon.damage * 1.05
+            if force then
+                inst.components.weapon._irene_old_damage = inst.components.weapon.damage
+            end
+        end
+    end
+end
+
+local function OnLoadInGame(inst)
+    if inst.components.timer and inst.components.timer:TimerExists("irene_repairkit_repaired") then
+        ResetDamage(inst, true)
+    end
+end
+
+local function OnTimerDone(inst, data)
+    if data and data.name then
+        if data.name == "irene_repairkit_repaired" then
+            ResetDamage(inst)
+        end
+    end
+end
+
+AddPrefabPostInitAny(function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.fueled then
+        if inst.components.insulator then
+            inst:AddTag("irene_repairableitem")
+            if not inst.components.timer then
+                inst:AddComponent("timer")
+            end
+        end
+    end
+
+    if inst:HasTag("irene_repairableitem") then
+        if inst.components.finiteuses then
+            local old_use = inst.components.finiteuses.Use
+            inst.components.finiteuses.Use = function(self, numuses)
+                if numuses and numuses > 0 then
+                    if inst.components.timer and inst.components.timer:TimerExists("irene_repairkit_repaired") then
+                        numuses = math.ceil(numuses * .85)
+                    end
+                end
+
+                -- 如果旧函数存在，则调用它
+                if old_use then
+                    old_use(self, numuses)
+                end
+            end
+        end
+        if inst.components.fueled then
+            local old_dodelta = inst.components.fueled.DoDelta
+            inst.components.fueled.DoDelta = function(self, amount, doer)
+                if amount and amount < 0 then
+                    amount = math.ceil(amount * .85)
+                end
+                if old_dodelta then
+                    old_dodelta(self, amount, doer)
+                end
+            end
+        end
+        inst:ListenForEvent("timerdone", OnTimerDone)
+        inst:DoTaskInTime(0, OnLoadInGame)
+    end
+end)
+
+--催眠相关
+AddComponentPostInit("grogginess", function(self)
+	local oldAddGrogginess = self.AddGrogginess
+	function self:AddGrogginess(grogginess, knockoutduration, ...)
+        local irene = FindIreneInRange(self.inst, 8)
+        if irene and irene:HasTag("irene_lanternpassiveactived") then
+            if irene.irene_lanternsanitylevel2 then
+                return
+            elseif irene.irene_lanternsanitylevel1 then
+                if grogginess > 0 then
+                    grogginess = math.max(0, grogginess - 2)
+                end
+            end
+        end
+		return oldAddGrogginess(self, grogginess, knockoutduration, ...)
+	end
+end)
+
+--[[do
+	local oldStateGraphInstancePushEvent = StateGraphInstance.PushEvent
+	function StateGraphInstance:PushEvent(eventname, data, ...)
+		local inst = self.inst
+        if inst == nil or not (type(inst) == "table" and inst.HasTag and inst:HasTag("player")) then
+            return oldStateGraphInstancePushEvent(self, eventname, data, ...)
+        end
+        local irene = FindIreneInRange(inst, 8)
+        local canimmune = irene and (irene.irene_lanternsanitylevel2 and irene:HasTag("irene_lanternpassiveactived"))
+		if (eventname == "yawn" or eventname == "knockedout") and canimmune then
+			return
+		end
+		return oldStateGraphInstancePushEvent(self, eventname, data, ...)
+	end
+end]]
+
+AddStategraphPostInit("wilson", function(self)
+    local talk = self.states.talk
+
+    local _onenter = talk.onenter
+    talk.onenter = function(inst, noanim)
+        if inst:HasTag("irene") and not (inst:HasTag("mime") or (inst.sg and inst.sg:HasStateTag("notalking"))) then
+            --print("条件合法，进入音效判断")
+            if math.random() <= TUNING.IRENE_VOICE_RATE and not inst:HasTag("playerghost") then
+                --print("尝试播放艾丽妮的音效")
+                if inst.sg and inst.sg.statemem and inst.sg.statemem.talktask ~= nil then
+                    inst.sg.statemem.talktask:Cancel()
+                    inst.sg.statemem.talktask = nil
+                end
+                inst.SoundEmitter:KillSound("irene_talk")
+                --inst.SoundEmitter:KillSound("talk")
+                PlayIrenePlayerVoice(inst, "irene_talk", TUNING.IRENE_VOICE_VOLUME, "irene_talk")
+            else
+                --print("概率判定失败或鬼魂状态不播放艾丽妮的音效")
+                --pass
+            end
+        end
+        return _onenter(inst, noanim)
+    end
+
+    local _onexit = talk.onexit
+    talk.onexit = function(inst, instant)
+        if inst:HasTag("irene") then
+            --inst.SoundEmitter:KillSound("irene_talk")
+        end
+        return _onexit(inst, instant)
+    end
+end)
+
+local compatible_item1 = {
+	"greenamulet"
+}
+
+for k,v in pairs(compatible_item1) do
+	AddPrefabPostInit(v,function(inst)  
+        inst:AddTag("irene_green_amulet")
+		local old_onequipfn = inst.components.equippable and inst.components.equippable.onequipfn 
+		if old_onequipfn then
+			inst.components.equippable.onequipfn = function(inst,owner,...)
+				old_onequipfn(inst,owner,...)
+				if not owner:HasTag("irene") then return end
+				local zy1 = owner.components.builder.ingredientmod or 1
+				local zy2 = owner.components.irene_builder.ingredientmod or 1
+				owner.components.builder.ingredientmod = math.min(zy1,zy2)
+			end
+		end
+		local old_onunequipfn = inst.components.equippable and inst.components.equippable.onunequipfn 
+		if old_onunequipfn then
+			inst.components.equippable.onunequipfn = function(inst,owner,...)
+				old_onunequipfn(inst,owner,...)
+				if not owner:HasTag("irene") then return end
+				if owner.components.irene_builder.ingredientmod ~= nil then
+					owner.components.builder.ingredientmod = owner.components.irene_builder.ingredientmod
+				end
+			end
+		end
+    end)
+end
+
+local function IsCloth(recipe)
+    if recipe.filter ~= nil then
+        for k, v in pairs(recipe.filter) do
+            if v == "CLOTHING" then
+                return true
+            end
+        end
+    end
+    for k, v in pairs(CRAFTING_FILTERS.CLOTHING.recipes) do
+        if v == recipe.product then
+            return true
+        end
+    end
+    return false
+end
+
+-- 让配方栏正确显示所需要的原料数量和贴图背景  参考：craftingmenu_ingredients.lua  97行
+AddClassPostConstruct("widgets/redux/craftingmenu_ingredients",
+    function(CraftingMenuIngredients, owner, max_ingredients_wide, recipe, extra_quantity_scale)
+        local oldSetRecipe = CraftingMenuIngredients.SetRecipe
+        function CraftingMenuIngredients:SetRecipe(recipe)
+            if self.owner:HasTag("irene") and IsCloth(recipe) then
+                local oldIngredientMod = self.owner.replica.builder.IngredientMod
+                local totalamount = self.owner:HasTag("irene_buildermax") and 0.5 or 0.75
+                function self.owner.replica.builder:IngredientMod()
+                    return totalamount
+                end
+                oldSetRecipe(self, recipe)
+                self.owner.replica.builder.IngredientMod = oldIngredientMod
+            else
+                oldSetRecipe(self, recipe)
+            end
+        end
+        CraftingMenuIngredients:SetRecipe(recipe) -- 刷新一次UI
+    end)
+
+AddComponentPostInit("cursable", function(self)--免疫猴子诅咒
+    local oldapplycurse = self.ApplyCurse
+    function self:ApplyCurse(item, curse)
+        if self.inst:HasTag("irene") then
+            return
+        end
+        oldapplycurse(self, item, curse)
+    end
+
+    local OldIsCursable = self.IsCursable
+    function self:IsCursable(item)
+        if self.inst:HasTag("irene") then
+            return nil
+        end
+        return OldIsCursable(self, item)
+    end
+
+    local oldforceontoowner = self.ForceOntoOwner
+    function self:ForceOntoOwner(item)
+        if self.inst:HasTag("irene") then
+            return
+        end
+        oldforceontoowner(self, item)
+    end
+end)
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stewer
+
+AddComponentPostInit("stewer", function(self)
+    local OldStartCooking = self.StartCooking
+    function self:StartCooking(doer)
+        if doer and doer:HasTag("irene") then
+            if self.targettime == nil and self.inst.components.container ~= nil then
+                self.chef_id = (doer ~= nil and doer.player_classified ~= nil) and doer.userid
+                self.ingredient_prefabs = {}
+
+                self.done = nil
+                self.spoiltime = nil
+
+                if self.onstartcooking ~= nil then
+                    self.onstartcooking(self.inst)
+                end
+
+                for k, v in pairs (self.inst.components.container.slots) do
+                    table.insert(self.ingredient_prefabs, v.prefab)
+                end
+
+                local cooktime = 1
+                self.product, cooktime = cooking.CalculateRecipe(self.inst.prefab, self.ingredient_prefabs)
+                local productperishtime = cooking.GetRecipe(self.inst.prefab, self.product).perishtime or 0
+
+                if productperishtime > 0 then
+                    local spoilage_total = 0
+                    local spoilage_n = 0
+                    for k, v in pairs (self.inst.components.container.slots) do
+                        if v.components.perishable ~= nil then
+                            spoilage_n = spoilage_n + 1
+                            spoilage_total = spoilage_total + v.components.perishable:GetPercent()
+                        end
+                    end
+                    self.product_spoilage =
+                        (spoilage_n <= 0 and 1) or
+                        (self.keepspoilage and spoilage_total / spoilage_n) or
+                        1 - (1 - spoilage_total / spoilage_n) * .5
+                else
+                    self.product_spoilage = nil
+                end
+
+                cooktime = TUNING.BASE_COOK_TIME * cooktime * self.cooktimemult
+                cooktime = math.max(0, cooktime - (doer:HasTag("irene_buildermax") and 7.5 or 5))
+                self.targettime = GetTime() + cooktime
+                if self.task ~= nil then
+                    self.task:Cancel()
+                end
+                self.task = self.inst:DoTaskInTime(cooktime, dostew, self)
+
+                self.inst.components.container:Close()
+                self.inst.components.container:DestroyContents()
+                self.inst.components.container.canbeopened = false
+            end
+        else
+            return OldStartCooking(self, doer)
+        end 
+    end
+    local OldHarvest = self.Harvest
+    function self:Harvest(harvester)
+        if harvester and harvester:HasTag("irene") and math.random() <= (harvester:HasTag("irene_buildermax") and .35 or .15) then
+            if self.done then
+                if self.onharvest ~= nil then
+                    self.onharvest(self.inst)
+                end
+
+                if self.product ~= nil then
+                    local loot = SpawnPrefab(self.product)
+                    if loot ~= nil then
+                        local recipe = cooking.GetRecipe(self.inst.prefab, self.product)
+
+                        if harvester ~= nil and
+                            self.chef_id == harvester.userid and
+                            recipe ~= nil and
+                            recipe.cookbook_category ~= nil and
+                            cooking.cookbook_recipes[recipe.cookbook_category] ~= nil and
+                            cooking.cookbook_recipes[recipe.cookbook_category][self.product] ~= nil then
+                            harvester:PushEvent("learncookbookrecipe", {product = self.product, ingredients = self.ingredient_prefabs})
+                        end
+
+                        local stacksize = recipe and recipe.stacksize or 1
+                        local lootcount = loot.components.stackable ~= nil and 1 or 2
+
+                        local function FinishLoot(item)
+                            if item == nil then
+                                return
+                            end
+                            if item.components.stackable ~= nil then
+                                item.components.stackable:SetStackSize(stacksize * 2)
+                            end
+                            if self.spoiltime ~= nil and item.components.perishable ~= nil then
+                                local spoilpercent = self:GetTimeToSpoil() / self.spoiltime
+                                item.components.perishable:SetPercent(self.product_spoilage * spoilpercent)
+                                item.components.perishable:StartPerishing()
+                            end
+                            if harvester ~= nil and harvester.components.inventory ~= nil then
+                                harvester.components.inventory:GiveItem(item, nil, self.inst:GetPosition())
+                            else
+                                LaunchAt(item, self.inst, nil, 1, 1)
+                            end
+                        end
+
+                        FinishLoot(loot)
+                        for i = 2, lootcount do
+                            FinishLoot(SpawnPrefab(self.product))
+                        end
+                    end
+                    self.product = nil
+                end
+
+                if self.task ~= nil then
+                    self.task:Cancel()
+                    self.task = nil
+                end
+                self.targettime = nil
+                self.done = nil
+                self.spoiltime = nil
+                self.product_spoilage = nil
+
+                if self.inst.components.container ~= nil then
+                    self.inst.components.container.canbeopened = true
+                end
+
+                return true
+            end
+        else
+            return OldHarvest(self, harvester)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:grogginess
+--催眠相关
+AddComponentPostInit("grogginess", function(self)
+	local oldAddGrogginess = self.AddGrogginess
+	function self:AddGrogginess(grogginess, knockoutduration, ...)
+        local irene = FindIreneInRange(self.inst, 8)
+        if irene and irene:HasTag("irene_lanternpassiveactived") then
+            if irene.irene_lanternsanitylevel2 then
+                return
+            elseif irene.irene_lanternsanitylevel1 then
+                if grogginess > 0 then
+                    grogginess = math.max(0, grogginess - 2)
+                end
+            end
+        end
+		return oldAddGrogginess(self, grogginess, knockoutduration, ...)
+	end
+end)
+
+--[[do
+	local oldStateGraphInstancePushEvent = StateGraphInstance.PushEvent
+	function StateGraphInstance:PushEvent(eventname, data, ...)
+		local inst = self.inst
+        if inst == nil or not (type(inst) == "table" and inst.HasTag and inst:HasTag("player")) then
+            return oldStateGraphInstancePushEvent(self, eventname, data, ...)
+        end
+        local irene = FindIreneInRange(inst, 8)
+        local canimmune = irene and (irene.irene_lanternsanitylevel2 and irene:HasTag("irene_lanternpassiveactived"))
+		if (eventname == "yawn" or eventname == "knockedout") and canimmune then
+			return
+		end
+		return oldStateGraphInstancePushEvent(self, eventname, data, ...)
+	end
+end]]
+
+AddStategraphPostInit("wilson", function(self)
+    local talk = self.states.talk
+
+    local _onenter = talk.onenter
+    talk.onenter = function(inst, noanim)
+        if inst:HasTag("irene") and not (inst:HasTag("mime") or (inst.sg and inst.sg:HasStateTag("notalking"))) then
+            --print("条件合法，进入音效判断")
+            if math.random() <= TUNING.IRENE_VOICE_RATE and not inst:HasTag("playerghost") then
+                --print("尝试播放艾丽妮的音效")
+                if inst.sg and inst.sg.statemem and inst.sg.statemem.talktask ~= nil then
+                    inst.sg.statemem.talktask:Cancel()
+                    inst.sg.statemem.talktask = nil
+                end
+                inst.SoundEmitter:KillSound("irene_talk")
+                --inst.SoundEmitter:KillSound("talk")
+                PlayIrenePlayerVoice(inst, "irene_talk", TUNING.IRENE_VOICE_VOLUME, "irene_talk")
+            else
+                --print("概率判定失败或鬼魂状态不播放艾丽妮的音效")
+                --pass
+            end
+        end
+        return _onenter(inst, noanim)
+    end
+
+    local _onexit = talk.onexit
+    talk.onexit = function(inst, instant)
+        if inst:HasTag("irene") then
+            --inst.SoundEmitter:KillSound("irene_talk")
+        end
+        return _onexit(inst, instant)
+    end
+end)
+
+local compatible_item1 = {
+	"greenamulet"
+}
+
+for k,v in pairs(compatible_item1) do
+	AddPrefabPostInit(v,function(inst)  
+        inst:AddTag("irene_green_amulet")
+		local old_onequipfn = inst.components.equippable and inst.components.equippable.onequipfn 
+		if old_onequipfn then
+			inst.components.equippable.onequipfn = function(inst,owner,...)
+				old_onequipfn(inst,owner,...)
+				if not owner:HasTag("irene") then return end
+				local zy1 = owner.components.builder.ingredientmod or 1
+				local zy2 = owner.components.irene_builder.ingredientmod or 1
+				owner.components.builder.ingredientmod = math.min(zy1,zy2)
+			end
+		end
+		local old_onunequipfn = inst.components.equippable and inst.components.equippable.onunequipfn 
+		if old_onunequipfn then
+			inst.components.equippable.onunequipfn = function(inst,owner,...)
+				old_onunequipfn(inst,owner,...)
+				if not owner:HasTag("irene") then return end
+				if owner.components.irene_builder.ingredientmod ~= nil then
+					owner.components.builder.ingredientmod = owner.components.irene_builder.ingredientmod
+				end
+			end
+		end
+    end)
+end
+
+local function IsCloth(recipe)
+    if recipe.filter ~= nil then
+        for k, v in pairs(recipe.filter) do
+            if v == "CLOTHING" then
+                return true
+            end
+        end
+    end
+    for k, v in pairs(CRAFTING_FILTERS.CLOTHING.recipes) do
+        if v == recipe.product then
+            return true
+        end
+    end
+    return false
+end
+
+-- 让配方栏正确显示所需要的原料数量和贴图背景  参考：craftingmenu_ingredients.lua  97行
+AddClassPostConstruct("widgets/redux/craftingmenu_ingredients",
+    function(CraftingMenuIngredients, owner, max_ingredients_wide, recipe, extra_quantity_scale)
+        local oldSetRecipe = CraftingMenuIngredients.SetRecipe
+        function CraftingMenuIngredients:SetRecipe(recipe)
+            if self.owner:HasTag("irene") and IsCloth(recipe) then
+                local oldIngredientMod = self.owner.replica.builder.IngredientMod
+                local totalamount = self.owner:HasTag("irene_buildermax") and 0.5 or 0.75
+                function self.owner.replica.builder:IngredientMod()
+                    return totalamount
+                end
+                oldSetRecipe(self, recipe)
+                self.owner.replica.builder.IngredientMod = oldIngredientMod
+            else
+                oldSetRecipe(self, recipe)
+            end
+        end
+        CraftingMenuIngredients:SetRecipe(recipe) -- 刷新一次UI
+    end)
+
+AddComponentPostInit("cursable", function(self)--免疫猴子诅咒
+    local oldapplycurse = self.ApplyCurse
+    function self:ApplyCurse(item, curse)
+        if self.inst:HasTag("irene") then
+            return
+        end
+        oldapplycurse(self, item, curse)
+    end
+
+    local OldIsCursable = self.IsCursable
+    function self:IsCursable(item)
+        if self.inst:HasTag("irene") then
+            return nil
+        end
+        return OldIsCursable(self, item)
+    end
+
+    local oldforceontoowner = self.ForceOntoOwner
+    function self:ForceOntoOwner(item)
+        if self.inst:HasTag("irene") then
+            return
+        end
+        oldforceontoowner(self, item)
+    end
+end)
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(self)
+    local talk = self.states.talk
+
+    local _onenter = talk.onenter
+    talk.onenter = function(inst, noanim)
+        if inst:HasTag("irene") and not (inst:HasTag("mime") or (inst.sg and inst.sg:HasStateTag("notalking"))) then
+            --print("条件合法，进入音效判断")
+            if math.random() <= TUNING.IRENE_VOICE_RATE and not inst:HasTag("playerghost") then
+                --print("尝试播放艾丽妮的音效")
+                if inst.sg and inst.sg.statemem and inst.sg.statemem.talktask ~= nil then
+                    inst.sg.statemem.talktask:Cancel()
+                    inst.sg.statemem.talktask = nil
+                end
+                inst.SoundEmitter:KillSound("irene_talk")
+                --inst.SoundEmitter:KillSound("talk")
+                PlayIrenePlayerVoice(inst, "irene_talk", TUNING.IRENE_VOICE_VOLUME, "irene_talk")
+            else
+                --print("概率判定失败或鬼魂状态不播放艾丽妮的音效")
+                --pass
+            end
+        end
+        return _onenter(inst, noanim)
+    end
+
+    local _onexit = talk.onexit
+    talk.onexit = function(inst, instant)
+        if inst:HasTag("irene") then
+            --inst.SoundEmitter:KillSound("irene_talk")
+        end
+        return _onexit(inst, instant)
+    end
+end)
+
+```
+
