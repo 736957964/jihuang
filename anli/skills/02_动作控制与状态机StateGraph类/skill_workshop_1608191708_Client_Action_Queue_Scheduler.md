@@ -34705,3 +34705,136 @@ AddPrefabPostInit("icepack", backpackpostinit)
 
 ```
 
+
+
+### 变体演进：Title (Mod 3778622972)
+- **变体场景与切面**：收录来自工坊 Mod 3778622972 (`Title`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3778622972)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+
+        AddPrefabPostInit("beefalo", MVB_SetupBackpackMount)
+
+        -- 牛悬停显示的名字：
+        -- 客户端上"牛没被玩家改名"时 inst.name 是 prefab（named_replica 只在名字变化时才刷新，空名字不发事件），
+        -- 悬停就会显示 "beefalo"。这里补一个 displaynamefn：有自定义名字用自定义的，否则用本地化名字。
+        local function MVB_HookBeefaloName(inst, fallback)
+            if inst.displaynamefn ~= nil then
+                return
+            end
+            inst.displaynamefn = function(i)
+                local rep = i.replica ~= nil and i.replica.named or nil
+                local custom = rep ~= nil and rep._name ~= nil and rep._name:value() or nil
+                if custom ~= nil and custom ~= "" then
+                    return custom
+                end
+                return GLOBAL.STRINGS.NAMES[string.upper(i.prefab)] or fallback
+            end
+        end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:grassgator_beef
+        if GLOBAL.KnownModIndex ~= nil and GLOBAL.KnownModIndex:IsModEnabled("workshop-3688913682") then
+            AddPrefabPostInit("grassgator_beef", MVB_SetupBackpackMount)
+            AddPrefabPostInit("grassgator_beef", function(inst)
+                MVB_HookBeefaloName(inst, "草鳄鱼坐骑")
+            end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mvb_beefalobackpack
+            local BeefaloBackpacks = {}
+            AddPrefabPostInit("mvb_beefalobackpack", function(inst)
+                if GLOBAL.TheWorld.ismastersim then
+                    BeefaloBackpacks[inst] = true
+                    inst:ListenForEvent("onremove", function()
+                        BeefaloBackpacks[inst] = nil
+                    end)
+                end
+            end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:messagebottleempty
+        -- 空瓶：可对伏特羊装羊奶
+        AddPrefabPostInit("messagebottleempty", function(inst)
+            if not GLOBAL.TheWorld.ismastersim or inst.components.bottler == nil then
+                return
+            end
+            -- （S 类，version=1）：回调字段改用 MVB_AddCallbackField
+            MVB_AddCallbackField(inst.components.bottler, "onbottlefn", "goat_milk", 1, function(inner)
+                return function(bottle, target, doer)
+                    if target ~= nil and target.prefab == "lightninggoat" then
+                        local x, y, z = bottle.Transform:GetWorldPosition()
+                        if bottle.components.stackable ~= nil then
+                            bottle.components.stackable:Get():Remove()
+                        else
+                            bottle:Remove()
+                        end
+                        local milk = GLOBAL.SpawnPrefab("goatmilk")
+                        if milk ~= nil then
+                            if doer ~= nil and doer.components.inventory ~= nil then
+                                doer.components.inventory:GiveItem(milk)
+                            else
+                                milk.Transform:SetPosition(x, y, z)
+                            end
+                        end
+                        return true
+                    end
+                    if inner ~= nil then
+                        local r = inner(bottle, target, doer)
+                        return r
+                    end
+                    return false
+                end
+            end)
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lightninggoat
+        -- 伏特羊：可装瓶 + 命名 + 存档（绑定铃铛）
+        AddPrefabPostInit("lightninggoat", function(inst)
+            inst:AddTag("canbebottled")
+            if not GLOBAL.TheWorld.ismastersim then
+                return
+            end
+            if inst.components.named == nil then
+                inst:AddComponent("named")
+            end
+            -- （D 类，version=1）：统一存档分发器
+            MVB_HookSaveLoad(inst, "voltgoat_bell", 1,
+                function(goat, data)
+                    data.mvb_bell_guid = goat.mvb_bell_guid
+                    return data
+                end,
+                function(goat, data)
+                    if data ~= nil and data.mvb_bell_guid ~= nil then
+                        goat.mvb_bell_guid = data.mvb_bell_guid
+                        if goat.components.herdmember ~= nil then
+                            goat.components.herdmember:Enable(false)
+                        end
+                        if goat.components.knownlocations ~= nil then
+                            goat.components.knownlocations:ForgetLocation("herd")
+                        end
+                        local function TryRelink()
+                            if not goat:IsValid() then
+                                return
+                            end
+                            local bell = GLOBAL.Ents ~= nil and GLOBAL.Ents[goat.mvb_bell_guid] or nil
+                            if bell ~= nil and bell:IsValid() then
+                                goat.mvb_bell = bell
+                                bell.mvb_goat = goat
+                            else
+                                goat:DoTaskInTime(2, TryRelink)
+                            end
+                        end
+                        goat:DoTaskInTime(0, TryRelink)
+                    end
+                end)
+        end)
+
+```
+

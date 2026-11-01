@@ -6080,3 +6080,87 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：赌狗模拟器 (Mod 2896628129)
+- **变体场景与切面**：收录来自工坊 Mod 2896628129 (`赌狗模拟器`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2896628129)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:container
+
+AddComponentPostInit("container", function(self)
+	function self:RemoveSingleItemBySlot(slot)
+		if slot and self.slots[slot] then
+			local item = self.slots[slot]
+			return self:RemoveItem(item)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：简易血条 (Mod 3582815384)
+- **变体场景与切面**：收录来自工坊 Mod 3582815384 (`简易血条`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3582815384)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(_, inst)
+    if G.TheWorld ~= nil and G.TheWorld.ismastersim and inst.components.combat ~= nil then
+        hookCombat(inst.components.combat)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+
+AddComponentPostInit("health", function(_, inst)
+    if G.TheWorld ~= nil and G.TheWorld.ismastersim and inst.components.health ~= nil then
+        hookHealth(inst.components.health)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- ======================================================
+AddPrefabPostInit("world", function(world)
+    if type(world) ~= "table" then return end
+    world.initShbTask = world:DoPeriodicTask(G.FRAMES, function()
+        -- 专用服务器没有本地玩家，也必须应用配置（服务端生成决策依赖它）
+        if G.TheNet ~= nil and G.TheNet:IsDedicated() then
+            SHB.ApplyConfig()
+            world.initShbTask:Cancel()
+            world.initShbTask = nil
+            return
+        end
+
+        local player = SHB.GetPlayer()
+        if player == nil or player.HUD == nil then return end
+
+        SHB.ApplyConfig()
+
+        -- 清理可能残留的伤害数字实体
+        local leftover = G.SpawnPrefab("dyc_damagedisplay")
+        if leftover ~= nil then
+            leftover:Remove()
+        end
+
+        world.initShbTask:Cancel()
+        world.initShbTask = nil
+    end)
+end)
+
+```
+

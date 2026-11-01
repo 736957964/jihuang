@@ -763,3 +763,40 @@ end)
 
 ```
 
+
+
+### 变体演进：null (Mod 3620271154)
+- **变体场景与切面**：收录来自工坊 Mod 3620271154 (`null`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3620271154)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:health
+	end
+	AddComponentPostInit("health", function(self, inst)
+		inst:ListenForEvent("healthdelta", function(inst)
+			if check_in_player_range(inst) then
+				local current_hp, max_hp = self.currenthealth, self.maxhealth
+				if current_hp and max_hp then
+					showme_health:GiveHealthBar_insight(inst, tonumber(current_hp), tonumber(max_hp),
+						current_hp .. max_hp)
+				end
+			end
+		end)
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+end)
+AddPrefabPostInit("player_classified", function(inst)
+	if not showme_health.showme then return end
+	inst:ListenForEvent("showme_hint_dirty2", function(inst)
+		showme_health:ShowMeHintDirty(inst.net_showme_hint2:value())
+	end)
+end)
+
+```
+
