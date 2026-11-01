@@ -890,3 +890,103 @@ local function PairFusionCaveHoles()
 
 ```
 
+
+
+### 变体演进：Abigail Attack Shadow Creature (Mod 2337896196)
+- **变体场景与切面**：收录来自工坊 Mod 2337896196 (`Abigail Attack Shadow Creature`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2337896196)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:abigail
+
+AddPrefabPostInit("abigail", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	
+	local function wendyinsane(inst)
+		if inst._playerlink ~= nil and inst._playerlink.components.sanity:IsInsane() then
+			inst:AddTag("crazy")
+		else
+			inst:RemoveTag("crazy") 
+		end
+	end
+
+	local function OnKill(inst, data)
+		local victim = data.victim
+		if victim and victim:HasTag("shadow") then
+			if inst._playerlink ~= nil and victim.sanityreward ~= nil then
+				inst._playerlink.components.sanity:DoDelta(victim.sanityreward / SANITY_REWARD)
+			end
+		end
+	end
+	
+	if ATTACK_SHADOW == 1 then
+		inst:AddTag("crazy")
+	elseif ATTACK_SHADOW == 2 then
+		inst:DoPeriodicTask(1, wendyinsane)
+	end
+	
+	inst:ListenForEvent("killed", OnKill)
+end)
+
+--Code by ptr from klei forum
+AddComponentPostInit("combat", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    local oldbonusdamagefn = inst.bonusdamagefn
+    inst.bonusdamagefn = function(attacker, target, damage, weapon)
+        local bonus = 0
+        if oldbonusdamagefn then
+            bonus = oldbonusdamagefn(attacker, target, damage, weapon) or 0
+        end
+		
+		--abigail damage 50% resist damage
+		if target.prefab == "abigail" and (attacker:HasTag("shadow") or attacker:HasTag("shadowchesspiece")) then
+            bonus = bonus - (damage + bonus) * RESIST_DAMAGE
+        end
+		
+		--abigail damage reduce 20%
+		if attacker.prefab == "abigail" and (target:HasTag("shadow")) then
+            bonus = bonus - (damage + bonus) * DAMAGE_REDUCTION
+        end
+		
+        return bonus
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+--Code by ptr from klei forum
+AddComponentPostInit("combat", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    local oldbonusdamagefn = inst.bonusdamagefn
+    inst.bonusdamagefn = function(attacker, target, damage, weapon)
+        local bonus = 0
+        if oldbonusdamagefn then
+            bonus = oldbonusdamagefn(attacker, target, damage, weapon) or 0
+        end
+		
+		--abigail damage 50% resist damage
+		if target.prefab == "abigail" and (attacker:HasTag("shadow") or attacker:HasTag("shadowchesspiece")) then
+            bonus = bonus - (damage + bonus) * RESIST_DAMAGE
+        end
+		
+		--abigail damage reduce 20%
+		if attacker.prefab == "abigail" and (target:HasTag("shadow")) then
+            bonus = bonus - (damage + bonus) * DAMAGE_REDUCTION
+        end
+		
+        return bonus
+    end
+end)
+
+```
+

@@ -11915,3 +11915,26 @@ end)
 
 ```
 
+
+
+### 变体演进：死亡不掉落物品 (Mod 3746911356)
+- **变体场景与切面**：收录来自工坊 Mod 3746911356 (`死亡不掉落物品`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3746911356)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+TUNING.PLAYER_DEATH_IS = GetModConfigData("死亡不掉落物品")
+AddComponentPostInit("inventory", function(self)
+    local old_DropEverything = self.DropEverything
+    self.DropEverything = function(self, ...)
+        if TUNING.PLAYER_DEATH_IS then return end
+        return old_DropEverything(self, ...)
+    end
+end)
+
+```
+
