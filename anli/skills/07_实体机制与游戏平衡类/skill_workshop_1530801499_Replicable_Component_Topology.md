@@ -7648,3 +7648,27 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：穴居猴香蕉仇恨 (Mod 3793986155)
+- **变体场景与切面**：收录来自工坊 Mod 3793986155 (`穴居猴香蕉仇恨`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3793986155)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:monkey
+
+AddPrefabPostInit("monkey", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    -- itemget 是猴子捡起物品时真正触发的事件
+    inst:ListenForEvent("itemget", OnMonkeyGetItem)
+end)
+
+```
+

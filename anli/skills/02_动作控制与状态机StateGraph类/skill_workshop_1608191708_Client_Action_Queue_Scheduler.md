@@ -33801,3 +33801,98 @@ if GetModConfigData("seedpouchjj") then
 
 ```
 
+
+
+### 变体演进：Ice Furnace (Mod 2610766467)
+- **变体场景与切面**：收录来自工坊 Mod 2610766467 (`Ice Furnace`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2610766467)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:dragonfly
+	else
+		AddPrefabPostInit("dragonfly", function(inst)	
+			if GLOBAL.TheWorld.ismastersim then
+				if inst.components.lootdropper ~= nil then
+					inst.components.lootdropper:AddChanceLoot("icefurnace_blueprint", 1.0)
+				end
+			end
+		end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:reskin_tool
+
+AddPrefabPostInit("reskin_tool", function(inst)
+	if GLOBAL.TheWorld.ismastersim then
+		if inst.components.spellcaster ~= nil then
+			inst.old_spell_icefurnace = inst.components.spellcaster.spell
+			inst.components.spellcaster:SetSpellFn(spell_icefurnace)
+			inst.old_can_cast_icefurnace = inst.components.spellcaster.can_cast_fn
+			inst.components.spellcaster:SetCanCastFn(can_cast_icefurnace)
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:temperature
+-- Items inside a closed Ice Furnace cool all the way to their minimum; the game's fridge branch stops at freezing
+AddComponentPostInit("temperature", function(temperature)
+	local old_OnUpdate = temperature.OnUpdate
+	temperature.OnUpdate = function(self, dt, applyhealthdelta)
+		local owner = self.inst.components.inventoryitem ~= nil and self.inst.components.inventoryitem.owner or nil
+		if owner == nil or not (owner:HasTag("icefurnace") and owner:HasTag("fridge")) then
+			return old_OnUpdate(self, dt, applyhealthdelta)
+		end
+		self.externalheaterpower = 0
+		self.delta = 0
+		self.rate = 0
+		if self.settemp ~= nil or self.inst.is_teleporting or
+			(self.inst.components.health ~= nil and self.inst.components.health:IsInvincible()) then
+			return
+		end
+		local ratemult = owner.components.preserver ~= nil and owner.components.preserver:GetTemperatureRateMultiplier(self.inst) or 1
+		self.rate = -TUNING.WARM_DEGREES_PER_SEC * ratemult
+		self:SetTemperature(math.clamp(self.current + self.rate * dt, self.mintemp, self.maxtemp))
+		if applyhealthdelta ~= false and self.inst.components.health ~= nil then
+			if self.current < 0 then
+				self.inst.components.health:DoDelta(-self.hurtrate * dt, true, "cold")
+			elseif self.current > self.overheattemp then
+				self.inst.components.health:DoDelta(-(self.overheathurtrate or self.hurtrate) * dt, true, "hot")
+			end
+		end
+	end
+end)
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragonflyfurnace
+	
+AddPrefabPostInit("dragonflyfurnace", function(inst)	
+	if GLOBAL.TheWorld.ismastersim then
+		inst:DoTaskInTime(1, function()
+			inst:AddTag("cooldowndone_furnace")
+		end)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+-- The engine drops skin ids it does not know, so the chosen skin reaches the prefab through the builder instead
+AddComponentPostInit("builder", function(builder)
+	local old_DoBuild = builder.DoBuild
+	builder.DoBuild = function(self, recname, pt, rotation, skin)
+		if recname ~= "icefurnace" or not IsIceFurnaceSkin(skin) then
+			return old_DoBuild(self, recname, pt, rotation, skin)
+		end
+		self.inst.icefurnace_build_skin = skin
+		local built, reason = old_DoBuild(self, recname, pt, rotation, nil)
+		self.inst.icefurnace_build_skin = nil
+		return built, reason
+	end
+end)
+
+```
+

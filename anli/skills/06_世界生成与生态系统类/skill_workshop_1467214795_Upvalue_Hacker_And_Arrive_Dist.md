@@ -3528,3 +3528,177 @@ AddClassPostConstruct("screens/playerhud", function(self)
 
 ```
 
+
+
+### 变体演进：万物书-滤镜 (Mod 3693202679)
+- **变体场景与切面**：收录来自工坊 Mod 3693202679 (`万物书-滤镜`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3693202679)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:lightrays_canopy
+
+AddPrefabPostInit("lightrays_canopy", function (self)
+    if not OptionsTool.GetConfig("leaf_light") then
+        self:Hide()
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- 雪覆盖控制
+AddPrefabPostInit("world", function(world)
+    local mapfuncs = getmetatable(world.Map).__index
+    local _SetOverlayLerp = mapfuncs.SetOverlayLerp
+    mapfuncs.SetOverlayLerp = function(map, level, ...)
+        if OptionsTool.GetConfig("sw_snow") then
+            local _level = OptionsTool.GetConfig("snow_level")
+            return _SetOverlayLerp(map, level > _level and _level or level, ...)
+        end
+        return _SetOverlayLerp(map, level, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:ambientlighting
+
+AddComponentPostInit("ambientlighting", function (self, inst)
+    colors = Tool.GetRecur(Tool.GetFnEnv(self.GetVisualAmbientValue), "_overridecolour.currentcolourset.PHASE_COLOURS")
+    if not colors then return print('PHASE_COLOURS 为空') end
+    -- 进行原值保存
+    Tool.Pairs(colors, function (cate, color)
+        if not dusk_data[cate] then
+            dusk_data[cate] = {}
+            day_data[cate] = {}
+        end
+        local c_data = Tool.GetRecur(color, "dusk.colour")
+        local d_data = Tool.GetRecur(color, "day.colour")
+        if not c_data then return print('dusk.colour 为空') end
+        Tool.Pairs(c_data, function (k, v)
+            dusk_data[cate][k] = v
+        end)
+        Tool.Pairs(d_data, function (k, v)
+            day_data[cate][k] = v
+        end)
+    end)
+    changeDusk()
+end)
+
+```
+
+
+
+### 变体演进：HIDE_BODY (Mod 3705961247)
+- **变体场景与切面**：收录来自工坊 Mod 3705961247 (`HIDE_BODY`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3705961247)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+	inst:ListenForEvent("playeractivated", function()
+		local player = GLOBAL.ThePlayer
+		if not player then return end
+		RefreshPlayerVisuals(player)
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_lunarplant_glow_fx
+
+AddPrefabPostInit("armor_lunarplant_glow_fx", DisableAttachToOwner)
+AddPrefabPostInit("armor_voidcloth_fx", DisableAttachToOwner)
+
+local function HookHatFx(inst)
+	local old_attach = inst.AttachToOwner
+	inst.AttachToOwner = function(fx, owner, ...)
+		if HIDE_HEAD then
+			return
+		end
+		if old_attach then
+			return old_attach(fx, owner, ...)
+		end
+	end
+	local old_rep = inst.OnEntityReplicated
+	inst.OnEntityReplicated = function(fx, ...)
+		if HIDE_HEAD then
+			return
+		end
+		if old_rep then
+			return old_rep(fx, ...)
+		end
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armor_voidcloth_fx
+AddPrefabPostInit("armor_lunarplant_glow_fx", DisableAttachToOwner)
+AddPrefabPostInit("armor_voidcloth_fx", DisableAttachToOwner)
+
+local function HookHatFx(inst)
+	local old_attach = inst.AttachToOwner
+	inst.AttachToOwner = function(fx, owner, ...)
+		if HIDE_HEAD then
+			return
+		end
+		if old_attach then
+			return old_attach(fx, owner, ...)
+		end
+	end
+	local old_rep = inst.OnEntityReplicated
+	inst.OnEntityReplicated = function(fx, ...)
+		if HIDE_HEAD then
+			return
+		end
+		if old_rep then
+			return old_rep(fx, ...)
+		end
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lunarplanthat_fx
+
+AddPrefabPostInit("lunarplanthat_fx", HookHatFx)
+AddPrefabPostInit("voidclothhat_fx", HookHatFx)
+
+local cmd_permission = GLOBAL.COMMAND_PERMISSION and GLOBAL.COMMAND_PERMISSION.USER or "USER"
+
+AddUserCommand("hh", {
+	prettyname = "隐藏头部外观",
+	desc = "切换隐藏头部装备外观",
+	permission = cmd_permission,
+	slash = true,
+	params = {},
+	vote = false,
+	localfn = function()
+		ToggleHead()
+	end,
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:voidclothhat_fx
+AddPrefabPostInit("lunarplanthat_fx", HookHatFx)
+AddPrefabPostInit("voidclothhat_fx", HookHatFx)
+
+local cmd_permission = GLOBAL.COMMAND_PERMISSION and GLOBAL.COMMAND_PERMISSION.USER or "USER"
+
+AddUserCommand("hh", {
+	prettyname = "隐藏头部外观",
+	desc = "切换隐藏头部装备外观",
+	permission = cmd_permission,
+	slash = true,
+	params = {},
+	vote = false,
+	localfn = function()
+		ToggleHead()
+	end,
+
+```
+
