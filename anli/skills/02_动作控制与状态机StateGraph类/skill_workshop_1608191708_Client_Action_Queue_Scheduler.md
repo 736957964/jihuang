@@ -44293,3 +44293,277 @@ end)
 
 ```
 
+
+
+### 变体演进：Custom Character Tweaks (Mod 1676327337)
+- **变体场景与切面**：收录来自工坊 Mod 1676327337 (`Custom Character Tweaks`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1676327337)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:seeds
+
+AddPrefabPostInit("seeds", ReplacePlantsTag)
+AddPrefabPostInit("veggies", ReplacePlantsTag)
+
+GLOBAL.ABILITY[4] = function(ply, isServer)
+	ply:AddTag("canplantseeds")
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:veggies
+AddPrefabPostInit("seeds", ReplacePlantsTag)
+AddPrefabPostInit("veggies", ReplacePlantsTag)
+
+GLOBAL.ABILITY[4] = function(ply, isServer)
+	ply:AddTag("canplantseeds")
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:waxwelljournal
+
+AddPrefabPostInit("waxwelljournal", function(inst)
+	inst:ListenForEvent("onputininventory", function(book, owner)
+		RemoveOptionFN(owner, inst.components.spellbook)
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:willow_ember
+
+AddPrefabPostInit("willow_ember", function(inst)
+	if (GLOBAL.TheWorld.ismastersim) then
+		inst.components.stackable.maxsize = GetData("WillowEmberStack")
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+Usually you'll want to be making these changes from an AddPrefabPostInit("world", function(inst) end),
+
+```
+
+
+
+### 变体演进：[Arknights]明日方舟-大地纪行Terra Chronicles (Mod 3549241277)
+- **变体场景与切面**：收录来自工坊 Mod 3549241277 (`[Arknights]明日方舟-大地纪行Terra Chronicles`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3549241277)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+}
+AddPrefabPostInit("world", function(inst)
+    if TheWorld.ismastersim then
+        inst:AddComponent("scourge_tianzai")
+		inst:ListenForEvent("entity_death",function(inst,data)--{ inst = self.inst, cause = cause, afflicter = afflicter }
+			if data.inst == nil or data.inst.brain == nil then
+				return
+			end
+			local x,y,z = data.inst.Transform:GetWorldPosition()
+			if (x==nil or y==nil or z==nil) and data.afflicter ~= nil then
+				x,y,z = data.afflicter.Transform:GetWorldPosition()
+			end
+			if x==nil or y==nil or z==nil then
+				return
+			end
+			local h = data.inst.components.health.maxhealth
+			for i,v in ipairs(battle_records) do
+				if h > v.h then
+					for ii,vv in ipairs(v.r) do
+						if vv[3] == nil or vv[4] ~= nil or math.random()<vv[3] then
+							local sp = SpawnPrefab(vv[1])
+							sp.Transform:SetPosition(x, y, z)
+							sp.components.stackable:SetStackSize(vv[4] ~= nil and math.random()<vv[3] and (vv[2]+vv[4]) or vv[2])
+							yyxk.FlingItem(sp)
+							sp.rem_task = sp:DoTaskInTime(99 ,sp.Remove)
+						end
+					end
+					return
+				end
+			end
+		end) 
+	else
+		
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+end)
+AddComponentPostInit("health",function(self,inst)
+	if TheWorld.ismastersim then
+		inst:AddComponent("arknights_buff")
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+
+AddComponentPostInit("playeractionpicker", function(self)
+	local GetSceneActions = self.GetSceneActions
+	function self:GetSceneActions(target, right, ...)
+		local actions = GetSceneActions(self, target, right, ...)
+		if target ~= nil and factory_upgrade_prefabs[target.prefab] then
+			for index = #actions, 1, -1 do
+				local action = actions[index].action
+				if (right and action == ACTIONS.RUMMAGE)
+						or (not right and (action == ACTIONS.CONSTRUCT
+							or action == ACTIONS.STOPCONSTRUCTION)) then
+					table.remove(actions, index)
+				end
+			end
+		end
+		return actions
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+--在制作站附近时DoLongAction所需时间减少50%
+AddStategraphPostInit("wilson", function(sg)
+    local state_long = sg.states["dolongaction"]
+    local plong = state_long.onenter
+    state_long.onenter = function(inst, timeout)
+        if FindEntity(inst,6,nil,{"terra_ark_workshop"}) then
+            local targ = inst:GetBufferedAction() and inst:GetBufferedAction().target or nil
+            if targ and not (targ:HasTag("junk_pile") or targ:HasTag("junk_pile_big")) then
+                targ:PushEvent("startlongaction")
+			elseif targ ~= nil then
+                return plong(inst, timeout)
+            end
+            inst.sg.statemem.action = inst.bufferedaction
+            inst.sg:SetTimeout((timeout or 1) * .5)
+            inst.components.locomotor:Stop()
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/make_trap", "make")
+            inst.AnimState:PlayAnimation("build_pre")
+            inst.AnimState:PushAnimation("build_loop", true)
+        else
+            return plong(inst, timeout)
+        end
+    end
+    table.insert(state_long.timeline, TimeEvent(4 * FRAMES, function(inst)
+        if FindEntity(inst,6,nil,{"terra_ark_workshop"}) then
+            inst.sg:RemoveStateTag("busy")
+        end
+    end))
+end)
+
+local function OnWorked_Common(inst)
+	if math.random() <= .25 then
+		for i = 1, math.random(2) do
+			if inst.components.lootdropper then
+				inst.components.lootdropper:SpawnLootPrefab("arknights_originium_shard", inst:GetPosition())
+			end
+		end
+	end
+end
+
+local list_commonrocks = {"rock1", "rock_flintless_med", "rock_flintless", "rock_flintless_low"}
+for i, v in ipairs(list_commonrocks) do
+	AddPrefabPostInit(v, function(inst)
+		if not TheWorld.ismastersim then
+			return
+		end
+		--inst:ListenForEvent("workfinished", OnWorked_Common)
+		if inst.components.workable.onfinish == nil then
+			inst.components.workable:SetOnFinishCallback(OnWorked_Common)
+		end
+	end)
+end
+
+local function OnWorked_Goldnugget(inst)
+	if math.random() <= .35 then
+		for i = 2, math.random(2,3) do
+			if inst.components.lootdropper then
+				inst.components.lootdropper:SpawnLootPrefab("arknights_originium_shard", inst:GetPosition())
+			end
+		end
+	end
+end
+
+local list_goldnuggetrocks = {"rock2"}
+for i, v in ipairs(list_goldnuggetrocks) do
+	AddPrefabPostInit(v, function(inst)
+		if not TheWorld.ismastersim then
+			return
+		end
+		--inst:ListenForEvent("workfinished", OnWorked_Goldnugget)
+		if inst.components.workable.onfinish == nil then
+			inst.components.workable:SetOnFinishCallback(OnWorked_Goldnugget)
+		end
+	end)
+end
+
+local function OnWorked_Stalamite(inst)
+	if math.random() <= .3 then
+		for i = 2, math.random(2,3) do
+			if inst.components.lootdropper then
+				inst.components.lootdropper:SpawnLootPrefab("arknights_originium_shard", inst:GetPosition())
+			end
+		end
+	end
+end
+
+local list_stalagmite = {"stalagmite", "stalagmite_full", "stalagmite_med", "stalagmite_low"}
+for i, v in ipairs(list_stalagmite) do
+	AddPrefabPostInit(v, function(inst)
+		if not TheWorld.ismastersim then
+			return
+		end
+		--inst:ListenForEvent("workfinished", OnWorked_Stalamite)
+		if inst.components.workable.onfinish == nil then
+			inst.components.workable:SetOnFinishCallback(OnWorked_Stalamite)
+		end
+	end)
+end
+
+local function OnWorked_Stalamite_Tall(inst)
+	if math.random() <= .3 then
+		if math.random() <= .5 then
+			if inst.components.lootdropper then
+				inst.components.lootdropper:SpawnLootPrefab("arknights_originium_shard", inst:GetPosition())
+			end
+		end
+	end
+end
+
+local list_stalagmite_tall = {"stalagmite_tall_med", "stalagmite_tall", "stalagmite_tall_low", "stalagmite_tall_full"}
+for i, v in ipairs(list_stalagmite_tall) do
+	AddPrefabPostInit(v, function(inst)
+		if not TheWorld.ismastersim then
+			return
+		end
+		--inst:ListenForEvent("workfinished", OnWorked_Stalamite_Tall)
+		if inst.components.workable.onfinish == nil then 
+			inst.components.workable:SetOnFinishCallback(OnWorked_Stalamite_Tall)
+		end
+	end)
+end
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", CombatPost)
+AddClassPostConstruct("components/combat_replica", CombatPost)
+
+AddComponentPostInit('combat', function(self, inst)--修改强制攻击间隔
+	local oldBlankOutAttacks = self.BlankOutAttacks
+	function self:BlankOutAttacks(fortime)
+		if self.inst and self.inst:HasOneOfTags(canaccepttags) and self.inst.arknights_attackspeed then
+			fortime = fortime * (1 - (self.inst.arknights_attackspeed - 1))
+		end
+		return oldBlankOutAttacks(self, fortime)
+	end
+end)
+
+```
+

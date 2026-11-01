@@ -7158,8 +7158,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 11:40:24",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1676327337",
+      "name": "Custom Character Tweaks",
+      "author": "Argonium",
+      "version": "5.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:46:02",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3549241277",
+      "name": "[Arknights]明日方舟-大地纪行Terra Chronicles",
+      "author": "絔狼BaiZealer",
+      "version": "1.7.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:46:02",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 11:40:24"
+  "lastUpdated": "2026-11-01 11:46:02"
 }
