@@ -43739,3 +43739,557 @@ end)
 
 ```
 
+
+
+### 变体演进：阿比盖尔玩法拓展 (Mod 3815166761)
+- **变体场景与切面**：收录来自工坊 Mod 3815166761 (`阿比盖尔玩法拓展`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3815166761)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:ghostlybond
+
+AddComponentPostInit("ghostlybond", function(self)
+    self.maxbondlevel = 6
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:pethealthbar
+
+AddComponentPostInit("pethealthbar", function(self)
+    self._symbol3 = net_hash(self.inst.GUID, "pethealthbar._symbol3", "pethealthsymbol3dirty")
+    self._symbol4 = net_hash(self.inst.GUID, "pethealthbar._symbol4", "pethealthsymbol4dirty")
+    self._symbol5 = net_hash(self.inst.GUID, "pethealthbar._symbol5", "pethealthsymbol5dirty")
+
+    if self.ismastersim then
+
+    else
+        self.inst:ListenForEvent("pethealthsymbol3dirty", OnSymbolDirty3)
+        self.inst:ListenForEvent("pethealthsymbol4dirty", OnSymbolDirty4)
+        self.inst:ListenForEvent("pethealthsymbol5dirty", OnSymbolDirty5)
+        -- inst:DoTaskInTime(0, OnSymbolDirty3)
+    end
+
+    function self:GetSymbol3()
+        return self._symbol3:value()
+    end
+
+    function self:GetSymbol4()
+        return self._symbol4:value()
+    end
+
+    function self:GetSymbol5()
+        return self._symbol5:value()
+    end
+
+    function self:SetSymbol3(symbol)
+        if self.ismastersim and self._symbol3:value() ~= symbol then
+            self._symbol3:set(symbol)
+            OnSymbolDirty3(self.inst)
+        end
+    end
+
+    function self:SetSymbol4(symbol)
+        if self.ismastersim and self._symbol4:value() ~= symbol then
+            self._symbol4:set(symbol)
+            OnSymbolDirty4(self.inst)
+        end
+    end
+
+    function self:SetSymbol5(symbol)
+        if self.ismastersim and self._symbol5:value() ~= symbol then
+            self._symbol5:set(symbol)
+            OnSymbolDirty5(self.inst)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sisturn
+
+AddPrefabPostInit("sisturn", function(inst)
+    if not TheWorld.ismastersim then
+		return inst
+	end
+    local function unregister(inst,data)
+        TheWorld_Abigail_Sisturn[inst] = nil
+    end
+    TheWorld_Abigail_Sisturn[inst] = true
+    inst:ListenForEvent("onremove",unregister)
+    inst:ListenForEvent("onburnt",  unregister)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wendy
+
+AddPrefabPostInit("wendy", function(inst)
+    local focused = nil
+    local function OnControlDirty(inst)
+        if inst._abigail:value() then
+            if inst == ThePlayer then
+                focused = inst._abigail:value()
+                TheFocalPoint.components.focalpoint:StartFocusSource(focused, "abigail_cam", nil, math.huge, math.huge, 10)
+
+            end
+        else
+            if inst == ThePlayer and focused then
+                TheFocalPoint.components.focalpoint:StopFocusSource(focused, "abigail_cam")
+            end
+        end
+    end
+
+    local function OnBondLevelDirtyExtra(inst)
+        if inst == ThePlayer then
+            local lv = inst._bondlevel:value()
+            for i = 4, 6 do
+                inst:SetClientSideInventoryImageOverrideFlag("bondlevel"..i, i == lv)
+            end
+        end
+    end
+    inst:ListenForEvent("_bondleveldirty", OnBondLevelDirtyExtra)
+    inst:ListenForEvent("playeractivated", OnBondLevelDirtyExtra)
+
+    inst._abigail = net_entity(inst.GUID, "abigailcommand_control.is_controlled","controldirty")
+    if not TheWorld.ismastersim then
+		inst:ListenForEvent("controldirty", OnControlDirty)
+		return inst
+	end
+
+    inst:ListenForEvent("controldirty",function ()
+        local abigail = inst.components.ghostlybond and inst.components.ghostlybond.ghost
+        if abigail then
+            if inst._abigail:value() then
+                abigail:StopBrain("abigail_control")
+            else
+                abigail:RestartBrain("abigail_control")
+            end
+        end
+    end)
+
+    inst:ListenForEvent("ghostlybond_recallcomplete", function() inst._abigail:set(nil) end)
+    inst:ListenForEvent("death", function() inst._abigail:set(nil) end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail
+
+AddPrefabPostInit("abigail", function(inst)
+    if not TheWorld.ismastersim then
+		return inst
+	end
+--     local health = inst.components.health
+--     if health then
+--         local old_redirect = health.redirect
+--         health.redirect = function (inst, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+--             if inst:HasTag("shadow_aligned") and inst.components.timer and not inst.components.timer:TimerExists("control_shadow_shield_cd") then
+--                 local leader = inst.components.follower and inst.components.follower:GetLeader()
+--                 if leader and leader:HasTag("abigailcommand_control") and amount<=0 then
+--                     inst.components.timer:StartTimer("control_shadow_shield_cd",5)
+--                     inst:AddTag("will_shadowshield")
+--                     return true
+--                 end
+--             end
+--             if old_redirect then
+--                 return old_redirect(inst, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+--             end
+--         end
+--     end
+    local debuffable = inst.components.debuffable
+    if debuffable then
+        local old_ondebuffadded = debuffable.ondebuffadded
+        local old_ondebuffremoved = debuffable.ondebuffremoved
+        debuffable.ondebuffadded = function (inst, name, debuff)
+            if old_ondebuffadded then
+                old_ondebuffadded(inst, name, debuff)
+            end
+            local pethealthbar = inst._playerlink and inst._playerlink.components.pethealthbar
+            if pethealthbar then
+                if name == "elixir_buff2" then
+                    pethealthbar:SetSymbol3(debuff.prefab)
+                elseif name == "elixir_buff3" then
+                    pethealthbar:SetSymbol4(debuff.prefab)
+                elseif name == "elixir_buff4" then
+                    pethealthbar:SetSymbol5(debuff.prefab)
+                end
+            end
+        end
+        debuffable.ondebuffremoved = function (inst, name, debuff)
+            if old_ondebuffremoved then
+                old_ondebuffremoved(inst, name, debuff)
+            end
+            local pethealthbar = inst._playerlink and inst._playerlink.components.pethealthbar
+            if pethealthbar then
+                if name == "elixir_buff2" then
+                    pethealthbar:SetSymbol3(0)
+                elseif name == "elixir_buff3" then
+                    pethealthbar:SetSymbol4(0)
+                elseif name == "elixir_buff4" then
+                    pethealthbar:SetSymbol5(0)
+                end
+            end
+        end
+    end
+
+    local inspectable = inst.components.inspectable
+    if inspectable then
+        -- local old_getstatus = inspectable.getstatus
+        inspectable.getstatus = function (inst)
+            local bondlevel = (inst._playerlink ~= nil and inst._playerlink.components.ghostlybond ~= nil) and inst._playerlink.components.ghostlybond.bondlevel or 0
+            return bondlevel >= 6 and "LEVEL6"
+                or bondlevel == 5 and "LEVEL5"
+                or bondlevel == 4 and "LEVEL4"
+                or bondlevel == 3 and "LEVEL3"
+                or bondlevel == 2 and "LEVEL2"
+                or "LEVEL1"
+        end
+    end
+
+    local old_on_ghostlybond_level_change = inst._on_ghostlybond_level_change
+    inst._on_ghostlybond_level_change = function (player, data)
+        if old_on_ghostlybond_level_change then
+            old_on_ghostlybond_level_change(player,data)
+        end
+        local max_health = abigail_health[player.components.ghostlybond.bondlevel] or TUNING.ABIGAIL_HEALTH_LEVEL1
+        inst.base_max_health = max_health
+        SetMaxHealth(inst)
+    end
+
+    local old_LinkToPlayer = inst.LinkToPlayer
+    inst.LinkToPlayer = function (inst, player)
+        if old_LinkToPlayer then
+            old_LinkToPlayer(inst,player)
+        end
+
+        local max_health = abigail_health[player.components.ghostlybond.bondlevel] or TUNING.ABIGAIL_HEALTH_LEVEL1
+        inst.base_max_health = max_health
+        SetMaxHealth(inst)
+
+        local pethealthbar = player.components.pethealthbar
+        if pethealthbar then
+            local d2, d3, d4 = inst:GetDebuff("elixir_buff2"), inst:GetDebuff("elixir_buff3"), inst:GetDebuff("elixir_buff4")
+            if d2 then pethealthbar:SetSymbol3(d2.prefab) end
+            if d3 then pethealthbar:SetSymbol4(d3.prefab) end
+            if d4 then pethealthbar:SetSymbol5(d4.prefab) end
+        end
+    end
+
+    local old_SetToGestalt = inst.SetToGestalt
+    inst.SetToGestalt = function (inst)
+        if old_SetToGestalt then
+            old_SetToGestalt(inst)
+        end
+        inst.AnimState:OverrideSymbol("v1_ball_loop",   "brightmare_gestalt",   "ball_loop")
+        inst.AnimState:OverrideSymbol("v1_embers",      "brightmare_gestalt",   "embers")
+        inst.AnimState:OverrideSymbol("v1_melt2",       "brightmare_gestalt",   "melt2")
+    end
+
+    local old_OnLoad = inst.OnLoad
+    inst.OnLoad = function (inst,data)
+        if old_OnLoad then
+            old_OnLoad(inst,data)
+        end
+        if data and data.gestalt then
+            inst.AnimState:OverrideSymbol("v1_ball_loop",   "brightmare_gestalt",   "ball_loop")
+            inst.AnimState:OverrideSymbol("v1_embers",      "brightmare_gestalt",   "embers")
+            inst.AnimState:OverrideSymbol("v1_melt2",       "brightmare_gestalt",   "melt2")
+        end
+    end
+
+    local old_UpdateDamage = inst.UpdateDamage
+    inst.UpdateDamage = function (inst)
+        if old_UpdateDamage then
+            old_UpdateDamage(inst)
+        end
+        UpdateDamage(inst)
+    end
+
+    local old_updatehealingbuffs = inst.updatehealingbuffs
+    inst.updatehealingbuffs = function (inst)
+        if old_updatehealingbuffs then
+            old_updatehealingbuffs(inst)
+        end
+        for i = 2, #POTION_SLOTS do
+            local elixir_buff = inst:GetDebuff(POTION_SLOTS[i])
+            if elixir_buff ~= nil and elixir_buff.potion_tunings.ghostly_healing then
+                local blossoms = TheWorld.components.sisturnregistry and
+                         TheWorld.components.sisturnregistry:IsBlossom() or nil
+                local leader = inst.components.follower and inst.components.follower:GetLeader()
+                local skilled = leader and leader.components.skilltreeupdater and leader.components.skilltreeupdater:IsActivated("wendy_sisturn_3")
+
+                local inworld = not inst:HasTag("INLIMBO") and (inst.sg and not inst.sg:HasStateTag("dissipate") ) or nil
+
+                local setslow = nil
+                local setnormal = nil
+
+                if not elixir_buff.slowed and blossoms and skilled and inworld then
+                    setslow = true
+                elseif elixir_buff.slowed and (not inworld or not blossoms or not skilled ) then
+                    setnormal = true
+                end
+
+                local time = elixir_buff.components.timer and elixir_buff.components.timer:GetTimeLeft("decay") or nil
+                if time then
+                    if setslow == true then
+                        elixir_buff.components.timer:StopTimer("decay")
+                        elixir_buff.components.timer:StartTimer("decay", time*2)
+                        elixir_buff.slowed = true
+                    elseif setnormal then
+                        elixir_buff.components.timer:StopTimer("decay")
+                        elixir_buff.components.timer:StartTimer("decay", time/2)
+                        elixir_buff.slowed = nil
+                    end
+                end
+            end
+        end
+    end
+
+    UpdateDamage(inst)
+    inst:WatchWorldState("phase", UpdateDamage)
+    inst:ListenForEvent("attacked",OnAttacked)
+end)
+
+AddPrefabPostInit("abigail_flower", function(inst)
+
+    local function OnAwayLightDirty(inst)
+        if ThePlayer ~= nil then
+            ThePlayer:PushEvent("item_buff_changed", { inst = inst, effect = "flowerlight_fx" })
+        end
+    end
+
+    inst._away_flowerlight = net_tinybyte(inst.GUID, "away_flowerlight.abigail","awaylight")
+
+    for i = 4, 6 do
+        inst:SetClientSideInventoryImageOverride("bondlevel"..i, "abigail_flower.tex", "abigail_flower_level3.tex")
+    end
+
+    local function RegisterExtraLevels(inst)
+        local build = inst.AnimState:GetBuild()
+        if build ~= nil and build ~= "abigail_flower_rework" then
+            local image_name = string.gsub(build, "abigail_", "abigail_flower_")
+            for i = 4, 6 do
+                inst:SetClientSideInventoryImageOverride("bondlevel"..i, image_name..".tex", image_name.."_level3.tex")
+            end
+        end
+    end
+
+    inst:DoTaskInTime(0, RegisterExtraLevels)
+
+    inst:ListenForEvent("awaylight", OnAwayLightDirty)
+    inst:ListenForEvent("abiflowerskiniddirty", function(inst) inst:DoTaskInTime(0, RegisterExtraLevels) end)
+
+    if not TheWorld.ismastersim then
+		return inst
+	end
+    inst._away_flowerlight:set(0)
+
+    local inspectable = inst.components.inspectable
+    if inspectable then
+        -- local old_getstatus = inspectable.getstatus
+        inspectable.getstatus = function (inst,viewer)
+            local _bondlevel = inst._bond_level
+            if inst.components.inventoryitem.owner then
+                _bondlevel = (viewer ~= nil and viewer.components.ghostlybond ~= nil and viewer.components.ghostlybond.bondlevel) or 0
+            end
+            return _bondlevel >= 6 and "LEVEL6"
+                or _bondlevel == 5 and "LEVEL5"
+                or _bondlevel == 4 and "LEVEL4"
+                or _bondlevel == 3 and "LEVEL3"
+                or _bondlevel == 2 and "LEVEL2"
+                or _bondlevel == 1 and "LEVEL1"
+                or nil
+        end
+    end
+
+    -- local old_drawimageoverride = inst.drawimageoverride
+    inst.drawimageoverride = function (inst)
+        local level = inst._bond_level or 0
+        level = level >3 and 3 or level
+        local skin_name = (inst:GetSkinName() or "abigail_flower")
+        return skin_name .. (level == 1 and "" or ("_level" .. tostring(level)))
+    end
+end)
+
+AddPrefabPostInit("ghostlyelixir_revive_buff", function(inst)
+    if not TheWorld.ismastersim then
+		return inst
+	end
+
+    local t = inst.potion_tunings
+    if t then
+        t.ONAPPLY = function(inst, target)
+            local leader = target.components.follower and target.components.follower:GetLeader()
+            if leader and leader.components.ghostlybond then
+                leader.components.ghostlybond:SetBondLevel(math.min(leader.components.ghostlybond.bondlevel + 2, leader.components.ghostlybond.maxbondlevel))
+            end
+        end
+    end
+end)
+
+AddPrefabPostInit("abigail_murder_buff", function(inst)
+    if not TheWorld.ismastersim then
+		return inst
+	end
+    local debuff = inst.components.debuff
+    if debuff then
+        local old_onattachedfn = debuff.onattachedfn
+        local old_ondetachedfn = debuff.ondetachedfn
+        debuff.onattachedfn = function (inst, target)
+            if old_onattachedfn then
+                old_onattachedfn(inst,target)
+            end
+            if target and target:IsValid() then
+                UpdateDamage(target)
+            end
+        end
+        debuff.ondetachedfn = function (inst, target)
+            if old_ondetachedfn then
+                old_ondetachedfn(inst, target)
+            end
+            if target and target:IsValid() then
+                UpdateDamage(target)
+            end
+        end
+    end
+end)
+
+AddPrefabPostInit("ghostlyelixir_shield_buff", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    if inst.potion_tunings ~= nil then
+        PatchShieldFamilyPlayerTunings(inst.potion_tunings)
+    end
+end)
+
+AddPrefabPostInit("ghostlyelixir_retaliation_buff", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    if inst.potion_tunings ~= nil then
+        PatchShieldFamilyPlayerTunings(inst.potion_tunings)
+    end
+end)
+
+for _, v in ipairs(potion_prefab) do
+    AddPrefabPostInit(v, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+        local ghostlyelixir = inst.components.ghostlyelixir
+        if ghostlyelixir then
+            -- local old_doapplyelixerfn = ghostlyelixir.doapplyelixerfn
+            ghostlyelixir.doapplyelixerfn = DoApplyElixir
+        end
+    end)
+end
+
+AddPrefabPostInit("ghostflowerhat", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    local equippable = inst.components.equippable
+    if equippable then
+        -- local old_onequip = equippable.onequipfn
+        local old_onunequip = equippable.onunequipfn
+        -- inst.components.equippable:SetOnEquip(function(inst, owner)
+        --     if old_onequip then
+        --         old_onequip(inst, owner)
+        --     end
+        -- end)
+        inst.components.equippable:SetOnUnequip(function(inst, owner)
+            local saved = nil
+            local debuff = owner:GetDebuff("elixir_buff")
+            if debuff ~= nil then
+                saved = {
+                    prefab = debuff.prefab,
+                    time_left = debuff.components.timer ~= nil
+                        and debuff.components.timer:GetTimeLeft("decay") or nil,
+                    skill_ext = debuff.duration_extended_by_skill,
+                }
+            end
+            if old_onunequip then
+                old_onunequip(inst, owner)
+            end
+            if saved ~= nil and owner:GetDebuff("elixir_buff") == nil then
+                if owner:AddDebuff("elixir_buff", saved.prefab) then
+                    local buff = owner:GetDebuff("elixir_buff")
+                    if buff ~= nil then
+                        if saved.skill_ext ~= nil then
+                            buff.duration_extended_by_skill = saved.skill_ext
+                        end
+                        if saved.time_left ~= nil and buff.components.timer ~= nil then
+                            buff.components.timer:SetTimeLeft("decay", saved.time_left)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
+    -- local old_OnSave = inst.OnSave
+    -- inst.OnSave = function (inst,data)
+    --     if old_OnSave then
+    --         old_OnSave(inst,data)
+    --     end
+    --     data._saved_elixirs = inst._saved_elixirs
+    -- end
+
+    -- local old_OnLoad = inst.OnLoad
+    -- inst.OnLoad = function (inst,data)
+    --     if old_OnLoad then
+    --         old_OnLoad(inst,data)
+    --     end
+    --     if data and data._saved_elixirs then
+    --         inst._saved_elixirs = data._saved_elixirs
+    --     end
+    -- end
+
+    inst:ListenForEvent("rechargechange", onghostflowerrecharge)
+end)
+
+AddPlayerPostInit(function(inst)
+    inst._buffsymbol2 = net_hash(inst.GUID, "healthbarbuff._buffsymbol2", "healthbarbuffsymbol2dirty")
+    inst._buffsymbol2:set(0)
+
+    inst._buffsymbol3 = net_hash(inst.GUID, "healthbarbuff._buffsymbol3", "healthbarbuffsymbol3dirty")
+    inst._buffsymbol3:set(0)
+
+    inst._buffsymbol4 = net_hash(inst.GUID, "healthbarbuff._buffsymbol4", "healthbarbuffsymbol4dirty")
+    inst._buffsymbol4:set(0)
+
+    inst:ListenForEvent("healthbarbuffsymbol2dirty", OnHealthbarBuffSymbol2Dirty)
+    inst:ListenForEvent("healthbarbuffsymbol3dirty", OnHealthbarBuffSymbol3Dirty)
+    inst:ListenForEvent("healthbarbuffsymbol4dirty", OnHealthbarBuffSymbol4Dirty)
+
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    local debuffable = inst.components.debuffable
+    if debuffable then
+        local old_ondebuffadded = debuffable.ondebuffadded
+        local old_ondebuffremoved = debuffable.ondebuffremoved
+        debuffable.ondebuffadded = function (inst, name, debuff)
+            if old_ondebuffadded then
+                old_ondebuffadded(inst, name, debuff)
+            end
+            if SetSymbol[name] then
+                SetSymbol[name](inst,debuff.prefab)
+            end
+        end
+        debuffable.ondebuffremoved = function (inst, name, debuff)
+            if old_ondebuffremoved then
+                old_ondebuffremoved(inst, name, debuff)
+            end
+            if SetSymbol[name] then
+                SetSymbol[name](inst,0)
+            end
+        end
+    end
+end)
+
+```
+

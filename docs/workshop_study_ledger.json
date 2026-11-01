@@ -7131,8 +7131,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 11:35:43",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1736542280",
+      "name": "Korean Foods & Items (Warly seasoning compatible)",
+      "author": "jajangmon & Cutlass",
+      "version": "3.6",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 11:40:23",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3749766414",
+      "name": "enable_sunkenchest",
+      "author": "NOUS",
+      "version": "1.5.0",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-01 11:40:23",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3815166761",
+      "name": "阿比盖尔玩法拓展",
+      "author": "over_dragon、Guto",
+      "version": "26.10.29",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:40:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 11:35:43"
+  "lastUpdated": "2026-11-01 11:40:24"
 }

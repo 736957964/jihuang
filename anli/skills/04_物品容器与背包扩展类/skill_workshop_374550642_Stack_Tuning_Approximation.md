@@ -832,3 +832,152 @@ local screen_data = {{
 
 ```
 
+
+
+### 变体演进：enable_sunkenchest (Mod 3749766414)
+- **变体场景与切面**：收录来自工坊 Mod 3749766414 (`enable_sunkenchest`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3749766414)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:locomotor
+
+AddComponentPostInit("locomotor", function(self)
+    local old_PushAction = self.PushAction
+    self.PushAction = function(self, bufferedaction, ...)
+        GLOBAL.pcall(function()
+            if bufferedaction ~= nil and bufferedaction.target ~= nil and bufferedaction.arrivedist == nil
+                and TargetInOurOpenChest(self.inst, bufferedaction.target) then
+                bufferedaction.arrivedist = ARRIVE_RANGE
+                if bufferedaction.distance == nil or bufferedaction.distance < ARRIVE_RANGE then
+                    bufferedaction.distance = ARRIVE_RANGE
+                end
+            end
+        end)
+        return old_PushAction(self, bufferedaction, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sunkenchest
+
+AddPrefabPostInit("sunkenchest", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    if inst.components.workable ~= nil then
+        inst.components.workable:SetOnFinishCallback(OnFinishOpen)
+        -- Each hammer "hit" plays an anim that RESETS symbol visibility, so re-hide the
+        -- chains right after — otherwise the unlocked chest flashes its chains every time
+        -- you hammer it during the destroy phase.
+        local base_onwork = inst.components.workable.onwork
+        inst.components.workable:SetOnWorkCallback(function(inst, ...)
+            if base_onwork ~= nil then
+                base_onwork(inst, ...)
+            end
+            if inst.unlocked then
+                HideChains(inst)
+            end
+        end)
+    end
+
+    -- When the unlocked chest is carried on the back, show OUR chain-less swap build.
+    -- (AnimState symbol overrides on the owner network to clients.)
+    if inst.components.equippable ~= nil then
+        local base_onequip = inst.components.equippable.onequipfn
+        inst.components.equippable.onequipfn = function(inst, owner)
+            if base_onequip ~= nil then
+                base_onequip(inst, owner)
+            end
+            if inst.unlocked and owner ~= nil and owner.AnimState ~= nil then
+                owner.AnimState:OverrideSymbol("swap_body", UNLOCKED_SWAP_BUILD, "swap_body")
+            end
+        end
+    end
+
+    local base_onsave = inst.OnSave
+    local base_onload = inst.OnLoad
+
+    inst.OnSave = function(inst, data)
+        if base_onsave ~= nil then
+            base_onsave(inst, data)
+        end
+        if inst._sunkenchest_opened then
+            data.sunkenchest_opened = true
+        end
+    end
+
+    inst.OnLoad = function(inst, data)
+        if base_onload ~= nil then
+            base_onload(inst, data)
+        end
+        if data ~= nil and data.sunkenchest_opened then
+            DoOpen(inst, true)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wardrobe
+-- 3) Per-wardrobe setup.
+AddPrefabPostInit("wardrobe", function(inst)
+    -- Disable the vanilla right-click dress collector (gates on the "wardrobe" tag).
+    -- Done on BOTH client and server: the client predicts actions from its local tags.
+    inst:RemoveTag("wardrobe")
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    if inst.components.wardrobe ~= nil then
+        inst.components.wardrobe:SetCanUseAction(false)
+    end
+
+    if inst.components.container == nil then
+        inst:AddComponent("container")
+    end
+    inst.components.container:WidgetSetup("wardrobe")
+
+    -- Suppress the generic HUD container open/close jingle so only the wardrobe's own
+    -- door sound (played in onopenfn/onclosefn below) is heard.
+    inst.components.container.skipopensnd = true
+    inst.components.container.skipclosesnd = true
+
+    inst.components.container.onopenfn = function(i)
+        if not i:HasTag("burnt") then
+            i.AnimState:PlayAnimation("open")
+            i.SoundEmitter:PlaySound("dontstarve/common/wardrobe_open")
+        end
+    end
+    inst.components.container.onclosefn = function(i)
+        if not i:HasTag("burnt") then
+            i.AnimState:PlayAnimation("closed")
+            i.SoundEmitter:PlaySound("dontstarve/common/wardrobe_close")
+        end
+    end
+
+    local function dropall()
+        if inst.components.container ~= nil then
+            inst.components.container:DropEverything()
+        end
+    end
+
+    if inst.components.workable ~= nil then
+        local base_finish = inst.components.workable.onfinish
+        inst.components.workable:SetOnFinishCallback(function(i, worker)
+            dropall()
+            if base_finish ~= nil then
+                base_finish(i, worker)
+            end
+        end)
+    end
+
+    inst:ListenForEvent("onignite", dropall)
+end)
+
+```
+
