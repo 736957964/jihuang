@@ -7672,3 +7672,31 @@ end)
 
 ```
 
+
+
+### 变体演进：Lava Caves! (Mod 3426875955)
+- **变体场景与切面**：收录来自工坊 Mod 3426875955 (`Lava Caves!`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3426875955)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:cave
+
+AddPrefabPostInit("cave", function(inst)
+	inst.entity:AddWaveComponent()
+	local scale = 1.3
+	inst.WaveComponent:SetWaveParams(13.5 * 1.3, 2.8 * (1.3 - .15), -5) -- wave texture u repeat, forward distance between waves, world y-axis position
+	inst.WaveComponent:SetWaveSize(80 * scale, 3.5 * scale)                 -- wave mesh width and height
+	inst.WaveComponent:SetWaveMotion(.3, .5, .35)                           -- speed, horizontal travel, vertical travel
+
+	inst.WaveComponent:SetWaveTexture(resolvefilepath("images/lavaarena_wave.tex"))
+	inst.WaveComponent:SetWaveEffect("shaders/waves.ksh")
+	
+	inst.Map:SetUndergroundFadeHeight(0)
+end)
+
+```
+

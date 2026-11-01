@@ -3702,3 +3702,82 @@ AddUserCommand("hh", {
 
 ```
 
+
+
+### 变体演进：迷你世界[测试用] (Mod 3512496273)
+- **变体场景与切面**：收录来自工坊 Mod 3512496273 (`迷你世界[测试用]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3512496273)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+--------------------------------------------------------------------------------------------------------
+AddPrefabPostInit("forest", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    if inst.components.sharkboimanager ~= nil then
+        inst:RemoveEventCallback("worldmapsetsize", inst.components.sharkboimanager.InitializeSharkBoiManager)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave_entrance_open
+--------------------------------------------------------------------------------------------------------
+AddPrefabPostInit("cave_entrance_open", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    if inst.components.childspawner ~= nil and not TUNING.RAIN_SUPERMINI_WORLD_CAVE_SPAWNBAT then
+        inst.components.childspawner.canspawnfn = function(inst)
+            return false
+        end
+    end
+    inst:DoTaskInTime(0, function()
+        inst.Physics:SetActive(false)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave_exit
+--------------------------------------------------------------------------------------------------------
+AddPrefabPostInit("cave_exit", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:DoTaskInTime(0, function()
+        inst.Physics:SetActive(false)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:birdspawner
+--------------------------------------------------------------------------------------------------------
+AddComponentPostInit("birdspawner", function(birdspawner)
+    local old_SpawnBird = birdspawner.SpawnBird
+    birdspawner.SpawnBird = function(self, ...)
+        if not TUNING.RAIN_SUPERMINI_WORLD_CAVE_SPAWNBIRDS then
+            return
+        end
+        return old_SpawnBird(self, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:vaultroommanager
+--------------------------------------------------------------------------------------------------------
+AddComponentPostInit("vaultroommanager", function(vaultroommanager)
+    local old_OnUpdate = vaultroommanager.OnUpdate
+    vaultroommanager.OnUpdate = function(self, dt, ...)
+        if TUNING.RAIN_SUPERMINI_WORLD_CAVE_MINI then
+            return
+        end
+        old_OnUpdate(self, dt, ...)
+    end
+end)
+
+```
+

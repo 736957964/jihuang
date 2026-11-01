@@ -6276,8 +6276,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 09:37:58",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2963262385",
+      "name": "镰刀[Re-Fixed]",
+      "author": "影",
+      "version": "2.48",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:42:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3426875955",
+      "name": "Lava Caves!",
+      "author": "Willow",
+      "version": "0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 09:42:20",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3512496273",
+      "name": "迷你世界[测试用]",
+      "author": "雨荧",
+      "version": "0.0.0.4",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 09:42:20",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 09:37:58"
+  "lastUpdated": "2026-11-01 09:42:20"
 }
