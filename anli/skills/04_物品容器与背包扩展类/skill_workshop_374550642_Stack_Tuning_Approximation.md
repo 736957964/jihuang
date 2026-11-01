@@ -1,44 +1,43 @@
 # 饥荒一线工坊深度研读 Skill：全局 TUNING 梯队注入与 AddPrefabPostInitAny 智能逼近
-
+`
 - **工坊 ID**：374550642 (`Increased Stack size`)
 - **领域分类**：全局 TUNING 宏变量重写、`AddPrefabPostInitAny` 全局实体切面优化、非标离散数值区间逼近算法
 - **研读基准**：Steam 创意工坊在线原版源码
-
+`
 ---
-
+`
 ## 一、核心实现原理与架构全貌
-
+`
 在饥荒模组开发中，很多全局性调整（如调整全服腐烂速度、全服堆叠上限、全服移动速度倍率）有两种流派：
 1. **轻量流派（推荐首选）**：改写官方 `GLOBAL.TUNING` 表中的宏常量；
 2. **强制穿透流派（防御第三方硬编码）**：借助 `AddPrefabPostInitAny` 拦截所有实例化实体并强行修正组件。
-
+`
 `Increased Stack Size` 提供了这两种流派融合的最佳实践。
-
+`
 ---
-
+`
 ## 二、标准化生产级代码范式 (可直接移植)
-
+`
 ```lua
 -- ==============================================================================
 -- 范式 1：全局 TUNING 五级梯队宏覆盖 (modmain.lua)
 -- ==============================================================================
-
+`
 local TUNING = GLOBAL.TUNING
-
+`
 -- 1. 覆写官方标准梯队 (侵入性最低，零运行时开销)
 TUNING.STACK_SIZE_LARGEITEM = 40  -- 原版 10 (如大肉、原木)
 TUNING.STACK_SIZE_MEDITEM   = 80  -- 原版 20 (如草、枝条、石头)
 TUNING.STACK_SIZE_SMALLITEM = 99  -- 原版 40 (如浆果、花瓣)
 TUNING.STACK_SIZE_TINYITEM  = 120 -- 原版 60 (如蜜蜂、蚊子)
 TUNING.STACK_SIZE_PELLET    = 250 -- 原版 120 (如种子、火药)
-
-
+`
 -- ==============================================================================
 -- 范式 2：针对硬编码第三方 Prefab 的智能区间逼近器 (scripts/tools/stack_approximator.lua)
 -- ==============================================================================
-
+`
 local TARGET_TIERS = { 40, 80, 99, 120, 250 }
-
+`
 -- 离散区间逼近：将非标数值（如 50）智能平滑映射到最接近的高阶档位
 local function ApproximateTier(val)
     if not val or type(val) ~= "number" then return TARGET_TIERS[2] end
@@ -49,53 +48,52 @@ local function ApproximateTier(val)
     end
     return TARGET_TIERS[#TARGET_TIERS]
 end
-
+`
 -- 全局实体切面拦截 (高性能短路设计)
 AddPrefabPostInitAny(function(inst)
     -- 仅服务端执行，客机依赖网络同步
     if not GLOBAL.TheWorld.ismastersim then return end
-
+`
     local stackable = inst.components.stackable
     -- 核心性能守门员：90% 的实体没有 stackable，立即短路返回
     if stackable == nil then return end
-
+`
     local current = stackable.maxsize
     local target = ApproximateTier(current)
-
+`
     if target and target ~= current then
         stackable.maxsize = target
     end
 end)
 ```
-
+`
 ---
-
+`
 ## 三、避坑与生产安全准则
-
+`
 1. **`AddPrefabPostInitAny` 性能陷阱**：
    - 绝不要在 `AddPrefabPostInitAny` 回调内执行 `TheSim:FindEntities`、字符串拼接、复杂正则表达式或大表遍历。实体生成每秒可能触发数十次，必须通过首行的 `if inst.components.xxx == nil then return end` 毫秒级退出。
 2. **`replica` 客户端显示对齐**：
    - 饥荒的 `stackable` 组件在主客机同步时，`replica.stackable:MaxSize()` 会自动拉取服务端的最新容量。无需在客户端手动再去 Hook `replica`，避免引发客户端本地与网络包的状态竞争（Race Condition）。
-
-
+`
+`
 ## 五、进阶拓扑演进与变体分支
-
+`
+`
+`
 ### 变体演进：Houndius Shootius protects Chester (and beefalo) (Mod 3476470130)
 - **变体场景与切面**：收录来自工坊 Mod 3476470130 (`Houndius Shootius protects Chester (and beefalo)`) 的生产级切面。
 - **核心切面代码**：
+`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3476470130)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 切面钩子：AddPrefabPostInit:world
-
 AddPrefabPostInit("world", function(inst)
     local RETARGET_MUST_TAGS = { "_combat" }
-
     local RETARGET_CANT_TAGS = { "INLIMBO", "player", "eyeturret", "engineering" }
-
     local function retargetfn(inst)
         local target = inst.components.combat.target
         if target ~= nil and
@@ -104,14 +102,12 @@ AddPrefabPostInit("world", function(inst)
             --keep current target
             return
         end
-
         local playertargets = {}
         for i, v in ipairs(GLOBAL.AllPlayers) do
             if v.components.combat.target ~= nil then
                 playertargets[v.components.combat.target] = true
             end
         end
-
         local x, y, z = inst.Transform:GetWorldPosition()
         local ents = TheSim:FindEntities(x, y, z, TUNING.EYETURRET_RANGE + 3, RETARGET_MUST_TAGS, RETARGET_CANT_TAGS)
         for i, v in ipairs(ents) do
@@ -130,39 +126,33 @@ AddPrefabPostInit("world", function(inst)
         end
         return nil
     end
-
-
+`
     UpvalueHacker.SetUpvalue(GLOBAL.Prefabs.eyeturret.fn, retargetfn, "retargetfn")
 end)
-
 ```
-
-
-
+`
+`
+`
 ### 变体演进：45 Inventory Slots with Equip Inventory (Mod 2802552738)
 - **变体场景与切面**：收录来自工坊 Mod 2802552738 (`45 Inventory Slots with Equip Inventory`) 的生产级切面。
 - **核心切面代码**：
+`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2802552738)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 切面钩子：AddPrefabPostInit:inventory_classified
     end
     AddPrefabPostInit("inventory_classified", addItemSlotNetvarsInInventory)
-
     local HUD_ATLAS = "images/hud.xml"
     local W = 64
     local SEP = 7
     local YSEP = 8
     local INTERSEP = 15
-
     local inv_CTorBase = inv._ctor or function() return true end
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:backpack
-
 AddPrefabPostInit("backpack",
 function(inst)
     if ENABLEBACKPACK == true then
@@ -175,20 +165,19 @@ function(inst)
         end
     end
 end )
-
 ```
-
-
-
+`
+`
+`
 ### 变体演进：装备大师 (Mod 3123028409)
 - **变体场景与切面**：收录来自工坊 Mod 3123028409 (`装备大师`) 的生产级切面。
 - **核心切面代码**：
+`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3123028409)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 切面钩子：AddComponentPostInit:playercontroller
 end
 AddComponentPostInit("playercontroller", function(self, inst)
@@ -253,7 +242,6 @@ AddComponentPostInit("playercontroller", function(self, inst)
 			end
 			return oldsay(self, ...)
 		end
-
 		for k, v in pairs(EQUIPSLOTS) do
 			BestEquiments['walk_' .. v] = {}
 			BestEquiments['fight_' .. v] = {}
@@ -317,7 +305,6 @@ function EquipMaster:equipbystring(str, target) --target可能是nil
 		end)
 	end
 end
-
 local MOD_CTRL_LEFT = function(act)
 	local set = INV_util:GetActiveItem()
 	if set and set:HasTag("_equippable") then
@@ -336,7 +323,6 @@ local MOD_CTRL_LEFT = function(act)
 	else
 		closefight = not closefight
 		ThePlayer.components.talker:Say(not closefight and '开启切武器' or '关闭切武器')
-
 		MOD_util:ChangeMOption("equipmaster_closefight", closefight)
 	end
 end
@@ -358,7 +344,6 @@ local MOD_CTRL_RIGHT = function(act)
 	else
 		closewalk = not closewalk
 		ThePlayer.components.talker:Say(not closewalk and '开启切行走' or '关闭切行走')
-
 		MOD_util:ChangeMOption("equipmaster_closewalk", closewalk)
 	end
 end
@@ -371,12 +356,10 @@ local MOD_ALT_LEFT = function(act)
 	else
 		closelight = not closelight
 		ThePlayer.components.talker:Say(not closelight and '开启切光源' or '关闭切光源')
-
 		MOD_util:ChangeMOption("equipmaster_closelight", closelight)
 	end
 end
-
-
+`
 local MOD_ALT_RIGHT = function(act)
 	local set = INV_util:GetActiveItem()
 	if set then --你敢设置我就相信这是可以吃的
@@ -386,11 +369,9 @@ local MOD_ALT_RIGHT = function(act)
 	else
 		closeeat = not closeeat
 		ThePlayer.components.talker:Say(not closeeat and '开启自动吃饭' or '关闭自动吃饭')
-
 		MOD_util:ChangeMOption("equipmaster_closeeat", closeeat)
 	end
 end
-
 --GLOBAL.STRINGS.RMB
 local function showtoggle()
 	if TheInput:GetWorldEntityUnderMouse() == ThePlayer then
@@ -407,7 +388,6 @@ local actionselect = {
 	[1] = { lmb = MOD_CTRL_LEFT, rmb = MOD_CTRL_RIGHT },
 	[2] = { lmb = MOD_ALT_LEFT, rmb = MOD_ALT_RIGHT },
 }
-
 AddComponentPostInit("playercontroller", function(self, inst)
 	if inst ~= ThePlayer then return end
 	local OldOnControl = self.OnControl --这里是人物按的时候实现功能
@@ -438,7 +418,6 @@ AddComponentPostInit("playercontroller", function(self, inst)
 		end
 		return oldUse(self, buffaction, item)
 	end
-
 	--行走
 	local olddirecttwalk = self.RemoteDirectWalking
 	function self:RemoteDirectWalking(x, z)
@@ -454,7 +433,6 @@ AddComponentPostInit("playercontroller", function(self, inst)
 		end
 		return olddirecttwalk(self, x, z)
 	end
-
 	--开延迟行走
 	local oldRemotePredictWalking = self.RemotePredictWalking
 	function self:RemotePredictWalking(x, z, isstart)
@@ -466,7 +444,6 @@ AddComponentPostInit("playercontroller", function(self, inst)
 		end
 		return oldRemotePredictWalking(self, x, z, isstart)
 	end
-
 	--攻击
 	local oldget = self.GetAttackTarget
 	function self:GetAttackTarget(force_attack, force_target, isretarget, use_remote_predict)
@@ -544,7 +521,6 @@ if MOD_util:CanAddSetting() then
 		buttondata = { name = buttonname },
 		order = pageorder,
 		all_options = {
-
 			MakeOption("equipmaster_closewalk", "切换行走道具", closewalk,
 				{ { text = "开启", data = false }, { text = "关闭", data = true } }),
 			MakeOption("equipmaster_closefight", "切换战斗道具", closefight,
@@ -553,17 +529,12 @@ if MOD_util:CanAddSetting() then
 				{ { text = "开启", data = false }, { text = "关闭", data = true } }),
 			MakeOption("equipmaster_closelight", "自动切光源", closelight,
 				{ { text = "开启", data = false }, { text = "关闭", data = true } }),
-
 			MakeOption("equipmaster_ppriority", "玩家使用装备关闭一秒功能", true),
-
 			MakeOption("equipmaster_hitrun", "是否走a模组联动", true),
-
 			MakeOption("equipmaster_catch", "自动接回旋镖(开关需要重启)", true),
-
 		}
 	})
 end
-
 do --外部接口(供自动战斗 boss_dealer 等外部模组使用)
 	--kind: "walk" / "fight"；当前是否会响应 EquipItem 事件去切换这一类装备
 	function GLOBAL.EquipMaster_IsEnabled(kind)
@@ -577,14 +548,12 @@ do --外部接口(供自动战斗 boss_dealer 等外部模组使用)
 		end
 		return true
 	end
-
 	--当前记录的最佳装备(只读)，key 如 "walk_hands" / "fight_hands"
 	function GLOBAL.EquipMaster_GetBest(key)
 		local data = BestEquiments[key]
 		return data ~= nil and data.item or nil
 	end
 end
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:inventory_classified
 --自动回旋镖
@@ -630,22 +599,20 @@ AddPrefabPostInit("inventory_classified", function(inst)
 		end)
 	end
 end)
-
 ```
-
-
-
+`
+`
+`
 ### 变体演进：Backpack Amulet Drop (Mod 2844520721)
 - **变体场景与切面**：收录来自工坊 Mod 2844520721 (`Backpack Amulet Drop`) 的生产级切面。
 - **核心切面代码**：
+`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2844520721)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 切面钩子：AddPrefabPostInit:amulet
-
 AddPrefabPostInit("amulet", newtag)
 AddPrefabPostInit("backpack", onhauntfn)
 AddPrefabPostInit("krampus_sack", onhauntfn)
@@ -654,7 +621,6 @@ AddPrefabPostInit("treasurechest", onhauntfn)
 AddPrefabPostInit("dragonflychest", onhauntfn)
 AddPrefabPostInit("hutch", onhauntfn)
 AddPrefabPostInit("chester", onhauntfn)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:backpack
 AddPrefabPostInit("amulet", newtag)
@@ -665,7 +631,6 @@ AddPrefabPostInit("treasurechest", onhauntfn)
 AddPrefabPostInit("dragonflychest", onhauntfn)
 AddPrefabPostInit("hutch", onhauntfn)
 AddPrefabPostInit("chester", onhauntfn)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:krampus_sack
 AddPrefabPostInit("backpack", onhauntfn)
@@ -675,7 +640,6 @@ AddPrefabPostInit("treasurechest", onhauntfn)
 AddPrefabPostInit("dragonflychest", onhauntfn)
 AddPrefabPostInit("hutch", onhauntfn)
 AddPrefabPostInit("chester", onhauntfn)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:piggyback
 AddPrefabPostInit("krampus_sack", onhauntfn)
@@ -684,7 +648,6 @@ AddPrefabPostInit("treasurechest", onhauntfn)
 AddPrefabPostInit("dragonflychest", onhauntfn)
 AddPrefabPostInit("hutch", onhauntfn)
 AddPrefabPostInit("chester", onhauntfn)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:treasurechest
 AddPrefabPostInit("piggyback", onhauntfn)
@@ -692,22 +655,20 @@ AddPrefabPostInit("treasurechest", onhauntfn)
 AddPrefabPostInit("dragonflychest", onhauntfn)
 AddPrefabPostInit("hutch", onhauntfn)
 AddPrefabPostInit("chester", onhauntfn)
-
 ```
-
-
-
+`
+`
+`
 ### 变体演进：群鸟绘卷 · 春󰀜 (Mod 3161117403)
 - **变体场景与切面**：收录来自工坊 Mod 3161117403 (`群鸟绘卷 · 春󰀜`) 的生产级切面。
 - **核心切面代码**：
+`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3161117403)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 切面钩子：AddPrefabPostInit:animal_track
-
 AddPrefabPostInit("animal_track", function(inst)
     local next_thing
     inst:DoPeriodicTask(0.5, function()
@@ -727,7 +688,6 @@ AddPrefabPostInit("animal_track", function(inst)
         end
     end)
 end)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:wagstaff_npc
 end
@@ -759,7 +719,6 @@ AddPrefabPostInit("wagstaff_npc", function(inst)
         end)
     end)
 end)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:smoke_plant
 local data_warn = {"关闭", "全部", "仅自燃"}
@@ -796,7 +755,6 @@ AddPrefabPostInit("smoke_plant", function(inst)
         end
     end)
 end)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:oceanfish_medium_
 for i = 1, 9 do
@@ -813,7 +771,6 @@ local screen_data = {{
     fn = function()
         VisitURL("https://www.bilibili.com/video/BV16FUZBEE32/", true)
     end
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:oceanfish_small_
     AddPrefabPostInit("oceanfish_medium_" .. i, AddFishName)
@@ -829,22 +786,20 @@ local screen_data = {{
     fn = function()
         VisitURL("https://www.bilibili.com/video/BV16FUZBEE32/", true)
     end
-
 ```
-
-
-
+`
+`
+`
 ### 变体演进：enable_sunkenchest (Mod 3749766414)
 - **变体场景与切面**：收录来自工坊 Mod 3749766414 (`enable_sunkenchest`) 的生产级切面。
 - **核心切面代码**：
+`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3749766414)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 切面钩子：AddComponentPostInit:locomotor
-
 AddComponentPostInit("locomotor", function(self)
     local old_PushAction = self.PushAction
     self.PushAction = function(self, bufferedaction, ...)
@@ -860,15 +815,12 @@ AddComponentPostInit("locomotor", function(self)
         return old_PushAction(self, bufferedaction, ...)
     end
 end)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:sunkenchest
-
 AddPrefabPostInit("sunkenchest", function(inst)
     if not GLOBAL.TheWorld.ismastersim then
         return
     end
-
     if inst.components.workable ~= nil then
         inst.components.workable:SetOnFinishCallback(OnFinishOpen)
         -- Each hammer "hit" plays an anim that RESETS symbol visibility, so re-hide the
@@ -884,7 +836,6 @@ AddPrefabPostInit("sunkenchest", function(inst)
             end
         end)
     end
-
     -- When the unlocked chest is carried on the back, show OUR chain-less swap build.
     -- (AnimState symbol overrides on the owner network to clients.)
     if inst.components.equippable ~= nil then
@@ -898,10 +849,8 @@ AddPrefabPostInit("sunkenchest", function(inst)
             end
         end
     end
-
     local base_onsave = inst.OnSave
     local base_onload = inst.OnLoad
-
     inst.OnSave = function(inst, data)
         if base_onsave ~= nil then
             base_onsave(inst, data)
@@ -910,7 +859,6 @@ AddPrefabPostInit("sunkenchest", function(inst)
             data.sunkenchest_opened = true
         end
     end
-
     inst.OnLoad = function(inst, data)
         if base_onload ~= nil then
             base_onload(inst, data)
@@ -920,7 +868,6 @@ AddPrefabPostInit("sunkenchest", function(inst)
         end
     end
 end)
-
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:wardrobe
 -- 3) Per-wardrobe setup.
@@ -928,25 +875,20 @@ AddPrefabPostInit("wardrobe", function(inst)
     -- Disable the vanilla right-click dress collector (gates on the "wardrobe" tag).
     -- Done on BOTH client and server: the client predicts actions from its local tags.
     inst:RemoveTag("wardrobe")
-
     if not GLOBAL.TheWorld.ismastersim then
         return
     end
-
     if inst.components.wardrobe ~= nil then
         inst.components.wardrobe:SetCanUseAction(false)
     end
-
     if inst.components.container == nil then
         inst:AddComponent("container")
     end
     inst.components.container:WidgetSetup("wardrobe")
-
     -- Suppress the generic HUD container open/close jingle so only the wardrobe's own
     -- door sound (played in onopenfn/onclosefn below) is heard.
     inst.components.container.skipopensnd = true
     inst.components.container.skipclosesnd = true
-
     inst.components.container.onopenfn = function(i)
         if not i:HasTag("burnt") then
             i.AnimState:PlayAnimation("open")
@@ -959,13 +901,11 @@ AddPrefabPostInit("wardrobe", function(inst)
             i.SoundEmitter:PlaySound("dontstarve/common/wardrobe_close")
         end
     end
-
     local function dropall()
         if inst.components.container ~= nil then
             inst.components.container:DropEverything()
         end
     end
-
     if inst.components.workable ~= nil then
         local base_finish = inst.components.workable.onfinish
         inst.components.workable:SetOnFinishCallback(function(i, worker)
@@ -975,43 +915,36 @@ AddPrefabPostInit("wardrobe", function(inst)
             end
         end)
     end
-
     inst:ListenForEvent("onignite", dropall)
 end)
-
 ```
-
-
-
+`
+`
+`
 ### 变体演进：Large Chest (HD) (Mod 2087177552)
 - **变体场景与切面**：收录来自工坊 Mod 2087177552 (`Large Chest (HD)`) 的生产级切面。
 - **核心切面代码**：
+`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2087177552)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 切面钩子：AddPrefabPostInit:reskin_tool
-
 AddPrefabPostInit("reskin_tool", function(inst)
     if inst.components ~= nil and inst.components.spellcaster ~= nil then
         local original_CanCast = inst.components.spellcaster.can_cast_fn
         local original_Spell   = inst.components.spellcaster.spell
-
         local function PuffFX(tool, target, scale, offset)
             local fx_pos_x, fx_pos_y, fx_pos_z = target.Transform:GetWorldPosition()
             local fx = GLOBAL.SpawnPrefab("explode_reskin")
-
             fx.Transform:SetScale(scale, scale, scale)
             fx.Transform:SetPosition(fx_pos_x, fx_pos_y + (offset or 0), fx_pos_z)
         end
-
         local function CanCast(doer, target, pos, tool)
             if target == nil then
                 return original_CanCast(doer, target, pos, tool)
             end
-
             if target.prefab == "largeicebox" then
                 for _, name in ipairs(ICEBOX_SKINS) do
                     if GLOBAL.TheInventory:CheckClientOwnership(doer.userid, name) then
@@ -1019,7 +952,6 @@ AddPrefabPostInit("reskin_tool", function(inst)
                     end
                 end
             end
-
             if target.prefab == "largesaltbox" then
                 for _, name in ipairs(SALTBOX_SKINS) do
                     if GLOBAL.TheInventory:CheckClientOwnership(doer.userid, name) then
@@ -1027,30 +959,23 @@ AddPrefabPostInit("reskin_tool", function(inst)
                     end
                 end
             end
-
             return original_CanCast(doer, target, pos, tool)
         end
-
         local function Spell(tool, target, pos, doer)
             if target == nil then
                 return original_Spell(tool, target, pos, doer)
             end
-
             if target.prefab == "largeicebox" then
                 local available_skins = {"icebox"}
-
                 if tool._cached_reskinname["largeicebox"] == nil then
                     tool._cached_reskinname["largeicebox"] = available_skins[1]
                 end
-
                 local skin = tool._cached_reskinname["largeicebox"]
-
                 for _, name in ipairs(ICEBOX_SKINS) do
                     if GLOBAL.TheInventory:CheckClientOwnership(tool.parent.userid, name) then
                         table.insert(available_skins, name)
                     end
                 end
-
                 local index = 1
                 for i, name in ipairs(available_skins) do
                     if name == target._skin then
@@ -1058,32 +983,24 @@ AddPrefabPostInit("reskin_tool", function(inst)
                         break
                     end
                 end
-
                 skin = available_skins[index + 1]
                 if skin == nil then
                     skin = available_skins[1]
                 end
-
                 tool._cached_reskinname["largeicebox"] = skin
-
                 target:SetSkin(skin)
                 PuffFX(tool, target, 1.5, 1)
-
             elseif target.prefab == "largesaltbox" then
                 local available_skins = {"saltbox"}
-
                 if tool._cached_reskinname["largesaltbox"] == nil then
                     tool._cached_reskinname["largesaltbox"] = available_skins[1]
                 end
-
                 local skin = tool._cached_reskinname["largesaltbox"]
-
                 for _, name in ipairs(SALTBOX_SKINS) do
                     if GLOBAL.TheInventory:CheckClientOwnership(tool.parent.userid, name) then
                         table.insert(available_skins, name)
                     end
                 end
-
                 local index = 1
                 for i, name in ipairs(available_skins) do
                     if name == target._skin then
@@ -1091,25 +1008,22 @@ AddPrefabPostInit("reskin_tool", function(inst)
                         break
                     end
                 end
-
                 skin = available_skins[index + 1]
                 if skin == nil then
                     skin = available_skins[1]
                 end
-
                 tool._cached_reskinname["largesaltbox"] = skin
-
                 target:SetSkin(skin)
                 PuffFX(tool, target, 1.5, 1)
             else
                 original_Spell(tool, target, pos, doer)
             end
         end
-
         inst.components.spellcaster:SetSpellFn(Spell)
         inst.components.spellcaster:SetCanCastFn(CanCast)
     end
 end)
-
 ```
-
+`
+`
+`
