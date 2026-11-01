@@ -7819,3 +7819,71 @@ end)
 
 ```
 
+
+
+### 变体演进：阿比打影怪 (Mod 3153648826)
+- **变体场景与切面**：收录来自工坊 Mod 3153648826 (`阿比打影怪`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3153648826)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:abigail
+end})
+AddPrefabPostInit("abigail",function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+	inst:AddTag("crazy")
+	inst:RemoveTag("ghost")
+	local function OnKill(inst, data)
+		local victim = data.victim
+		if victim and (victim:HasTag("shadow") or victim.prefab == "dreadeye") then
+			if inst._playerlink and (victim.sanityreward or victim.prefab == "dreadeye") then
+				inst._playerlink.components.sanity:DoDelta(10)
+				if victim.prefab == "dreadeye" then
+				    inst._playerlink.components.sanity:DoDelta(10) --死亡之眼回20理智
+				end
+			end
+		    local x,y,z = inst.Transform:GetWorldPosition()  --杀死任意影怪时吸引全场影怪仇恨
+		    local ents = TheSim:FindEntities(x,y,z,40)
+            for k,v in pairs(ents) do
+		        if v:HasTag("shadow") and v.components.combat then
+			        v.components.combat:SetTarget(inst)
+			    end
+		    end
+		end
+	end
+	inst:AddComponent("sanityaura") --温蒂靠近阿比恢复理智
+	inst.components.sanityaura.aurafn = function(inst, observer)
+	    if observer.prefab == "wendy" then 
+            return TUNING.SANITYAURA_SMALL
+	    end	
+	    return 0
+    end
+	inst:ListenForEvent("killed", OnKill)
+end)
+
+```
+
+
+
+### 变体演进：Mod 3481766603 (Mod 3481766603)
+- **变体场景与切面**：收录来自工坊 Mod 3481766603 (`Mod 3481766603`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3481766603)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+PrefabFiles = { 'blink_marker' } -- Soul Hop target position display | 灵魂跳跃目标位置显示
+AddComponentPostInit('playercontroller', FN.RefreshBlinkMarkers)
+
+AddClassPostConstruct('widgets/controls', function(self) T.CONTROLS = self end) -- to check CPMAPanel shown or not
+
+```
+
