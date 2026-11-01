@@ -8643,8 +8643,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 16:30:53",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1595934840",
+      "name": "Help Me Up!",
+      "author": "Flynn",
+      "version": "0.1.8",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:34:39",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2008539383",
+      "name": "Rengoku Kyojurou",
+      "author": "Seaweed",
+      "version": "1.6",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 16:34:39",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2589174774",
+      "name": "芮塔",
+      "author": "丧芝，LUOXIA11，vandoordeep",
+      "version": "0.5.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:34:39",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2985009933",
+      "name": "auto_open_craft_menu",
+      "author": "未知",
+      "version": "1.93",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 16:34:39",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3545191688",
+      "name": "language",
+      "author": "好黑好黑的大黑",
+      "version": "1.4.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:34:39",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 16:30:53"
+  "lastUpdated": "2026-11-01 16:34:40"
 }
