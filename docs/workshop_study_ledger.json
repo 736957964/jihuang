@@ -8526,8 +8526,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 16:05:20",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2208128427",
+      "name": "Loot Pump",
+      "author": "Gleenus, Catherine and Jess",
+      "version": "1.10",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 16:10:43",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3660903728",
+      "name": "雪露",
+      "author": "吹雪",
+      "version": "1.1.0.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:10:44",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3725501959",
+      "name": "Shivoo",
+      "author": "Shivoo",
+      "version": "1.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:10:44",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3765331100",
+      "name": "Stanley & Xeno",
+      "author": "代码：尹怨怨",
+      "version": "0.0.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:10:44",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 16:05:20"
+  "lastUpdated": "2026-11-01 16:10:44"
 }

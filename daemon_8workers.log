@@ -7645,3 +7645,32 @@
 [2026-11-01 16:05:20] 母本变体展示已达上限 (10)，增量归约记录至总账本
 [2026-11-01 16:05:20] Reducer: 成功将 Mod 3433469397 (牧-dev) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 16:05:20] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:05:28] Git 自动提交并推送成功！
+[2026-11-01 16:05:29] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 16:05:29] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 16:06:00] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['804413673', '3765331100', '2208128427', '3725501959', '3487625569', '3660903728']
+[2026-11-01 16:06:00] SteamCMD 下载 804413673 ...
+[2026-11-01 16:06:00] SteamCMD 下载 3765331100 ...
+[2026-11-01 16:06:00] SteamCMD 下载 2208128427 ...
+[2026-11-01 16:06:00] SteamCMD 下载 3725501959 ...
+[2026-11-01 16:06:00] SteamCMD 下载 3660903728 ...
+[2026-11-01 16:06:00] SteamCMD 下载 3487625569 ...
+[2026-11-01 16:06:20] Worker [804413673] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 16:06:40] Worker [3765331100] 成功解析入库暂存区 -> Stanley & Xeno (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 16:06:52] Worker [2208128427] 成功解析入库暂存区 -> Loot Pump (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 16:07:16] Worker [3725501959] 成功解析入库暂存区 -> Shivoo (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 16:09:14] Worker [3660903728] 成功解析入库暂存区 -> 雪露 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 16:10:43] Worker [3487625569] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 16:10:43] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-01 16:10:43] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-01 16:10:43] Reducer: 成功将 Mod 2208128427 (Loot Pump) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 16:10:44] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 16:10:44] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-01 16:10:44] Reducer: 成功将 Mod 3660903728 (雪露) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:10:44] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:10:44] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-01 16:10:44] Reducer: 成功将 Mod 3725501959 (Shivoo) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:10:44] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:10:44] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-01 16:10:44] Reducer: 成功将 Mod 3765331100 (Stanley & Xeno) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 16:10:44] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
