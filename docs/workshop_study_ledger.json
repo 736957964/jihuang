@@ -5754,8 +5754,35 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 08:12:43",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3032865114",
+      "name": "The Lamb",
+      "author": "Nekoyama",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:14:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3736896777",
+      "name": "女武神-斗者意志",
+      "author": "春宝",
+      "version": "1.1.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:14:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3808432416",
+      "name": "SET_PRESERVER_VALUE",
+      "author": "未知",
+      "version": "未声明",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:14:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:12:43"
+  "lastUpdated": "2026-11-01 08:14:24"
 }

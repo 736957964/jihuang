@@ -26964,3 +26964,264 @@ end)
 
 ```
 
+
+
+### 变体演进：The Lamb (Mod 3032865114)
+- **变体场景与切面**：收录来自工坊 Mod 3032865114 (`The Lamb`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3032865114)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：女武神-斗者意志 (Mod 3736896777)
+- **变体场景与切面**：收录来自工坊 Mod 3736896777 (`女武神-斗者意志`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3736896777)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:tent
+
+  AddPrefabPostInit("tent", MakeInfiniteUses)
+  AddPrefabPostInit("siestahut", MakeInfiniteUses)
+end
+
+----------------------------------------------------------------------
+-- 雪球机：不消耗燃料
+----------------------------------------------------------------------
+if GetModConfigData("GENERAL_INFINITE_FLINGOMATIC") then
+  AddPrefabPostInit("firesuppressor", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+      return
+    end
+
+    local fueled = inst.components.fueled
+    if fueled == nil then
+      return
+    end
+
+    -- 消耗速率归零：DoUpdate 每秒扣 -dt * rate，现在恒为 0
+    fueled.rate = 0
+    fueled:SetPercent(1)
+
+    -- 读档会覆盖燃料值，读档后再补满一次
+    local old_OnLoad = fueled.OnLoad
+    fueled.OnLoad = function(self, data, ...)
+      if old_OnLoad ~= nil and data ~= nil then
+        old_OnLoad(self, data, ...)
+      end
+      self:InitializeFuelLevel(self.maxfuel)
+    end
+  end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:siestahut
+  AddPrefabPostInit("tent", MakeInfiniteUses)
+  AddPrefabPostInit("siestahut", MakeInfiniteUses)
+end
+
+----------------------------------------------------------------------
+-- 雪球机：不消耗燃料
+----------------------------------------------------------------------
+if GetModConfigData("GENERAL_INFINITE_FLINGOMATIC") then
+  AddPrefabPostInit("firesuppressor", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+      return
+    end
+
+    local fueled = inst.components.fueled
+    if fueled == nil then
+      return
+    end
+
+    -- 消耗速率归零：DoUpdate 每秒扣 -dt * rate，现在恒为 0
+    fueled.rate = 0
+    fueled:SetPercent(1)
+
+    -- 读档会覆盖燃料值，读档后再补满一次
+    local old_OnLoad = fueled.OnLoad
+    fueled.OnLoad = function(self, data, ...)
+      if old_OnLoad ~= nil and data ~= nil then
+        old_OnLoad(self, data, ...)
+      end
+      self:InitializeFuelLevel(self.maxfuel)
+    end
+  end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:firesuppressor
+if GetModConfigData("GENERAL_INFINITE_FLINGOMATIC") then
+  AddPrefabPostInit("firesuppressor", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+      return
+    end
+
+    local fueled = inst.components.fueled
+    if fueled == nil then
+      return
+    end
+
+    -- 消耗速率归零：DoUpdate 每秒扣 -dt * rate，现在恒为 0
+    fueled.rate = 0
+    fueled:SetPercent(1)
+
+    -- 读档会覆盖燃料值，读档后再补满一次
+    local old_OnLoad = fueled.OnLoad
+    fueled.OnLoad = function(self, data, ...)
+      if old_OnLoad ~= nil and data ~= nil then
+        old_OnLoad(self, data, ...)
+      end
+      self:InitializeFuelLevel(self.maxfuel)
+    end
+  end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:lunarthrall_plantspawner
+
+AddComponentPostInit("lunarthrall_plantspawner", function(self)
+  if not GLOBAL.TheWorld.ismastersim then
+    return
+  end
+
+  local old_SpawnPlant = self.SpawnPlant
+  local old_SpawnGestalt = self.SpawnGestalt
+  if old_SpawnPlant == nil or old_SpawnGestalt == nil then
+    return
+  end
+
+  -- 虚影起飞前：目标被保护就改成范围外的植物（虚影会真的飞过去）
+  self.SpawnGestalt = function(spawner, target, rift)
+    if target ~= nil and target:IsValid() and IsWardedByLightningRod(target) then
+      local x, y, z = target.Transform:GetWorldPosition()
+      target = FindRedirectPlant(spawner, GLOBAL.Vector3(x, y, z))
+      if target == nil then
+        return
+      end
+    end
+    return old_SpawnGestalt(spawner, target, rift)
+  end
+
+  -- 落地生成 / 裂隙直接生成：再判定一次，覆盖「飞行途中才建避雷针」
+  self.SpawnPlant = function(spawner, target)
+    if target ~= nil and target:IsValid() then
+      if target.lunarthrall_plant ~= nil then
+        return
+      end
+      if IsWardedByLightningRod(target) then
+        local x, y, z = target.Transform:GetWorldPosition()
+        target = FindRedirectPlant(spawner, GLOBAL.Vector3(x, y, z))
+        if target == nil then
+          return
+        end
+      end
+    end
+    return old_SpawnPlant(spawner, target)
+  end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:spear_wathgrithr_lightning
+
+  AddPrefabPostInit("spear_wathgrithr_lightning", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+      return
+    end
+    if inst.components.aoeweapon_lunge then
+      inst:ListenForEvent("onlungedhit", OnLungedHitSongFn)
+    end
+  end)
+
+```
+
+
+
+### 变体演进：SET_PRESERVER_VALUE (Mod 3808432416)
+- **变体场景与切面**：收录来自工坊 Mod 3808432416 (`SET_PRESERVER_VALUE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3808432416)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playerspawner
+
+-- 挂钩点用 AddComponentPostInit("playerspawner")：组件后置钩子由 Lua 派发
+-- （entityscript.lua:637），而 AddPrefabPostInit("world") 命中与否取决于引擎是否遍历 deps
+-- （世界真实 prefab 名是 forest / cave，mainfunctions.lua:113、world.lua:401）。
+-- playerspawner 由 world.lua:583 在森林 / 洞穴共用的 master_postinit 里添加，必被创建。
+env.AddComponentPostInit("playerspawner", function()
+    if not TheWorld.ismastersim then
+        return;
+    end
+
+    TheWorld:ListenForEvent("ms_newplayerspawned", function(_, player)
+        -- 只在主世界发放：洞穴是独立分片、各自记一套「已生成」名单，
+        -- 否则每次过洞穴都会再领一个。
+        if TheWorld:HasTag("cave") then
+            return;
+        end
+
+        local spawner = TheWorld.components.playerspawner;
+        if spawner == nil or not spawner:IsPlayersInitialSpawn(player) then
+            return;
+        end
+        if not isValid(player) then
+            return;
+        end
+
+        -- 延后一帧：此时玩家已到出生点，放不下而落地也不会掉在 (0,0,0)
+        player:DoTaskInTime(0, function(inst)
+            if isValid(inst) then
+                GiveStarterGift(inst);
+            end
+        end);
+    end);
+end);
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- 挂钩点用 AddComponentPostInit("playerspawner")：组件后置钩子由 Lua 派发
+-- （entityscript.lua:637），而 AddPrefabPostInit("world") 命中与否取决于引擎是否遍历 deps
+-- （世界真实 prefab 名是 forest / cave，mainfunctions.lua:113、world.lua:401）。
+-- playerspawner 由 world.lua:583 在森林 / 洞穴共用的 master_postinit 里添加，必被创建。
+env.AddComponentPostInit("playerspawner", function()
+    if not TheWorld.ismastersim then
+        return;
+    end
+
+    TheWorld:ListenForEvent("ms_newplayerspawned", function(_, player)
+        -- 只在主世界发放：洞穴是独立分片、各自记一套「已生成」名单，
+        -- 否则每次过洞穴都会再领一个。
+        if TheWorld:HasTag("cave") then
+            return;
+        end
+
+        local spawner = TheWorld.components.playerspawner;
+        if spawner == nil or not spawner:IsPlayersInitialSpawn(player) then
+            return;
+        end
+        if not isValid(player) then
+            return;
+        end
+
+        -- 延后一帧：此时玩家已到出生点，放不下而落地也不会掉在 (0,0,0)
+        player:DoTaskInTime(0, function(inst)
+            if isValid(inst) then
+                GiveStarterGift(inst);
+            end
+        end);
+    end);
+end);
+
+```
+
