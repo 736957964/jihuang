@@ -8877,8 +8877,17 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 16:55:55",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3462627272",
+      "name": "自用-六格装备栏（适配mod版改）",
+      "author": "修改：梦为鱼,原模组：Geraint小白、冷逸修、凛子不是林子、xingmot星莫",
+      "version": "1.0.15",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:57:42",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 16:55:55"
+  "lastUpdated": "2026-11-01 16:57:42"
 }
