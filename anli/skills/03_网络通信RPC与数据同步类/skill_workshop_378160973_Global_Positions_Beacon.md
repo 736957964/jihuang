@@ -7780,3 +7780,515 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Infinite Stacks (Mod 3206595446)
+- **变体场景与切面**：收录来自工坊 Mod 3206595446 (`Infinite Stacks`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3206595446)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minotaurhorn
+
+AddPrefabPostInit("minotaurhorn", makeStackable)
+AddPrefabPostInit("tallbirdegg", makeStackable)
+AddPrefabPostInit("eyeturret_item", makeStackable)
+AddPrefabPostInit("lavae_egg", makeStackable)
+AddPrefabPostInit("cane", makeStackable)
+AddPrefabPostInit("mast_item", makeStackable)
+AddPrefabPostInit("boat_grass", makeStackable)
+AddPrefabPostInit("boat_item", makeStackable)
+AddPrefabPostInit("anchor_item", makeStackable)
+AddPrefabPostInit("steeringwheel_item", makeStackable)
+AddPrefabPostInit("boat_rotator_kit", makeStackable)
+AddPrefabPostInit("mast_malbatross_item", makeStackable)
+AddPrefabPostInit("boat_cannon_kit", makeStackable)
+AddPrefabPostInit("ocean_trawler_kit", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lightningrod_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item_yotd", makeStackable)
+AddPrefabPostInit("boat_magnet_kit", makeStackable)
+AddPrefabPostInit("boat_magnet_beacon", makeStackable)
+AddPrefabPostInit("beemine", makeStackable)
+AddPrefabPostInit("razor", makeStackable)
+AddPrefabPostInit("nightmare_timepiece", makeStackable)
+AddPrefabPostInit("boat_ancient_item", makeStackable)
+AddPrefabPostInit("moonstorm_static_item", makeStackable)
+AddPrefabPostInit("security_pulse_cage", makeStackable)
+AddPrefabPostInit("security_pulse_cage_full", makeStackable)
+AddPrefabPostInit("gestalt_cage", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled1", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled2", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled3", makeStackable)
+AddPrefabPostInit("deer_antler1", makeStackable)
+AddPrefabPostInit("deer_antler2", makeStackable)
+AddPrefabPostInit("deer_antler3", makeStackable)
+
+if GetModConfigData("cfgRabbitsCanStackToggle") then
+    AddPrefabPostInit("rabbit", makeStackable)
+end
+if GetModConfigData("cfgBirdsCanStackToggle")then
+    AddPrefabPostInit("crow", makeStackable)
+    AddPrefabPostInit("robin", makeStackable)
+    AddPrefabPostInit("robin_winter", makeStackable)
+    AddPrefabPostInit("canary", makeStackable)
+    AddPrefabPostInit("puffin", makeStackable)
+end
+if GetModConfigData("cfgMolesCanStackToggle") then
+    AddPrefabPostInit("mole", makeStackable)
+end
+if GetModConfigData("cfgFishesCanStackToggle") then
+    AddPrefabPostInit("pondfish", makeStackable)
+    AddPrefabPostInit("pondeel", makeStackable)
+    AddPrefabPostInit("oceanfish_small_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_9_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_9_inv", makeStackable)
+end
+if GetModConfigData("cfgSpidersCanStackToggle") then
+    AddPrefabPostInit("spider", makeStackable)
+    AddPrefabPostInit("spider_warrior", makeStackable)
+    AddPrefabPostInit("spider_hider", makeStackable)
+    AddPrefabPostInit("spider_spitter", makeStackable)
+    AddPrefabPostInit("spider_dropper", makeStackable)
+    AddPrefabPostInit("spider_moon", makeStackable)
+    AddPrefabPostInit("spider_healer", makeStackable)
+    AddPrefabPostInit("spider_water", makeStackable)
+end
+
+-- Remove feedable
+local function unmakeFeedable(inst)
+    if inst.components.perishable and GLOBAL.TheWorld.ismastersim then
+        inst:RemoveComponent("perishable")
+    end
+    if inst.components.inventoryitem and GLOBAL.TheWorld.ismastersim then
+        inst.components.inventoryitem:SetOnPutInInventoryFn(function(inst)
+            if oninventory then
+                oninventory(inst)
+            end
+        end)
+        inst.components.inventoryitem:SetOnDroppedFn(function(inst)
+            if ondropped then
+                ondropped(inst)
+            end
+        end)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tallbirdegg
+AddPrefabPostInit("minotaurhorn", makeStackable)
+AddPrefabPostInit("tallbirdegg", makeStackable)
+AddPrefabPostInit("eyeturret_item", makeStackable)
+AddPrefabPostInit("lavae_egg", makeStackable)
+AddPrefabPostInit("cane", makeStackable)
+AddPrefabPostInit("mast_item", makeStackable)
+AddPrefabPostInit("boat_grass", makeStackable)
+AddPrefabPostInit("boat_item", makeStackable)
+AddPrefabPostInit("anchor_item", makeStackable)
+AddPrefabPostInit("steeringwheel_item", makeStackable)
+AddPrefabPostInit("boat_rotator_kit", makeStackable)
+AddPrefabPostInit("mast_malbatross_item", makeStackable)
+AddPrefabPostInit("boat_cannon_kit", makeStackable)
+AddPrefabPostInit("ocean_trawler_kit", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lightningrod_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item_yotd", makeStackable)
+AddPrefabPostInit("boat_magnet_kit", makeStackable)
+AddPrefabPostInit("boat_magnet_beacon", makeStackable)
+AddPrefabPostInit("beemine", makeStackable)
+AddPrefabPostInit("razor", makeStackable)
+AddPrefabPostInit("nightmare_timepiece", makeStackable)
+AddPrefabPostInit("boat_ancient_item", makeStackable)
+AddPrefabPostInit("moonstorm_static_item", makeStackable)
+AddPrefabPostInit("security_pulse_cage", makeStackable)
+AddPrefabPostInit("security_pulse_cage_full", makeStackable)
+AddPrefabPostInit("gestalt_cage", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled1", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled2", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled3", makeStackable)
+AddPrefabPostInit("deer_antler1", makeStackable)
+AddPrefabPostInit("deer_antler2", makeStackable)
+AddPrefabPostInit("deer_antler3", makeStackable)
+
+if GetModConfigData("cfgRabbitsCanStackToggle") then
+    AddPrefabPostInit("rabbit", makeStackable)
+end
+if GetModConfigData("cfgBirdsCanStackToggle")then
+    AddPrefabPostInit("crow", makeStackable)
+    AddPrefabPostInit("robin", makeStackable)
+    AddPrefabPostInit("robin_winter", makeStackable)
+    AddPrefabPostInit("canary", makeStackable)
+    AddPrefabPostInit("puffin", makeStackable)
+end
+if GetModConfigData("cfgMolesCanStackToggle") then
+    AddPrefabPostInit("mole", makeStackable)
+end
+if GetModConfigData("cfgFishesCanStackToggle") then
+    AddPrefabPostInit("pondfish", makeStackable)
+    AddPrefabPostInit("pondeel", makeStackable)
+    AddPrefabPostInit("oceanfish_small_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_9_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_9_inv", makeStackable)
+end
+if GetModConfigData("cfgSpidersCanStackToggle") then
+    AddPrefabPostInit("spider", makeStackable)
+    AddPrefabPostInit("spider_warrior", makeStackable)
+    AddPrefabPostInit("spider_hider", makeStackable)
+    AddPrefabPostInit("spider_spitter", makeStackable)
+    AddPrefabPostInit("spider_dropper", makeStackable)
+    AddPrefabPostInit("spider_moon", makeStackable)
+    AddPrefabPostInit("spider_healer", makeStackable)
+    AddPrefabPostInit("spider_water", makeStackable)
+end
+
+-- Remove feedable
+local function unmakeFeedable(inst)
+    if inst.components.perishable and GLOBAL.TheWorld.ismastersim then
+        inst:RemoveComponent("perishable")
+    end
+    if inst.components.inventoryitem and GLOBAL.TheWorld.ismastersim then
+        inst.components.inventoryitem:SetOnPutInInventoryFn(function(inst)
+            if oninventory then
+                oninventory(inst)
+            end
+        end)
+        inst.components.inventoryitem:SetOnDroppedFn(function(inst)
+            if ondropped then
+                ondropped(inst)
+            end
+        end)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:eyeturret_item
+AddPrefabPostInit("tallbirdegg", makeStackable)
+AddPrefabPostInit("eyeturret_item", makeStackable)
+AddPrefabPostInit("lavae_egg", makeStackable)
+AddPrefabPostInit("cane", makeStackable)
+AddPrefabPostInit("mast_item", makeStackable)
+AddPrefabPostInit("boat_grass", makeStackable)
+AddPrefabPostInit("boat_item", makeStackable)
+AddPrefabPostInit("anchor_item", makeStackable)
+AddPrefabPostInit("steeringwheel_item", makeStackable)
+AddPrefabPostInit("boat_rotator_kit", makeStackable)
+AddPrefabPostInit("mast_malbatross_item", makeStackable)
+AddPrefabPostInit("boat_cannon_kit", makeStackable)
+AddPrefabPostInit("ocean_trawler_kit", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lightningrod_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item_yotd", makeStackable)
+AddPrefabPostInit("boat_magnet_kit", makeStackable)
+AddPrefabPostInit("boat_magnet_beacon", makeStackable)
+AddPrefabPostInit("beemine", makeStackable)
+AddPrefabPostInit("razor", makeStackable)
+AddPrefabPostInit("nightmare_timepiece", makeStackable)
+AddPrefabPostInit("boat_ancient_item", makeStackable)
+AddPrefabPostInit("moonstorm_static_item", makeStackable)
+AddPrefabPostInit("security_pulse_cage", makeStackable)
+AddPrefabPostInit("security_pulse_cage_full", makeStackable)
+AddPrefabPostInit("gestalt_cage", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled1", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled2", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled3", makeStackable)
+AddPrefabPostInit("deer_antler1", makeStackable)
+AddPrefabPostInit("deer_antler2", makeStackable)
+AddPrefabPostInit("deer_antler3", makeStackable)
+
+if GetModConfigData("cfgRabbitsCanStackToggle") then
+    AddPrefabPostInit("rabbit", makeStackable)
+end
+if GetModConfigData("cfgBirdsCanStackToggle")then
+    AddPrefabPostInit("crow", makeStackable)
+    AddPrefabPostInit("robin", makeStackable)
+    AddPrefabPostInit("robin_winter", makeStackable)
+    AddPrefabPostInit("canary", makeStackable)
+    AddPrefabPostInit("puffin", makeStackable)
+end
+if GetModConfigData("cfgMolesCanStackToggle") then
+    AddPrefabPostInit("mole", makeStackable)
+end
+if GetModConfigData("cfgFishesCanStackToggle") then
+    AddPrefabPostInit("pondfish", makeStackable)
+    AddPrefabPostInit("pondeel", makeStackable)
+    AddPrefabPostInit("oceanfish_small_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_9_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_9_inv", makeStackable)
+end
+if GetModConfigData("cfgSpidersCanStackToggle") then
+    AddPrefabPostInit("spider", makeStackable)
+    AddPrefabPostInit("spider_warrior", makeStackable)
+    AddPrefabPostInit("spider_hider", makeStackable)
+    AddPrefabPostInit("spider_spitter", makeStackable)
+    AddPrefabPostInit("spider_dropper", makeStackable)
+    AddPrefabPostInit("spider_moon", makeStackable)
+    AddPrefabPostInit("spider_healer", makeStackable)
+    AddPrefabPostInit("spider_water", makeStackable)
+end
+
+-- Remove feedable
+local function unmakeFeedable(inst)
+    if inst.components.perishable and GLOBAL.TheWorld.ismastersim then
+        inst:RemoveComponent("perishable")
+    end
+    if inst.components.inventoryitem and GLOBAL.TheWorld.ismastersim then
+        inst.components.inventoryitem:SetOnPutInInventoryFn(function(inst)
+            if oninventory then
+                oninventory(inst)
+            end
+        end)
+        inst.components.inventoryitem:SetOnDroppedFn(function(inst)
+            if ondropped then
+                ondropped(inst)
+            end
+        end)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lavae_egg
+AddPrefabPostInit("eyeturret_item", makeStackable)
+AddPrefabPostInit("lavae_egg", makeStackable)
+AddPrefabPostInit("cane", makeStackable)
+AddPrefabPostInit("mast_item", makeStackable)
+AddPrefabPostInit("boat_grass", makeStackable)
+AddPrefabPostInit("boat_item", makeStackable)
+AddPrefabPostInit("anchor_item", makeStackable)
+AddPrefabPostInit("steeringwheel_item", makeStackable)
+AddPrefabPostInit("boat_rotator_kit", makeStackable)
+AddPrefabPostInit("mast_malbatross_item", makeStackable)
+AddPrefabPostInit("boat_cannon_kit", makeStackable)
+AddPrefabPostInit("ocean_trawler_kit", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lightningrod_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item_yotd", makeStackable)
+AddPrefabPostInit("boat_magnet_kit", makeStackable)
+AddPrefabPostInit("boat_magnet_beacon", makeStackable)
+AddPrefabPostInit("beemine", makeStackable)
+AddPrefabPostInit("razor", makeStackable)
+AddPrefabPostInit("nightmare_timepiece", makeStackable)
+AddPrefabPostInit("boat_ancient_item", makeStackable)
+AddPrefabPostInit("moonstorm_static_item", makeStackable)
+AddPrefabPostInit("security_pulse_cage", makeStackable)
+AddPrefabPostInit("security_pulse_cage_full", makeStackable)
+AddPrefabPostInit("gestalt_cage", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled1", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled2", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled3", makeStackable)
+AddPrefabPostInit("deer_antler1", makeStackable)
+AddPrefabPostInit("deer_antler2", makeStackable)
+AddPrefabPostInit("deer_antler3", makeStackable)
+
+if GetModConfigData("cfgRabbitsCanStackToggle") then
+    AddPrefabPostInit("rabbit", makeStackable)
+end
+if GetModConfigData("cfgBirdsCanStackToggle")then
+    AddPrefabPostInit("crow", makeStackable)
+    AddPrefabPostInit("robin", makeStackable)
+    AddPrefabPostInit("robin_winter", makeStackable)
+    AddPrefabPostInit("canary", makeStackable)
+    AddPrefabPostInit("puffin", makeStackable)
+end
+if GetModConfigData("cfgMolesCanStackToggle") then
+    AddPrefabPostInit("mole", makeStackable)
+end
+if GetModConfigData("cfgFishesCanStackToggle") then
+    AddPrefabPostInit("pondfish", makeStackable)
+    AddPrefabPostInit("pondeel", makeStackable)
+    AddPrefabPostInit("oceanfish_small_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_9_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_9_inv", makeStackable)
+end
+if GetModConfigData("cfgSpidersCanStackToggle") then
+    AddPrefabPostInit("spider", makeStackable)
+    AddPrefabPostInit("spider_warrior", makeStackable)
+    AddPrefabPostInit("spider_hider", makeStackable)
+    AddPrefabPostInit("spider_spitter", makeStackable)
+    AddPrefabPostInit("spider_dropper", makeStackable)
+    AddPrefabPostInit("spider_moon", makeStackable)
+    AddPrefabPostInit("spider_healer", makeStackable)
+    AddPrefabPostInit("spider_water", makeStackable)
+end
+
+-- Remove feedable
+local function unmakeFeedable(inst)
+    if inst.components.perishable and GLOBAL.TheWorld.ismastersim then
+        inst:RemoveComponent("perishable")
+    end
+    if inst.components.inventoryitem and GLOBAL.TheWorld.ismastersim then
+        inst.components.inventoryitem:SetOnPutInInventoryFn(function(inst)
+            if oninventory then
+                oninventory(inst)
+            end
+        end)
+        inst.components.inventoryitem:SetOnDroppedFn(function(inst)
+            if ondropped then
+                ondropped(inst)
+            end
+        end)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cane
+AddPrefabPostInit("lavae_egg", makeStackable)
+AddPrefabPostInit("cane", makeStackable)
+AddPrefabPostInit("mast_item", makeStackable)
+AddPrefabPostInit("boat_grass", makeStackable)
+AddPrefabPostInit("boat_item", makeStackable)
+AddPrefabPostInit("anchor_item", makeStackable)
+AddPrefabPostInit("steeringwheel_item", makeStackable)
+AddPrefabPostInit("boat_rotator_kit", makeStackable)
+AddPrefabPostInit("mast_malbatross_item", makeStackable)
+AddPrefabPostInit("boat_cannon_kit", makeStackable)
+AddPrefabPostInit("ocean_trawler_kit", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lightningrod_item", makeStackable)
+AddPrefabPostInit("mastupgrade_lamp_item_yotd", makeStackable)
+AddPrefabPostInit("boat_magnet_kit", makeStackable)
+AddPrefabPostInit("boat_magnet_beacon", makeStackable)
+AddPrefabPostInit("beemine", makeStackable)
+AddPrefabPostInit("razor", makeStackable)
+AddPrefabPostInit("nightmare_timepiece", makeStackable)
+AddPrefabPostInit("boat_ancient_item", makeStackable)
+AddPrefabPostInit("moonstorm_static_item", makeStackable)
+AddPrefabPostInit("security_pulse_cage", makeStackable)
+AddPrefabPostInit("security_pulse_cage_full", makeStackable)
+AddPrefabPostInit("gestalt_cage", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled1", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled2", makeStackable)
+AddPrefabPostInit("gestalt_cage_filled3", makeStackable)
+AddPrefabPostInit("deer_antler1", makeStackable)
+AddPrefabPostInit("deer_antler2", makeStackable)
+AddPrefabPostInit("deer_antler3", makeStackable)
+
+if GetModConfigData("cfgRabbitsCanStackToggle") then
+    AddPrefabPostInit("rabbit", makeStackable)
+end
+if GetModConfigData("cfgBirdsCanStackToggle")then
+    AddPrefabPostInit("crow", makeStackable)
+    AddPrefabPostInit("robin", makeStackable)
+    AddPrefabPostInit("robin_winter", makeStackable)
+    AddPrefabPostInit("canary", makeStackable)
+    AddPrefabPostInit("puffin", makeStackable)
+end
+if GetModConfigData("cfgMolesCanStackToggle") then
+    AddPrefabPostInit("mole", makeStackable)
+end
+if GetModConfigData("cfgFishesCanStackToggle") then
+    AddPrefabPostInit("pondfish", makeStackable)
+    AddPrefabPostInit("pondeel", makeStackable)
+    AddPrefabPostInit("oceanfish_small_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_small_9_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_1_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_2_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_3_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_4_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_5_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_6_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_7_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_8_inv", makeStackable)
+    AddPrefabPostInit("oceanfish_medium_9_inv", makeStackable)
+end
+if GetModConfigData("cfgSpidersCanStackToggle") then
+    AddPrefabPostInit("spider", makeStackable)
+    AddPrefabPostInit("spider_warrior", makeStackable)
+    AddPrefabPostInit("spider_hider", makeStackable)
+    AddPrefabPostInit("spider_spitter", makeStackable)
+    AddPrefabPostInit("spider_dropper", makeStackable)
+    AddPrefabPostInit("spider_moon", makeStackable)
+    AddPrefabPostInit("spider_healer", makeStackable)
+    AddPrefabPostInit("spider_water", makeStackable)
+end
+
+-- Remove feedable
+local function unmakeFeedable(inst)
+    if inst.components.perishable and GLOBAL.TheWorld.ismastersim then
+        inst:RemoveComponent("perishable")
+    end
+    if inst.components.inventoryitem and GLOBAL.TheWorld.ismastersim then
+        inst.components.inventoryitem:SetOnPutInInventoryFn(function(inst)
+            if oninventory then
+                oninventory(inst)
+            end
+        end)
+        inst.components.inventoryitem:SetOnDroppedFn(function(inst)
+            if ondropped then
+                ondropped(inst)
+            end
+        end)
+    end
+end
+
+```
+

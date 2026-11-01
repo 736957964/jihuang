@@ -4137,3 +4137,126 @@ end)
 
 ```
 
+
+
+### 变体演进：流浪商人-重制 (Mod 3585773419)
+- **变体场景与切面**：收录来自工坊 Mod 3585773419 (`流浪商人-重制`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3585773419)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:craftingstation
+
+AddComponentPostInit("craftingstation", function(self)
+    local old_GetRecipes = self.GetRecipes
+    
+    self.GetRecipes = function(self, ...)
+        local recipes = old_GetRecipes(self, ...)
+        
+        if self.inst.prefab == "wandering_trader" or self.inst.prefab == "wanderingtrader" then
+            -- 必须先复制数组，避免原地排序破坏 craftingstation.recipes 与 items 的索引对应关系
+            local sorted = {}
+            for i = 1, #recipes do
+                sorted[i] = recipes[i]
+            end
+            
+            table.sort(sorted, function(a, b)
+                local pa = GLOBAL.RECIPE_SORT_PRIORITIES[a] or (GetValidRecipe(a) and GetValidRecipe(a).sort_priority) or 9999
+                local pb = GLOBAL.RECIPE_SORT_PRIORITIES[b] or (GetValidRecipe(b) and GetValidRecipe(b).sort_priority) or 9999
+                if pa ~= pb then
+                    return pa < pb
+                end
+                return a < b
+            end)
+            
+            return sorted
+        end
+        
+        return recipes
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:stackable
+
+AddComponentPostInit("stackable", function(self)
+    local old_SetStackSize = self.SetStackSize
+    self.SetStackSize = function(self, sz)
+        if sz > self.maxsize and self.inst.prefab == "beefalowool" then
+            local maxsize = self.maxsize
+            old_SetStackSize(self, maxsize)
+            self.inst:DoTaskInTime(0, function()
+                if self.inst:IsValid() and self.inst.prefab == "beefalowool" then
+                    local remaining = sz - maxsize
+                    while remaining > 0 do
+                        local batch = math.min(remaining, maxsize)
+                        local extra = SpawnPrefab("beefalowool")
+                        extra.components.stackable:SetStackSize(batch)
+                        local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner
+                        if owner and owner.components.inventory then
+                            owner.components.inventory:GiveItem(extra)
+                        else
+                            local pt = self.inst:GetPosition()
+                            extra.Transform:SetPosition(pt:Get())
+                            extra.components.inventoryitem:OnDropped()
+                        end
+                        remaining = remaining - batch
+                    end
+                end
+            end)
+        else
+            old_SetStackSize(self, sz)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:worldroutefollower
+-- 组件 OnEntitySleep 会无条件启动虚拟传送任务，未检查 pausedsources。
+AddComponentPostInit("worldroutefollower", function(self)
+    local old_OnEntitySleep = self.OnEntitySleep
+    self.OnEntitySleep = function(self)
+        -- 仅对本 Mod 的 dollreveal 暂停生效，不干扰原生交易/到达等待等暂停逻辑
+        if self.pausedsources:HasModifier(self.inst, "dollreveal") then
+            -- 暂停期间不安排虚拟行走/传送；取消已存在的任务
+            if self.trytoteleporttodestinationtask ~= nil then
+                self.trytoteleporttodestinationtask:Cancel()
+                self.trytoteleporttodestinationtask = nil
+            end
+            return
+        end
+        old_OnEntitySleep(self)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wanderingtrader
+
+AddPrefabPostInit("wanderingtrader", function(inst)
+    if not TheWorld.ismastersim then return end
+
+    local old_SetRevealed = inst.SetRevealed
+    inst.SetRevealed = function(inst, revealed)
+        old_SetRevealed(inst, revealed)
+
+        if not revealed or not inst._doll_reveal_paused then return end
+
+        ResumeWanderingTraderFromDollReveal(inst)
+
+        -- 5 秒后向所有焚烧玩偶时持有标记的玩家发送触发信号并清除标记
+        if inst._doll_reveal_task ~= nil then
+            inst._doll_reveal_task:Cancel()
+        end
+        inst._doll_reveal_task = inst:DoTaskInTime(5, function()
+            if inst:IsValid() then
+                NotifyDollRevealPlayers(inst)
+            end
+        end)
+    end
+end)
+
+```
+

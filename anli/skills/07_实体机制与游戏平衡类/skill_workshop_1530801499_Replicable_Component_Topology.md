@@ -9618,3 +9618,674 @@ if GetModConfigData("showCampfireTimer") then
 
 ```
 
+
+
+### 变体演进：preview_able (Mod 3479690934)
+- **变体场景与切面**：收录来自工坊 Mod 3479690934 (`preview_able`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3479690934)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:actionqueuer
+
+AddComponentPostInit("actionqueuer",function(ActionQueuer)
+
+-- 220410 null: alternative method to attempt Attack Queuing without excessive delays
+function ActionQueuer:SendAttackLoop(act, pos, target) -- 给排队论加强Mod擦个屁股。按住CTRL+Shift+鼠标左键选择目标，松开鼠标左键后开启行为学攻击，松开CTRL后停止攻击。适用于强制攻击栅栏
+    SendRPCToServer(RPC.LeftClick, act.action.code, pos.x, pos.z, target, false, 10, act.action.canforce, act.action.mod_name)
+        -- Note that using this to attack causes subsequent client attack actions to always loop (even if not Attack Queuing)
+    self:Wait(act.action, target) -- wait after attack to prevent freeze/crash
+end
+
+-- 这个函数不好HOOK，所以暴力覆盖
+function ActionQueuer:DeployToSelection(deploy_fn, spacing, item)
+    local DebugPrint = TUNING.ACTION_QUEUE_DEBUG_MODE and function(...)
+        print("[行为学] ",...)
+    end or function() --[[disabled]] end
+
+
+    if not self.TL then return end
+
+    -- 210116 null: cases for snapping positions to farm grid (Tilling, Wormwood planting on soil tiles, etc)
+    local snap_farm = false
+    if deploy_fn == self.TillAtPoint or deploy_fn == self.WormwoodPlantAtPoint then snap_farm = true end
+    if snap_farm then
+        if farm_grid == "4x4" then spacing = 1.26 -- 210116 null: different spacing for 4x4 grid
+        elseif farm_grid == "2x2" then spacing = 2 -- 210609 null: different spacing for 2x2 grid
+        end
+    end
+
+    local heading, dir = GetHeadingDir()
+    local diagonal = heading % 2 ~= 0
+    DebugPrint("Heading:", heading, "Diagonal:", diagonal, "Spacing:", spacing)
+    DebugPrint("TL:", self.TL, "TR:", self.TR, "BL:", self.BL, "BR:", self.BR)
+    local X, Z = "x", "z"
+    if dir then X, Z = Z, X end
+    local spacing_x = self.TL[X] > self.TR[X] and -spacing or spacing
+    local spacing_z = self.TL[Z] > self.BL[Z] and -spacing or spacing
+    local adjusted_spacing_x = diagonal and spacing * 1.4 or spacing
+    local adjusted_spacing_z = diagonal and spacing * 0.7 or spacing
+    local width = math.floor(self.TL:Dist(self.TR) / adjusted_spacing_x)
+    local height = self.endless_deploy and 100 or math.floor(self.TL:Dist(self.BL) / (width < 1 and adjusted_spacing_x or adjusted_spacing_z))
+    DebugPrint("Width:", width + 1, "Height:", height + 1) --since counting from 0
+    local start_x, _, start_z = self.TL:Get()
+    local terraforming = false
+
+    if deploy_fn == self.WaterAtPoint or -- 201217 null: added support for Watering of farming tiles
+       deploy_fn == self.FertilizeAtPoint or -- 201223 null: added support for Fertilizing of farming tiles
+       deploy_fn == self.TerraformAtPoint or
+       item and item:HasTag("groundtile") then
+        start_x, _, start_z = TheWorld.Map:GetTileCenterPoint(start_x, 0, start_z)
+        terraforming = true
+
+    elseif deploy_fn == self.DropActiveItem or item and (item:HasTag("wallbuilder") or item:HasTag("fencebuilder")) then
+        start_x, start_z = math.floor(start_x) + 0.5, math.floor(start_z) + 0.5
+
+    -- 210116 null: adjust farm grid start position + offsets (thanks to blizstorm for help)
+    elseif snap_farm then
+
+        -- 210709 null: fix for 3x3 alignment on medium/huge servers (different tile offsets)
+        local tilecenter = _G.Point(_G.TheWorld.Map:GetTileCenterPoint(start_x, 0, start_z)) -- center of tile
+        local tilepos = _G.Point(tilecenter.x - 2, 0, tilecenter.z - 2) -- corner of tile
+        if tilecenter.x % 4 == 0 then -- if center of tile is divisible by 4, then it's a medium/huge server
+            farm3x3_offset = farm_spacing -- adjust offset for medium/huge servers for 3x3 grid
+        end
+
+        if farm_grid == "4x4" then -- 4x4 grid
+            -- 4x4 grid: spacing = 1.26, offset/margins = 0.11
+            start_x, start_z = tilepos.x + math.floor((start_x - tilepos.x)/1.26 + 0.5) * 1.26 + 0.11 * offsets_4x4[heading].x,
+                               tilepos.z + math.floor((start_z - tilepos.z)/1.26 + 0.5) * 1.26 + 0.11 * offsets_4x4[heading].z
+
+        elseif farm_grid == "2x2" then -- 210609 null: 2x2 grid: spacing = 2 (4/2), offset = 1 (4/2/2)
+            start_x, start_z = math.floor(start_x / 2) * 2 + 1,
+                               math.floor(start_z / 2) * 2 + 1
+
+        else -- 3x3 grid: spacing = 1.333 (4/3), offset = 0.665 (4/3/2)
+            -- start_x, start_z = math.floor(start_x * 0.75 + 0.5) * 1.333 + 0.665, 
+            --                    math.floor(start_z * 0.75 + 0.5) * 1.333 + 0.665
+
+            -- 210201 null: /0.75 (3/4) instead of *1.333 (4/3) to better support edge of large -1600 to 1600 maps (blizstorm)
+            -- start_x, start_z = math.floor(start_x * 0.75 + 0.5) / 0.75 + 0.665, 
+            --                    math.floor(start_z * 0.75 + 0.5) / 0.75 + 0.665
+            start_x, start_z = math.floor(start_x / farm_spacing) * farm_spacing + farm3x3_offset,
+                               math.floor(start_z / farm_spacing) * farm_spacing + farm3x3_offset
+                               -- 210202 null: remove +0.5 floored rounding for more consistent wormwood placements (blizstorm)
+                               -- 210202 null: use more precise 3x3 grid offset for better alignment at edge of maps
+        end
+
+    elseif self.deploy_on_grid then -- 210201 null: deploy_on_grid = last to avoid conflict with farm grids (blizstorm)
+        start_x, start_z = math.floor(start_x * 2 + 0.5) * 0.5, math.floor(start_z * 2 + 0.5) * 0.5
+
+    end
+
+    local cur_pos = Point()
+    local count = {x = 0, y = 0, z = 0}
+    local row_swap = 1
+
+    -- 210127 null: added support for snaking within snaking for faster deployment (thanks to blizstorm)
+    local step = 1
+    local countz2 = 0
+    local countStep = {{0,1},{1,0},{0,-1},{1,0}}
+    if height < 1 then countStep = {{1,0},{1,0},{1,0},{1,0}} end -- 210130 null: bliz fix (210127)
+
+    self.action_thread = StartThread(function()
+        self.inst:ClearBufferedAction()
+        while self.inst:IsValid() do
+            cur_pos.x = start_x + spacing_x * count.x
+            cur_pos.z = start_z + spacing_z * count.z
+            if diagonal then
+                if width < 1 then
+                    if count[Z] > height then break end
+                    count[X] = count[X] - 1
+                    count[Z] = count[Z] + 1
+                else
+                    local row = math.floor(count.y / 2)
+                    if count[X] + row > width or count[X] + row < 0 then
+                        count.y = count.y + 1
+                        if count.y > height then break end
+                        row_swap = -row_swap
+                        count[X] = count[X] + row_swap - 1
+                        count[Z] = count[Z] + row_swap
+                        cur_pos.x = start_x + spacing_x * count.x
+                        cur_pos.z = start_z + spacing_z * count.z
+                    end
+                    count.x = count.x + row_swap
+                    count.z = count.z + row_swap
+                end
+            else
+                if double_snake then -- 210127 null: snake within snake deployment (thanks to blizstorm)
+                    if count[X] > width or count[X] < 0 then
+                        countz2 = countz2 + 2 -- assume first that next major row can be progressed since this is the case most of the time (blizstorm)
+
+                        -- if countz2 > height then -- old bliz code (210115)
+                        if countz2 + 1 > height then -- 210130 null: bliz fix (210127)
+
+                            -- if countz2 - 1 > height then -- old bliz code (210115)
+                            -- if countz2 - 1 <= height then -- old bliz code (210122)
+                            if countz2 <= height then -- 210130 null: bliz fix (210127)
+
+                                -- countz2 = countz2 - 1 -- old bliz code (210115)
+                                countStep={{1,0},{1,0},{1,0},{1,0}}
+
+                            else break end
+                        end
+
+                        step = 1
+                        row_swap = -row_swap
+                        count[X] = count[X] + row_swap
+                        count[Z] = countz2
+                        cur_pos.x = start_x + spacing_x * count.x
+                        cur_pos.z = start_z + spacing_z * count.z
+                    end
+                    count[X] = count[X] + countStep[step][1]*row_swap
+                    count[Z] = count[Z] + countStep[step][2]
+                    step = step % 4 + 1
+
+                else -- Regular snaking deployment
+                    if count[X] > width or count[X] < 0 then
+                        count[Z] = count[Z] + 1
+                        if count[Z] > height then break end
+                        row_swap = -row_swap
+                        count[X] = count[X] + row_swap
+                        cur_pos.x = start_x + spacing_x * count.x
+                        cur_pos.z = start_z + spacing_z * count.z
+                    end
+                    count[X] = count[X] + row_swap
+                end
+            end
+
+            local accessible_pos = cur_pos
+            if terraforming then
+                accessible_pos = GetAccessibleTilePosition(cur_pos)
+            -- 210116 null: not needed anymore
+            -- elseif snap_farm then -- 210116 null: (Tilling, Wormwood planting on soil tile)
+            --     accessible_pos = GetSnapTillPosition(cur_pos) -- Snap pos to farm grid
+
+            elseif deploy_fn == self.TillAtPoint then -- 210117 null: 检查pos是否已耕作
+                for _,ent in pairs(TheSim:FindEntities(cur_pos.x, 0, cur_pos.z, 0.05, {"soil"})) do
+                    if not ent:HasTag("NOCLICK") then
+                        accessible_pos = false
+                        break
+                    end -- 跳过此耕地位置
+                end
+            elseif ThePlayer.replica.inventory and
+                    ThePlayer.replica.inventory:GetActiveItem() and
+                    ThePlayer.replica.inventory:GetActiveItem().replica and
+                    ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem and
+                    ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem.CanDeploy and
+                    ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem:IsDeployable(self.inst) and  -- 鼠标拿着物品&是可以部署的
+                    not ( -- 不满足可以放置在此点位的要求
+                        ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem:CanDeploy(
+                            accessible_pos and gp_mod_Snap and gp_mod_CTRL_setting() == TheInput:IsKeyDown(KEY_CTRL) and gp_mod_Snap(cur_pos) or cur_pos, -- 兼容几何布局校准后的点位
+                            nil, ThePlayer,
+                            ThePlayer.components.playercontroller and ThePlayer.components.playercontroller.placer and ThePlayer.components.playercontroller.placer:GetRotation() or nil)
+                    )
+                    or ThePlayer.components.playercontroller and ThePlayer.components.playercontroller.placer and ThePlayer.components.playercontroller.placer_recipe and not -- 鼠标上打包的建筑是否可以放置
+                        TheWorld.Map:CanDeployRecipeAtPoint(
+                            accessible_pos and gp_mod_Snap and gp_mod_CTRL_setting() == TheInput:IsKeyDown(KEY_CTRL) and gp_mod_Snap(cur_pos) or cur_pos, -- 兼容几何布局校准后的点位
+                            ThePlayer.components.playercontroller.placer_recipe,
+                            ThePlayer.components.playercontroller.placer:GetRotation(),
+                            ThePlayer
+                    )
+            then
+                accessible_pos = false
+            end
+
+            if accessible_pos and gp_mod_Snap and not (deploy_fn == self.DropActiveItem) then -- 如果获取到几何布局的对齐网格点函数 and 当前不为丢弃物品操作
+                if gp_mod_CTRL_setting() == TheInput:IsKeyDown(KEY_CTRL) and not snap_farm then -- 启用网格对齐&不在耕地状态(耕地的点位对齐不符合要求)
+                    accessible_pos = gp_mod_Snap(accessible_pos)
+                end
+            end
+
+            -- DebugPrint("当前位置:", accessible_pos or "跳过")
+            if accessible_pos then
+                if deploy_fn(self, accessible_pos, item) then
+                    self:RemovePreview(accessible_pos)
+                else
+                    break
+                end
+            end
+        end
+        self:ClearActionThread()
+        self.inst:DoTaskInTime(0, function() if next(self.selected_ents) then self:ApplyToSelection() end end)
+    end, action_thread_id)
+end
+
+-- 覆盖法×2
+function ActionQueuer:SelectionBox(rightclick)
+    local previous_ents = {}
+    local started_selection = false
+    local start_x, start_y = self.screen_x, self.screen_y
+    self.update_selection = function()
+        if not started_selection then
+            if math.abs(start_x - self.screen_x) + math.abs(start_y - self.screen_y) < 32 then
+                return
+            end
+            started_selection = true
+        end
+        local xmin, xmax = start_x, self.screen_x
+        if xmax < xmin then
+            xmin, xmax = xmax, xmin
+        end
+        local ymin, ymax = start_y, self.screen_y
+        if ymax < ymin then
+            ymin, ymax = ymax, ymin
+        end
+        self.selection_widget:SetPosition((xmin + xmax) / 2, (ymin + ymax) / 2)
+        self.selection_widget:SetSize(xmax - xmin + 2, ymax - ymin + 2)
+        self.selection_widget:Show()
+        self.TL, self.BL, self.TR, self.BR = GetWorldPosition(xmin, ymax), GetWorldPosition(xmin, ymin), GetWorldPosition(xmax, ymax), GetWorldPosition(xmax, ymin)
+        --self.TL, self.BL, self.TR, self.BR = GetWorldPosition(xmin, ymin), GetWorldPosition(xmin, ymax), GetWorldPosition(xmax, ymin), GetWorldPosition(xmax, ymax)
+        self:SetPreview(rightclick) -- 我只是想加上这个
+        local center = GetWorldPosition((xmin + xmax) / 2, (ymin + ymax) / 2)
+        local range = math.sqrt(math.max(center:DistSq(self.TL), center:DistSq(self.BL), center:DistSq(self.TR), center:DistSq(self.BR)))
+        local IsBounded = GeoUtil.NewQuadrilateralTester(self.TL, self.TR, self.BR, self.BL)
+        local current_ents = {}
+        for _, ent in pairs(TheSim:FindEntities(center.x, 0, center.z, range, nil, unselectable_tags)) do
+            if IsValidEntity(ent) then
+                local pos = ent:GetPosition()
+                if IsBounded(pos) then
+                    if not self:IsSelectedEntity(ent) and not previous_ents[ent] then
+                        local act, rightclick_ = self:GetAction(ent, rightclick, pos)
+                        if act then self:SelectEntity(ent, rightclick_) end
+                    end
+                    current_ents[ent] = true
+                end
+            end
+        end
+        for ent in pairs(previous_ents) do
+            if not current_ents[ent] then
+                self:DeselectEntity(ent)
+            end
+        end
+        previous_ents = current_ents
+    end
+    self.selection_thread = StartThread(function()
+        while self.inst:IsValid() do
+            if self.queued_movement then
+                self.update_selection()
+                self.queued_movement = false
+            end
+            Sleep(FRAMES)
+        end
+        self:ClearSelectionThread()
+    end, selection_thread_id)
+end
+
+-- 魔改部分
+ActionQueuer.preview_curs = {} -- 当前:存实体
+ActionQueuer.preview_eds = {} -- 已种：存true
+ActionQueuer.userid = ActionQueuer.inst.userid -- 自己的id
+ActionQueuer.preview_highlight = AQ_highlight
+ActionQueuer.preview_max = AQ_preview_max -- 预览最大数量
+ActionQueuer.preview_color = AQ_preview_color -- 颜色
+ActionQueuer.preview_dont = AQ_preview_dont -- 不要变色
+
+
+-- 工具
+-- 返回最近的倍数
+local function FindNearMulti(number, multiple)
+    return multiple == 0 and number or math.floor(number / multiple + 0.5) * multiple
+end
+
+local function MergeList(...)
+    local mTable = {}
+    for _, v in ipairs({ ... }) do
+        if type(v) == "table" then
+            for _, k in pairs(v) do
+                table.insert(mTable, k)
+            end
+        end
+    end
+    return mTable
+end
+
+-- 获取鼠标上的物品
+function GetActiveItem(prefab)
+    local item = ThePlayer.replica.inventory:GetActiveItem()
+    if not prefab or not item then
+        return item
+    end
+    local prefabs = type(prefab) == "table" and prefab or { prefab }
+    return table.contains(prefabs, item.prefab) and item
+end
+
+-- 获取所有物品(物品名，标签，满足函数，获取物品的顺序) [当且仅当order=="mouse"时，才会包括鼠标上的物品]
+local function GetItemsFromAll(prefab, needtags, func, order)
+    local order_all = { "container", "backpack", "equip", "body", "mouse" }
+    local result = {}
+    local invent = ThePlayer.replica.inventory
+    local items = {
+        body = invent:GetItems(),
+        equip = invent:GetEquips(),
+        mouse = { GetActiveItem() },
+        backpack = {},
+        container = {}
+    }
+
+    for container_inst, _ in pairs(invent:GetOpenContainers() or {}) do
+        local container = (container_inst and container_inst.replica and container_inst.replica.container) or
+        (container_inst and container_inst.replica and container_inst.replica.inventory)
+        if container then
+            if container_inst:HasTag("INLIMBO") then
+                items.backpack = MergeList(items.backpack, container:GetItems())
+            else
+                items.container = MergeList(items.container, container:GetItems())
+            end
+        end
+    end
+
+    local t = type(order)
+    if order == "mouse" then
+        order = order_all
+    elseif t == "string" and order_all[order] then
+        order = { order }
+    elseif t == "table" then
+        -- do nothing
+    else
+        order = { "container", "backpack", "equip", "body" }
+    end
+
+    local all_items = {}
+    for _, o in ipairs(order) do
+        if items[o] then
+            all_items = MergeList(all_items, items[o])
+        end
+    end
+
+    needtags = type(needtags) == "string" and { needtags } or (type(needtags) == "table" and needtags)
+    for _, item in pairs(all_items) do
+        if (not prefab or prefab == item.prefab or (type(prefab) == "table" and table.contains(prefab, item.prefab))) and
+            (not needtags or item:HasTags(needtags)) and (not func or func(item)) then
+            table.insert(result, item)
+        end
+    end
+    return result
+end
+
+-- 获取耐久度
+local function GetPercent(inst)
+    local i = 100
+    local classified = type(inst) == "table" and inst.replica and inst.replica.inventoryitem and
+        inst.replica.inventoryitem.classified
+    if classified then
+        if inst:HasOneOfTags({ "fresh", "show_spoilage" }) and classified.perish then
+            i = math.floor(classified.perish:value() / 0.62)
+        elseif classified.percentused then
+            i = classified.percentused:value()
+        end
+    end
+    return i
+end
+
+local function GetAPrefabCount(prefab)
+    local count = 0
+    for _, ent in ipairs(GetItemsFromAll(prefab, nil, nil, { "container", "backpack", "body", "mouse" }) or {}) do
+        count = (ent and ent.replica and (ent.replica.inst and
+                (
+                   ent.replica.inst.prefab == "fertilizer" and -- 便便桶
+                    math.ceil(GetPercent(ent.replica.inst) / 10) -- 可使用10次，所以除以10（所以不兼容修改了物品使用次数的MOD）
+                or ent.replica.inst.prefab == "soil_amender_fermented" and -- 超级催长剂
+                    math.ceil(GetPercent(ent.replica.inst) / 20) -- 可使用5次，所以除以20（所以不兼容修改了物品使用次数的MOD）
+                ))
+            or
+            ent.replica.stackable and ent.replica.stackable:StackSize() or 1) + count -- 否则按堆叠数算
+    end
+    return count
+end
+
+function ActionQueuer:GetStartValue(spacing, snap_farm, tile_or_wall)
+    if not self.TL then
+        return
+    end
+
+    if snap_farm then
+        if farm_grid == "4x4" then
+            spacing = 1.26 -- 210116 null: different spacing for 4x4 grid
+        elseif farm_grid == "2x2" then
+            spacing = 2    -- 210609 null: different spacing for 2x2 grid
+        end
+    end
+
+    local heading, dir = GetHeadingDir()
+    local diagonal = heading % 2 ~= 0
+    DebugPrint("Heading:", heading, "Diagonal:", diagonal, "Spacing:", spacing)
+    DebugPrint("TL:", self.TL, "TR:", self.TR, "BL:", self.BL, "BR:", self.BR)
+    local X, Z = "x", "z"
+    if dir then
+        X, Z = Z, X
+    end
+    local spacing_x = self.TL[X] > self.TR[X] and -spacing or spacing
+    local spacing_z = self.TL[Z] > self.BL[Z] and -spacing or spacing
+    local adjusted_spacing_x = diagonal and spacing * 1.4 or spacing
+    local adjusted_spacing_z = diagonal and spacing * 0.7 or spacing
+    local width = math.floor(self.TL:Dist(self.TR) / adjusted_spacing_x)
+    local height = self.endless_deploy and 100 or
+        math.floor(self.TL:Dist(self.BL) / (width < 1 and adjusted_spacing_x or adjusted_spacing_z))
+    DebugPrint("Width:", width + 1, "Height:", height + 1) -- since counting from 0
+
+    local talker_string = (width + 1).."×"..(height + 1)
+    if last_Width_Height_String ~= talker_string then -- 如果长宽有变化
+        ThePlayer.components.talker:Say(talker_string) -- 玩家读出预计放置长宽
+        last_Width_Height_String = talker_string
+    end
+    local start_x, _, start_z = self.TL:Get()
+    local terraforming = false
+
+    if tile_or_wall == "tile" then
+        start_x, _, start_z = TheWorld.Map:GetTileCenterPoint(start_x, 0, start_z)
+        terraforming = true
+    elseif tile_or_wall == "wall" then
+        start_x, start_z = math.floor(start_x) + 0.5, math.floor(start_z) + 0.5
+    elseif snap_farm then
+        local tilecenter = Point(TheWorld.Map:GetTileCenterPoint(start_x, 0, start_z)) -- center of tile
+        local tilepos = Point(tilecenter.x - 2, 0, tilecenter.z - 2)                   -- corner of tile
+        if tilecenter.x % 4 == 0 then                                                  -- if center of tile is divisible by 4, then it's a medium/huge server
+            farm3x3_offset = farm_spacing                                              -- adjust offset for medium/huge servers for 3x3 grid
+        end
+
+        if farm_grid == "4x4" then -- 4x4 grid
+            -- 4x4 grid: spacing = 1.26, offset/margins = 0.11
+            start_x, start_z = tilepos.x + math.floor((start_x - tilepos.x) / 1.26 + 0.5) * 1.26 + 0.11 *
+                offsets_4x4[heading].x, tilepos.z + math.floor((start_z - tilepos.z) / 1.26 + 0.5) *
+                1.26 + 0.11 * offsets_4x4[heading].z
+        elseif farm_grid == "2x2" then -- 210609 null: 2x2 grid: spacing = 2 (4/2), offset = 1 (4/2/2)
+            start_x, start_z = math.floor(start_x / 2) * 2 + 1, math.floor(start_z / 2) * 2 + 1
+        else
+            start_x, start_z = math.floor(start_x / farm_spacing) * farm_spacing + farm3x3_offset,
+                math.floor(start_z / farm_spacing) * farm_spacing + farm3x3_offset
+        end
+    elseif type(self.deploy_on_grid) == "number" then -- 210201 null: deploy_on_grid = last to avoid conflict with farm grids (blizstorm)
+        start_x, start_z = FindNearMulti(start_x, self.deploy_on_grid),
+            FindNearMulti(start_z, self.deploy_on_grid)
+    end
+
+    local cur_pos = Point()
+    local count = {
+        x = 0,
+        y = 0,
+        z = 0
+    }
+    local row_swap = 1
+
+    -- 210127 null: added support for snaking within snaking for faster deployment (thanks to blizstorm)
+    local step = 1
+    local countz2 = 0
+    local countStep = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { 1, 0 } }
+    if height < 1 then
+        countStep = { { 1, 0 }, { 1, 0 }, { 1, 0 }, { 1, 0 } }
+    end -- 210130 null: bliz fix (210127)
+
+    return start_x, start_z, terraforming, width, height, spacing_x, spacing_z, X, Z, diagonal, cur_pos, count,
+        row_swap, step, countz2, countStep
+end
+
+function ActionQueuer:GetPosList(spacing, snap_farm, tow, istill, maxsize, meta, compat_gp_mod)
+    local ent = meta.ent
+    local func = meta.func_pos
+    local ret = {}
+    local i = 0
+    maxsize = type(maxsize) == "number" and maxsize or self.preview_max
+    maxsize = maxsize > self.preview_max and self.preview_max or maxsize
+    local start_x, start_z, terraforming, width, height, spacing_x, spacing_z, X, Z, diagonal, cur_pos, count, row_swap,
+    step, countz2, countStep = self:GetStartValue(spacing, snap_farm, tow)
+    if not start_x then
+        return ret
+    end
+    while self.inst:IsValid() do
+        cur_pos.x = start_x + spacing_x * count.x
+        cur_pos.z = start_z + spacing_z * count.z
+        if diagonal then
+            if width < 1 then
+                if count[Z] > height then
+                    break
+                end
+                count[X] = count[X] - 1
+                count[Z] = count[Z] + 1
+            else
+                local row = math.floor(count.y / 2)
+                if count[X] + row > width or count[X] + row < 0 then
+                    count.y = count.y + 1
+                    if count.y > height then
+                        break
+                    end
+                    row_swap = -row_swap
+                    count[X] = count[X] + row_swap - 1
+                    count[Z] = count[Z] + row_swap
+                    cur_pos.x = start_x + spacing_x * count.x
+                    cur_pos.z = start_z + spacing_z * count.z
+                end
+                count.x = count.x + row_swap
+                count.z = count.z + row_swap
+            end
+        else
+            if double_snake then
+                if count[X] > width or count[X] < 0 then
+                    countz2 = countz2 + 2
+                    if countz2 + 1 > height then
+                        if countz2 <= height then
+                            countStep = { { 1, 0 }, { 1, 0 }, { 1, 0 }, { 1, 0 } }
+                        else
+                            break
+                        end
+                    end
+                    step = 1
+                    row_swap = -row_swap
+                    count[X] = count[X] + row_swap
+                    count[Z] = countz2
+                    cur_pos.x = start_x + spacing_x * count.x
+                    cur_pos.z = start_z + spacing_z * count.z
+                end
+                count[X] = count[X] + countStep[step][1] * row_swap
+                count[Z] = count[Z] + countStep[step][2]
+                step = step % 4 + 1
+            else
+                if count[X] > width or count[X] < 0 then
+                    count[Z] = count[Z] + 1
+                    if count[Z] > height then
+                        break
+                    end
+                    row_swap = -row_swap
+                    count[X] = count[X] + row_swap
+                    cur_pos.x = start_x + spacing_x * count.x
+                    cur_pos.z = start_z + spacing_z * count.z
+                end
+                count[X] = count[X] + row_swap
+            end
+        end
+
+        if not func or func(cur_pos) then
+            local accessible_pos = cur_pos
+            if terraforming then -- terraforming 指的是当前行为位置是否为地皮中心点（比如挖地皮、放地皮、给农田浇水、给农田施肥，都是往地皮中心点操作的）
+                if ent and (ent:HasTag("fertilizer") or ent.prefab == "wateringcan" or ent.prefab == "premiumwateringcan") then -- 如果在施肥、浇水
+                    if not TheWorld.Map:IsFarmableSoilAtPoint(cur_pos.x, 0, cur_pos.z) then -- 如果操作的位置不是农田区
+                        accessible_pos = false -- 取消预览
+                    end
+                elseif ent and (ent.prefab == "pitchfork" or ent.prefab == "goldenpitchfork") then -- 草叉/金草叉
+                    accessible_pos = not TheWorld.Map:CanPlaceTurfAtPoint(cur_pos.x, 0, cur_pos.z) and accessible_pos or false -- 当前位置不能放新地皮则false
+                elseif ent and ent:HasTag("groundtile") then -- 地皮
+                    accessible_pos = TheWorld.Map:CanPlaceTurfAtPoint(cur_pos.x, 0, cur_pos.z) and accessible_pos or false -- 当前位置可以放地皮则继续
+                else
+                    accessible_pos = GetAccessibleTilePosition(cur_pos) -- 否则将操作位置设置为中心点
+                end
+            elseif istill then -- 210117 null: 检查pos是否已耕作
+                for _, ent in pairs(TheSim:FindEntities(cur_pos.x, 0, cur_pos.z, 0.05, { "soil" })) do
+                    if not ent:HasTag("NOCLICK") then
+                        accessible_pos = false
+                        break
+                    end -- 跳过此耕地位置
+                end
+            elseif ThePlayer.replica.inventory and
+                    ThePlayer.replica.inventory:GetActiveItem() and
+                    ThePlayer.replica.inventory:GetActiveItem().replica and
+                    ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem and
+                    ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem.CanDeploy and
+                    ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem:IsDeployable(self.inst) and  -- 鼠标拿着物品&是可以部署的
+                    not ( -- 不满足可以放置在此点位的要求
+                        ThePlayer.replica.inventory:GetActiveItem().replica.inventoryitem:CanDeploy(
+                            accessible_pos and gp_mod_Snap and gp_mod_CTRL_setting() == TheInput:IsKeyDown(KEY_CTRL) and gp_mod_Snap(cur_pos) or cur_pos, -- 兼容几何布局校准后的点位
+                            nil, ThePlayer,
+                            meta.rotation or nil
+                        )
+                    )
+
+```
+
+
+
+### 变体演进：简易全球定位 (Mod 3590648641)
+- **变体场景与切面**：收录来自工坊 Mod 3590648641 (`简易全球定位`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3590648641)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:compass
+
+    env.AddPrefabPostInit("compass", function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        if inst.components.equippable ~= nil then
+            inst.components.equippable.onunequipfn = generate_onunequipfn(inst.components.equippable.onunequipfn)
+        end
+    end)
+
+```
+
+
+
+### 变体演进：Alter strikes you down if you make a bad crockpot dish (Mod 3778380966)
+- **变体场景与切面**：收录来自工坊 Mod 3778380966 (`Alter strikes you down if you make a bad crockpot dish`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3778380966)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:cookpot
+
+AddPrefabPostInit("cookpot", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        inst.components.stewer.ondonecooking = donecookfn
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablecookpot
+
+AddPrefabPostInit("portablecookpot", function(inst)
+    if GLOBAL.TheWorld.ismastersim then
+        inst.components.stewer.ondonecooking = donecookfn
+    end
+end)
+
+```
+
