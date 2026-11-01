@@ -8677,3 +8677,84 @@ end)
 
 ```
 
+
+
+### 变体演进：Zoom+ (Mod 3715602247)
+- **变体场景与切面**：收录来自工坊 Mod 3715602247 (`Zoom+`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3715602247)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:focalpoint
+
+AddPrefabPostInit("focalpoint", function(inst)
+    CameraController.HookFocalPoint(inst)
+end)
+
+```
+
+
+
+### 变体演进：Buff Timer+ (Mod 3784854554)
+- **变体场景与切面**：收录来自工坊 Mod 3784854554 (`Buff Timer+`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3784854554)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    -- only a real death clears; a fresh classified syncing false must not wipe
+    inst:ListenForEvent("isghostmodedirty", function()
+        if inst.isghostmode ~= nil and inst.isghostmode:value() then
+            Tracker:Clear()
+            Tracker:Forget()
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:trial_radius_fx
+function Observer.Install(AddPrefabPostInit)
+    AddPrefabPostInit("trial_radius_fx", function(inst)
+        trialring = inst
+    end)
+
+```
+
+
+
+### 变体演进：DST Sodium / 饥荒钠优化 (Mod 3793502052)
+- **变体场景与切面**：收录来自工坊 Mod 3793502052 (`DST Sodium / 饥荒钠优化`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3793502052)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:pickable
+if plant_sleep then
+    AddComponentPostInit("pickable", function(self)
+        if G.TheWorld ~= nil and G.TheWorld.ismastersim then
+            PatchPickable(self)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:harvestable
+if harvestable_sleep then
+    AddComponentPostInit("harvestable", function(self)
+        if G.TheWorld ~= nil and G.TheWorld.ismastersim then
+            PatchHarvestable(self)
+        end
+    end)
+
+```
+
