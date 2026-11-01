@@ -7581,8 +7581,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 12:42:17",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2097358269",
+      "name": "Smart Chest",
+      "author": "little_xuuu",
+      "version": "2.3.7",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 12:47:16",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3236932653",
+      "name": "Ukrainian 2026",
+      "author": "Laite",
+      "version": "2.1.18",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-01 12:47:16",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "3543433366",
+      "name": "拯救Wathgrithr技能树",
+      "author": "澈先生",
+      "version": "2.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:47:17",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3604214733",
+      "name": "亮茄稻草人 / Brightshade Scarecrow",
+      "author": "无相邪神",
+      "version": "2.1.0",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-01 12:47:17",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "3762655303",
+      "name": "Just Enough Statues",
+      "author": "Kyno, glooms and Pep 󰀃",
+      "version": "1.5-A",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 12:47:17",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 12:42:17"
+  "lastUpdated": "2026-11-01 12:47:17"
 }

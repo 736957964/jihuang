@@ -4514,3 +4514,68 @@ end
 
 ```
 
+
+
+### 变体演进：Just Enough Statues (Mod 3762655303)
+- **变体场景与切面**：收录来自工坊 Mod 3762655303 (`Just Enough Statues`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3762655303)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+if TUNING.JES_DEBUG_MODE then
+    AddComponentPostInit("inventory", function(self)
+        local _DropItemFromInvTile = self.DropItemFromInvTile
+
+        self.DropItemFromInvTile = function(self, item, single, ...)
+            if not item.components.inventoryitem.cangoincontainer then
+                local player = self.inst
+                local playercontroller = player.components.playercontroller
+
+                if not player.sg:HasStateTag("busy") and self:CanAccessItem(item) and playercontroller then
+                    local pos = playercontroller:GetRemotePredictPosition() or player:GetPosition()
+
+                    -- pos.x = math.floor(pos.x) + 0.5
+                    -- pos.z = math.floor(pos.z) + 0.5
+                    local TILE = 4
+
+                    local tilex = math.floor(pos.x / TILE) * TILE
+                    local tilez = math.floor(pos.z / TILE) * TILE
+
+                    pos.x = tilex + math.floor((pos.x - tilex)) + 1
+                    pos.z = tilez + math.floor((pos.z - tilez)) + 1
+
+                    local act = _G.BufferedAction(player, nil, _G.ACTIONS.DROP, item, pos)
+                    player.components.locomotor:PushAction(act, true)
+                end
+            else
+                _DropItemFromInvTile(self, item, single, ...)
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:chester
+
+AddPrefabPostInit("chester", ChesterPostInit)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:critterlab
+
+AddPrefabPostInit("critterlab", CritterLabPostInit)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:glommer
+
+AddPrefabPostInit("glommer", GlommerPostInit)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:marblepillar
+
+AddPrefabPostInit("marblepillar", MarblePillarPostInit)
+
+```
+

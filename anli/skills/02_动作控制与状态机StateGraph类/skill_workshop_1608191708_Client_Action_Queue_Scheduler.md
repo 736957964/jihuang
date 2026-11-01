@@ -48823,3 +48823,659 @@ end)
 
 ```
 
+
+
+### 变体演进：拯救Wathgrithr技能树 (Mod 3543433366)
+- **变体场景与切面**：收录来自工坊 Mod 3543433366 (`拯救Wathgrithr技能树`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3543433366)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:singinginspiration
+
+AddComponentPostInit("singinginspiration", function(self)
+	local old_p = self.OnUpdate
+	function self:OnUpdate(delta,...)
+		if self.inst.components.inventory:EquipHasTag("battlespear_lightning") then
+			return
+		end
+		return old_p(self,delta,...)
+	end
+    local oldAddSong = self.AddSong
+    function self:AddSong(songdata, skip_inspire, inst,...)
+        oldAddSong(self,songdata, skip_inspire, inst, ...)
+        local name = songdata and songdata.ITEM_NAME
+        if name == "battlesong_instant_taunt" and not skip_inspire then --粗鲁插曲
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local radius = self.attach_radius
+
+            local players = FindPlayersInRange(x, y, z, radius, true)
+            for _, v in ipairs(players) do
+                if v == self.inst or self.inst.components.combat:IsAlly(v) then
+                    v:AddDebuff("battlesong_instant_taunt_damagebuff","battlesong_instant_taunt_damagebuff")
+                end
+            end
+        elseif  name == "battlesong_durability" and not skip_inspire then --武器化的颤音
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local radius = self.attach_radius
+
+            local players = FindPlayersInRange(x, y, z, radius)
+            for _, v in ipairs(players) do
+                local equip = v.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                if equip and equip.components.finiteuses then
+                    equip.components.finiteuses:Repair(equip.components.finiteuses.total*0.1)
+                end
+            end
+        elseif  name == "battlesong_fireresistance" and not skip_inspire then --防火假声
+            local radius = self.attach_radius
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local ents = TheSim:FindEntities(x, y, z, radius, nil, {"campfire","FX",})--"wildfireprotected"
+            for i, v in pairs(ents) do
+                if v.components.burnable ~= nil then
+                    if v.components.burnable:IsBurning() then
+                        v.components.burnable:Extinguish()
+                    elseif v.components.burnable:IsSmoldering() then
+                        v.components.burnable:SmotherSmolder()
+                    end
+                end
+            end
+            for k1 = -self.attach_radius,self.attach_radius,4 do
+                for k2 = -self.attach_radius,self.attach_radius,4 do
+                    local tile = TheWorld.Map:GetTileAtPoint(x+k1, 0, z+k2)
+                    if tile == GROUND.FARMING_SOIL then
+                        TheWorld.components.farming_manager:AddSoilMoistureAtPoint(x+k1, 0, z+k2, 100)
+                        local tile_x, tile_z = TheWorld.Map:GetTileCoordsAtPoint(x+k1, 0, z+k2)
+                        TheWorld.components.farming_manager:AddTileNutrients(tile_x, tile_z, 100, 100, 100)
+                    end
+                end
+            end
+        elseif  name == "battlesong_shadowaligned" and not skip_inspire then --黑暗悲歌
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local radius = self.attach_radius
+            local players = FindPlayersInRange(x, y, z, radius)
+            for _, v in ipairs(players) do
+                if v.components.sanity then
+                    v.components.sanity:SetPercent(1)
+                end
+            end
+        elseif  name == "battlesong_lunaraligned" and not skip_inspire then --启迪摇篮曲
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local radius = self.attach_radius
+            local players = FindPlayersInRange(x, y, z, radius)
+            for _, v in ipairs(players) do
+                if v.components.sanity then
+                    v.components.sanity:SetPercent(0)
+                end
+            end
+        elseif  name == "battlesong_instant_panic" and not skip_inspire then --惊心独白
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local radius = self.attach_radius
+            local ents = TheSim:FindEntities(x,0,z, radius, ATTACK_PROP_MUST_TAGS,ATTACK_PROP_CANT_TAGS)
+            for k,v in pairs(ents) do
+                if v:IsValid() and canattacktarget(self.inst,v) then
+                    local damage = v.components.health:DoDelta(-20,false,self.inst.prefab,true,self.instt,true)
+                    v:PushEvent("attacked", { attacker = self.inst, damage = 20, damageresolved = damage, })
+                    if v.components.health and v.components.health:IsDead() then
+                        self.inst:PushEvent("killed", { victim = v, attacker = self.inst })
+                    end
+                end
+            end
+        elseif  name == "battlesong_instant_revive" and not skip_inspire then --战士重奏
+            local x, y, z = self.inst.Transform:GetWorldPosition()
+            local radius = self.attach_radius
+
+            local players = FindPlayersInRange(x, y, z, radius)
+            for k,v in pairs(players) do
+                if IsEntityDeadOrGhost(v) then
+                    return
+                end
+            end
+            for k,v in pairs(players) do
+                if v.components.health and not IsEntityDeadOrGhost(v) then
+                    v.components.health:DoDelta(30)
+                end
+            end
+            self.inst.components.health:DoDelta(30)
+        end
+    end
+end)
+AddPrefabPostInit("battlesong_instant_revive", function(inst)
+    if inst.songdata then
+        inst.songdata.DELTA = 60
+    end
+end)
+
+AddPrefabPostInit("battlesong_lunaraligned", function(inst) --移除启迪摇篮曲使用时的技能点前置条件
+    if inst.songdata then
+        inst.songdata.REQUIRE_SKILL = nil
+    end
+end)
+AddPrefabPostInit("battlesong_shadowaligned", function(inst) --移除黑暗悲歌使用时的技能点前置条件
+    if inst.songdata then
+        inst.songdata.REQUIRE_SKILL = nil
+    end
+end)
+
+TUNING.BATTLESONG_INSTANT_REVIVE_NUM_PLAYERS =  3
+
+AddComponentPostInit("grogginess",function(self)
+    local oldAddGrogginess = self.AddGrogginess
+    function self:AddGrogginess(...)
+        if self.inst:HasDebuff("battlesong_sanitygain_buff")  then --醍醐灌顶华彩 免疫催眠
+            return
+        end
+        return oldAddGrogginess(self, ...)
+    end
+end)
+
+AddComponentPostInit("sanityaura",function(self)
+    local oldGetAura = self.GetAura
+    function self:GetAura(observer,...)
+        local old = oldGetAura(self,observer,...)
+        if observer and observer:HasDebuff("battlesong_sanityaura_buff") then --英勇美声颂 无视光环扣脑残
+            old = math.max(0,old)
+        end
+        return old
+    end
+end)
+
+TUNING.BATTLESONG_HEALTHGAIN_DELTA_SINGER = 1  --心碎歌谣 回血
+
+
+
+--战斗号角
+params.battlesong_container.widget.animbank  = "ui_piggyback_2x6"
+params.battlesong_container.widget.animbuild = "ui_piggyback_2x6"
+
+local battlesong_container_bg = { image = "battlesong_slot.tex", atlas = "images/hud2.xml" }
+params.battlesong_container.widget.slotpos = {}
+params.battlesong_container.widget.slotbg = {}
+for y = 0, 5 do
+    table.insert(params.battlesong_container.widget.slotpos, Vector3(-162, -75 * y + 170, 0))
+    table.insert(params.battlesong_container.widget.slotpos, Vector3(-162 + 75, -75 * y + 170, 0))
+    table.insert(params.battlesong_container.widget.slotbg, battlesong_container_bg)
+    table.insert(params.battlesong_container.widget.slotbg, battlesong_container_bg)
+end
+
+local wathgrithritems  = {
+    -- spear_wathgrithr  = true,
+    -- spear_wathgrithr_lightning  = true,
+    -- spear_wathgrithr_lightning_charged =  true,
+    -- wathgrithr_shield = true,
+    featherpencil = true,
+    papyrus = true,
+}
+function params.battlesong_container.itemtestfn(container, item, slot)
+    -- Battlesongs.
+    --return wathgrithritems[item.prefab] or item:HasTag("battlesong")
+    return wathgrithritems[item.prefab] or item:HasTag("birdfeather") or item:HasTag("battlesong")
+end
+
+AddPrefabPostInit("battlesong_container", function(inst)
+    inst:RemoveTag("portablestorage")
+    if  inst.components.container then
+        inst.components.container.restrictedtag = nil
+        inst.components.container.droponopen = false
+    end
+end)
+
+TUNING.SKILLS.WATHGRITHR.BATTLESONG_INSTANT_COOLDOWN = 6
+TUNING.SKILLS.WATHGRITHR.BATTLESONG_INSTANT_COOLDOWN_HIGH = 60
+---
+local skilldefs = require("prefabs/skilltree_defs")
+local wathgrithrskilltree = skilldefs.SKILLTREE_DEFS.wathgrithr --返场表演:移除使用时的技能点限制-over
+wathgrithrskilltree.wathgrithr_songs_revivewarrior_lock.lock_open = function(prefabname, activatedskills, readonly)
+    return true
+end
+
+--神秘韧性
+local function isediablefood(food)
+    return food and food.components.edible and (food.components.edible.foodtype == FOODTYPE.MEAT or food.components.edible.foodtype == FOODTYPE.GOODIES)
+end
+local function CustomFoodStatsMod(inst, health_delta, hunger_delta, sanity_delta, food, feeder)
+	if not isediablefood(food) and hunger_delta and hunger_delta > 0 then
+		hunger_delta = hunger_delta /2
+	end
+    if not isediablefood(food) and health_delta and health_delta > 0 then
+		health_delta = health_delta /2
+	end
+    if not isediablefood(food) and sanity_delta and sanity_delta > 0 then
+		health_delta = health_delta /2
+	end
+	return health_delta, hunger_delta, sanity_delta
+end
+local function oneat(inst, data)
+    if data ~= nil and data.food and data.food.components.edible and data.food.components.edible.foodtype == FOODTYPE.MEAT and inst.components.singinginspiration then
+        inst.components.singinginspiration:DoDelta(5)
+    end
+end
+wathgrithrskilltree.wathgrithr_combat_defense.onactivate = function(inst)
+    if inst.components.eater ~= nil then
+        if set1 then
+            inst.components.eater:SetDiet({ FOODGROUP.OMNI }, { FOODGROUP.OMNI })
+        end
+        inst.components.eater.custom_stats_mod_fn = CustomFoodStatsMod
+        inst:ListenForEvent("oneat",oneat)
+    end
+end
+wathgrithrskilltree.wathgrithr_combat_defense.ondeactivate = function(inst)
+    if inst.components.eater ~= nil then
+        inst.components.eater:SetDiet({ FOODGROUP.OMNI }, { FOODTYPE.MEAT, FOODTYPE.GOODIES })
+        inst.components.eater.custom_stats_mod_fn = nil
+        inst:RemoveEventCallback("oneat",oneat)
+    end
+end
+
+--布拉基的祝福
+TUNING.SKILLS.WATHGRITHR.INSPIRATION_GAIN_MULT = {
+    1.3,
+    1.6,
+}
+TUNING.SKILLS.WATHGRITHR.WATHGRITHRHAT_DURABILITY_MOD = {
+    0.80,
+    0.50,
+}
+
+TUNING.SKILLS.WATHGRITHR.HELM_PLANAR_DEF = 20 --一级统帅头盔加强
+
+AddPrefabPostInit("wathgrithr_improvedhat", function(inst)
+    if inst.components.equippable then
+        inst.components.equippable.insulated = true
+    end
+end)
+--战斗矛
+local CHESPEAR_LEVELUP = Action({priority = 10,mount_valid = true})
+CHESPEAR_LEVELUP.id = 'CHESPEAR_LEVELUP'
+CHESPEAR_LEVELUP.str = HawthornText("升级")
+CHESPEAR_LEVELUP.fn = function(act)
+    if act.invobject and act.target then
+        local inst = act.target
+        local skin_build, skin_id = inst:GetSkinBuild(), inst.skin_id
+        if skin_build == nil or skin_build == "" or skin_id == 0 then
+            skin_build, skin_id = nil, nil
+        end
+        local spear = SpawnPrefab(inst.prefab == "spear_wathgrithr" and "spear_wathgrithr_lightning" or "wathgrithr_improvedhat")--, skin_build, skin_id)
+
+        -- spear.components.rechargeable:Discharge(spear._cooldown)
+        -- spear.components.rechargeable:SetPercent(inst.components.rechargeable:GetPercent())
+    
+        -- spear.components.finiteuses:SetPercent(inst.components.finiteuses:GetPercent())
+    
+        local container = inst.components.inventoryitem:GetContainer()
+        if container ~= nil then
+            local slot = inst.components.inventoryitem:GetSlotNum()
+            inst:Remove()
+            container:GiveItem(spear, slot)
+        else
+            local x, y, z = inst.Transform:GetWorldPosition()
+            inst:Remove()
+            spear.Transform:SetPosition(x, y, z)
+        end
+        if act.invobject.components.stackable ~= nil and act.invobject.components.stackable:IsStack() then
+            act.invobject.components.stackable:Get():Remove()
+        else
+            act.invobject:Remove()
+        end
+        return true
+    end
+end
+AddAction(CHESPEAR_LEVELUP)
+
+AddComponentAction("USEITEM", "spear_wathgrithr_levelupable", function(inst, doer, target, actions, right)
+    if right then
+        if doer.components.skilltreeupdater and doer.components.skilltreeupdater:IsActivated("wathgrithr_arsenal_spear_3") and target and target.prefab == "spear_wathgrithr" then
+            table.insert(actions, CHESPEAR_LEVELUP)
+        elseif doer.components.skilltreeupdater and doer.components.skilltreeupdater:IsActivated("wathgrithr_arsenal_helmet_3") and target and target.prefab == "wathgrithrhat" then
+            table.insert(actions, CHESPEAR_LEVELUP)
+        end
+    end
+end)
+AddStategraphActionHandler("wilson",ActionHandler(CHESPEAR_LEVELUP, "give"))
+AddStategraphActionHandler("wilson_client",ActionHandler(CHESPEAR_LEVELUP, "give"))
+
+AddPrefabPostInit("lightninggoathorn", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:AddComponent("spear_wathgrithr_levelupable")
+end)
+AddPrefabPostInit("marble", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:AddComponent("spear_wathgrithr_levelupable")
+end)
+--奔雷矛
+-- TUNING.SPEAR_WATHGRITHR_LIGHTNING_USES = 150 --150
+TUNING.SPEAR_WATHGRITHR_LIGHTNING_CHARGED_USES = 260 --200
+local function onlightning(inst)
+    inst.components.finiteuses:Repair(inst.components.finiteuses.total*0.1)
+end
+
+local function Lightning_OnLungedHit1(inst, doer, target)
+    inst._lunge_hit_count = inst._lunge_hit_count or 0
+
+    if inst._lunge_hit_count < 2 and -- 2
+        doer.IsValidVictim ~= nil and
+        doer.IsValidVictim(target)
+    then
+        inst.components.finiteuses:Repair(4)--4
+        inst._lunge_hit_count = inst._lunge_hit_count + 1
+    end
+end
+AddPrefabPostInit("spear_wathgrithr_lightning", function(inst)
+    inst:AddTag("battlespear_lightning")
+    inst:AddTag("lightningrod")
+    inst._cooldown = TUNING.SPEAR_WATHGRITHR_LIGHTNING_LUNGE_COOLDOWN/2
+    if  inst.components.equippable then
+        inst.components.equippable.walkspeedmult = 1.1
+    end
+    if inst.components.aoeweapon_lunge then
+        inst.components.aoeweapon_lunge:SetOnHitFn(Lightning_OnLungedHit1)
+        -- inst.components.aoeweapon_lunge:SetDamage(TUNING.SPEAR_WATHGRITHR_LIGHTNING_LUNGE_DAMAGE) --68
+    end
+    inst:ListenForEvent("lightningstrike", onlightning)
+end)
+
+local function Lightning_OnLungedHit2(inst, doer, target)
+    inst._lunge_hit_count = inst._lunge_hit_count or 0
+
+    if inst._lunge_hit_count < 4 and -- 2
+        inst.components.upgradeable == nil and
+        doer.IsValidVictim ~= nil and
+        doer.IsValidVictim(target)
+    then
+        inst.components.finiteuses:Repair(6)--4
+        inst._lunge_hit_count = inst._lunge_hit_count + 1
+    end
+end
+
+local function spear_equipped(inst, data)
+    if data.owner and inst.fire == nil then
+        inst.fire = SpawnPrefab("nightstickfire")
+        inst.fire.entity:SetParent(data.owner.entity)
+    end
+end
+
+local function spear_unequipped(inst, owner)
+    if inst.fire ~= nil then
+        inst.fire:Remove()
+        inst.fire = nil
+    end
+end
+
+AddPrefabPostInit("spear_wathgrithr_lightning_charged", function(inst)
+    inst:AddTag("battlespear_lightning")
+    inst:AddTag("lightningrod")
+    inst._cooldown = TUNING.SPEAR_WATHGRITHR_LIGHTNING_CHARGED_LUNGE_COOLDOWN/2
+    if inst.components.aoeweapon_lunge then
+        inst.components.aoeweapon_lunge:SetDamage(85) --68
+        inst.components.aoeweapon_lunge:SetOnHitFn(Lightning_OnLungedHit2)
+    end
+    inst:ListenForEvent("lightningstrike", onlightning)
+
+    if set8 then
+        inst:ListenForEvent("equipped", spear_equipped)
+        inst:ListenForEvent("unequipped", spear_unequipped)
+    end
+end)
+
+--
+AddPrefabPostInit("shadowheart", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    inst:AddComponent("upgrader")
+    inst.components.upgrader.upgradetype = UPGRADETYPES.SPEAR_LIGHTNING
+end)
+
+local function OnEquip(inst, owner)
+    local slot = inst.components.equippable.equipslot
+    if slot == EQUIPSLOTS.HANDS then
+        owner.AnimState:Show("ARM_carry")
+        owner.AnimState:Show("lantern_overlay")
+        owner.AnimState:Hide("ARM_normal")
+        owner.AnimState:HideSymbol("swap_object")
+    
+        local skin_build = inst:GetSkinBuild()
+        if skin_build ~= nil then
+            owner:PushEvent("equipskinneditem", inst:GetSkinName())
+            owner.AnimState:OverrideItemSkinSymbol("lantern_overlay", skin_build, "swap_shield", inst.GUID, "swap_wathgrithr_shield")
+            owner.AnimState:OverrideItemSkinSymbol("swap_shield",     skin_build, "swap_shield", inst.GUID, "swap_wathgrithr_shield")
+        else
+            owner.AnimState:OverrideSymbol("lantern_overlay", "swap_wathgrithr_shield", "swap_shield")
+            owner.AnimState:OverrideSymbol("swap_shield",     "swap_wathgrithr_shield", "swap_shield")
+        end
+    else
+        
+    end
+    -- if inst.components.rechargeable:GetTimeToCharge() < TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP then
+    --     inst.components.rechargeable:Discharge(TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP)
+    -- end
+end
+
+
+local function OnUnequip(inst, owner)
+    local slot = inst.components.equippable.equipslot
+    if slot == EQUIPSLOTS.HANDS then
+        owner.AnimState:ClearOverrideSymbol("lantern_overlay")
+        owner.AnimState:ClearOverrideSymbol("swap_shield")
+    
+        owner.AnimState:Hide("ARM_carry")
+        owner.AnimState:Hide("lantern_overlay")
+        owner.AnimState:Show("ARM_normal")
+        owner.AnimState:ShowSymbol("swap_object")
+    
+        local skin_build = inst:GetSkinBuild()
+        if skin_build ~= nil then
+            owner:PushEvent("unequipskinneditem", inst:GetSkinName())
+        end
+    end
+end
+
+--战斗圆盾  shield
+local CHESHIELD_LEVELUP = Action({priority = 10,mount_valid = true})
+CHESHIELD_LEVELUP.id = 'CHESHIELD_LEVELUP'
+CHESHIELD_LEVELUP.str = HawthornText("切换")
+CHESHIELD_LEVELUP.fn = function(act)
+    local target = act.invobject or act.target
+    if target and act.doer then
+        if target.components.equippable:IsEquipped() then
+            act.doer.components.inventory:GiveItem(target)
+        end
+        if target.SetArmor then
+            target:SetArmor()
+        end
+        return true
+    end
+end
+AddAction(CHESHIELD_LEVELUP)
+
+AddComponentAction("INVENTORY", "spear_wathgrithr_levelupable", function(inst, doer, actions)
+    if doer.components.skilltreeupdater and doer.components.skilltreeupdater:IsActivated("wathgrithr_arsenal_shield_3") and 
+        inst.prefab == "wathgrithr_shield" and  inst.replica.equippable ~= nil and
+        inst.replica.equippable:IsEquipped() and
+        doer.replica.inventory ~= nil and
+        doer.replica.inventory:IsOpenedBy(doer) then
+        table.insert(actions, CHESHIELD_LEVELUP)
+    end
+end)
+AddStategraphActionHandler("wilson",ActionHandler(CHESHIELD_LEVELUP, "doshortaction"))
+AddStategraphActionHandler("wilson_client",ActionHandler(CHESHIELD_LEVELUP, "doshortaction"))
+local function SetArmor(inst)
+    inst.isarmor = not inst.isarmor
+    if inst.isarmor then
+        inst.components.equippable.equipslot = EQUIPSLOTS.BODY
+        inst.components.armor:SetAbsorption(0.9)
+    else
+        inst.components.equippable.equipslot = EQUIPSLOTS.HANDS
+        inst.components.armor:SetAbsorption(TUNING.WATHGRITHR_SHIELD_ABSORPTION)
+    end
+end
+AddPrefabPostInit("wathgrithr_shield", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    inst.isarmor = false
+    inst:AddComponent("spear_wathgrithr_levelupable")
+    if inst.components.equippable then
+        inst.components.equippable:SetOnEquip(OnEquip)
+        inst.components.equippable:SetOnUnequip(OnUnequip)
+    end
+    inst.OnSave = function(inst, data)
+        data.isarmor = inst.isarmor
+    end
+    inst.SetArmor = SetArmor
+    inst.OnLoad = function(inst, data)
+        if data and data.isarmor then
+            SetArmor(inst)
+        end
+    end
+end)
+TUNING.SKILLS.WATHGRITHR.SHIELD_PARRY_DURATION_MULT = 5
+------------------------
+
+--牛牛
+TUNING.SKILLS.WATHGRITHR.WATHGRITHRHAT_BEEFALO_DOMESTICATION_MOD = 2
+TUNING.SKILLS.WATHGRITHR.WATHGRITHR_BEEFALO_BUCK_TIME_MOD = 2
+wathgrithrskilltree.wathgrithr_beefalo_1.tags = {"beefalodomestication","beefalobucktime"}
+wathgrithrskilltree.wathgrithr_beefalo_2.tags = { }
+
+local function addorremoverangetag(inst,item,add)
+    if item then
+        if add then
+            if not item:HasTag("rangedweapon") and not item:HasTag("nopunch") and item:HasTag("weapon") then
+                item:AddTag("rangedweapon")
+                item.provisional_rangeweapon =  true
+            end
+        elseif item:IsValid() and  item.provisional_rangeweapon then
+            item:RemoveTag("rangedweapon")
+            item.provisional_rangeweapon =  false
+        end
+    end
+end
+local function onequip(inst,data)
+    if data and data.item then
+        addorremoverangetag(inst,data.item,true)
+    end
+end
+local function onunequip(inst,data)
+    if data and data.item then
+        addorremoverangetag(inst,data.item)
+    end
+end
+wathgrithrskilltree.wathgrithr_beefalo_2.onactivate = function(inst)
+    if inst.components.inventory ~= nil then
+        inst:ListenForEvent("equip",onequip)
+        inst:ListenForEvent("unequip",onunequip)
+        addorremoverangetag(inst,inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS),true)
+    end
+end
+wathgrithrskilltree.wathgrithr_beefalo_2.ondeactivate = function(inst)
+    if inst.components.inventory ~= nil then
+        inst:RemoveEventCallback("equip",onequip)
+        inst:RemoveEventCallback("unequip",onunequip)
+        addorremoverangetag(inst,inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS))
+    end
+end
+
+-------------------
+local quickactions = {
+    ACTIONS.HARVEST,
+    ACTIONS.PICK,
+    ACTIONS.PICKUP,
+}
+local function EventPostInit(self)
+    for _, v in ipairs(quickactions) do
+        if self.actionhandlers[v] and self.actionhandlers[v].deststate then
+            local old_fn = self.actionhandlers[v].deststate
+            self.actionhandlers[v].deststate = function(inst, action)
+                if inst.components.skilltreeupdater ~= nil and inst.components.skilltreeupdater:IsActivated("wathgrithr_beefalo_2") and inst.replica.rider ~= nil and inst.replica.rider:IsRiding() then
+                    if action.target and not action.target:HasTag("noquickpick") and not action.target:HasAnyTag("jostlepick", "jostlerummage", "jostlesearch") then
+                        return "doshortaction"
+                    end
+                end
+                return old_fn(inst, action)
+            end
+        end
+    end
+end
+AddStategraphPostInit("wilson", EventPostInit)
+AddStategraphPostInit("wilson_client", EventPostInit)
+----------------------------------------------
+
+AddComponentPostInit("rider",function(self)
+    local old_Mount = self.Mount
+    function self:Mount(target, instant,...)
+        if self.inst.components.skilltreeupdater ~= nil and self.inst.components.skilltreeupdater:IsActivated("wathgrithr_beefalo_2") then
+            instant =  true
+        end
+        return old_Mount(self,target, instant,...)
+    end
+end)
+
+local function IsDevouring(inst)
+    return inst ~= nil
+        and inst:IsValid()
+        and (inst.sg ~= nil and inst.sg:HasStateTag("devoured") --出于被吞得sg
+        or inst.components.playercontroller and not inst.components.playercontroller:IsEnabled())--处于无法控制状态
+end
+AddStategraphPostInit("wilson", function(self)
+	local olddismount_enter = self.states["dismount"].onenter
+	self.states["dismount"].onenter = function(inst, ...)
+		olddismount_enter(inst, ...)
+		if inst.components.skilltreeupdater ~= nil and inst.components.skilltreeupdater:IsActivated("wathgrithr_beefalo_2") then
+			inst.sg:GoToState("idle")
+		end
+	end
+
+	local oldknockback = self.events["knockback"].fn
+	self.events["knockback"].fn = function(inst, data, ...)
+		if inst.components.rider and inst.components.rider:IsRiding() then 
+            local saddle = inst.components.rider:GetSaddle()
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:battlesong_instant_revive
+end)
+AddPrefabPostInit("battlesong_instant_revive", function(inst)
+    if inst.songdata then
+        inst.songdata.DELTA = 60
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:battlesong_lunaraligned
+
+AddPrefabPostInit("battlesong_lunaraligned", function(inst) --移除启迪摇篮曲使用时的技能点前置条件
+    if inst.songdata then
+        inst.songdata.REQUIRE_SKILL = nil
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:battlesong_shadowaligned
+end)
+AddPrefabPostInit("battlesong_shadowaligned", function(inst) --移除黑暗悲歌使用时的技能点前置条件
+    if inst.songdata then
+        inst.songdata.REQUIRE_SKILL = nil
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:grogginess
+
+AddComponentPostInit("grogginess",function(self)
+    local oldAddGrogginess = self.AddGrogginess
+    function self:AddGrogginess(...)
+        if self.inst:HasDebuff("battlesong_sanitygain_buff")  then --醍醐灌顶华彩 免疫催眠
+            return
+        end
+        return oldAddGrogginess(self, ...)
+    end
+end)
+
+```
+

@@ -258,3 +258,181 @@ end)
 
 ```
 
+
+
+### 变体演进：Ukrainian 2026 (Mod 3236932653)
+- **变体场景与切面**：收录来自工坊 Mod 3236932653 (`Ukrainian 2026`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3236932653)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:blueprint
+	-- TODO: перевірити роботу AddPrefabPostInit
+	AddPrefabPostInit("blueprint", function(inst)
+		local function ReassignName(inst)
+			if inst.recipetouse then
+				local recipe_key = string.upper(inst.recipetouse)
+				local name = strings.NAMES[recipe_key] or strings.NAMES[inst.recipetouse]
+				if name then
+					name = name_to_english[name] or name
+					inst.components.named:SetName(name .. " Blueprint")
+				end
+			end
+		end
+
+		if inst.OnLoad and not inst.OldOnLoad then
+			inst.OldOnLoad = inst.OnLoad
+			function inst.OnLoad(inst, data)
+				if data and data.recipetouse and not strings.NAMES[string.upper(data.recipetouse)] then
+					local recipe_key = string.upper(data.recipetouse)
+					strings.NAMES[recipe_key] = "Предмет із відключеного мода"
+					inst.OldOnLoad(inst, data)
+					strings.NAMES[recipe_key] = nil
+				else
+					inst.OldOnLoad(inst, data)
+				end
+				ReassignName(inst)
+			end
+		end
+		ReassignName(inst)
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:skeleton_player
+
+	AddPrefabPostInit("skeleton_player", function(inst)
+		local function reassignfn(inst)
+			inst.components.inspectable.Oldgetspecialdescription = inst.components.inspectable.getspecialdescription
+			function inst.components.inspectable.getspecialdescription(inst, viewer, ...)
+				local oldGetDescription = global.GetDescription
+				global.GetDescription = function(viewer1, inst1, tag)
+					local ret = oldGetDescription(viewer1, inst1, tag)
+					return parse_translation_tags(ret, inst1.cause, nil, nil)
+				end
+
+				local message = inst.components.inspectable.Oldgetspecialdescription(inst, viewer, ...)
+				global.GetDescription = oldGetDescription
+				if not message then return message end
+
+				local player = global.ThePlayer
+				local key = player and player.prefab:upper() or "GENERIC"
+				local deadgender = global.GetGenderStrings(inst.char)
+				local character_strings = strings.CHARACTERS[key]
+				local skeleton_strings = character_strings
+					and character_strings.DESCRIBE
+					and character_strings.DESCRIBE.SKELETON_PLAYER
+				local message_template = skeleton_strings and skeleton_strings[deadgender]
+					or strings.CHARACTERS.GENERIC.DESCRIBE.SKELETON_PLAYER[deadgender]
+				message_template = parse_translation_tags(message_template, inst.cause, nil, nil)
+				if not message_template then return message end
+
+				local dead, killer = string.match(message, string.gsub(message_template, "%%s", "(.*)"))
+				if not (dead and killer) then return message end
+
+				dead = inst.playername or name_to_english[dead] or dead
+				if name_to_english[killer] and inst.pkname == nil then
+					local mentions = name_to_english[killer]
+					local killerkey = english_to_key[mentions]
+
+					if not killerkey and key == "WX78" then
+						for english_name, prefab_key in pairs(english_to_key) do
+							if english_name:upper() == mentions then
+								killerkey = prefab_key
+								break
+							end
+						end
+					end
+
+					mentions = killerkey and strings.NAMES[killerkey] or mentions
+					if killerkey then
+						mentions = ukrainian_names[mentions] and ukrainian_names[mentions]["KILL"]
+							or rebuildname(mentions, "KILL", killerkey)
+							or mentions
+						if not should_be_capped[killerkey:lower()]
+							and not contains(get_active_character_list(), killerkey:lower()) then
+							mentions = firsttolower(mentions)
+						end
+
+						killerkey = killerkey:lower()
+						if contains(get_active_character_list(), killerkey) then
+							killerkey = nil
+						end
+					end
+
+					killer = mentions
+				else
+					killer = name_to_english[killer] or killer
+				end
+
+				return string.format(message_template, dead, killer)
+			end
+		end
+
+		if inst.SetSkeletonDescription and not inst.OldSetSkeletonDescription then
+			inst.OldSetSkeletonDescription = inst.SetSkeletonDescription
+			function inst.SetSkeletonDescription(inst, ...)
+				inst.OldSetSkeletonDescription(inst, ...)
+				reassignfn(inst)
+			end
+		end
+		if inst.OnLoad and not inst.OldOnLoad then
+			inst.OldOnLoad = inst.OnLoad
+			function inst.OnLoad(inst, ...)
+				inst.OldOnLoad(inst, ...)
+				reassignfn(inst)
+			end
+		end
+	end)
+
+```
+
+
+
+### 变体演进：亮茄稻草人 / Brightshade Scarecrow (Mod 3604214733)
+- **变体场景与切面**：收录来自工坊 Mod 3604214733 (`亮茄稻草人 / Brightshade Scarecrow`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3604214733)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:brightshade_scarecrow
+-- 根据配置修改预制体
+AddPrefabPostInit("brightshade_scarecrow", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+    
+    -- 1. 驱赶小生物
+    if SCARE_SMALL_CREATURES then
+        inst:AddTag("scarytoprey")
+    end
+    
+    -- 2. 禁止鸟类降落
+    if PREVENT_BIRD_LANDING then
+        inst:AddTag("birdblocker")
+    end
+
+    -- 3. 恐惧光环
+    if FEAR_AURA_VALUE > 0 then
+        inst:AddComponent("sanityaura")
+        inst.components.sanityaura.aurafn = function(inst, observer)
+            -- 将每分钟减少的san值转换为每秒减少值
+            local san_per_second = -FEAR_AURA_VALUE / 60
+            return san_per_second
+        end
+    end
+
+    -- 4. 根据配置修改可接受的复活材料
+    inst.revive_material = REVIVE_MATERIAL
+
+    -- 5. 保存语言配置到实体上，供prefab运行时台词使用
+    inst.language = LANGUAGE
+end)
+
+```
+

@@ -8654,3 +8654,217 @@ end)
 
 ```
 
+
+
+### 变体演进：Smart Chest (Mod 2097358269)
+- **变体场景与切面**：收录来自工坊 Mod 2097358269 (`Smart Chest`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2097358269)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:treasurechest
+	if istreasurechest == 1 then
+		AddPrefabPostInit("treasurechest", changeChest)
+	end
+	if isicebox == 1 then
+		AddPrefabPostInit("icebox", changeChest)
+	end
+	if issaltbox == 1 then
+		AddPrefabPostInit("saltbox", changeChest)
+	end
+	if isdragonflychest == 1 then
+		AddPrefabPostInit("dragonflychest", changeChest)
+	end
+
+	-- 改变小木牌的部分（1.小木牌画，挖，加载，烧毁，种的时候，设置箱子。2.在小木牌画的时候，设置LX_collect_item属性。3.修改OnSave OnLoad 来保存这个属性。4.为特殊木牌修改显示名称）
+	
+	-- 1.小木牌画，挖，加载，烧毁，种的时候，设置箱子
+	local function findAndSetChest(inst, x, y, z)
+		if inst ~= nil then
+			x, y, z = inst.Transform:GetWorldPosition()
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:icebox
+	if isicebox == 1 then
+		AddPrefabPostInit("icebox", changeChest)
+	end
+	if issaltbox == 1 then
+		AddPrefabPostInit("saltbox", changeChest)
+	end
+	if isdragonflychest == 1 then
+		AddPrefabPostInit("dragonflychest", changeChest)
+	end
+
+	-- 改变小木牌的部分（1.小木牌画，挖，加载，烧毁，种的时候，设置箱子。2.在小木牌画的时候，设置LX_collect_item属性。3.修改OnSave OnLoad 来保存这个属性。4.为特殊木牌修改显示名称）
+	
+	-- 1.小木牌画，挖，加载，烧毁，种的时候，设置箱子
+	local function findAndSetChest(inst, x, y, z)
+		if inst ~= nil then
+			x, y, z = inst.Transform:GetWorldPosition()
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:saltbox
+	if issaltbox == 1 then
+		AddPrefabPostInit("saltbox", changeChest)
+	end
+	if isdragonflychest == 1 then
+		AddPrefabPostInit("dragonflychest", changeChest)
+	end
+
+	-- 改变小木牌的部分（1.小木牌画，挖，加载，烧毁，种的时候，设置箱子。2.在小木牌画的时候，设置LX_collect_item属性。3.修改OnSave OnLoad 来保存这个属性。4.为特殊木牌修改显示名称）
+	
+	-- 1.小木牌画，挖，加载，烧毁，种的时候，设置箱子
+	local function findAndSetChest(inst, x, y, z)
+		if inst ~= nil then
+			x, y, z = inst.Transform:GetWorldPosition()
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragonflychest
+	if isdragonflychest == 1 then
+		AddPrefabPostInit("dragonflychest", changeChest)
+	end
+
+	-- 改变小木牌的部分（1.小木牌画，挖，加载，烧毁，种的时候，设置箱子。2.在小木牌画的时候，设置LX_collect_item属性。3.修改OnSave OnLoad 来保存这个属性。4.为特殊木牌修改显示名称）
+	
+	-- 1.小木牌画，挖，加载，烧毁，种的时候，设置箱子
+	local function findAndSetChest(inst, x, y, z)
+		if inst ~= nil then
+			x, y, z = inst.Transform:GetWorldPosition()
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minisign
+	end
+	AddPrefabPostInit("minisign", changeMinisign1) -- 画 挖 世界加载 烧毁
+	AddPrefabPostInit("minisign_drawn", changeMinisign1) -- 种
+
+	-- 2.在小木牌画的时候，设置LX_collect_item属性。
+	-- 		由于minisign的drawable组件的ondrawnfn函数中，参数imagesource/src对应被画的物品本身。
+	-- 		在小木牌挖和种的时候，会在minisign 与 minisign_drawn之间切换，所以需要在两者之间继承这个LX_collect_item属性
+	-- 3.修改OnSave OnLoad 来保存这个属性
+	-- ！！！顺序很重要。因为这里是用覆盖的方式修改的dig_up与ondeploy。所以需要调高优先级，来优先加载
+	local isRunOnceMinisign = true
+	local isRunOnceMinisignDrawn = true
+	local function changeMinisign2(inst)
+		if inst.prefab == "minisign" then
+			-- 2.在小木牌画的时候，设置LX_collect_item属性
+			if inst.LX_collect_item == nil then
+				inst.LX_collect_item = _G.net_string(inst.GUID, "minisign.LX_collect_item") -- 用于保存收集物品的prefab，需要同步给客户端
+			end
+			inst.LX_collect_item:set("")
+			local old_draw = inst.components.drawable.ondrawnfn -- 在画的时候，设置LX_collect_item
+			inst.components.drawable:SetOnDrawnFn(function(inst2, image, src, ...)
+				old_draw(inst2, image, src, ...)
+				if src ~= nil then
+					inst.LX_collect_item:set(src.prefab)
+				end
+			end)
+			-- 在小木牌挖的时候，将LX_collect_item属性保存到minisign_drawn中。
+			if isRunOnceMinisign then
+				isRunOnceMinisign = false
+				-- 读取游戏源代码中的dig_up函数的地址
+				local fn = _G.Prefabs["minisign"].fn
+				local index, source_dig_up = getUpValue(fn, "dig_up")
+				if index == nil then
+					-- print("[Smart Chest]315 The initialization failed.")
+				end
+				-- 不能再Prefab.fn中直接修改dig_up。因为它可能已经被其他mod改动了。
+				-- 通过getupvalue的递归调用，根据source_dig_up找到正在调用的函数中的dig_up函数的位置，然后覆盖。
+				local old_onfinish = inst.components.workable.onfinish
+				local retfn, reti, retname, retvalue = getUpValueRecursion(old_onfinish, nil, source_dig_up, 0, 10000)
+				if retfn == nil then
+					-- print("[Smart Chest]323 The initialization failed.")
+				end
+				-- ！！！这里仍旧是对游戏源文件的修改。如果以后游戏源文件中的digup函数修改了，需要跟着更新这个。但是不会影响其他mod对这个函数的正常修改了。
+				-- 如果它和我使用同样的方式，则前一个修改会被覆盖
+				local function dig_up(inst2)
+					local image = inst2.components.drawable:GetImage()
+					if image ~= nil then
+						local item = inst2.components.lootdropper:SpawnLootPrefab("minisign_drawn", nil, inst2.linked_skinname_drawn, inst2.skin_id )
+						item.components.drawable:OnDrawn(image, nil, inst2.components.drawable:GetAtlas(), inst2.components.drawable:GetBGImage(), inst2.components.drawable:GetBGAtlas())
+						item._imagename:set(inst2._imagename:value())
+						item.LX_collect_item:set(inst2.LX_collect_item:value()) -- 仅添加了这一行
+						-- print("[SmartChest]299 dig_upMy")
+					else
+						inst2.components.lootdropper:SpawnLootPrefab("minisign_item", nil, inst2.linked_skinname, inst2.skin_id )
+					end
+					inst2:Remove()
+				end
+				-- 这里是对当前生成的小木牌的设置
+				setUpValue(retfn, reti, dig_up)
+				-- 这里是为以后生成的小木牌修改的设置
+				setUpValue(fn, index, dig_up)
+					
+			end
+		end
+		if inst.prefab == "minisign_drawn" then
+			if inst.LX_collect_item == nil then
+				inst.LX_collect_item = _G.net_string(inst.GUID, "minisign_drawn.LX_collect_item") -- 用于保存收集物品的prefab，需要同步给客户端
+			end
+			inst.LX_collect_item:set("")
+			-- 在小木牌种的时候，将LX_collect_item属性保存到minisign中。
+			if isRunOnceMinisignDrawn then
+				isRunOnceMinisignDrawn = false
+				-- 读取游戏源代码中的dig_up函数的地址
+				local fn = _G.Prefabs["minisign_drawn"].fn
+				local index, source_ondeploy = getUpValue(fn, "ondeploy")
+				if index == nil then
+					-- print("[Smart Chest]334 The initialization failed.")
+				end
+				-- 不能再Prefab.fn中直接修改ondeploy。因为它可能已经被其他mod改动了。
+				-- 通过getupvalue的递归调用，根据source_ondeploy找到正在调用的函数中的ondeploy函数的位置，然后覆盖。
+				local old_ondeploy = inst.components.deployable.ondeploy
+				local retfn, reti, retname, retvalue = getUpValueRecursion(old_ondeploy, nil, source_ondeploy, 0, 10000)
+				if retfn == nil then
+					-- print("[Smart Chest]341 The initialization failed.")
+				end
+				-- ！！！这里仍旧是对游戏源文件的修改。如果以后游戏源文件中的ondeploy函数修改了，需要跟着更新这个。但是不会影响其他mod对这个函数的正常修改了。
+				-- 但如果它和我使用同样的方式，则前一个修改会被覆盖
+				local function ondeploy(inst2, pt)
+					local ent = _G.SpawnPrefab("minisign", inst2.linked_skinname, inst2.skin_id )
+				
+					if inst2.components.stackable ~= nil then
+						inst2.components.stackable:Get():Remove()
+					else
+						ent.components.drawable:OnDrawn(inst2.components.drawable:GetImage(), nil, inst2.components.drawable:GetAtlas(), inst2.components.drawable:GetBGImage(), inst2.components.drawable:GetBGAtlas())
+						ent._imagename:set(inst2._imagename:value())
+						ent.LX_collect_item:set(inst2.LX_collect_item:value()) -- 仅添加了这一行
+						-- print("[SmartChest]335 ondeployMy")
+						inst2:Remove()
+					end
+				
+					ent.Transform:SetPosition(pt:Get())
+					ent.SoundEmitter:PlaySound("dontstarve/common/sign_craft")
+				end
+				-- 这里是对当前生成的小木牌的设置
+				setUpValue(retfn, reti, ondeploy)
+				-- 这里是为以后生成的小木牌修改的设置
+				setUpValue(fn, index, ondeploy)
+			end
+		end
+		-- 3.修改OnSave OnLoad 来保存这个属性
+		-- minisign 与 minisign_drawn都需要
+		local old_onsave = inst.OnSave
+		inst.OnSave = function(inst1, data)
+			if old_onsave ~= nil then
+				old_onsave(inst1, data)
+			end
+			data.LX_collect_item = #inst1.LX_collect_item:value() > 0 and inst1.LX_collect_item:value() or nil
+		end
+		local old_onload = inst.OnLoad
+		inst.OnLoad = function(inst1, data)
+			if old_onload ~= nil then
+				old_onload(inst1, data)
+			end
+			inst1.LX_collect_item:set(data ~= nil and data.LX_collect_item or "")
+		end
+	end
+
+```
+
