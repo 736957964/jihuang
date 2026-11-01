@@ -7338,8 +7338,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 12:16:29",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2881739960",
+      "name": "Smart Minisign Revisited",
+      "author": "Gwynbleidd",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:21:40",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3377362899",
+      "name": "英雄联盟武器补丁",
+      "author": "Clockcycas",
+      "version": "1.7.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:21:41",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3482480147",
+      "name": "填海叉（自用）",
+      "author": "时温",
+      "version": "0.2.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:21:41",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3758775601",
+      "name": "METAL SONIC: The Successful Creation",
+      "author": "Mr.tier",
+      "version": "1.0.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:21:41",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 12:16:29"
+  "lastUpdated": "2026-11-01 12:21:41"
 }

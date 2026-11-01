@@ -45471,3 +45471,250 @@ end)
 
 ```
 
+
+
+### 变体演进：英雄联盟武器补丁 (Mod 3377362899)
+- **变体场景与切面**：收录来自工坊 Mod 3377362899 (`英雄联盟武器补丁`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3377362899)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+function dst_lan:_hookCombat()
+    AddComponentPostInit("combat", function(self)
+        self.dstlan_atkperiodmodifiers = SourceModifierList(self.inst)
+        self.dstlan_orig_min_attack_period = self.min_attack_period
+        local p = rawget(self, "_")["min_attack_period"]
+        local old_on_map = p[2]
+        p[2] = function(self, map)
+            if old_on_map ~= nil then
+                old_on_map(self, map)
+            end
+            if self.inst.replica.combat and self.inst.replica.combat.dstlan_atkperiodmult then
+                self.inst.replica.combat.dstlan_atkperiodmult:set(self.dstlan_atkperiodmodifiers:Get())
+            end
+        end
+
+        function self:SetAttackPeriod(val)
+            self.dstlan_orig_min_attack_period = val
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:SetAtkPeriodModifier(source, mult, key)
+            self.dstlan_atkperiodmodifiers:SetModifier(source, mult, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+
+        function self:RemoveAtkPeriodModifier(source, key)
+            self.dstlan_atkperiodmodifiers:RemoveModifier(source, key)
+            self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+function dst_lan:_hookSG()
+    AddStategraphPostInit("wilson", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local combat = inst.components.combat
+            local timeout = (math.floor(13/(combat.dstlan_atkperiodmodifiers:Get())))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(combat.dstlan_atkperiodmodifiers:Get())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+function dst_lan:_hookSGClient()
+    AddStategraphPostInit("wilson_client", function(sg)
+        local old_onenter = sg.states["attack"].onenter
+        sg.states["attack"].onenter = function (inst,...)
+            local res = old_onenter ~= nil and {old_onenter(inst,...)} or {}
+            local timeout = (math.floor(13/inst.replica.combat.dstlan_atkperiodmult:value()))*FRAMES
+            inst.sg:SetTimeout(timeout)
+            inst.AnimState:SetDeltaTimeMultiplier(inst.replica.combat.dstlan_atkperiodmult:value())
+            return unpack(res)
+        end
+
+        local old_ontimeout = sg.states["attack"].ontimeout
+        sg.states["attack"].ontimeout = function (inst,...)
+            inst:PerformPreviewBufferedAction()
+            inst.sg:RemoveStateTag('abouttoattack')
+            return old_ontimeout(inst,...)
+        end
+
+        local old_onexit = sg.states["attack"].onexit
+        sg.states["attack"].onexit = function (inst,...)
+            inst.AnimState:SetDeltaTimeMultiplier(1)
+            return old_onexit(inst,...)
+        end
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cook_certificate
+    --------------------------------------------
+    AddPrefabPostInit('cook_certificate',function (inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        local old_HarvestFoodFn = inst.HarvestFoodFn
+        ---@diagnostic disable-next-line: inject-field
+        inst.HarvestFoodFn = function(inst,foodname,harvester,cookpotname,...)
+            local fuelnum = GetThisMODDishConsume(foodname)
+            if foodname and fuelnum > 0 and not table.contains(inst.foodlist,foodname) then
+                --消耗耐久
+                if inst.components.finiteuses then
+                    inst.components.finiteuses:Use(fuelnum)
+                    inst.foodlist[#inst.foodlist+1]=foodname
+                    setFoodList(inst,harvester)--同步料理列表
+                    if not RewardToiler(harvester,0.1) then--天道酬勤
+                        SpawnMedalTips(harvester,fuelnum,10)--弹幕提示
+                    end
+                end
+            end
+            return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lol_wp_s9_eyestone_low
+end
+AddPrefabPostInit("lol_wp_s9_eyestone_low", function(inst)
+	if not TheWorld.ismastersim then
+		inst.OnEntityReplicated =function (inst)
+			inst.replica.container:WidgetSetup("lol_wp_s9_eyestone_low_1")
+		end
+		return inst
+	end
+	if inst.components.container then
+		inst.components.container:WidgetSetup("lol_wp_s9_eyestone_low_1")
+	end
+    if TUNING.ADD_EYESTONE_EQUIPSLOTS then
+        if inst.components.equippable then
+            if inst:HasTag("amulet") then
+                inst:RemoveTag("amulet") -- 移除原有的 amulet 标签
+            end
+            inst.components.equippable.equipslot = EQUIPSLOTS.EYESTONE or EQUIPSLOTS.AMULET or EQUIPSLOTS.NECK or EQUIPSLOTS.BODY 
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：填海叉（自用） (Mod 3482480147)
+- **变体场景与切面**：收录来自工坊 Mod 3482480147 (`填海叉（自用）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3482480147)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playerspawner
+
+AddComponentPostInit("playerspawner", function(OnPlayerSpawn, inst)
+    inst:ListenForEvent("ms_playerjoined", function(self, player)
+        if not (player and player.components) then
+            return
+        end
+        local isAdmin = false
+        for _, client in ipairs(TheNet:GetClientTable() or {}) do
+            if player.userid == client.userid and client.admin then
+                isAdmin = true
+                break
+            end
+        end
+        if not isAdmin then
+            player:RemoveTag("sea2land_admin")
+        end
+
+        if (isAdmin or GetModConfigData('admin_only') == false) and not player:HasTag("sea2land_admin") then
+            player:AddTag("sea2land_admin")
+        end
+    end)
+end)
+
+```
+
+
+
+### 变体演进：METAL SONIC: The Successful Creation (Mod 3758775601)
+- **变体场景与切面**：收录来自工坊 Mod 3758775601 (`METAL SONIC: The Successful Creation`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3758775601)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:deer_fire_charge
+
+ENV.AddPrefabPostInit("deer_fire_charge", MetalSonicChargeFxPostInit)
+
+-- ============================================================
+-- Trabaja mejor, pero le cuesta salud.
+--
+-- El multiplicador de eficiencia (1.75x, igual que el modo "mighty" de
+-- Wolfgang) se setea en metalsonic.lua (workmultiplier). Acá solo se
+-- envuelve la función nativa de cada acción de trabajo para restarle 1
+-- de salud a Metal Sonic por cada golpe de hacha/pico/martillo que
+-- efectivamente conecte (success == true). Si la acción falla (por
+-- ejemplo, sin herramienta válida) no se cobra nada.
+--
+-- Por qué envolver el .fn nativo en vez de un evento tipo "onworked":
+-- así no depende de que el objeto trabajado dispare ese evento en
+-- particular (varía según el prefab), y es el mismo patrón ya usado en
+-- este modmain para EXTERMINATE_ACT/REPAIR_ACT.
+-- ============================================================
+local METALSONIC_WORK_SELFDAMAGE = 1
+
+local function AddMetalSonicWorkSelfDamage(action)
+    local old_fn = action.fn
+    action.fn = function(act, ...)
+        local success = old_fn(act, ...)
+
+        if success
+            and act.doer ~= nil
+            and act.doer:HasTag("metalsonic_hardworker")
+            and act.doer.components.health ~= nil
+            and not act.doer.components.health:IsDead() then
+            act.doer.components.health:DoDelta(
+                -METALSONIC_WORK_SELFDAMAGE,     -- amount
+                false,                            -- overtime
+                "metalsonic_work_selfdamage",     -- cause
+                true,                             -- ignore_invincible
+                nil,                              -- afflicter
+                true                              -- ignore_absorb
+            )
+        end
+
+        return success
+    end
+end
+
+```
+

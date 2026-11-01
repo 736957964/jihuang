@@ -10501,3 +10501,445 @@ end
 
 ```
 
+
+
+### 变体演进：Smart Minisign Revisited (Mod 2881739960)
+- **变体场景与切面**：收录来自工坊 Mod 2881739960 (`Smart Minisign Revisited`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2881739960)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minisign
+end
+AddPrefabPostInit("minisign", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+	local oldOnLoadPostPass = inst.OnLoadPostPass
+	inst.OnLoadPostPass = function(inst, newents, savedata)
+		if oldOnLoadPostPass ~= nil then
+			oldOnLoadPostPass(inst, newents, savedata)
+		end
+		onloadpostpass(inst, newents, savedata)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:treasurechest
+
+AddPrefabPostInit("treasurechest", draw)
+
+if GetModConfigData("DragonflyChest") == true then
+	AddPrefabPostInit("dragonflychest", draw)
+end
+if GetModConfigData("Icebox") == true then
+	AddPrefabPostInit("icebox", draw)
+end
+if GetModConfigData("SaltBox") == true then
+	AddPrefabPostInit("saltbox", draw)
+end
+
+--读取所有已加载的mod
+local enabledmods = GLOBAL.ModManager.enabledmods
+
+local thisname = env.modname 
+--hook一下加载prefabs 加载完prefabs在检索数据
+local oldRegisterPrefabs = GLOBAL.ModManager.RegisterPrefabs 
+
+GLOBAL.ModManager.RegisterPrefabs = function(self)
+	oldRegisterPrefabs(self)
+	
+	for i,modname in ipairs(enabledmods) do
+		local mod = GLOBAL.ModManager:GetMod(modname)
+		
+		--检索 modmain里注册的资源
+		if mod.Assets then 
+			local modatlas = {}
+			local modatlas_build = {}
+			--检索所有的贴图
+			for k,v in ipairs (mod.Assets) do
+				if v.type == "ATLAS" then 
+					table.insert(modatlas,v.file)
+				elseif v.type == "ATLAS_BUILD" then 
+					table.insert(modatlas_build,v.file)
+				end
+				
+			end
+			--判断是否有对应的ATLAS_BUILD
+			for k,v in ipairs(modatlas) do
+				local notfind = true
+				for x,y in ipairs(modatlas_build) do
+					if v == y then
+						notfind = false
+						break
+					end
+				end
+				if notfind then
+				--没有就插入
+				--因为注册的时候会自动搜索路径，所以自己注册的时候要还原回原来的路径
+				v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+				table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+				end
+			end
+		end
+		
+		--检索 prefabs 里注册的资源
+		if mod.Prefabs then
+			for n,prefab in pairs(mod.Prefabs) do
+				local modatlas = {}
+				local modatlas_build = {}
+				--检索所有的贴图
+				if prefab.assets then
+					for k,v in pairs (prefab.assets) do
+						if v.type == "ATLAS" then 
+							table.insert(modatlas,v.file)
+						elseif v.type == "ATLAS_BUILD" then 
+							table.insert(modatlas_build,v.file)
+						end
+					end
+				end
+				--判断是否有对应的ATLAS_BUILD
+				for k,v in ipairs(modatlas) do
+					local notfind = true
+					for x,y in ipairs(modatlas_build) do
+						if v == y then
+							notfind = false
+							break
+						end
+					end
+					if notfind then
+					--没有就插入
+					v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+					table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+					end
+				end
+			end
+		end
+	end
+	--注册资源
+	GLOBAL.RegisterPrefabs(GLOBAL.Prefab("MOD_SMARTSIGNOTHER",nil,Assets,nil,true))
+	GLOBAL.TheSim:LoadPrefabs({"MOD_SMARTSIGNOTHER"})
+	table.insert(self.loadedprefabs,"MOD_SMARTSIGNOTHER")
+	
+end
+
+GLOBAL.TUNING.SMART_SIGN_DRAW_ENABLE = true
+GLOBAL.SMART_SIGN_DRAW = draw
+--示例代码  
+--[[
+if TUNING.SMART_SIGN_DRAW_ENABLE then
+		SMART_SIGN_DRAW(inst)
+	end
+	]]--
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragonflychest
+if GetModConfigData("DragonflyChest") == true then
+	AddPrefabPostInit("dragonflychest", draw)
+end
+if GetModConfigData("Icebox") == true then
+	AddPrefabPostInit("icebox", draw)
+end
+if GetModConfigData("SaltBox") == true then
+	AddPrefabPostInit("saltbox", draw)
+end
+
+--读取所有已加载的mod
+local enabledmods = GLOBAL.ModManager.enabledmods
+
+local thisname = env.modname 
+--hook一下加载prefabs 加载完prefabs在检索数据
+local oldRegisterPrefabs = GLOBAL.ModManager.RegisterPrefabs 
+
+GLOBAL.ModManager.RegisterPrefabs = function(self)
+	oldRegisterPrefabs(self)
+	
+	for i,modname in ipairs(enabledmods) do
+		local mod = GLOBAL.ModManager:GetMod(modname)
+		
+		--检索 modmain里注册的资源
+		if mod.Assets then 
+			local modatlas = {}
+			local modatlas_build = {}
+			--检索所有的贴图
+			for k,v in ipairs (mod.Assets) do
+				if v.type == "ATLAS" then 
+					table.insert(modatlas,v.file)
+				elseif v.type == "ATLAS_BUILD" then 
+					table.insert(modatlas_build,v.file)
+				end
+				
+			end
+			--判断是否有对应的ATLAS_BUILD
+			for k,v in ipairs(modatlas) do
+				local notfind = true
+				for x,y in ipairs(modatlas_build) do
+					if v == y then
+						notfind = false
+						break
+					end
+				end
+				if notfind then
+				--没有就插入
+				--因为注册的时候会自动搜索路径，所以自己注册的时候要还原回原来的路径
+				v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+				table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+				end
+			end
+		end
+		
+		--检索 prefabs 里注册的资源
+		if mod.Prefabs then
+			for n,prefab in pairs(mod.Prefabs) do
+				local modatlas = {}
+				local modatlas_build = {}
+				--检索所有的贴图
+				if prefab.assets then
+					for k,v in pairs (prefab.assets) do
+						if v.type == "ATLAS" then 
+							table.insert(modatlas,v.file)
+						elseif v.type == "ATLAS_BUILD" then 
+							table.insert(modatlas_build,v.file)
+						end
+					end
+				end
+				--判断是否有对应的ATLAS_BUILD
+				for k,v in ipairs(modatlas) do
+					local notfind = true
+					for x,y in ipairs(modatlas_build) do
+						if v == y then
+							notfind = false
+							break
+						end
+					end
+					if notfind then
+					--没有就插入
+					v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+					table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+					end
+				end
+			end
+		end
+	end
+	--注册资源
+	GLOBAL.RegisterPrefabs(GLOBAL.Prefab("MOD_SMARTSIGNOTHER",nil,Assets,nil,true))
+	GLOBAL.TheSim:LoadPrefabs({"MOD_SMARTSIGNOTHER"})
+	table.insert(self.loadedprefabs,"MOD_SMARTSIGNOTHER")
+	
+end
+
+GLOBAL.TUNING.SMART_SIGN_DRAW_ENABLE = true
+GLOBAL.SMART_SIGN_DRAW = draw
+--示例代码  
+--[[
+if TUNING.SMART_SIGN_DRAW_ENABLE then
+		SMART_SIGN_DRAW(inst)
+	end
+	]]--
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:icebox
+if GetModConfigData("Icebox") == true then
+	AddPrefabPostInit("icebox", draw)
+end
+if GetModConfigData("SaltBox") == true then
+	AddPrefabPostInit("saltbox", draw)
+end
+
+--读取所有已加载的mod
+local enabledmods = GLOBAL.ModManager.enabledmods
+
+local thisname = env.modname 
+--hook一下加载prefabs 加载完prefabs在检索数据
+local oldRegisterPrefabs = GLOBAL.ModManager.RegisterPrefabs 
+
+GLOBAL.ModManager.RegisterPrefabs = function(self)
+	oldRegisterPrefabs(self)
+	
+	for i,modname in ipairs(enabledmods) do
+		local mod = GLOBAL.ModManager:GetMod(modname)
+		
+		--检索 modmain里注册的资源
+		if mod.Assets then 
+			local modatlas = {}
+			local modatlas_build = {}
+			--检索所有的贴图
+			for k,v in ipairs (mod.Assets) do
+				if v.type == "ATLAS" then 
+					table.insert(modatlas,v.file)
+				elseif v.type == "ATLAS_BUILD" then 
+					table.insert(modatlas_build,v.file)
+				end
+				
+			end
+			--判断是否有对应的ATLAS_BUILD
+			for k,v in ipairs(modatlas) do
+				local notfind = true
+				for x,y in ipairs(modatlas_build) do
+					if v == y then
+						notfind = false
+						break
+					end
+				end
+				if notfind then
+				--没有就插入
+				--因为注册的时候会自动搜索路径，所以自己注册的时候要还原回原来的路径
+				v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+				table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+				end
+			end
+		end
+		
+		--检索 prefabs 里注册的资源
+		if mod.Prefabs then
+			for n,prefab in pairs(mod.Prefabs) do
+				local modatlas = {}
+				local modatlas_build = {}
+				--检索所有的贴图
+				if prefab.assets then
+					for k,v in pairs (prefab.assets) do
+						if v.type == "ATLAS" then 
+							table.insert(modatlas,v.file)
+						elseif v.type == "ATLAS_BUILD" then 
+							table.insert(modatlas_build,v.file)
+						end
+					end
+				end
+				--判断是否有对应的ATLAS_BUILD
+				for k,v in ipairs(modatlas) do
+					local notfind = true
+					for x,y in ipairs(modatlas_build) do
+						if v == y then
+							notfind = false
+							break
+						end
+					end
+					if notfind then
+					--没有就插入
+					v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+					table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+					end
+				end
+			end
+		end
+	end
+	--注册资源
+	GLOBAL.RegisterPrefabs(GLOBAL.Prefab("MOD_SMARTSIGNOTHER",nil,Assets,nil,true))
+	GLOBAL.TheSim:LoadPrefabs({"MOD_SMARTSIGNOTHER"})
+	table.insert(self.loadedprefabs,"MOD_SMARTSIGNOTHER")
+	
+end
+
+GLOBAL.TUNING.SMART_SIGN_DRAW_ENABLE = true
+GLOBAL.SMART_SIGN_DRAW = draw
+--示例代码  
+--[[
+if TUNING.SMART_SIGN_DRAW_ENABLE then
+		SMART_SIGN_DRAW(inst)
+	end
+	]]--
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:saltbox
+if GetModConfigData("SaltBox") == true then
+	AddPrefabPostInit("saltbox", draw)
+end
+
+--读取所有已加载的mod
+local enabledmods = GLOBAL.ModManager.enabledmods
+
+local thisname = env.modname 
+--hook一下加载prefabs 加载完prefabs在检索数据
+local oldRegisterPrefabs = GLOBAL.ModManager.RegisterPrefabs 
+
+GLOBAL.ModManager.RegisterPrefabs = function(self)
+	oldRegisterPrefabs(self)
+	
+	for i,modname in ipairs(enabledmods) do
+		local mod = GLOBAL.ModManager:GetMod(modname)
+		
+		--检索 modmain里注册的资源
+		if mod.Assets then 
+			local modatlas = {}
+			local modatlas_build = {}
+			--检索所有的贴图
+			for k,v in ipairs (mod.Assets) do
+				if v.type == "ATLAS" then 
+					table.insert(modatlas,v.file)
+				elseif v.type == "ATLAS_BUILD" then 
+					table.insert(modatlas_build,v.file)
+				end
+				
+			end
+			--判断是否有对应的ATLAS_BUILD
+			for k,v in ipairs(modatlas) do
+				local notfind = true
+				for x,y in ipairs(modatlas_build) do
+					if v == y then
+						notfind = false
+						break
+					end
+				end
+				if notfind then
+				--没有就插入
+				--因为注册的时候会自动搜索路径，所以自己注册的时候要还原回原来的路径
+				v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+				table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+				end
+			end
+		end
+		
+		--检索 prefabs 里注册的资源
+		if mod.Prefabs then
+			for n,prefab in pairs(mod.Prefabs) do
+				local modatlas = {}
+				local modatlas_build = {}
+				--检索所有的贴图
+				if prefab.assets then
+					for k,v in pairs (prefab.assets) do
+						if v.type == "ATLAS" then 
+							table.insert(modatlas,v.file)
+						elseif v.type == "ATLAS_BUILD" then 
+							table.insert(modatlas_build,v.file)
+						end
+					end
+				end
+				--判断是否有对应的ATLAS_BUILD
+				for k,v in ipairs(modatlas) do
+					local notfind = true
+					for x,y in ipairs(modatlas_build) do
+						if v == y then
+							notfind = false
+							break
+						end
+					end
+					if notfind then
+					--没有就插入
+					v = string.gsub(v,"%.%./mods/[^/]+/","",1)
+					table.insert(Assets,Asset("ATLAS_BUILD",v,256))
+					end
+				end
+			end
+		end
+	end
+	--注册资源
+	GLOBAL.RegisterPrefabs(GLOBAL.Prefab("MOD_SMARTSIGNOTHER",nil,Assets,nil,true))
+	GLOBAL.TheSim:LoadPrefabs({"MOD_SMARTSIGNOTHER"})
+	table.insert(self.loadedprefabs,"MOD_SMARTSIGNOTHER")
+	
+end
+
+GLOBAL.TUNING.SMART_SIGN_DRAW_ENABLE = true
+GLOBAL.SMART_SIGN_DRAW = draw
+--示例代码  
+--[[
+if TUNING.SMART_SIGN_DRAW_ENABLE then
+		SMART_SIGN_DRAW(inst)
+	end
+	]]--
+
+```
+
