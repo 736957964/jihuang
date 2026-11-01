@@ -8,7 +8,6 @@
     * [响应式 HUD 与 RPC 传输管道](anli/skills/01_UI与HUD界面交互类/skill_workshop_responsive_hud_and_rpc_pipeline.md)
   * 02 动作控制与状态机 StateGraph 类
     * [纯客机协程动作队列调度器 (1608191708)](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md)
-    * [真-神之火腿](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3705975335_3705975335.md)
     * [海钓随机物品](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_2710978964_2710978964.md)
     * [真-神之火腿](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3684078343_3684078343.md)
     * [小型拖拉机](anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_3748361628_3748361628.md)
