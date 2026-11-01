@@ -8436,8 +8436,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 15:47:11",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2812783478",
+      "name": "[API] Modded Skins",
+      "author": "Hornet, -Variant, Cunning Fox, & Erik",
+      "version": "2.8",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 15:56:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3407249185",
+      "name": "Smarter Craft Pot R(Server)",
+      "author": "lapislazuliStern、IvanX",
+      "version": "1.0.4",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 15:56:16",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3484720277",
+      "name": "无限耐久",
+      "author": "MK、Yuki_Spike、难搞",
+      "version": "2026.10.28V1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 15:56:16",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 15:47:11"
+  "lastUpdated": "2026-11-01 15:56:16"
 }
