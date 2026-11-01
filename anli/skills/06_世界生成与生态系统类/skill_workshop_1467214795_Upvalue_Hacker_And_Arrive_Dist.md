@@ -5616,3 +5616,66 @@ Usually you'll want to be making these changes from an AddPrefabPostInit("world"
 
 ```
 
+
+
+### 变体演进：Instantly Insights (Mod 2948410295)
+- **变体场景与切面**：收录来自工坊 Mod 2948410295 (`Instantly Insights`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2948410295)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(world)    
+	world:ListenForEvent("playeractivated", function(world, player)
+		if player == GLOBAL.ThePlayer and 
+		   player.components.skilltreeupdater and
+		   SKILLTREE_PREFABS[player.prefab]
+		then
+			GLOBAL.TheGenericKV:SetKV("fuelweaver_killed", "1")
+			GLOBAL.TheGenericKV:SetKV("celestialchampion_killed", "1")
+			player.components.skilltreeupdater:AddSkillXP(160)
+		end
+	end)
+end)
+
+```
+
+
+
+### 变体演进：Wormhole Marks [DST Continued] (Mod 3571706033)
+- **变体场景与切面**：收录来自工坊 Mod 3571706033 (`Wormhole Marks [DST Continued]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3571706033)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wormhole
+
+AddPrefabPostInit("wormhole", WormholePrefabPostInit)
+
+function WorldPrefabPostInit(inst)
+	if inst:HasTag("forest") then
+		inst:AddComponent("wormhole_counter")
+	elseif inst:HasTag("cave") then
+		inst:AddComponent("wormhole_counter")
+	end
+end
+
+if GLOBAL.TheNet:GetIsServer() or GLOBAL.TheNet:IsDedicated() then
+	AddPrefabPostInit("world", WorldPrefabPostInit)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+if GLOBAL.TheNet:GetIsServer() or GLOBAL.TheNet:IsDedicated() then
+	AddPrefabPostInit("world", WorldPrefabPostInit)
+end
+
+```
+

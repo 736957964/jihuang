@@ -12314,3 +12314,42 @@ AddClassPostConstruct("widgets/equipslot", InvSlotPostInit)
 
 ```
 
+
+
+### 变体演进：Wormwood Flowers Extender (Mod 1777679820)
+- **变体场景与切面**：收录来自工坊 Mod 1777679820 (`Wormwood Flowers Extender`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1777679820)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wormwood_plant_fx
+
+MODENV.AddPrefabPostInit("wormwood_plant_fx", function(inst)
+	inst:DoTaskInTime(0, function(inst)
+		local pos = inst:GetPosition()
+		
+		local owner = TheSim:FindEntities(pos.x, 0, pos.z, 2, {"plantkin"})[1]
+		if owner then
+			local build = GetBuild(owner)
+			if build then
+				local override = build
+				if build:find("stage") then
+					override = string.match(build, "wormwood_.+_")
+				end
+				override = override:gsub("wormwood", ""):gsub("_", "")
+				if override and BUILD_OVERRIDES[override] then
+					if SPECIAL_BANK[override] then
+						inst.AnimState:SetBank(BUILD_OVERRIDES[override])
+					end
+					inst.AnimState:SetBuild(BUILD_OVERRIDES[override])
+				end
+			end
+		end
+	end)
+end)
+
+```
+

@@ -8238,8 +8238,44 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-01 14:52:03",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "1777679820",
+      "name": "Wormwood Flowers Extender",
+      "author": "CunningFox, POWD3d4, Asura",
+      "version": "12.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 14:55:00",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2948410295",
+      "name": "Instantly Insights",
+      "author": "Geeris",
+      "version": "1.3.2",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 14:55:00",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3571706033",
+      "name": "Wormhole Marks [DST Continued]",
+      "author": "KittyKit",
+      "version": "1.0.0a",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 14:55:00",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3695812202",
+      "name": "Kira Yoshikage (KLQ)",
+      "author": "dog",
+      "version": "1.4.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:55:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 14:52:03"
+  "lastUpdated": "2026-11-01 14:55:00"
 }

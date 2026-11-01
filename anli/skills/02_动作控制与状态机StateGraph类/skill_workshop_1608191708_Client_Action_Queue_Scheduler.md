@@ -63920,3 +63920,113 @@ end)
 
 ```
 
+
+
+### 变体演进：Kira Yoshikage (KLQ) (Mod 3695812202)
+- **变体场景与切面**：收录来自工坊 Mod 3695812202 (`Kira Yoshikage (KLQ)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3695812202)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+local _player_classified = require "overrides/prefabs/kira_classified"
+AddPrefabPostInit("player_classified", _player_classified)
+
+GLOBAL.TUNING.KIRA = {}
+GLOBAL.TUNING.KIRA.SSTAND = GetModConfigData("SSTANDCDM") or 122
+GLOBAL.TUNING.KIRA.OBOMB = GetModConfigData("1bomb") or 120
+GLOBAL.TUNING.KIRA.SHA = GetModConfigData("SHA") or 118 
+GLOBAL.TUNING.KIRA.HAYATO = GetModConfigData("HAYATO") or 104 
+
+-----------------------------------------------------------
+-- 1. ฟังก์ชันตัวช่วย (Helper Functions)
+-----------------------------------------------------------
+local function ObeyCollision(inst)
+    if inst:HasTag("playerghost") then return end
+    inst.Physics:ClearCollisionMask()
+    inst.Physics:CollidesWith(GLOBAL.COLLISION.OBSTACLES)
+    inst.Physics:CollidesWith(GLOBAL.COLLISION.SMALLOBSTACLES)
+    inst.Physics:CollidesWith(GLOBAL.COLLISION.CHARACTERS)
+    inst.Physics:CollidesWith(GLOBAL.COLLISION.GIANTS)
+    if inst.components.drownable then
+        inst.components.drownable.enabled = true
+        if not inst:HasTag("playerghost") then inst.Physics:CollidesWith(GLOBAL.COLLISION.WORLD) end
+    else 
+        inst.Physics:CollidesWith(GLOBAL.COLLISION.GROUND) 
+    end
+    inst.Physics:Teleport(inst.Transform:GetWorldPosition())
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:kira
+
+AddPrefabPostInit("kira", function(inst)
+    inst:DoTaskInTime(0, AddDashInputHandler)
+
+    if not GLOBAL.TheWorld.ismastersim then return end
+
+    inst.kira_snapshots = {}
+    inst:DoPeriodicTask(1, function(inst)
+        if inst.components.health and not inst.components.health:IsDead() then
+            table.insert(inst.kira_snapshots, {
+                hp = inst.components.health:GetPercent(),
+                sp = (inst.components.sanity and inst.components.sanity:GetPercent()) or 1,
+                hg = (inst.components.hunger and inst.components.hunger:GetPercent()) or 1,
+                pwr = (inst.components.sbomb and inst.components.sbomb:GetPercent()) or 1,
+                pos = inst:GetPosition(),
+            })
+            
+            if #inst.kira_snapshots > 30 then
+                table.remove(inst.kira_snapshots, 1)
+            end
+        end
+    end)
+
+    if not inst.components.timer then inst:AddComponent("timer") end
+
+    inst:ListenForEvent("healthdelta", function(inst, data)
+        if data and data.amount and data.amount < 0 then
+            if inst:HasTag("standOn") and inst.components.health and inst.components.health.currenthealth <= 1 then
+                RevertToBody(inst)
+            end
+        end
+    end)
+
+    inst:ListenForEvent("minhealth", function(inst)
+        if inst:HasTag("standOn") then
+            RevertToBody(inst)
+        end
+    end)
+
+    inst:ListenForEvent("death", function(inst)
+        if inst.skinny_dummy and inst.skinny_dummy:IsValid() then
+            inst.skinny_dummy:Remove()
+            inst.skinny_dummy = nil
+        end
+        inst.kira_snapshots = {}
+    end)
+
+    inst:ListenForEvent("onremove", function(inst)
+        if inst.skinny_dummy and inst.skinny_dummy:IsValid() then
+            inst.skinny_dummy:Remove()
+            inst.skinny_dummy = nil
+        end
+    end)
+    
+    inst:DoPeriodicTask(0.5, function(inst)
+        if inst:HasTag("standOn") and inst.components.sbomb then
+            if inst.components.sbomb:GetCurrent() <= 0 then
+                if inst.components.talker then
+                    inst.components.talker:Say("Power depleted...")
+                end
+                RevertToBody(inst)
+            end
+        end
+    end)
+end)
+
+```
+
