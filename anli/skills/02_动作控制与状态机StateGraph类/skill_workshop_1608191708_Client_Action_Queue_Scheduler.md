@@ -58174,3 +58174,204 @@ local function NewweaponSpiceFn(weapon)
 
 ```
 
+
+
+### 变体演进：Adventure Mode (Mod 1847959350)
+- **变体场景与切面**：收录来自工坊 Mod 1847959350 (`Adventure Mode`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1847959350)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest_network
+
+AddPrefabPostInit("forest_network",function(worldnet)
+    -- print("forest_network")
+    _G.TUNING.TELEPORTATOMOD.adv_forcechar_prefabs = _G.net_string(worldnet.GUID, "adv_forcechar.player", "adv_forcechar_dirty")
+    _G.TUNING.TELEPORTATOMOD.adv_forcechar_prefabs:set("")
+    
+    if CLIENT_SIDE then
+        worldnet:ListenForEvent("adv_forcechar_dirty", function(worldnet) 
+            local adv_forcechar = _G.TUNING.TELEPORTATOMOD.adv_forcechar_prefabs:value()
+            -- print(adv_forcechar)
+            local adv_forcechar_split = string.split(adv_forcechar, "###") -- we send userid+###+prefab within netvar
+            local userid,prefab = adv_forcechar_split[1],adv_forcechar_split[2]
+            if TheNet:GetUserID()==userid then
+                local lobbyscreen = IsScreenInStackAndReturnScreen("LobbyScreen")
+                if lobbyscreen then
+                    lobbyscreen:Hide()
+                    -- print(prefab)
+                    lobbyscreen.character_for_game = prefab
+                    lobbyscreen.cb(lobbyscreen.character_for_game) -- currentskin is nil, but we will use the normal worldjump load to add the skin back
+                -- else
+                    -- print("no lobbyscreen")
+                end
+            -- else
+                -- print("userid unequal")
+                -- print(TheNet:GetUserID())
+                -- print(userid)
+            end
+        end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wormhole
+adv_savewormholes = {}  -- remember the wormholes and connect them in world post init
+AddPrefabPostInit("wormhole",function(inst)
+    if SERVER_SIDE and inst.components.teleporter then
+        inst:DoTaskInTime(0.5,function(inst) -- do it after _G.TUNING.TELEPORTATOMOD.LEVEL is checked (0.001) and before adv_savewormholes are used 0.1
+            if (GetModConfigData("withocean")=="wormholes" or GetModConfigData("withocean")=="oceanwormholes") then
+                -- print("ADV: execute wormhole saving if world with wormholes...level "..tostring(_G.TUNING.TELEPORTATOMOD.LEVEL))
+                local taskandroom = ""
+                if _G.TUNING.TELEPORTATOMOD.LEVEL~=nil and _G.TUNING.TELEPORTATOMOD.WORLDS[_G.TUNING.TELEPORTATOMOD.LEVEL]~=nil then
+                    if _G.TUNING.TELEPORTATOMOD.WORLDS[_G.TUNING.TELEPORTATOMOD.LEVEL].name=="Archipelago" then
+                        -- print("save wormholes")
+                        taskandroom = GetRoom(inst) -- eg "IslandHop_Start:2:SpiderMarsh"                
+                        if string.find(taskandroom,"IslandHop_Start") and (adv_savewormholes["wormhole1"]==nil or not adv_savewormholes["wormhole1"]:IsValid()) then
+                            adv_savewormholes["wormhole1"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Hounds") and (adv_savewormholes["wormhole2"]==nil or not adv_savewormholes["wormhole2"]:IsValid()) then
+                            adv_savewormholes["wormhole2"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Hounds") and (adv_savewormholes["wormhole3"]==nil or not adv_savewormholes["wormhole3"]:IsValid()) then
+                            adv_savewormholes["wormhole3"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Forest") and (adv_savewormholes["wormhole4"]==nil or not adv_savewormholes["wormhole4"]:IsValid()) then
+                            adv_savewormholes["wormhole4"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Forest") and (adv_savewormholes["wormhole5"]==nil or not adv_savewormholes["wormhole5"]:IsValid()) then
+                            adv_savewormholes["wormhole5"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Savanna") and (adv_savewormholes["wormhole6"]==nil or not adv_savewormholes["wormhole6"]:IsValid()) then
+                            adv_savewormholes["wormhole6"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Savanna") and (adv_savewormholes["wormhole7"]==nil or not adv_savewormholes["wormhole7"]:IsValid()) then
+                            adv_savewormholes["wormhole7"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Rocky") and (adv_savewormholes["wormhole8"]==nil or not adv_savewormholes["wormhole8"]:IsValid()) then
+                            adv_savewormholes["wormhole8"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Rocky") and (adv_savewormholes["wormhole9"]==nil or not adv_savewormholes["wormhole9"]:IsValid()) then
+                            adv_savewormholes["wormhole9"] = inst
+                        elseif string.find(taskandroom,"IslandHop_Merm") and (adv_savewormholes["wormhole10"]==nil or not adv_savewormholes["wormhole10"]:IsValid()) then
+                            adv_savewormholes["wormhole10"] = inst
+                        end
+                    elseif _G.TUNING.TELEPORTATOMOD.WORLDS[_G.TUNING.TELEPORTATOMOD.LEVEL].name=="Two Worlds" then -- there we only have 2 wormholes
+                        taskandroom = GetRoom(inst)
+                        -- print("connect wormholes")
+                        if _G.TheWorld.firsttwoworldswormhole==nil and string.find(taskandroom,"Land of Plenty") then
+                            _G.TheWorld.firsttwoworldswormhole = inst
+                        elseif _G.TheWorld.firsttwoworldswormhole~=nil and string.find(taskandroom,"The other side") and _G.TheWorld.firsttwoworldswormhole.components.teleporter.targetTeleporter==nil then
+                            inst.components.teleporter.targetTeleporter = _G.TheWorld.firsttwoworldswormhole
+                            _G.TheWorld.firsttwoworldswormhole.components.teleporter.targetTeleporter = inst
+                        end
+                    end
+                end
+            end
+        end)
+        inst:DoTaskInTime(2,function(inst)
+            if inst.components.teleporter.targetTeleporter==nil then
+                inst:Remove()
+            else
+                local pt = inst:GetPosition()
+                if adv_helpers.IsNearOcean(pt.x,pt.y,pt.z, 2) then
+                    local success = false
+                    success = adv_helpers.MoveInstAtLandPlotNearInst(inst,inst,8,0,8,4,4,2) -- move it a bit so it is not that near the ocean (otherwise player might fall into ocean)
+                    if not success then
+                        success = adv_helpers.MoveInstAtLandPlotNearInst(inst,inst,15,0,15,6,6,2) -- try again with bigger moves
+                    end
+                end
+            end
+            
+        end)
+    end
+end)
+
+
+-- following code from Baku/Loki99, thanks
+local sitonthrone =
+    _G.State{ 
+        name = "throne_sit",
+        tags = { "busy", "nopredict", "nomorph" },
+        onenter = function(inst)
+            inst.components.locomotor:StopMoving()
+            inst.AnimState:Hide("ARM_carry") 
+            inst.AnimState:Show("ARM_normal")
+            inst.AnimState:PlayAnimation("appear")
+            inst.AnimState:PushAnimation("throne_loop", true)
+        end,
+    }
+AddStategraphState("wilson", sitonthrone) -- instead of spawning a puppet, we simply put the real player char on the throne
+AddStategraphState("wilson_client", sitonthrone)
+local danceplayers =
+    _G.State{ 
+        name = "shadowdance",
+        tags = { "busy", "nopredict", "nomorph" },
+        onenter = function(inst)
+            inst:ClearBufferedAction()
+                        inst.components.locomotor:StopMoving()
+        if inst.components.playercontroller ~= nil then
+                inst.components.playercontroller:Enable(false)
+        end
+            if inst.AnimState:IsCurrentAnimation("run_pst") then
+                inst.AnimState:PushAnimation("emoteXL_pre_dance0")
+            else
+                inst.AnimState:PlayAnimation("emoteXL_pre_dance0")
+            end
+            inst.AnimState:PushAnimation("emoteXL_loop_dance0", true)
+        end,
+    }
+AddStategraphState("wilson", danceplayers) -- other players who will not sit on throne will shadowdance
+AddStategraphState("wilson_client", danceplayers)
+
+
+
+-- ##################################################################
+
+-- code from wingsummer (https://steamcommunity.com/sharedfiles/filedetails/?id=3189631997), 
+-- slightly adjusted, disable sharkboi ice island:
+local function removeIceIsland(inst)
+    -- don't Initialize the Ice Island
+    inst.InitializeSharkBoiManager = function(...) end
+
+    -- block the callback
+    inst.OnSeasonChange = function(...) end		
+    inst.OnCooldownEnd = function(...) end
+
+    -- block the iceberg generation
+    inst.SetArenaState = function(...) end
+    inst.OnLoad = function(self,...) 
+        self.arena = nil
+    end
+
+    -- delete the Ice Island
+    inst.SetDesiredArenaRadius = function(self,...)
+        if self.arena~=nil then
+          self.arena.radius = -1
+        end
+    end
+end
+-- register the callback to modify 'sharkboimanager'
+AddClassPostConstruct("components/sharkboimanager", removeIceIsland)
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+```
+
+
+
+### 变体演进：WOOLPOPE 唔咩咩教主 (Mod 3677942207)
+- **变体场景与切面**：收录来自工坊 Mod 3677942207 (`WOOLPOPE 唔咩咩教主`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3677942207)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+

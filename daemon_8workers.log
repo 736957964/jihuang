@@ -7129,3 +7129,26 @@
 [2026-11-01 13:42:08] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
 [2026-11-01 13:42:08] Reducer: 成功将 Mod 3798485532 (沃利全面重做/Warly Rework) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 13:42:08] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:42:15] Git 自动提交并推送成功！
+[2026-11-01 13:42:16] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 13:42:16] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 13:42:46] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['1098843500', '1847959350', '3677942207', '3739028801', '3118627881', '3785624072']
+[2026-11-01 13:42:46] SteamCMD 下载 1098843500 ...
+[2026-11-01 13:42:46] SteamCMD 下载 1847959350 ...
+[2026-11-01 13:42:46] SteamCMD 下载 3739028801 ...
+[2026-11-01 13:42:46] SteamCMD 下载 3677942207 ...
+[2026-11-01 13:42:46] SteamCMD 下载 3118627881 ...
+[2026-11-01 13:42:46] SteamCMD 下载 3785624072 ...
+[2026-11-01 13:44:09] Worker [1098843500] 过滤拦截: Spanish Client (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 13:45:57] Worker [1847959350] 成功解析入库暂存区 -> Adventure Mode (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 13:47:12] Worker [3739028801] 过滤拦截: Universal Keybinds (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 13:48:18] Worker [3677942207] 成功解析入库暂存区 -> WOOLPOPE 唔咩咩教主 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 13:49:37] Worker [3118627881] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 13:49:55] Worker [3785624072] 成功解析入库暂存区 -> Possesed Shadow (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 13:49:55] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 13:49:55] Reducer: 成功将 Mod 1847959350 (Adventure Mode) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:49:55] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:49:55] Reducer: 成功将 Mod 3677942207 (WOOLPOPE 唔咩咩教主) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:49:56] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 13:49:56] Reducer: 成功将 Mod 3785624072 (Possesed Shadow) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 13:49:56] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md

@@ -7905,8 +7905,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 13:42:08",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1847959350",
+      "name": "Adventure Mode",
+      "author": "Serpens",
+      "version": "0.9971",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:49:55",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3677942207",
+      "name": "WOOLPOPE 唔咩咩教主",
+      "author": "Nekoyama 玉萍经纬",
+      "version": "7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:49:55",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3785624072",
+      "name": "Possesed Shadow",
+      "author": "Letitbe & Forming Rain & Black Bear",
+      "version": "1.0.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 13:49:56",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:42:08"
+  "lastUpdated": "2026-11-01 13:49:56"
 }

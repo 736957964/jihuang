@@ -11889,3 +11889,29 @@ end)
 
 ```
 
+
+
+### 变体演进：Possesed Shadow (Mod 3785624072)
+- **变体场景与切面**：收录来自工坊 Mod 3785624072 (`Possesed Shadow`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3785624072)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:shadow_battleaxe
+end
+AddPrefabPostInit("shadow_battleaxe", function(inst)
+    local _SetLevel = inst.SetLevel
+    inst.SetLevel = function(...)
+        _SetLevel(...)
+        local owner = inst.components.inventoryitem.owner
+        if owner then
+            owner:PushEvent("axelevelchange", {axe = inst})
+        end
+    end
+end)
+
+```
+
