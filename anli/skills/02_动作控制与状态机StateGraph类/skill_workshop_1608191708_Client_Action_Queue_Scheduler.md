@@ -29490,3 +29490,1921 @@ end)
 
 ```
 
+
+
+### 变体演进：______ (Mod 3253273657)
+- **变体场景与切面**：收录来自工坊 Mod 3253273657 (`______`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3253273657)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:globalmapicon
+
+AddPrefabPostInit("globalmapicon", function(inst)
+    inst.playername = net_string(inst.GUID, "ciallo_gps.playername", "dirty")
+    inst.colour_r = net_byte(inst.GUID, "ciallo_gps.colour_r", "dirty")
+    inst.colour_g = net_byte(inst.GUID, "ciallo_gps.colour_g", "dirty")
+    inst.colour_b = net_byte(inst.GUID, "ciallo_gps.colour_b", "dirty")
+    if TheWorld.ismastersim then
+        if not inst.components.maprevealer then
+            inst:AddComponent("maprevealer") --地图揭示
+        end
+        inst.BindToPlayer = ciallo_gps.BindToPlayer
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if TheWorld.ismastersim then
+        ciallo_gps.WorldMapRecord(inst)
+        inst:ListenForEvent("ms_playerjoined", function(world, player) ciallo_gps.OnPlayerJoin(player) end)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:yyxkc
+
+AddComponentPostInit("yyxkc",function(self)
+    self.foxEquip = foxEquip
+    self.OnGetItemFromPlayer = OnGetItemFromPlayer
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:boat
+if Config.boatCleanTimeout then
+    AddPrefabPostInit("boat", BoatCleaner.init)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+
+AddComponentPostInit("health", function(self)
+    ciallo.SetAbsorb(self)
+    ciallo.Health(self)
+end)
+
+```
+
+
+
+### 变体演进：Language (Mod 3704300915)
+- **变体场景与切面**：收录来自工坊 Mod 3704300915 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3704300915)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playervision
+
+AddComponentPostInit("playervision", function(self)
+	local old_ForceGoggleVision = self.ForceGoggleVision
+	if old_ForceGoggleVision == nil then
+		return
+	end
+	function self:ForceGoggleVision(force, ...)
+		local eye_on = ZheiXinglanEyeWantsGoggles(self.inst)
+		force = force or eye_on
+		return old_ForceGoggleVision(self, force, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:zhei_xinglan
+-- 客机：常驻刷新队友听感音量
+AddPrefabPostInit("zhei_xinglan", function(inst)
+	if TheNet ~= nil and TheNet:IsDedicated() then
+		return
+	end
+	inst:DoTaskInTime(0, function(i)
+		if i == nil or not i:IsValid() or i._zhei_emote_music_vol_task ~= nil then
+			return
+		end
+		i._zhei_emote_music_vol_task = i:DoPeriodicTask(
+			ZHEI_DANCE_MUSIC_VOL_TICK,
+			ZheiXinglanUpdateEmoteMusicVolume
+		)
+		ZheiXinglanUpdateEmoteMusicVolume(i)
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+	local handler = sg.actionhandlers[ACTIONS.CASTAOE]
+	if handler ~= nil and type(handler.deststate) == "function" then
+		local old_deststate = handler.deststate
+		handler.deststate = function(inst, action, ...)
+			if action.invobject ~= nil and (
+				action.invobject:HasTag("zhei_xinglan_life_rejuvenation_cursor")
+				or action.invobject:HasTag("zhei_xinglan_repair_magic_cursor")
+				or action.invobject:HasTag("zhei_xinglan_yishang_cursor")
+			) then
+				return LIFE_REJUV_CAST_STATE
+			end
+			if ZheiWanJiangWantsFastCast(inst, action) then
+				return WANJIANG_FAST_CAST_STATE
+			end
+			return old_deststate(inst, action, ...)
+		end
+	end
+
+	local emote_state = sg.states ~= nil and sg.states.emote or nil
+	if emote_state ~= nil and type(emote_state.onenter) == "function" then
+		local old_onenter = emote_state.onenter
+		emote_state.onenter = function(inst, data)
+			local is_xl = inst.prefab == "zhei_xinglan"
+			local soundname = is_xl and ZheiXinglanCustomDanceSoundName(data) or nil
+			-- data 可能为 nil（短接：soundname 为 nil 时不会读 data 字段）
+			local want_dance_music = soundname ~= nil
+				and data ~= nil
+				and data.sound == nil
+				and data.soundoverride == nil
+			local want_carol_music = is_xl and ZheiXinglanIsCarolEmote(data)
+			if want_dance_music then
+				local track = ZheiXinglanPickDanceTrack()
+				inst._zhei_dance_track = track
+				-- DoEmoteSound 读 *soundoverride；本次表情内两字段都指向同一随机曲
+				inst.dancesoundoverride = track
+				inst.stepsoundoverride = track
+				local newdata = {}
+				for k, v in pairs(data) do
+					newdata[k] = v
+				end
+				newdata.soundoverride = soundname
+				newdata.soundlooped = true
+				data = newdata
+			elseif want_carol_music then
+				-- 与 /dance 相同：每次 /carol 在 andreas / 浮光 间随机
+				inst.carolsoundoverride = ZheiXinglanPickCarolTrack()
+				local newdata = {}
+				for k, v in pairs(data) do
+					newdata[k] = v
+				end
+				newdata.soundoverride = "carol"
+				newdata.soundlooped = true
+				data = newdata
+			end
+			old_onenter(inst, data)
+			-- 舞狮帽等会在 onenter 内替换 data 并丢掉 soundoverride；若仍在跳舞且未播上，补一次
+			if want_dance_music and inst.sg ~= nil and inst.sg:HasStateTag("dancing") then
+				ZheiXinglanEnsureDanceMusic(inst)
+			end
+			if want_carol_music and inst:IsValid() then
+				local delay = (data ~= nil and type(data.sounddelay) == "number" and data.sounddelay > 0)
+					and (data.sounddelay + 0.05)
+					or 0.05
+				inst:DoTaskInTime(delay, ZheiXinglanEnsureCarolMusic)
+			elseif is_xl and inst:IsValid() then
+				local delay = (data ~= nil and type(data.sounddelay) == "number" and data.sounddelay > 0)
+					and (data.sounddelay + 0.05)
+					or 0
+				if delay > 0 then
+					inst:DoTaskInTime(delay, ZheiXinglanUpdateEmoteMusicVolume)
+				else
+					ZheiXinglanUpdateEmoteMusicVolume(inst)
+				end
+			end
+		end
+	end
+end)
+
+AddStategraphPostInit("wilson_client", function(sg)
+	local handler = sg.actionhandlers[ACTIONS.CASTAOE]
+	if handler == nil or type(handler.deststate) ~= "function" then
+		return
+	end
+	local old_deststate = handler.deststate
+	handler.deststate = function(inst, action, ...)
+		if action.invobject ~= nil and (
+			action.invobject:HasTag("zhei_xinglan_life_rejuvenation_cursor")
+			or action.invobject:HasTag("zhei_xinglan_repair_magic_cursor")
+			or action.invobject:HasTag("zhei_xinglan_yishang_cursor")
+		) then
+			return LIFE_REJUV_CAST_STATE
+		end
+		if ZheiWanJiangWantsFastCast(inst, action) then
+			return WANJIANG_FAST_CAST_STATE
+		end
+		return old_deststate(inst, action, ...)
+	end
+
+	local state = sg.states[LIFE_REJUV_CAST_STATE]
+	if state == nil then
+		return
+	end
+	local old_onupdate = state.onupdate
+	state.onupdate = function(inst)
+		if inst._zhei_life_rejuv_casting then
+			if inst.sg:ServerStateMatches() then
+				inst._zhei_life_rejuv_casting = nil
+				if inst.entity:FlattenMovementPrediction() then
+					inst.sg:GoToState("idle", "noanim")
+				end
+			end
+			return
+		end
+		if inst._zhei_repair_magic_casting then
+			if inst.sg:ServerStateMatches() then
+				inst._zhei_repair_magic_casting = nil
+				if inst.entity:FlattenMovementPrediction() then
+					inst.sg:GoToState("idle", "noanim")
+				end
+			end
+			return
+		end
+		if inst._zhei_yishang_casting then
+			if inst.sg:ServerStateMatches() then
+				inst._zhei_yishang_casting = nil
+				if inst.entity:FlattenMovementPrediction() then
+					inst.sg:GoToState("idle", "noanim")
+				end
+			end
+			return
+		end
+		if old_onupdate ~= nil then
+			return old_onupdate(inst)
+		end
+	end
+end)
+
+AddComponentPostInit("playercontroller", function(self)
+	if self._zhei_life_rejuv_pc_patched then
+		return
+	end
+	self._zhei_life_rejuv_pc_patched = true
+
+	local old_GetGroundUseAction = self.GetGroundUseAction
+	if type(old_GetGroundUseAction) == "function" then
+		function self:GetGroundUseAction(position, spellbook)
+			local rejuv = ZheiGetLifeRejuvCursor(self)
+			if rejuv ~= nil then
+				spellbook = rejuv
+			else
+				local repair = ZheiGetRepairMagicCursor(self)
+				if repair ~= nil then
+					spellbook = repair
+				else
+					local yishang = ZheiGetYishangCursor(self)
+					if yishang ~= nil then
+						spellbook = yishang
+					end
+				end
+			end
+			return old_GetGroundUseAction(self, position, spellbook)
+		end
+	end
+
+	local old_OnControl = self.OnControl
+	if type(old_OnControl) == "function" then
+		function self:OnControl(control, down)
+			if down and control == CONTROL_CANCEL and self.inst ~= nil then
+				if ZheiIsLifeRejuvCastInProgress(self.inst) then
+					ZheiRequestServerAbortLifeRejuv(self.inst)
+					return
+				end
+				if ZheiIsRepairMagicCastInProgress(self.inst) then
+					ZheiRequestServerAbortRepairMagic(self.inst)
+					return
+				end
+				if ZheiIsYishangCastInProgress(self.inst) then
+					ZheiRequestServerAbortYishang(self.inst)
+					return
+				end
+			end
+			if down and control == CONTROL_PRIMARY and self:IsAOETargeting() then
+				if ZheiGetLifeRejuvCursor(self) ~= nil and ZheiTryClientCastLifeRejuv(self) then
+					return
+				end
+				if ZheiGetRepairMagicCursor(self) ~= nil and ZheiTryClientCastRepairMagic(self) then
+					return
+				end
+				if ZheiGetYishangCursor(self) ~= nil and ZheiTryClientCastYishang(self) then
+					return
+				end
+			end
+			return old_OnControl(self, control, down)
+		end
+	end
+
+	local old_CancelAOETargeting = self.CancelAOETargeting
+	if type(old_CancelAOETargeting) == "function" then
+		function self:CancelAOETargeting(...)
+			local had_rejuv = ZheiGetLifeRejuvCursor(self) ~= nil
+			local had_repair = ZheiGetRepairMagicCursor(self) ~= nil
+			local had_yishang = ZheiGetYishangCursor(self) ~= nil
+			local suppress_rejuv = self.inst ~= nil and self.inst._zhei_life_rejuv_suppress_server_clear
+			local suppress_repair = self.inst ~= nil and self.inst._zhei_repair_magic_suppress_server_clear
+			local suppress_yishang = self.inst ~= nil and self.inst._zhei_yishang_suppress_server_clear
+			local ret = old_CancelAOETargeting(self, ...)
+			if had_rejuv and not suppress_rejuv and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearLifeRejuv(self.inst)
+			end
+			if had_repair and not suppress_repair and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearRepairMagic(self.inst)
+			end
+			if had_yishang and not suppress_yishang and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearYishang(self.inst)
+			end
+			return ret
+		end
+	end
+end)
+
+AddComponentPostInit("playeractionpicker", function(self)
+	if self._zhei_life_rejuv_pap_patched then
+		return
+	end
+	self._zhei_life_rejuv_pap_patched = true
+
+	local old_DoGetMouseActions = self.DoGetMouseActions
+	if type(old_DoGetMouseActions) == "function" then
+		function self:DoGetMouseActions(position, target, spellbook)
+			local pc = self.inst.components.playercontroller
+			local rejuv = pc ~= nil and ZheiGetLifeRejuvCursor(pc) or nil
+			if rejuv ~= nil then
+				spellbook = rejuv
+			else
+				local repair = pc ~= nil and ZheiGetRepairMagicCursor(pc) or nil
+				if repair ~= nil then
+					spellbook = repair
+				else
+					local yishang = pc ~= nil and ZheiGetYishangCursor(pc) or nil
+					if yishang ~= nil then
+						spellbook = yishang
+					end
+				end
+			end
+			-- 原版：IsAOETargeting 为真时若 reticule.targetpos 尚未就绪，会对 nil 调 :Get() 崩溃
+			if position == nil and pc ~= nil and pc.IsAOETargeting ~= nil and pc:IsAOETargeting() then
+				local aoepos = pc.GetAOETargetingPos ~= nil and pc:GetAOETargetingPos() or nil
+				if aoepos == nil then
+					return nil, nil
+				end
+			end
+			return old_DoGetMouseActions(self, position, target, spellbook)
+		end
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopLifeRejuvClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayLifeRejuvClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_life_rejuv_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiLifeRejuvCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiLifeRejuvResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiLifeRejuvStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearLifeRejuv(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	-- 点地收圈选时的误 cancel 仍忽略；真取消走 life_rejuvenation_abort_cast
+	if player._zhei_life_rejuv_cast_task ~= nil or player._zhei_life_rejuv_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopRepairMagicClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayRepairMagicClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_repair_magic_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiRepairMagicCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiRepairMagicResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiRepairMagicStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearRepairMagic(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	if player._zhei_repair_magic_cast_task ~= nil or player._zhei_repair_magic_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopYishangClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayYishangClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_yishang_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiYishangCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiYishangResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiYishangStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearYishang(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	if player._zhei_yishang_cast_task ~= nil or player._zhei_yishang_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "starsky_map_pick_vis", function()
+	local ThePlayer = GLOBAL.ThePlayer
+	if ThePlayer ~= nil then
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(sg)
+	local handler = sg.actionhandlers[ACTIONS.CASTAOE]
+	if handler == nil or type(handler.deststate) ~= "function" then
+		return
+	end
+	local old_deststate = handler.deststate
+	handler.deststate = function(inst, action, ...)
+		if action.invobject ~= nil and (
+			action.invobject:HasTag("zhei_xinglan_life_rejuvenation_cursor")
+			or action.invobject:HasTag("zhei_xinglan_repair_magic_cursor")
+			or action.invobject:HasTag("zhei_xinglan_yishang_cursor")
+		) then
+			return LIFE_REJUV_CAST_STATE
+		end
+		if ZheiWanJiangWantsFastCast(inst, action) then
+			return WANJIANG_FAST_CAST_STATE
+		end
+		return old_deststate(inst, action, ...)
+	end
+
+	local state = sg.states[LIFE_REJUV_CAST_STATE]
+	if state == nil then
+		return
+	end
+	local old_onupdate = state.onupdate
+	state.onupdate = function(inst)
+		if inst._zhei_life_rejuv_casting then
+			if inst.sg:ServerStateMatches() then
+				inst._zhei_life_rejuv_casting = nil
+				if inst.entity:FlattenMovementPrediction() then
+					inst.sg:GoToState("idle", "noanim")
+				end
+			end
+			return
+		end
+		if inst._zhei_repair_magic_casting then
+			if inst.sg:ServerStateMatches() then
+				inst._zhei_repair_magic_casting = nil
+				if inst.entity:FlattenMovementPrediction() then
+					inst.sg:GoToState("idle", "noanim")
+				end
+			end
+			return
+		end
+		if inst._zhei_yishang_casting then
+			if inst.sg:ServerStateMatches() then
+				inst._zhei_yishang_casting = nil
+				if inst.entity:FlattenMovementPrediction() then
+					inst.sg:GoToState("idle", "noanim")
+				end
+			end
+			return
+		end
+		if old_onupdate ~= nil then
+			return old_onupdate(inst)
+		end
+	end
+end)
+
+AddComponentPostInit("playercontroller", function(self)
+	if self._zhei_life_rejuv_pc_patched then
+		return
+	end
+	self._zhei_life_rejuv_pc_patched = true
+
+	local old_GetGroundUseAction = self.GetGroundUseAction
+	if type(old_GetGroundUseAction) == "function" then
+		function self:GetGroundUseAction(position, spellbook)
+			local rejuv = ZheiGetLifeRejuvCursor(self)
+			if rejuv ~= nil then
+				spellbook = rejuv
+			else
+				local repair = ZheiGetRepairMagicCursor(self)
+				if repair ~= nil then
+					spellbook = repair
+				else
+					local yishang = ZheiGetYishangCursor(self)
+					if yishang ~= nil then
+						spellbook = yishang
+					end
+				end
+			end
+			return old_GetGroundUseAction(self, position, spellbook)
+		end
+	end
+
+	local old_OnControl = self.OnControl
+	if type(old_OnControl) == "function" then
+		function self:OnControl(control, down)
+			if down and control == CONTROL_CANCEL and self.inst ~= nil then
+				if ZheiIsLifeRejuvCastInProgress(self.inst) then
+					ZheiRequestServerAbortLifeRejuv(self.inst)
+					return
+				end
+				if ZheiIsRepairMagicCastInProgress(self.inst) then
+					ZheiRequestServerAbortRepairMagic(self.inst)
+					return
+				end
+				if ZheiIsYishangCastInProgress(self.inst) then
+					ZheiRequestServerAbortYishang(self.inst)
+					return
+				end
+			end
+			if down and control == CONTROL_PRIMARY and self:IsAOETargeting() then
+				if ZheiGetLifeRejuvCursor(self) ~= nil and ZheiTryClientCastLifeRejuv(self) then
+					return
+				end
+				if ZheiGetRepairMagicCursor(self) ~= nil and ZheiTryClientCastRepairMagic(self) then
+					return
+				end
+				if ZheiGetYishangCursor(self) ~= nil and ZheiTryClientCastYishang(self) then
+					return
+				end
+			end
+			return old_OnControl(self, control, down)
+		end
+	end
+
+	local old_CancelAOETargeting = self.CancelAOETargeting
+	if type(old_CancelAOETargeting) == "function" then
+		function self:CancelAOETargeting(...)
+			local had_rejuv = ZheiGetLifeRejuvCursor(self) ~= nil
+			local had_repair = ZheiGetRepairMagicCursor(self) ~= nil
+			local had_yishang = ZheiGetYishangCursor(self) ~= nil
+			local suppress_rejuv = self.inst ~= nil and self.inst._zhei_life_rejuv_suppress_server_clear
+			local suppress_repair = self.inst ~= nil and self.inst._zhei_repair_magic_suppress_server_clear
+			local suppress_yishang = self.inst ~= nil and self.inst._zhei_yishang_suppress_server_clear
+			local ret = old_CancelAOETargeting(self, ...)
+			if had_rejuv and not suppress_rejuv and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearLifeRejuv(self.inst)
+			end
+			if had_repair and not suppress_repair and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearRepairMagic(self.inst)
+			end
+			if had_yishang and not suppress_yishang and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearYishang(self.inst)
+			end
+			return ret
+		end
+	end
+end)
+
+AddComponentPostInit("playeractionpicker", function(self)
+	if self._zhei_life_rejuv_pap_patched then
+		return
+	end
+	self._zhei_life_rejuv_pap_patched = true
+
+	local old_DoGetMouseActions = self.DoGetMouseActions
+	if type(old_DoGetMouseActions) == "function" then
+		function self:DoGetMouseActions(position, target, spellbook)
+			local pc = self.inst.components.playercontroller
+			local rejuv = pc ~= nil and ZheiGetLifeRejuvCursor(pc) or nil
+			if rejuv ~= nil then
+				spellbook = rejuv
+			else
+				local repair = pc ~= nil and ZheiGetRepairMagicCursor(pc) or nil
+				if repair ~= nil then
+					spellbook = repair
+				else
+					local yishang = pc ~= nil and ZheiGetYishangCursor(pc) or nil
+					if yishang ~= nil then
+						spellbook = yishang
+					end
+				end
+			end
+			-- 原版：IsAOETargeting 为真时若 reticule.targetpos 尚未就绪，会对 nil 调 :Get() 崩溃
+			if position == nil and pc ~= nil and pc.IsAOETargeting ~= nil and pc:IsAOETargeting() then
+				local aoepos = pc.GetAOETargetingPos ~= nil and pc:GetAOETargetingPos() or nil
+				if aoepos == nil then
+					return nil, nil
+				end
+			end
+			return old_DoGetMouseActions(self, position, target, spellbook)
+		end
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopLifeRejuvClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayLifeRejuvClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_life_rejuv_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiLifeRejuvCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiLifeRejuvResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiLifeRejuvStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearLifeRejuv(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	-- 点地收圈选时的误 cancel 仍忽略；真取消走 life_rejuvenation_abort_cast
+	if player._zhei_life_rejuv_cast_task ~= nil or player._zhei_life_rejuv_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopRepairMagicClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayRepairMagicClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_repair_magic_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiRepairMagicCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiRepairMagicResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiRepairMagicStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearRepairMagic(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	if player._zhei_repair_magic_cast_task ~= nil or player._zhei_repair_magic_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopYishangClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayYishangClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_yishang_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiYishangCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiYishangResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiYishangStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearYishang(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	if player._zhei_yishang_cast_task ~= nil or player._zhei_yishang_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "starsky_map_pick_vis", function()
+	local ThePlayer = GLOBAL.ThePlayer
+	if ThePlayer ~= nil then
+		ThePlayer._zhei_starsky_client_pick_pending = true
+	end
+end)
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "starsky_map_pick_clear_vis", function()
+	local ThePlayer = GLOBAL.ThePlayer
+	if ThePlayer ~= nil then
+		ThePlayer._zhei_starsky_client_pick_pending = nil
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "starsky_map_closed", function(player)
+	if player == nil or not player:IsValid() or TheWorld == nil or not TheWorld.ismastersim then
+		return
+	end
+	local world = TheWorld
+	local delay = (GLOBAL.FRAMES ~= nil and 2 * GLOBAL.FRAMES) or (2 / 30)
+	local captured_session = player._zhei_starsky_map_session or 0
+	world:DoTaskInTime(delay, function()
+		if world == nil or not world:IsValid() or player == nil or not player:IsValid() then
+			return
+		end
+		-- 关图 RPC 排队期间若玩家又点了「选择星空基站」，会话号已增加；勿用旧关图播 MAP_CANCELLED / 清 map_armed（否则会大地图打不开+误播「选择已取消」）
+		if (player._zhei_starsky_map_session or 0) > captured_session then
+			player._zhei_starsky_map_umbrella = nil
+			return
+		end
+		if player._zhei_starsky_map_umbrella ~= nil and player._zhei_starsky_map_umbrella:IsValid() then
+			local u = player._zhei_starsky_map_umbrella
+			local picked = u._zhei_starsky_pad_ready ~= nil and u._zhei_starsky_pad_ready:value()
+			-- 选点已成功 / 即将成功：apply_starsky_map_pick 已设标记
+			if picked or player._zhei_starsky_pick_committed then
+				player._zhei_starsky_map_umbrella = nil
+				return
+			end
+			-- 2帧后仍未选点：云服上 MapAction 可能还在路上，再等一会儿
+			-- 避免 starsky_map_closed RPC 抢在 MapAction 前到达导致清 map_armed →
+			-- apply_starsky_map_pick 因 map_armed=false 失败
+			world:DoTaskInTime(0.5, function()
+				if world == nil or not world:IsValid() or player == nil or not player:IsValid() then
+					return
+				end
+				if (player._zhei_starsky_map_session or 0) > captured_session then
+					player._zhei_starsky_map_umbrella = nil
+					return
+				end
+				if player._zhei_starsky_map_umbrella ~= nil and player._zhei_starsky_map_umbrella:IsValid() then
+					local u2 = player._zhei_starsky_map_umbrella
+					local picked2 = u2._zhei_starsky_pad_ready ~= nil and u2._zhei_starsky_pad_ready:value()
+					if picked2 or player._zhei_starsky_pick_committed then
+						player._zhei_starsky_map_umbrella = nil
+						return
+					end
+					local say = rawget(GLOBAL, "ZheiStarskyFlowSay")
+					if say ~= nil then
+						say(player, "MAP_CANCELLED")
+					end
+					if u2._zhei_starsky_map_armed ~= nil then
+						u2._zhei_starsky_map_armed:set(false)
+					end
+				end
+				player._zhei_starsky_map_umbrella = nil
+			end)
+		else
+			player._zhei_starsky_map_umbrella = nil
+		end
+	end)
+end)
+
+-- 人物三维与等级 TUNING：须在 modimport 等级脚本之前，避免加载时读到未写入的配置
+TUNING.ZHEI_XINGLAN_HEALTH = 200
+-- 等级满（与 ZHEI_XINGLAN_MAX_LEVEL 一致）时的生命上限；每升一级增量 = (此项 - HEALTH) / MAX_LEVEL
+TUNING.ZHEI_XINGLAN_MAX_HEALTH_CAP = 350
+TUNING.ZHEI_XINGLAN_HUNGER = 200
+TUNING.ZHEI_XINGLAN_SANITY = 150
+-- 食物记忆（可配置关闭）：重复吃同种料理（调味按 basename）收益递减，最高档可负；约 3 天遗忘
+-- 倍率下标 = 记忆次数（第 1 次吃倍率 1.0，不在表内；再吃读 [1]、[2]…）
+do
+	local fm = GetModConfigData("zhei_xinglan_food_memory")
+	if fm == nil then
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+	if self._zhei_life_rejuv_pc_patched then
+		return
+	end
+	self._zhei_life_rejuv_pc_patched = true
+
+	local old_GetGroundUseAction = self.GetGroundUseAction
+	if type(old_GetGroundUseAction) == "function" then
+		function self:GetGroundUseAction(position, spellbook)
+			local rejuv = ZheiGetLifeRejuvCursor(self)
+			if rejuv ~= nil then
+				spellbook = rejuv
+			else
+				local repair = ZheiGetRepairMagicCursor(self)
+				if repair ~= nil then
+					spellbook = repair
+				else
+					local yishang = ZheiGetYishangCursor(self)
+					if yishang ~= nil then
+						spellbook = yishang
+					end
+				end
+			end
+			return old_GetGroundUseAction(self, position, spellbook)
+		end
+	end
+
+	local old_OnControl = self.OnControl
+	if type(old_OnControl) == "function" then
+		function self:OnControl(control, down)
+			if down and control == CONTROL_CANCEL and self.inst ~= nil then
+				if ZheiIsLifeRejuvCastInProgress(self.inst) then
+					ZheiRequestServerAbortLifeRejuv(self.inst)
+					return
+				end
+				if ZheiIsRepairMagicCastInProgress(self.inst) then
+					ZheiRequestServerAbortRepairMagic(self.inst)
+					return
+				end
+				if ZheiIsYishangCastInProgress(self.inst) then
+					ZheiRequestServerAbortYishang(self.inst)
+					return
+				end
+			end
+			if down and control == CONTROL_PRIMARY and self:IsAOETargeting() then
+				if ZheiGetLifeRejuvCursor(self) ~= nil and ZheiTryClientCastLifeRejuv(self) then
+					return
+				end
+				if ZheiGetRepairMagicCursor(self) ~= nil and ZheiTryClientCastRepairMagic(self) then
+					return
+				end
+				if ZheiGetYishangCursor(self) ~= nil and ZheiTryClientCastYishang(self) then
+					return
+				end
+			end
+			return old_OnControl(self, control, down)
+		end
+	end
+
+	local old_CancelAOETargeting = self.CancelAOETargeting
+	if type(old_CancelAOETargeting) == "function" then
+		function self:CancelAOETargeting(...)
+			local had_rejuv = ZheiGetLifeRejuvCursor(self) ~= nil
+			local had_repair = ZheiGetRepairMagicCursor(self) ~= nil
+			local had_yishang = ZheiGetYishangCursor(self) ~= nil
+			local suppress_rejuv = self.inst ~= nil and self.inst._zhei_life_rejuv_suppress_server_clear
+			local suppress_repair = self.inst ~= nil and self.inst._zhei_repair_magic_suppress_server_clear
+			local suppress_yishang = self.inst ~= nil and self.inst._zhei_yishang_suppress_server_clear
+			local ret = old_CancelAOETargeting(self, ...)
+			if had_rejuv and not suppress_rejuv and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearLifeRejuv(self.inst)
+			end
+			if had_repair and not suppress_repair and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearRepairMagic(self.inst)
+			end
+			if had_yishang and not suppress_yishang and self.inst ~= nil and self.inst:IsValid() then
+				ZheiRequestServerClearYishang(self.inst)
+			end
+			return ret
+		end
+	end
+end)
+
+AddComponentPostInit("playeractionpicker", function(self)
+	if self._zhei_life_rejuv_pap_patched then
+		return
+	end
+	self._zhei_life_rejuv_pap_patched = true
+
+	local old_DoGetMouseActions = self.DoGetMouseActions
+	if type(old_DoGetMouseActions) == "function" then
+		function self:DoGetMouseActions(position, target, spellbook)
+			local pc = self.inst.components.playercontroller
+			local rejuv = pc ~= nil and ZheiGetLifeRejuvCursor(pc) or nil
+			if rejuv ~= nil then
+				spellbook = rejuv
+			else
+				local repair = pc ~= nil and ZheiGetRepairMagicCursor(pc) or nil
+				if repair ~= nil then
+					spellbook = repair
+				else
+					local yishang = pc ~= nil and ZheiGetYishangCursor(pc) or nil
+					if yishang ~= nil then
+						spellbook = yishang
+					end
+				end
+			end
+			-- 原版：IsAOETargeting 为真时若 reticule.targetpos 尚未就绪，会对 nil 调 :Get() 崩溃
+			if position == nil and pc ~= nil and pc.IsAOETargeting ~= nil and pc:IsAOETargeting() then
+				local aoepos = pc.GetAOETargetingPos ~= nil and pc:GetAOETargetingPos() or nil
+				if aoepos == nil then
+					return nil, nil
+				end
+			end
+			return old_DoGetMouseActions(self, position, target, spellbook)
+		end
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopLifeRejuvClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayLifeRejuvClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_life_rejuv_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiLifeRejuvCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiLifeRejuvResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiLifeRejuvStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearLifeRejuv(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "life_rejuvenation_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	-- 点地收圈选时的误 cancel 仍忽略；真取消走 life_rejuvenation_abort_cast
+	if player._zhei_life_rejuv_cast_task ~= nil or player._zhei_life_rejuv_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiLifeRejuvClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopRepairMagicClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayRepairMagicClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_repair_magic_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiRepairMagicCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiRepairMagicResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiRepairMagicStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearRepairMagic(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "repair_magic_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	if player._zhei_repair_magic_cast_task ~= nil or player._zhei_repair_magic_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiRepairMagicClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast_abort", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	ZheiStopYishangClientCast(GLOBAL.ThePlayer)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast_anim", function()
+	if TheWorld.ismastersim then
+		return
+	end
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+	ZheiPlayYishangClientCast(player)
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_target", function(cursor_guid)
+	local player = GLOBAL.ThePlayer
+	if player == nil or not player:IsValid() then
+		return
+	end
+
+	player._zhei_yishang_expected_guid = cursor_guid
+	local cancel_fn = GLOBAL.ZheiYishangCancelClientTargeting
+	if type(cancel_fn) == "function" then
+		cancel_fn(player, true)
+	end
+
+	local resolve_fn = GLOBAL.ZheiYishangResolveLocalCursor
+
+	local function ResolveCursor()
+		if type(resolve_fn) == "function" then
+			return resolve_fn(player, cursor_guid)
+		end
+		local Ents = GLOBAL.Ents or rawget(_G, "Ents")
+		local cursor = (cursor_guid ~= nil and Ents ~= nil) and Ents[cursor_guid] or nil
+		return cursor, "Ents"
+	end
+
+	local function TryStart(attempt)
+		if not player:IsValid() then
+			return
+		end
+		local pc = player.components.playercontroller
+		if pc == nil then
+			if attempt < 40 then
+				player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+			end
+			return
+		end
+		local cursor, src = ResolveCursor()
+		if cursor ~= nil and cursor:IsValid() and cursor.components.aoetargeting ~= nil then
+			local start_fn = GLOBAL.ZheiYishangStartClientTargeting
+			if type(start_fn) == "function" and start_fn(cursor, "RPC(" .. tostring(src) .. ")") then
+				return
+			end
+			return
+		end
+		if attempt < 60 then
+			player:DoTaskInTime(0, function() TryStart(attempt + 1) end)
+		else
+			ZheiRequestServerClearYishang(player)
+		end
+	end
+
+	player:DoTaskInTime(0, function() TryStart(0) end)
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cast", function(player, x, z)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangCastAtPosition
+	if type(fn) == "function" then
+		fn(player, x, z)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_begin", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangTryBegin
+	if type(fn) == "function" then
+		fn(player)
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_abort_cast", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangAbortCast
+	if type(fn) == "function" then
+		fn(player, "rpc_abort_cast")
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "yishang_cancel", function(player)
+	if player == nil or not player:IsValid() then
+		return
+	end
+	if player._zhei_yishang_cast_task ~= nil or player._zhei_yishang_cast_pending then
+		return
+	end
+	local fn = GLOBAL.ZheiYishangClearSession
+	if type(fn) == "function" then
+		fn(player, "rpc_cancel")
+	end
+end)
+
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "starsky_map_pick_vis", function()
+	local ThePlayer = GLOBAL.ThePlayer
+	if ThePlayer ~= nil then
+		ThePlayer._zhei_starsky_client_pick_pending = true
+	end
+end)
+GLOBAL.AddClientModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "starsky_map_pick_clear_vis", function()
+	local ThePlayer = GLOBAL.ThePlayer
+	if ThePlayer ~= nil then
+		ThePlayer._zhei_starsky_client_pick_pending = nil
+	end
+end)
+
+GLOBAL.AddModRPCHandler(TUNING.ZHEI_XINGLAN_RPC_NAMESPACE, "starsky_map_closed", function(player)
+	if player == nil or not player:IsValid() or TheWorld == nil or not TheWorld.ismastersim then
+		return
+	end
+	local world = TheWorld
+	local delay = (GLOBAL.FRAMES ~= nil and 2 * GLOBAL.FRAMES) or (2 / 30)
+	local captured_session = player._zhei_starsky_map_session or 0
+	world:DoTaskInTime(delay, function()
+		if world == nil or not world:IsValid() or player == nil or not player:IsValid() then
+			return
+		end
+		-- 关图 RPC 排队期间若玩家又点了「选择星空基站」，会话号已增加；勿用旧关图播 MAP_CANCELLED / 清 map_armed（否则会大地图打不开+误播「选择已取消」）
+		if (player._zhei_starsky_map_session or 0) > captured_session then
+			player._zhei_starsky_map_umbrella = nil
+			return
+		end
+		if player._zhei_starsky_map_umbrella ~= nil and player._zhei_starsky_map_umbrella:IsValid() then
+			local u = player._zhei_starsky_map_umbrella
+			local picked = u._zhei_starsky_pad_ready ~= nil and u._zhei_starsky_pad_ready:value()
+			-- 选点已成功 / 即将成功：apply_starsky_map_pick 已设标记
+			if picked or player._zhei_starsky_pick_committed then
+				player._zhei_starsky_map_umbrella = nil
+				return
+			end
+			-- 2帧后仍未选点：云服上 MapAction 可能还在路上，再等一会儿
+			-- 避免 starsky_map_closed RPC 抢在 MapAction 前到达导致清 map_armed →
+			-- apply_starsky_map_pick 因 map_armed=false 失败
+			world:DoTaskInTime(0.5, function()
+				if world == nil or not world:IsValid() or player == nil or not player:IsValid() then
+					return
+				end
+				if (player._zhei_starsky_map_session or 0) > captured_session then
+					player._zhei_starsky_map_umbrella = nil
+					return
+				end
+				if player._zhei_starsky_map_umbrella ~= nil and player._zhei_starsky_map_umbrella:IsValid() then
+					local u2 = player._zhei_starsky_map_umbrella
+					local picked2 = u2._zhei_starsky_pad_ready ~= nil and u2._zhei_starsky_pad_ready:value()
+					if picked2 or player._zhei_starsky_pick_committed then
+						player._zhei_starsky_map_umbrella = nil
+						return
+					end
+					local say = rawget(GLOBAL, "ZheiStarskyFlowSay")
+					if say ~= nil then
+						say(player, "MAP_CANCELLED")
+					end
+					if u2._zhei_starsky_map_armed ~= nil then
+						u2._zhei_starsky_map_armed:set(false)
+					end
+				end
+				player._zhei_starsky_map_umbrella = nil
+			end)
+		else
+			player._zhei_starsky_map_umbrella = nil
+		end
+	end)
+end)
+
+-- 人物三维与等级 TUNING：须在 modimport 等级脚本之前，避免加载时读到未写入的配置
+TUNING.ZHEI_XINGLAN_HEALTH = 200
+-- 等级满（与 ZHEI_XINGLAN_MAX_LEVEL 一致）时的生命上限；每升一级增量 = (此项 - HEALTH) / MAX_LEVEL
+TUNING.ZHEI_XINGLAN_MAX_HEALTH_CAP = 350
+TUNING.ZHEI_XINGLAN_HUNGER = 200
+TUNING.ZHEI_XINGLAN_SANITY = 150
+-- 食物记忆（可配置关闭）：重复吃同种料理（调味按 basename）收益递减，最高档可负；约 3 天遗忘
+-- 倍率下标 = 记忆次数（第 1 次吃倍率 1.0，不在表内；再吃读 [1]、[2]…）
+do
+	local fm = GetModConfigData("zhei_xinglan_food_memory")
+	if fm == nil then
+		fm = true
+	end
+	TUNING.ZHEI_XINGLAN_FOOD_MEMORY = fm ~= false
+end
+TUNING.ZHEI_XINGLAN_FOOD_MEMORY_COOLDOWN = TUNING.TOTAL_DAY_TIME * 3
+TUNING.ZHEI_XINGLAN_FOOD_MEMORY_MULTIPLIERS = { 0.6, 0.2, -0.2, -0.6, -1 }
+local _zhei_lv_mode = GetModConfigData("zhei_xinglan_level_mode") or "simple"
+TUNING.ZHEI_XINGLAN_LEVEL_HARD_MODE = (_zhei_lv_mode == "hard")
+TUNING.ZHEI_XINGLAN_LEVEL_XP_PER_LEVEL = TUNING.ZHEI_XINGLAN_LEVEL_HARD_MODE and 750 or 300
+TUNING.ZHEI_XINGLAN_MAX_LEVEL = 10
+-- 击杀 epic/Boss 掉落经验星尘概率（0～1），由 mod 配置百分比换算
+do
+	local p = GetModConfigData("zhei_xinglan_boss_exp_drop_chance")
+	if p == nil then
+		p = 30
+	end
+	p = math.clamp(tonumber(p) or 30, 0, 100)
+	TUNING.ZHEI_XINGLAN_BOSS_EXP_DROP_CHANCE = p / 100
+end
+-- Boss 经验掉落：luckuser 幸运加成（马蹄铁等）。原版 GetLuck 会随叠堆累加，数值可达 1～2+，不得再线性加到概率上。
+TUNING.ZHEI_XINGLAN_BOSS_EXP_LUCK_SCALE = TUNING.ZHEI_XINGLAN_BOSS_EXP_LUCK_SCALE or 1
+--- 幸运最多能把概率抬高多少（绝对值，在基础概率之上 saturating；默认约 +35%）
+TUNING.ZHEI_XINGLAN_BOSS_EXP_LUCK_MAX_EXTRA = TUNING.ZHEI_XINGLAN_BOSS_EXP_LUCK_MAX_EXTRA or 0.35
+-- 便携锅收取成品：额外调味概率 = 基础 + max(0, 等级−2)×每级
+TUNING.ZHEI_XINGLAN_STEWER_SPICE_BONUS_CHANCE = 0.3
+TUNING.ZHEI_XINGLAN_STEWER_SPICE_PER_LEVEL = 0.1
+
+-- 星空伞 / 基站 / 小地图（zhei_xinglan_starsky_teleport.lua、zhei_xinglan_starsky_actions.lua）
+TUNING.ZHEI_XINGLAN_STARSKY_ON_PAD_EXTRA_RADIUS = nil -- nil → WINONA TELEPAD 检测半径
+TUNING.ZHEI_XINGLAN_STARSKY_TELEPORT_CARRY_RADIUS = 3
+TUNING.ZHEI_XINGLAN_STARSKY_ALLY_DEPART_FRAMES = 30 -- 队友起传延迟（帧），勿超过 remote_teleport_out 总长
+TUNING.ZHEI_XINGLAN_STARSKY_MAP_PICK_RADIUS = 10
+TUNING.ZHEI_XINGLAN_STARSKY_MAP_PICK_MAX_DSQ = 36
+-- 小地图基站装饰圈缩放（原版宝库球约 min 0.18 / max 0.55 / overall 3.6；此处略缩小以免盖住图标）
+TUNING.ZHEI_XINGLAN_STARSKY_MAP_DECOR_MIN_ZOOMSCALE = 0.12
+TUNING.ZHEI_XINGLAN_STARSKY_MAP_DECOR_MAX_ZOOMSCALE = 0.42
+TUNING.ZHEI_XINGLAN_STARSKY_MAP_DECOR_OVERALL_SCALE = 2.5
+TUNING.ZHEI_XINGLAN_STARSKY_MAP_HOST_PICK_DEBOUNCE = 0.55
+TUNING.ZHEI_XINGLAN_STARSKY_PAD_HINTS_SWEEP_RADIUS = 5000
+TUNING.ZHEI_XINGLAN_STARSKY_UMBRELLA_MAX_FUEL = TUNING.TOTAL_DAY_TIME * 18
+TUNING.ZHEI_XINGLAN_STARSKY_TELEPORT_FUEL = TUNING.WINONA_TELEBRELLA_TELEPORT_FUEL
+TUNING.ZHEI_XINGLAN_TEAMHEART_LIFETIME = 10
+TUNING.ZHEI_XINGLAN_TEAMHEART_SANITY_COST = 10
+TUNING.ZHEI_XINGLAN_TEAMHEART_HUNGER_COST = 10
+-- 道标跟在队友头顶；须 < TELEPORT.distance(2)，否则头顶高度会让 3D 距离判定点不到
+TUNING.ZHEI_XINGLAN_TEAMHEART_FLOAT_LIFT = 1.85
+TUNING.ZHEI_XINGLAN_TEAMHEART_FLOAT_BOB = 0.14
+TUNING.ZHEI_XINGLAN_TEAMHEART_FLOAT_SWAY = 0 -- 已改回上下浮动，摇晃停用
+
+-- 星轨（成长剑）：1 级 56/位面 0 → 10 级 120/位面 15；另有 15% 双倍暴击
+TUNING.ZHEI_XINGLAN_SWORD = {
+	MAX_LEVEL = 10,
+	-- 与星澜角色一致：喂经验星尘只加经验，经验满了才升一级
+	XP_PER_LEVEL = TUNING.ZHEI_XINGLAN_LEVEL_XP_PER_LEVEL or 300,
+	-- 伤害：1 级 56 → 10 级 120（线性，四舍五入到整数）
+	BASE_DAMAGE = 56,
+	MAX_DAMAGE = 120,
+	-- 位面：1 级 0 → 10 级 15（线性）；吞噬紫水晶剑后与成长位面取较大值（14）
+	BASE_PLANAR = 0,
+
+```
+

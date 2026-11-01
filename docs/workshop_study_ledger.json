@@ -5916,8 +5916,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 08:36:21",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3007238052",
+      "name": "犀牛必爆懒人法杖",
+      "author": "好黑好黑的大黑，Hubert",
+      "version": "2.1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 08:42:05",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3008998415",
+      "name": "KEY",
+      "author": "Leonidas IV",
+      "version": "1.0.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 08:42:05",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3253273657",
+      "name": "______",
+      "author": "未知",
+      "version": "3.0.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:42:05",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3704300915",
+      "name": "Language",
+      "author": "龙炎",
+      "version": "0.3.13",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 08:42:05",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3746003620",
+      "name": "range",
+      "author": "Generated with Claude Code",
+      "version": "1.2.8",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 08:42:05",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:36:21"
+  "lastUpdated": "2026-11-01 08:42:05"
 }

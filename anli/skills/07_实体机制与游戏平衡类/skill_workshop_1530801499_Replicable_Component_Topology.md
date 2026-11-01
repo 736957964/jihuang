@@ -7325,3 +7325,171 @@ end)
 
 ```
 
+
+
+### 变体演进：犀牛必爆懒人法杖 (Mod 3007238052)
+- **变体场景与切面**：收录来自工坊 Mod 3007238052 (`犀牛必爆懒人法杖`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3007238052)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+if FIRST_SPAWN_ONLY then
+    AddPrefabPostInit("forest", SetupWorldPersistence)
+    AddPrefabPostInit("cave", SetupWorldPersistence)
+end
+
+-------------------------- hubert大佬写的不是我写的----------------------------------------
+--获取局部变量(引用了该函数的函数,变量名)
+local getUpvalue = function(fn, fname)
+    for i = 1, 20, 1 do
+        local name, val = debug.getupvalue(fn, i)
+        if name and name == fname then
+            return val
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+    AddPrefabPostInit("forest", SetupWorldPersistence)
+    AddPrefabPostInit("cave", SetupWorldPersistence)
+end
+
+-------------------------- hubert大佬写的不是我写的----------------------------------------
+--获取局部变量(引用了该函数的函数,变量名)
+local getUpvalue = function(fn, fname)
+    for i = 1, 20, 1 do
+        local name, val = debug.getupvalue(fn, i)
+        if name and name == fname then
+            return val
+        end
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minotaurchestspawner
+
+AddPrefabPostInit("minotaurchestspawner", function(inst)
+    -- get chest_loot from spawner.OnLoad
+    local dospawnchest = getUpvalue(inst.OnLoad, "dospawnchest")
+    if not dospawnchest then
+        return
+    end
+    local chest_loot = getUpvalue(dospawnchest, "chest_loot")
+
+    if chest_loot then
+        -- [喵喵喵]: 同时匹配两种排列，避免原版调整组内顺序后重新混入随机池。
+        for index, value in ipairs(chest_loot) do
+            local items = type(value) == "table" and value.item or nil
+            if items
+                and #items == 2
+                and value.count == 1
+                and ((items[1] == "orangestaff" and items[2] == "yellowstaff")
+                    or (items[1] == "yellowstaff" and items[2] == "orangestaff")) then
+                table.remove(chest_loot, index)
+                break
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minotaurchest
+-- [喵喵喵]: 原版填充宝箱后再补入，放于首个空位且不参与随机抽取。
+AddPrefabPostInit("minotaurchest", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    -- [喵喵喵]: 持久化“已发放懒人魔杖”标记并随宝箱存档，避免拿走手杖后重载再次补发（一个宝箱只发一次）。
+    local base_onsave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        local refs
+        if base_onsave ~= nil then
+            refs = base_onsave(inst, data)
+        end
+        if inst.mmhh_lazystaff_given then
+            data.mmhh_lazystaff_given = true
+        end
+        return refs
+    end
+
+    local base_onload = inst.OnLoad
+    inst.OnLoad = function(inst, data, newents)
+        if base_onload ~= nil then
+            base_onload(inst, data, newents)
+        end
+        if data ~= nil and data.mmhh_lazystaff_given then
+            inst.mmhh_lazystaff_given = true
+        end
+        if FIRST_SPAWN_ONLY then
+            -- [喵喵喵]: 存档中已有宝箱说明首次生成已发生，避免安装 mod 后把它当新宝箱补发。
+            TheWorld.mmhh_lazy_chest_spawned = true
+        end
+    end
+
+    inst:DoTaskInTime(0, function()
+        if not inst:IsValid() or inst.components.container == nil then
+            return
+        end
+        -- [喵喵喵]: 已发放过就不再补发；标记随宝箱持久化，重载后依旧生效。
+        if inst.mmhh_lazystaff_given then
+            return
+        end
+        if FIRST_SPAWN_ONLY and TheWorld.mmhh_lazy_chest_spawned then
+            return
+        end
+        if FIRST_SPAWN_ONLY then
+            -- [喵喵喵]: 首次生成的宝箱领取名额后，后续遗迹重置不再补发。
+            TheWorld.mmhh_lazy_chest_spawned = true
+        end
+        -- [喵喵喵]: 旧世界已按原版随机表开出过懒人魔杖的宝箱视为已发放，标记后不再补发，避免双杖。
+        if inst.components.container:FindItem(function(item) return item.prefab == "orangestaff" end) ~= nil then
+            inst.mmhh_lazystaff_given = true
+            return
+        end
+        inst.components.container:GiveItem(SpawnPrefab("orangestaff"))
+        inst.mmhh_lazystaff_given = true
+    end)
+end)
+
+```
+
+
+
+### 变体演进：range (Mod 3746003620)
+- **变体场景与切面**：收录来自工坊 Mod 3746003620 (`range`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3746003620)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+
+AddPrefabPostInit("player_classified", function(inst)
+    inst._cfc_table = {}
+    inst._cfc_items = net_string(inst.GUID, "cfc_items", "cfc_itemsdirty")
+
+    if GLOBAL.TheWorld ~= nil and GLOBAL.TheWorld.ismastersim then
+        inst._cfc_last = ""
+        inst._cfc_items:set("")
+        inst._cfc_task = inst:DoPeriodicTask(SYNC_PERIOD, function()
+            ServerSyncChestMap(inst)
+        end)
+    else
+        -- Client: parse incoming maps and nudge the crafting menu to re-evaluate.
+        inst:ListenForEvent("cfc_itemsdirty", function()
+            inst._cfc_table = DecodeMap(inst._cfc_items:value())
+            if inst._parent ~= nil and inst._parent:IsValid() then
+                inst._parent:PushEvent("refreshcrafting")
+            end
+        end)
+    end
+end)
+
+```
+
