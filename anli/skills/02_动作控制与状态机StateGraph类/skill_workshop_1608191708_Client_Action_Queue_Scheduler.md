@@ -59002,3 +59002,287 @@ end
 
 ```
 
+
+
+### 变体演进：quick_pick_cactus (Mod 2921270365)
+- **变体场景与切面**：收录来自工坊 Mod 2921270365 (`quick_pick_cactus`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2921270365)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+if GetModConfigData("quick_harvest") then
+    AddStategraphPostInit("wilson", function(sg)
+        local actionhandler = GLOBAL.ActionHandler(GLOBAL.ACTIONS.HARVEST, "doshortaction")
+        sg.actionhandlers[GLOBAL.ACTIONS.HARVEST] = actionhandler
+    end)
+
+```
+
+
+
+### 变体演进：LANGUAGE (Mod 2937640068)
+- **变体场景与切面**：收录来自工坊 Mod 2937640068 (`LANGUAGE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2937640068)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playerlightningtarget
+-- CC : add "lightning" achievement counter >> [Achievement] HURT Get hit by lightning
+AddComponentPostInit("playerlightningtarget", function(self)
+    local _DoStrike = self.DoStrike
+    function self:DoStrike(...)
+        _DoStrike(self, ...)
+        if self.inst and self.inst.components.allachivevent then
+            self.inst.components.allachivevent:CheckAchievement(self.inst, "lightning")
+        end
+        if self.inst.chasni_playerlighningstruck then
+            self.inst.chasni_playerlighningstruck()
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shadowworker
+if TheNet:GetIsServer() then
+    AddPrefabPostInit("shadowworker", function(inst)
+        inst:ListenForEvent("finishedwork", function(i, data)
+            if inst.components.follower then
+                local leader = inst.components.follower.leader
+                if leader and leader.components.allachivevent then
+                    if data.action then
+                        if data.action == ACTIONS.CHOP then
+                            leader.components.allachivevent:CountAchievement(leader, "chopmaster")
+                        end
+                        if data.action == ACTIONS.DIG and data.target:HasTag("stump") then
+                            leader.components.allachivevent:CountAchievement(leader, "chopmaster")
+                        end
+                        if data.action == ACTIONS.MINE then
+                            leader.components.allachivevent:CountAchievement(leader, "minemaster")
+                        end
+                    end
+                end
+                if leader and leader.components.levelsystem then
+                    if _G.WORKXP ~= true then return end
+                    leader.components.levelsystem:xpDoDelta(2, leader)
+                end
+            end
+        end)
+        -- book_voker
+        inst:ListenForEvent("working", function(i, data)
+            if inst.components.follower then
+                local leader = inst.components.follower.leader
+                if leader and leader.components.inventory and leader.components.inventory:EquipHasTag("book_voker") and leader.components.allachivcoin then
+                    local workable = data.target and data.target.components.workable
+                    if workable and workable.workleft > 0 then
+                        if (leader.components.allachivcoin.minefaster and workable.action == ACTIONS.MINE) or (leader.components.allachivcoin.chopfaster and workable.action == ACTIONS.CHOP) then
+                            inst:DoTaskInTime(0.1, function()
+                                workable:Destroy(inst)
+                            end)
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:farmplantable
+end
+AddComponentPostInit("farmplantable", function(farmplantable)
+    local _Plant = farmplantable.Plant
+    farmplantable.Plant = function(self, target, planter, ...)
+        DoFarmCheck(self.inst, planter)
+
+        return _Plant(self, target, planter, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:deployable
+-- CC : add xp to Planting Farm as deployable >> [LevelSystem]
+AddComponentPostInit("deployable", function(deployable)
+    local _Deploy = deployable.Deploy
+    deployable.Deploy = function(self, pt, deployer, rot, ...)
+        if self.inst:HasTag("deployedfarmplant") then
+            DoFarmCheck(self.inst, deployer)
+        end
+
+        return _Deploy(self, pt, deployer, rot, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:livinglog
+if TheNet:GetIsServer() then
+    AddPrefabPostInit("livinglog", function(inst)
+        inst:ListenForEvent("oneaten", function(_, data)
+            if data.eater and data.eater.prefab == "cookiecutter" then
+                local player, distsq = data.eater:GetNearestPlayer(true)
+                if distsq and distsq < 20 and player and player.components.allachivevent then
+                    player.components.allachivevent:CheckAchievement(player, "feedlivinglog")
+                end
+            end
+        end)
+    end)
+
+```
+
+
+
+### 变体演进：Wxwood is canon! (in this mod) (Mod 3628657754)
+- **变体场景与切面**：收录来自工坊 Mod 3628657754 (`Wxwood is canon! (in this mod)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3628657754)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wx78_scanner_succeeded
+
+AddPrefabPostInit("wx78_scanner_succeeded", function(inst)
+    if inst.components.teacher then
+        local old_Teach = inst.components.teacher.Teach
+        inst.components.teacher.Teach = function(self, learner)
+            if learner and learner.prefab == "wormwood" then
+                -- Return true to pretend it worked, so the scanner is returned, 
+                -- but don't actually learn anything.
+                return true 
+            end
+            return old_Teach(self, learner)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78_scanner_item
+
+AddPrefabPostInit("wx78_scanner_item", function(inst)
+    -- Handle Inventory Item (when held) 
+    -- Allow Wormwood to deploy it
+    if inst.components.deployable then
+        inst.components.deployable.restrictedtag = nil -- Remove UI block
+        
+        local old_candeploy = inst._custom_candeploy_fn
+        inst._custom_candeploy_fn = function(self, pt, mouseover, deployer, rot)
+            -- Only WX (upgrademoduleowner) and Wormwood (plantkin) can deploy
+            if deployer:HasTag("plantkin") or deployer:HasTag("upgrademoduleowner") or deployer.components.upgrademoduleowner then
+                return self.components.deployable:IsDeployable(deployer)
+            end
+            return false
+        end
+    end
+
+    -- Sanity gain while in inventory
+    if inst.components.inventoryitem then     
+        local _old_OnPutInInventory = inst.components.inventoryitem.OnPutInInventory
+        inst.components.inventoryitem.OnPutInInventory = function(self, owner)
+            if _old_OnPutInInventory then _old_OnPutInInventory(self, owner) end
+            
+            self.last_owner = owner -- Track for drop
+            if owner and owner.prefab == "wormwood" then
+                SetSanityRate(owner, "wxwood_jimmy_item", JIMMY_SANITY_RATE)
+            end
+        end
+        
+        local _old_OnDropped = inst.components.inventoryitem.OnDropped
+        inst.components.inventoryitem.OnDropped = function(self, droptarget)
+            -- Clear from last owner if it was Wormwood
+            if self.last_owner and self.last_owner.prefab == "wormwood" then
+                ClearSanityRate(self.last_owner, "wxwood_jimmy_item")
+            end
+            self.last_owner = nil
+            
+            if _old_OnDropped then _old_OnDropped(self, droptarget) end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78_scanner
+
+AddPrefabPostInit("wx78_scanner", function(inst)
+    -- Handle Active Scanner (Follower)
+    if inst.components.follower then
+        local function ApplyJimmyFriendSanity(inst, leader)
+            if leader and leader.prefab == "wormwood" then
+                SetSanityRate(leader, "wxwood_jimmy_friend", JIMMY_SANITY_RATE)
+            end
+        end
+        
+        local function RemoveJimmyFriendSanity(inst, leader)
+            if leader and leader.prefab == "wormwood" then
+                ClearSanityRate(leader, "wxwood_jimmy_friend")
+            end
+        end
+        
+        local _old_SetLeader = inst.components.follower.SetLeader
+        inst.components.follower.SetLeader = function(self, leader)
+             local old_leader = self.leader
+             if old_leader then RemoveJimmyFriendSanity(inst, old_leader) end
+             
+             if _old_SetLeader then _old_SetLeader(self, leader) end
+             
+             if leader then ApplyJimmyFriendSanity(inst, leader) end
+        end
+        
+        -- Apply immediately if already following (e.g. reload)
+        if inst.components.follower.leader then
+            ApplyJimmyFriendSanity(inst, inst.components.follower.leader)
+        end
+    end
+
+    -- Fix Bio Data drop visibility for Wormwood
+    local old_SpawnData = inst.SpawnData
+    inst.SpawnData = function(self)
+        local leader = self.components.follower.leader
+        if leader and leader.prefab == "wormwood" and leader.components.dataanalyzer then
+            local amount = leader.components.dataanalyzer:SpendData(self._scanned_prefab)
+            
+            -- FAILSAFE: If SpendData returned 0, try to force a drop based on moduledefs
+            if amount == 0 then
+                local moduledefs = GLOBAL.require("wx78_moduledefs")
+                local creature_data = moduledefs.GetCreatureScanDataDefinition(self._scanned_prefab)
+                if creature_data then
+                    amount = creature_data.maxdata
+                end
+            end
+
+            if amount > 0 then
+                local data = SpawnPrefab("scandata")
+                if data then
+                    -- Animation handling
+                    if data.AnimState then
+                        data.AnimState:PlayAnimation("fall")
+                        data.AnimState:PushAnimation("idle")
+                    end
+                    
+                    local x, y, z = self.Transform:GetWorldPosition()
+                    data.Transform:SetPosition(x, 0, z)
+                    
+                    if data.components.stackable then
+                        data.components.stackable:SetStackSize(amount)
+                    end
+                    
+                    if data.components.inventoryitem then
+                        -- Use OnDropped to trigger physics/sounds properly
+                        data.components.inventoryitem:OnDropped(true)
+                    end
+                end
+            end
+            self._scanned_prefab = nil
+            return
+        end
+        return old_SpawnData(self)
+    end
+end)
+
+```
+

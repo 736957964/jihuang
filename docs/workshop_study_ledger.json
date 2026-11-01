@@ -8013,8 +8013,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 14:00:28",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2720251768",
+      "name": "脚印追踪器",
+      "author": "adai1198",
+      "version": "18.07.25",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 14:10:56",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2921270365",
+      "name": "quick_pick_cactus",
+      "author": "PiaoYang (Origin.辣椒小皇纸)",
+      "version": "1.5.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:10:57",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2937640068",
+      "name": "LANGUAGE",
+      "author": "cz",
+      "version": "7.3.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:10:57",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3625863267",
+      "name": "启蒙滤镜-基石",
+      "author": "喜乐",
+      "version": "2.2.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 14:10:57",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3628657754",
+      "name": "Wxwood is canon! (in this mod)",
+      "author": "DigitalClowns",
+      "version": "1.3.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:10:57",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 14:00:28"
+  "lastUpdated": "2026-11-01 14:10:57"
 }
