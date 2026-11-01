@@ -8292,3 +8292,313 @@ end
 
 ```
 
+
+
+### 变体演进：Improved Premier Gardeneer Hat (Mod 2339167956)
+- **变体场景与切面**：收录来自工坊 Mod 2339167956 (`Improved Premier Gardeneer Hat`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2339167956)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+local net_smallbyte = G.net_smallbyte
+AddPrefabPostInit("player_classified", function(inst)
+	inst._nutrientgoggles_shown = net_bool(inst.GUID, "nutrientgoggles.shown", "nutrientgoggles_nutrientsdirty")
+	inst._nutrientgoggles_nutrient1 = net_byte(inst.GUID, "nutrientgoggles.nutrient1", "nutrientgoggles_nutrientsdirty")
+	inst._nutrientgoggles_nutrient2 = net_byte(inst.GUID, "nutrientgoggles.nutrient2", "nutrientgoggles_nutrientsdirty")
+	inst._nutrientgoggles_nutrient3 = net_byte(inst.GUID, "nutrientgoggles.nutrient3", "nutrientgoggles_nutrientsdirty")
+	inst._nutrientgoggles_water = net_byte(inst.GUID, "nutrientgoggles.water", "nutrientgoggles_nutrientsdirty")
+	inst._nutrientgoggles_status = net_smallbyte(inst.GUID, "nutrientgoggles.status", "nutrientgoggles_nutrientsdirty")
+	function inst:GetGogglesNutrients()
+		return {inst._nutrientgoggles_nutrient1:value(), inst._nutrientgoggles_nutrient2:value(), inst._nutrientgoggles_nutrient3:value()}
+	end
+	function inst:GetGogglesWater()
+		return self._nutrientgoggles_water:value()
+	end
+	function inst:GetGogglesStatus()
+		local v = self._nutrientgoggles_status:value()
+		local s1 = bit.band(v, 3)
+		local s2 = bit.band(bit.rshift(v,2), 3)
+		local s3 = bit.band(bit.rshift(v,4), 3)
+		return {s1, s2, s3}
+	end
+	function inst:GetGogglesWidgetShown()
+		return self._nutrientgoggles_shown:value()
+	end
+	function inst:SetGogglesStats(shown, nutrients, water, status)
+		if shown then
+			for i = 1, 3 do
+				self["_nutrientgoggles_nutrient"..tostring(i)]:set(nutrients[i])
+			end
+			local status_num = status[1] + bit.lshift(status[2],2) + bit.lshift(status[3],4)
+			self._nutrientgoggles_status:set(status_num)
+			self._nutrientgoggles_water:set(math.ceil(water or 0))
+			self._nutrientgoggles_shown:set(true)
+		else
+			self._nutrientgoggles_shown:set(false)
+		end
+		inst:PushEvent("nutrientgoggles_nutrientsdirty")
+	end
+	inst:ListenForEvent("nutrientgoggles_nutrientsdirty", UpdateNutrientGoggleWidget)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:nutrientsgoggleshat
+
+AddPrefabPostInit("nutrientsgoggleshat", require("nutrientgoggles_postinit"))
+
+local function GetInspectStr(inst, viewer)
+	local desc = G.GetDescription(viewer, inst, inst.components.inspectable:GetStatus(viewer))
+	if viewer.replica.inventory and viewer.replica.inventory:EquipHasTag("veggieweigher") then
+		local weightstr = "Weight: %0.2f\n"
+		desc = string.format(weightstr, inst.components.weighable:GetWeight() or 1) .. desc
+	end
+	return desc
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+	inst:ListenForEvent("nutrientsvision", function(inst, data)
+		if G.ThePlayer ~= nil then
+			local function removegrid(player)
+				if player._nutrientgoggle_grid then
+					player._nutrientgoggle_grid:Remove()
+					player._nutrientgoggle_grid = nil
+				end
+			end
+			if data.enabled then
+				if G.ThePlayer._nutrientgoggle_grid == nil then
+					local ind = G.SpawnPrefab("nutrientgoggles_gridindicator")
+					ind.followtask = ind:DoPeriodicTask(2*G.FRAMES, function(ind)
+						if G.ThePlayer ~= nil then
+							ind:SetPosition(G.ThePlayer.Transform:GetWorldPosition())
+						else
+							ind.followtask:Cancel()
+							ind.followtask = nil
+						end
+					end, 0)
+					G.ThePlayer._nutrientgoggle_grid = ind
+					G.ThePlayer:ListenForEvent("onremove", removegrid)
+				end
+			elseif G.ThePlayer._nutrientgoggle_grid ~= nil then
+				G.ThePlayer._nutrientgoggle_grid:Remove()
+				G.ThePlayer._nutrientgoggle_grid = nil
+				G.ThePlayer:RemoveEventCallback("onremove", removegrid)
+			end
+		end
+	end)
+end)
+local debug = G.debug
+local function GetUpValue(func, varname)
+	local i = 1
+	local n, v = debug.getupvalue(func, 1)
+	while v ~= nil do
+		--print("UPVAL GET", varname ,n, v)
+		if n == varname then
+			return v
+		end
+		i = i + 1
+		n, v = debug.getupvalue(func, i)
+	end
+end
+
+AddComponentPostInit("farming_manager", function(self)
+	--self._GetTileDataAtPoint = GetUpValue(self.AddSoilMoistureAtPoint, "GetTileDataAtPoint")
+	self._GetTileDataAtPoint = function(_, x,y,z)
+		local _overlaygrid = GetUpValue(self.AddSoilMoistureAtPoint, "_overlaygrid")
+		local _moisturegrid = GetUpValue(self.AddSoilMoistureAtPoint, "_moisturegrid")
+		local _x,_y = G.TheWorld.Map:GetTileCoordsAtPoint(x,y,z)
+		local index = _overlaygrid:GetIndex(_x,_y)
+		return {nutrients_overlay=_overlaygrid:GetDataAtIndex(index), soilmoisture=_moisturegrid:GetDataAtIndex(index)}
+	end
+	
+	local SetTileNutrients_old = self.SetTileNutrients
+	self.SetTileNutrients = function(self,x, y, n1, n2, n3, ...)
+		local rtn = {SetTileNutrients_old(self,x, y, n1, n2, n3, ...)}
+		local ents = G.TheWorld.Map:GetEntitiesOnTileAtPoint(G.TheWorld.Map:GetTileCenterPoint(x,y))
+		for k, v in pairs(ents) do
+			if v:HasTag("player") then
+				v:PushEvent("updatenutrients", true)
+			end
+		end
+		return G.unpack(rtn)
+	end
+end)
+
+if GetModConfigData("hideover") then
+	AddClassPostConstruct("widgets/nutrientsover", function(self)
+		self.Show_old = self.Show
+		self.Show = function() end
+	end)
+end
+
+
+if GetModConfigData("hidevision") then
+	AddComponentPostInit("nutrients_visual_manager", function(self)
+		self.UpdateVisualAnimState_old = self.UpdateVisualAnimState
+		self.UpdateVisualAnimState = function(self, visual)
+            visual.AnimState:SetMultColour(0, 0, 0, 1)
+            visual.AnimState:SetAddColour(40/255, 20/255, 20/255, 0)
+            visual.AnimState:SetLayer(G.LAYER_GROUND)
+            visual.AnimState:SetSortOrder(1)
+		end
+	end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:farming_manager
+
+AddComponentPostInit("farming_manager", function(self)
+	--self._GetTileDataAtPoint = GetUpValue(self.AddSoilMoistureAtPoint, "GetTileDataAtPoint")
+	self._GetTileDataAtPoint = function(_, x,y,z)
+		local _overlaygrid = GetUpValue(self.AddSoilMoistureAtPoint, "_overlaygrid")
+		local _moisturegrid = GetUpValue(self.AddSoilMoistureAtPoint, "_moisturegrid")
+		local _x,_y = G.TheWorld.Map:GetTileCoordsAtPoint(x,y,z)
+		local index = _overlaygrid:GetIndex(_x,_y)
+		return {nutrients_overlay=_overlaygrid:GetDataAtIndex(index), soilmoisture=_moisturegrid:GetDataAtIndex(index)}
+	end
+	
+	local SetTileNutrients_old = self.SetTileNutrients
+	self.SetTileNutrients = function(self,x, y, n1, n2, n3, ...)
+		local rtn = {SetTileNutrients_old(self,x, y, n1, n2, n3, ...)}
+		local ents = G.TheWorld.Map:GetEntitiesOnTileAtPoint(G.TheWorld.Map:GetTileCenterPoint(x,y))
+		for k, v in pairs(ents) do
+			if v:HasTag("player") then
+				v:PushEvent("updatenutrients", true)
+			end
+		end
+		return G.unpack(rtn)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:nutrients_visual_manager
+if GetModConfigData("hidevision") then
+	AddComponentPostInit("nutrients_visual_manager", function(self)
+		self.UpdateVisualAnimState_old = self.UpdateVisualAnimState
+		self.UpdateVisualAnimState = function(self, visual)
+            visual.AnimState:SetMultColour(0, 0, 0, 1)
+            visual.AnimState:SetAddColour(40/255, 20/255, 20/255, 0)
+            visual.AnimState:SetLayer(G.LAYER_GROUND)
+            visual.AnimState:SetSortOrder(1)
+		end
+	end)
+
+```
+
+
+
+### 变体演进：Teleportato (Mod 756229217)
+- **变体场景与切面**：收录来自工坊 Mod 756229217 (`Teleportato`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 756229217)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:teleportato_base
+end
+AddPrefabPostInit("teleportato_base", TeleportatoPostInit)
+
+--[[
+local WSO = require("worldsettings_overrides")
+AddSimPostInit(function(dummy)
+    if SERVER_SIDE then -- just to make it more clear that everything is server
+        if _G.TheWorld~=nil and _G.TheWorld.components~=nil and _G.TheWorld.components.adv_startstuff~=nil and not _G.TheWorld.components.adv_startstuff.done["AdjustWorldSettings"] then -- only change it once (after the world loaded first)
+            -- save our chosen overrides (settings and worldgen) after first world generation in the savegame/world, so it is also displayed on the settings screen (and not reverted)
+            -- INFO: does not work, because TASKSETDATA_OVERRIDES is only saved in modworldgenmain when the WSO code is executed, not on AddLevelP. So all we could save here in topology are the worldsettings, while this also works in savedata when overwriting WSO in modworldgenmain
+            print("_G.TUNING.TELEPORTATOMOD.TASKSETDATA_OVERRIDES:")
+            _G.dumptable(_G.TUNING.TELEPORTATOMOD.TASKSETDATA_OVERRIDES)
+            if _G.TUNING.TELEPORTATOMOD.TASKSETDATA_OVERRIDES[_G.TheWorld.prefab]~=nil and _G.TUNING.TELEPORTATOMOD.TASKSETDATA_OVERRIDES[_G.TheWorld.prefab].overrides~=nil then
+                for name,setting in pairs(_G.TUNING.TELEPORTATOMOD.TASKSETDATA_OVERRIDES[_G.TheWorld.prefab].overrides) do
+                    _G.TheWorld.topology.overrides[name] = setting
+                end
+            end
+        
+            _G.TheWorld.components.adv_startstuff.done["AdjustWorldSettings"] = true -- SimPostInit runs after the worldsettings where applied, so we change it here, not in postinit of world. worldsettings are changed in modworldgenmain
+        end
+        
+        
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(world) -- prefabpostinits are never called for clients
+
+    if SERVER_SIDE then -- just to make it more clear that everything is server
+
+        -- print("worldpostinit")
+        world:DoTaskInTime(0, function()
+            LoadLevelAndDoStuff(world)
+        end)
+
+        if world.ismastershard or _G.TUNING.TELEPORTATOMOD.GEMAPIActive then -- with APIGem we also add worldjump to cave with limited functionality to get info about players in caves
+            world:AddComponent("worldjump")
+        end
+        if world.ismastershard and _G.next(WORLDS) then -- telebase and these componets only to the mastershard. teleparts can be transferred between worlds.
+            world:AddComponent("adventurejump") -- better add this after worldjump, cause the jump itself uses worldjump
+        end
+        
+        -- does not work like this, we have to find another solution to remove sharkboi and other unwanted world components...
+        -- remove eg. the sharkboimanager component from the world, so we do not spawn this ice-island in adventure worlds
+        -- level ist hier noch nicht defined, und ich glaube removecomponent ist auch nicht der richtige weg, muss anders gehen.. (zb in der componente oder forest.lua muss ein wert gerprüft werden und dann entsprehcend nihts gemacht werden wenns auf disabled gesetzt ist oderso)
+        -- if _G.next(WORLDS) then
+            -- local level = _G.TUNING.TELEPORTATOMOD.LEVEL
+            -- if WORLDS[level].WorldComponentsToRemove then
+              -- for worldtag,component in pairs(WorldComponentsToRemove) do
+                -- if world:HasTag(worldtag) then
+                  -- world:RemoveComponent(component)
+                -- end
+              -- end
+            -- end
+        -- end
+        
+        world:AddComponent("adv_startstuff") -- aldo add this to client
+
+        world:ListenForEvent("ms_playerdespawnandmigrate", function(world, data)
+            -- data = { player = doer, portalid = self.id, worldid = self.linkedWorld }
+            if data ~= nil and data.player ~= nil and data.player.components and data.player.components.inventory then -- a player switching worlds
+                local inst = data.player
+                for i = 1, inst.components.inventory:GetNumSlots() do
+                    item = inst.components.inventory:GetItemInSlot(i)
+                    if item ~= nil and item:IsValid() and table.contains({"teleportato_potato", "teleportato_box", "teleportato_ring", "teleportato_crank"}, item.prefab) and item:HasTag("irreplaceable") then
+                        item:RemoveTag("irreplaceable") -- remove this tag for now, so parts can be transferred between worlds. is automatically added on spwning again
+                    end
+                end
+            end
+        end)
+
+    end
+end)
+
+local function PickedFn(inst, data) -- announce picking of the parts
+    local picker = data and data.picker
+    if inst and picker then
+        if inst.prefab ~= nil and (inst.prefab == "teleportato_box" or inst.prefab == "teleportato_ring" or inst.prefab == "teleportato_crank" or inst.prefab == "teleportato_potato") then
+            _G.TheNet:Announce(tostring(picker.name or picker.prefab) .. _G.STRINGS.TELEPORTATOMOD.TELE_PICKUP ..tostring(_G.STRINGS.NAMES[string.upper(inst.prefab)] or inst.prefab) .. "!")
+        end
+    end
+end
+for _, prefab in ipairs({"teleportato_potato", "teleportato_box", "teleportato_ring", "teleportato_crank"}) do
+    AddPrefabPostInit(prefab, function(inst)
+        helpers.MakeSlowPick(inst)
+        if _G.TUNING.TELEPORTATOMOD.announcepickparts then
+            inst:ListenForEvent("picked", PickedFn)
+        end
+        inst:DoTaskInTime(0, helpers.CallthisfnIfthatfnIsTrue, _G.TheWorld.components.adv_startstuff.DoStartStuffNow,
+            IsLEVELINFOLOADED, 100, _G.TheWorld.components.adv_startstuff, RecognizeTelePart,
+            "RecognizeTelePart" .. inst.prefab, inst)
+        -- _G.TheWorld.components.adv_startstuff:DoStartStuffIn(0,RecognizeTelePart,"RecognizeTelePart"..inst.prefab,inst)
+    end)
+end
+
+```
+

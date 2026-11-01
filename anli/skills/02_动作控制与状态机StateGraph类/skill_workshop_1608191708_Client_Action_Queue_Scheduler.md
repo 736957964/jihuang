@@ -47770,3 +47770,182 @@ end)
 
 ```
 
+
+
+### 变体演进：不死鸟传说-地球穹顶 (Mod 2763324369)
+- **变体场景与切面**：收录来自工坊 Mod 2763324369 (`不死鸟传说-地球穹顶`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2763324369)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:forest
+-- TheWorld.components.galeboss_ruinforce_spawner:SpawnAt(ThePlayer,30)
+AddPrefabPostInit("forest", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+
+	inst:AddComponent("galeboss_ruinforce_spawner")
+	inst:AddComponent("galeboss_katash_spawner")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shard_network
+
+AddPrefabPostInit("shard_network", function(inst)
+	inst:AddComponent("shard_galeboss_katash_spawner")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+
+AddPrefabPostInit("cave", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+
+	inst:AddComponent("galeboss_katash_spawner_cave")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:daywalker
+
+AddPrefabPostInit("daywalker", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+
+	inst:AddComponent("athetos_berserker_enchant")
+	inst.components.athetos_berserker_enchant:SetChargeFn(function()
+		return math.random(7, 13) + math.random(7, 13)
+	end)
+
+	if TheWorld.components.daywalkerspawner and not TheWorld.components.daywalkerspawner.athetos_amulet_berserker_dropped then
+		-- Change hand symbols with athetos_amulet_berserker
+		inst.AnimState:OverrideSymbol("ww_hand", "daywalker_phase2_berserker_amulet", "ww_hand")
+		inst.components.athetos_berserker_enchant:SetTarget(inst)
+	end
+
+
+	local old_MakeUnchained = inst.MakeUnchained
+	inst.MakeUnchained = function(...)
+		local rets = old_MakeUnchained(...)
+		if TheWorld.components.daywalkerspawner and not TheWorld.components.daywalkerspawner.athetos_amulet_berserker_dropped then
+			-- Change hand symbols with athetos_amulet_berserker
+			inst.AnimState:OverrideSymbol("ww_hand", "daywalker_phase2_berserker_amulet", "ww_hand")
+			inst.components.athetos_berserker_enchant:SetTarget(inst)
+		end
+		return rets
+	end
+
+
+	inst:ListenForEvent("minhealth", function()
+		if inst.defeated then
+			local pos = inst:GetPosition()
+
+			if TheWorld.components.daywalkerspawner
+				and not TheWorld.components.daywalkerspawner.athetos_amulet_berserker_dropped then
+				-- Change hand symbols without athetos_amulet_berserker
+				inst.AnimState:ClearOverrideSymbol("ww_hand")
+				inst.components.athetos_berserker_enchant:DropTarget()
+
+
+				if inst.components.lootdropper then
+					inst.components.lootdropper:SpawnLootPrefab("athetos_amulet_berserker_broken", pos)
+					inst.components.lootdropper:SpawnLootPrefab("athetos_amulet_berserker_broken", pos)
+
+					TheWorld.components.daywalkerspawner.athetos_amulet_berserker_dropped = true
+				end
+			end
+
+			if inst.components.lootdropper then
+				inst.components.lootdropper:SpawnLootPrefab("athetos_amulet_berserker_blueprint", pos)
+			end
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:daywalkerspawner
+
+AddComponentPostInit("daywalkerspawner", function(self)
+	self.athetos_amulet_berserker_dropped = false
+
+	local old_OnSave = self.OnSave
+	local old_OnLoad = self.OnLoad
+
+	function self:OnSave()
+		local data, refs = old_OnSave(self)
+		data.athetos_amulet_berserker_dropped = self.athetos_amulet_berserker_dropped
+
+		return data, refs
+	end
+
+	function self:OnLoad(data, ...)
+		old_OnLoad(data, ...)
+		if data ~= nil then
+			if data.athetos_amulet_berserker_dropped ~= nil then
+				self.athetos_amulet_berserker_dropped = data.athetos_amulet_berserker_dropped
+			end
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：火只因皮肤材质包-服务器端 (Mod 3272850223)
+- **变体场景与切面**：收录来自工坊 Mod 3272850223 (`火只因皮肤材质包-服务器端`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3272850223)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:perd
+
+AddPrefabPostInit("perd", function(inst)
+	if not TheWorld.ismastersim then return end
+	if TUNING.Ikun_Sound then
+		if not inst.components.talker then
+			inst:AddComponent("talker")
+		end
+		inst:ListenForEvent("attacked", ikun_onattacked)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:perd
+}
+AddStategraphPostInit("perd", function(sg)
+	-- 坤坤出现时的叫声
+	local old_appear_onenter = sg.states["appear"].onenter
+	sg.states["appear"].onenter = function(inst)
+		if TUNING.Ikun_Sound then
+			local random_index = math.random(1, #ikun_appearsound)
+			local selected_sound = ikun_appearsound[random_index]
+			if inst.SoundEmitter then
+				inst.SoundEmitter:PlaySound("ikun/ikun/"..selected_sound, selected_sound, TUNING.Ikun_Appear_Volume)
+			end
+		end
+		old_appear_onenter(inst)
+	end
+	-- 坤坤奔跑的时候概率发声
+	local old_run_onenter = sg.states["run"].onenter
+	sg.states["run"].onenter = function(inst)
+		if TUNING.Ikun_Sound then
+			if inst.SoundEmitter and math.random() < TUNING.Ikun_Runsound_Percent/100 then
+				inst.SoundEmitter:PlaySound("ikun/ikun/zhiyin", "zhiyin", TUNING.Ikun_Run_Volume)
+			end
+		end
+		old_run_onenter(inst)
+	end
+end)
+
+```
+

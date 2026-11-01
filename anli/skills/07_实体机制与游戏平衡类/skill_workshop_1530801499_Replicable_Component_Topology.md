@@ -11054,3 +11054,91 @@ end)
 
 ```
 
+
+
+### 变体演进：ABIGAIL_FORALLPLAYER (Mod 3808363421)
+- **变体场景与切面**：收录来自工坊 Mod 3808363421 (`ABIGAIL_FORALLPLAYER`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3808363421)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:abigail
+
+AddPrefabPostInit("abigail", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    -- 每秒回血放在最前面，并且直接把 StartRegen 包一层：
+    -- 阿比盖尔在 prefab 里会写死一次回血数值，之后任何一次 StartRegen
+    -- 都会把它改回去，所以强制所有调用都使用模组配置的数值。
+    if inst.components.health ~= nil then
+        local health = inst.components.health
+        local old_StartRegen = health.StartRegen
+
+        health.StartRegen = function(self, amount, period, ...)
+            return old_StartRegen(self, TUNING.ABIGAIL_REGENAMOUNT, period or 1, ...)
+        end
+
+        health:StartRegen(TUNING.ABIGAIL_REGENAMOUNT, 1)
+
+        -- 打一行日志，方便确认模组实际读到的数值
+        if not regen_logged then
+            regen_logged = true
+            print("[姐姐救救我] 阿比盖尔每秒回血 =", tostring(TUNING.ABIGAIL_REGENAMOUNT), "点")
+        end
+    end
+
+    local ok, err = pcall(SetupAbigailExtras, inst)
+    if not ok then
+        print("[姐姐救救我] 阿比盖尔附加设置失败:", err)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:elixir_container
+    -- 制作条件从温蒂技能改成 elixirbrewer 标签
+    AddRecipePostInit("elixir_container", function(recipe)
+        recipe.builder_skill = nil
+        recipe.builder_tag = "elixirbrewer"
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail_flower
+
+AddPrefabPostInit("abigail_flower", function(inst)
+    inst:ListenForEvent("onremove", function()
+        local owner = inst._owner
+        if owner ~= nil and owner:IsValid() and not owner:HasTag("backpack") then
+            -- 这两个回调只在主机端创建，客户端为 nil
+            if inst._onskillrefresh_server ~= nil then
+                owner:RemoveEventCallback("onactivateskill_server", inst._onskillrefresh_server)
+                owner:RemoveEventCallback("ondeactivateskill_server", inst._onskillrefresh_server)
+            end
+            if inst._onsummonstatechanged_server ~= nil then
+                owner:RemoveEventCallback("ghostlybond_summoncomplete", inst._onsummonstatechanged_server)
+                owner:RemoveEventCallback("ghostlybond_recallcomplete", inst._onsummonstatechanged_server)
+            end
+        end
+        inst._owner = nil
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:ghostlybond
+-- 兜底：Summon 内部会直接访问 pethealthbar，缺了就是硬崩溃
+AddComponentPostInit("ghostlybond", function(self)
+    local old_Summon = self.Summon
+    self.Summon = function(self, summoningitem, pos)
+        if self.inst:IsValid() and self.inst.components.pethealthbar == nil then
+            self.inst:AddComponent("pethealthbar")
+        end
+        return old_Summon(self, summoningitem, pos)
+    end
+end)
+
+```
+
