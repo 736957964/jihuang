@@ -54,12 +54,11 @@ end)
 ### 变体演进：无人自动重置单层世界 (Mod 3552197369)
 - **变体场景与切面**：收录来自工坊 Mod 3552197369 (无人自动重置单层世界) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3552197369)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddComponentPostInit("playerspawner", function(self)
 	local _SpawnAtLocation = self.SpawnAtLocation
 	self.SpawnAtLocation = function(self, inst, player, x, y, z, isloading, ...)
@@ -68,39 +67,31 @@ AddComponentPostInit("playerspawner", function(self)
 		TheWorld.components.AutoRegenerateShard:ResetTime()
 	end
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Nat (Mod 3661375684)
 - **变体场景与切面**：收录来自工坊 Mod 3661375684 (Nat) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3661375684)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("world", function(inst)
     inst:WatchWorldState("season", CleanUp)
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Backrooms alpha-v-0.1 (Mod 3786215888)
 - **变体场景与切面**：收录来自工坊 Mod 3786215888 (Backrooms alpha-v-0.1) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3786215888)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("world", function(world)
     if not world.ismastersim then return end
     local b_objects_spawned = false
@@ -176,21 +167,17 @@ AddPrefabPostInit("world", function(world)
         end
     end
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：共享位置 (Mod 3789721701)
 - **变体场景与切面**：收录来自工坊 Mod 3789721701 (共享位置) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3789721701)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("world", function(inst)
     if not inst.ismastersim then return end
     inst:DoTaskInTime(0, function()
@@ -205,16 +192,12 @@ local function GetRealPlayer(userid)
         end
     end
 end
-```
-```
-```
 
-`
+```
 
 ### 变体演进：RoseN Farm Blueprints (Mod 3823475990)
 - **变体场景与切面**：收录来自工坊 Mod 3823475990 (`RoseN Farm Blueprints`) 的生产级切面。
 - **核心切面代码**：
-`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3823475990)
@@ -229,17 +212,12 @@ if not G.TheNet:IsDedicated() then
         world:ListenForEvent("playeractivated", function() world:DoTaskInTime(0.5, function() ApplySeason(world.state.season) end) end)
     end)
 end
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Speedrun Timer + Utility Mod (Mod 3765874168)
 - **变体场景与切面**：收录来自工坊 Mod 3765874168 (`Speedrun Timer + Utility Mod`) 的生产级切面。
 - **核心切面代码**：
-`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3765874168)
@@ -307,17 +285,12 @@ AddPrefabPostInit("world", function(inst) -- ++Zoomzoombang
 		end
 	end)
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Slash Command Trading (Mod 3007529410)
 - **变体场景与切面**：收录来自工坊 Mod 3007529410 (`Slash Command Trading`) 的生产级切面。
 - **核心切面代码**：
-`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3007529410)
@@ -332,17 +305,12 @@ local function TableCombine(table1, table2)
 	for k, v in ipairs(table2) do 	
 		table1[#table1 + 1] = table2[k]
 	end
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：开局物品 (Mod 3012465209)
 - **变体场景与切面**：收录来自工坊 Mod 3012465209 (`开局物品`) 的生产级切面。
 - **核心切面代码**：
-`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3012465209)
@@ -373,17 +341,12 @@ local GLOBAL = GLOBAL
 			MY_STRINGS_OVERRIDE = nil
 		end
 	end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：超级保镖小Q (Mod 3829871506)
 - **变体场景与切面**：收录来自工坊 Mod 3829871506 (`超级保镖小Q`) 的生产级切面。
 - **核心切面代码**：
-`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3829871506)
@@ -414,17 +377,12 @@ end)
 AddPrefabPostInit("teleportato_ring", function(inst)
     manager:OnRingPostInit(inst)
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：AI NPC - Đừng Chết Đói :) (Mod 3809084975)
 - **变体场景与切面**：收录来自工坊 Mod 3809084975 (`AI NPC - Đừng Chết Đói :)`) 的生产级切面。
 - **核心切面代码**：
-`lua
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3809084975)
@@ -435,11 +393,7 @@ AddPrefabPostInit("world", function(inst)
     if not inst.ismastersim then return end
     inst:AddComponent("ailangquanly")
 end)
-```
-```
 > 💡 注：本黄金母本已在底层总账本中累计归约收敛 47 个同类工坊模组的生产级演进分支，此处精选保留最具代表性的前 10 个拓扑切面以确保文档秒开流畅。
-```
-```
 
-`
+```
 

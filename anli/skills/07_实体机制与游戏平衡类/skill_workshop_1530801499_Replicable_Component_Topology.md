@@ -138,12 +138,11 @@ end)
 ### 变体演进：lan (Mod 3052540872)
 - **变体场景与切面**：收录来自工坊 Mod 3052540872 (lan) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3052540872)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
  AddPrefabPostInit("skyshow",function(inst)
     inst:AddComponent("weapon")
     inst.components.weapon:SetDamage(SKYSHOW.DAMAGE)
@@ -734,21 +733,17 @@ local GLOBAL = GLOBAL
 			if TUNING.XGDUSE > 0 then staff.components.finiteuses:Use(10) end
 			if caster ~= nil and caster.components.sanity ~= nil then
 				caster.components.sanity:DoDelta(-5)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：明日方舟唱片 (Mod 3379258656)
 - **变体场景与切面**：收录来自工坊 Mod 3379258656 (明日方舟唱片) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3379258656)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("phonograph", function(inst)
     if not TheWorld.ismastersim then return inst end
     inst.TurnOffMachine = function() end --为什么科雷设计成播放64秒就停止了？
@@ -770,41 +765,32 @@ AddPrefabPostInit("phonograph", function(inst)
         inst:ListenForEvent("onremove", onremove)
     end
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：改变玩家出生位置 (Mod 3518921307)
 - **变体场景与切面**：收录来自工坊 Mod 3518921307 (改变玩家出生位置) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3518921307)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("multiplayer_portal_moonrock_constr",kepohuai)	
 AddPrefabPostInit("multiplayer_portal_moonrock",kepohuai)	
 AddPrefabPostInit("multiplayer_portal",kepohuai)	
-```
 AddPrefabPostInit("spawnpoint_master",CanDigInit)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：kramel的华语经典唱片 (Mod 3586130971)
 - **变体场景与切面**：收录来自工坊 Mod 3586130971 (kramel的华语经典唱片) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3586130971)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("phonograph", function(inst)
     if not TheWorld.ismastersim then return inst end
     inst.TurnOffMachine = function() end --为什么科雷设计成播放64秒就停止了？
@@ -826,16 +812,13 @@ AddPrefabPostInit("phonograph", function(inst)
         inst:ListenForEvent("onremove", onremove)
     end
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：自定义沃拓克斯 / Customize Wortox (Mod 3627955500)
 - **变体场景与切面**：收录来自工坊 Mod 3627955500 (自定义沃拓克斯 / Customize Wortox) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3627955500)
 -- ============================================================================
@@ -857,21 +840,17 @@ local GLOBAL = GLOBAL
             end
             inst.starting_inventory = items
         end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：HOWLS唱片 (Mod 3716634921)
 - **变体场景与切面**：收录来自工坊 Mod 3716634921 (HOWLS唱片) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3716634921)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("phonograph", function(inst)
     if not TheWorld.ismastersim then return inst end
     inst.TurnOffMachine = function() end --为什么科雷设计成播放64秒就停止了？
@@ -893,16 +872,13 @@ AddPrefabPostInit("phonograph", function(inst)
         inst:ListenForEvent("onremove", onremove)
     end
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：大霜鲨更多交易次数 (Mod 3771598087)
 - **变体场景与切面**：收录来自工坊 Mod 3771598087 (大霜鲨更多交易次数) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3771598087)
 -- ============================================================================
@@ -949,16 +925,13 @@ AddPrefabPostInit("sharkboi", function(inst)
         end
     end
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Mod 3808236333 (Mod 3808236333)
 - **变体场景与切面**：收录来自工坊 Mod 3808236333 (Mod 3808236333) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3808236333)
 -- ============================================================================
@@ -976,21 +949,17 @@ AddPrefabPostInit("queen_torch", function(inst)
         inst.components.channelcastable:SetOnStopChannelingFn(OnStopChanneling)
     end
     -- 武器攻击回调
-```
-```
-```
 
-`
+```
 
 ### 变体演进：智能矿工帽 Smart Miner Hat (Mod 3813163216)
 - **变体场景与切面**：收录来自工坊 Mod 3813163216 (智能矿工帽 Smart Miner Hat) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3813163216)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddPrefabPostInit("minerhat", function(inst)
     -- 只在服务端（主机 / 服务器）跑；客户端不插手
     if not GLOBAL.TheWorld.ismastersim then
@@ -1003,21 +972,17 @@ AddPrefabPostInit("minerhat", function(inst)
         return
     end
     ------------------------------------------------------------------
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Geometric Drop (fixed) (Mod 3813858106)
 - **变体场景与切面**：收录来自工坊 Mod 3813858106 (Geometric Drop (fixed)) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3813858106)
 -- ============================================================================
 local GLOBAL = GLOBAL
-```
 AddComponentPostInit("playercontroller", function(self)
     ThePlayer = GLOBAL.ThePlayer
     TheWorld = GLOBAL.TheWorld
@@ -1032,10 +997,7 @@ AddComponentPostInit("playercontroller", function(self)
             act = drop_action
         end
         self.LMBaction = act
-```
 > 💡 注：本黄金母本已在底层总账本中累计归约收敛 152 个同类工坊模组的生产级演进分支，此处精选保留最具代表性的前 10 个拓扑切面以确保文档秒开流畅。
-```
-```
 
-`
+```
 

@@ -124,7 +124,7 @@ end
 ### 变体演进：附魔拓展补丁 (Mod 3605108247)
 - **变体场景与切面**：收录来自工坊 Mod 3605108247 (附魔拓展补丁) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3605108247)
 -- ============================================================================
@@ -139,7 +139,6 @@ AddPrefabPostInit("killerbee", function(inst)
         config_value = GetModConfigData("ENABLE_KILLERBEE_ENCHANT_DROPS") or false
         GLOBAL.KillerBeeEnchantDropsEnabled = config_value
     end
-```
     if not inst.components.lootdropper then
         return
     end
@@ -182,17 +181,13 @@ AddPrefabPostInit("killerbee", function(inst)
     end)
     print("[KillerBee Event] 杀人蜂事件过滤加载完成")
 end)
-```
-```
-```
 
-`
+```
 
 ### 变体演进：移除BOSS间仇恨 (Mod 2819087689)
 - **变体场景与切面**：收录来自工坊 Mod 2819087689 (`移除BOSS间仇恨`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2819087689)
 -- ============================================================================
@@ -215,18 +210,13 @@ AddPrefabPostInit("bigshadowtentacle", function(inst)
 	end
 	inst:AddTag("epic")
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：小恶魔plus (Mod 3730144014)
 - **变体场景与切面**：收录来自工坊 Mod 3730144014 (`小恶魔plus`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3730144014)
 -- ============================================================================
@@ -340,18 +330,13 @@ AddPrefabPostInit("pigking", function(inst)
     end
   end
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Roman (Mod 3820783686)
 - **变体场景与切面**：收录来自工坊 Mod 3820783686 (`Roman`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3820783686)
 -- ============================================================================
@@ -396,18 +381,13 @@ AddComponentPostInit("combat",function(inst)
         return bonus
     end
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Better Skill Affinity Wortox (Mod 3721858089)
 - **变体场景与切面**：收录来自工坊 Mod 3721858089 (`Better Skill Affinity Wortox`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3721858089)
 -- ============================================================================
@@ -449,7 +429,6 @@ AddComponentPostInit("combat", function(self)
             return old(self, attacker, damage, weapon, stimuli, ...)
         end
         local inv = inst.components.inventory
-```
         if inst:HasTag("player")
             and not HasLunarSet(inst)
             and HasLunarAffiliation(inst)
@@ -463,24 +442,18 @@ AddComponentPostInit("combat", function(self)
                 weapon = weapon
             })
             inst:TryToPortalHop(1, false)
-```
             return old(self, attacker, 0, weapon, stimuli, ...)
         end
         return old(self, attacker, damage, weapon, stimuli, ...)
     end
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Wurt And Merm AI Tweaks (Mod 2070498017)
 - **变体场景与切面**：收录来自工坊 Mod 2070498017 (`Wurt And Merm AI Tweaks`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2070498017)
 -- ============================================================================
@@ -580,18 +553,13 @@ local MermKingStatus = Class(Widget, function(self, owner, name)
 	self.health_num:SetHAlign(ANCHOR_MIDDLE)
 	self.health_num:SetPosition(3, -10, 0)
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：伤害显示 (Mod 2952056856)
 - **变体场景与切面**：收录来自工坊 Mod 2952056856 (`伤害显示`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2952056856)
 -- ============================================================================
@@ -620,18 +588,13 @@ AddComponentPostInit("health", function(Health, inst)
 		end
 	end)
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：受到任何伤害都被击飞！ (Mod 3723296222)
 - **变体场景与切面**：收录来自工坊 Mod 3723296222 (`受到任何伤害都被击飞！`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3723296222)
 -- ============================================================================
@@ -658,18 +621,13 @@ local GLOBAL = GLOBAL
             return _DoDelta(self, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
         end
     end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：显示攻击范围 [Display Attack Range] (Mod 3756859423)
 - **变体场景与切面**：收录来自工坊 Mod 3756859423 (`显示攻击范围 [Display Attack Range]`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3756859423)
 -- ============================================================================
@@ -698,18 +656,13 @@ AddComponentPostInit("projectile", function(self, inst)
         DidProjectile(self)
     end
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：null (Mod 3620271154)
 - **变体场景与切面**：收录来自工坊 Mod 3620271154 (`null`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3620271154)
 -- ============================================================================
@@ -736,18 +689,13 @@ AddPrefabPostInit("player_classified", function(inst)
 		showme_health:ShowMeHintDirty(inst.net_showme_hint2:value())
 	end)
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：世界生成兼容 (Mod 3798999176)
 - **变体场景与切面**：收录来自工坊 Mod 3798999176 (`世界生成兼容`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3798999176)
 -- ============================================================================
@@ -817,18 +765,13 @@ local function PairFusionCaveHoles()
         or not _G.TheWorld:HasTag("cave") then
         return
     end
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Abigail Attack Shadow Creature (Mod 2337896196)
 - **变体场景与切面**：收录来自工坊 Mod 2337896196 (`Abigail Attack Shadow Creature`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2337896196)
 -- ============================================================================
@@ -906,18 +849,13 @@ AddComponentPostInit("combat", function(inst)
         return bonus
     end
 end)
-```
-```
-```
-```
 
-`
+```
 
 ### 变体演进：Health Bar and Buff - Client (Mod 2316507379)
 - **变体场景与切面**：收录来自工坊 Mod 2316507379 (`Health Bar and Buff - Client`) 的生产级切面。
 - **核心切面代码**：
-`lua
-```
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2316507379)
 -- ============================================================================
@@ -1289,7 +1227,6 @@ AddPrefabPostInit(
         )
     end
 )
-```
 AddPrefabPostInit(
     "tophat_shadow_fx",
     function(inst)
@@ -1307,7 +1244,6 @@ AddPrefabPostInit(
         )
     end
 )
-```
 AddPrefabPostInit(
     "alterguardianhat_projectile",
     function(inst)
@@ -1388,7 +1324,6 @@ AddPrefabPostInit(
         )
     end
 )
-```
 AddPrefabPostInit(
     "lunarplanttentacle",
     function(inst)
@@ -1616,10 +1551,6 @@ AddPrefabPostInit(
             end
         )
     end
-```
-```
-```
-```
 
-`
+```
 
