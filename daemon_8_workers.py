@@ -385,12 +385,18 @@ local GLOBAL = GLOBAL
 """
                 if evolve_header in master_content:
                     parts = master_content.split(evolve_header, 1)
-                    next_sec = re.search(r"\n## ", parts[1])
-                    if next_sec:
-                        insert_pos = next_sec.start()
-                        master_content = parts[0] + evolve_header + parts[1][:insert_pos] + "\n" + evolve_block + "\n" + parts[1][insert_pos:]
+                    # 控制母本中展示的变体数量上限（最多保留 10 份代表性切面），避免 Markdown 文件无限膨胀致使前端页面卡死
+                    v_count = parts[1].count("### 变体演进：")
+                    if v_count < 10:
+                        next_sec = re.search(r"\n## ", parts[1])
+                        if next_sec:
+                            insert_pos = next_sec.start()
+                            master_content = parts[0] + evolve_header + parts[1][:insert_pos] + "\n" + evolve_block + "\n" + parts[1][insert_pos:]
+                        else:
+                            master_content = parts[0] + evolve_header + parts[1] + "\n" + evolve_block + "\n"
                     else:
-                        master_content = parts[0] + evolve_header + parts[1] + "\n" + evolve_block + "\n"
+                        # 超过 10 份后，只在总账本和末尾汇总注释，不再无限堆砌代码块
+                        log("母本变体展示已达上限 (10)，增量归约记录至总账本")
                 else:
                     master_content += "\n\n" + evolve_header + "\n" + evolve_block + "\n"
                 
