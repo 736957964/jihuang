@@ -8758,3 +8758,35 @@ if harvestable_sleep then
 
 ```
 
+
+
+### 变体演进：카미시로 루이 (Mod 3322437916)
+- **变体场景与切面**：收录来自工坊 Mod 3322437916 (`카미시로 루이`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3322437916)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:tsukasa
+
+AddPrefabPostInit("tsukasa", AddSanityAura)
+
+-- The skins shown in the cycle view window on the character select screen.
+-- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("rui", "MALE", skin_modes)
+
+```
+

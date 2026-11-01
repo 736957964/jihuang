@@ -6834,8 +6834,26 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 10:54:49",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1349799880",
+      "name": "Basements",
+      "author": "Tykvesh",
+      "version": "2.16",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 11:01:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3322437916",
+      "name": "카미시로 루이",
+      "author": "LLS_0529",
+      "version": "1.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 11:01:23",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 10:54:49"
+  "lastUpdated": "2026-11-01 11:01:23"
 }

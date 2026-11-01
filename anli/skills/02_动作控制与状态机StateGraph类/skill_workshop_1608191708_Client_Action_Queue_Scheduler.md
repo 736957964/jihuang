@@ -41625,3 +41625,62 @@ local function nilfn() end
 
 ```
 
+
+
+### 变体演进：Basements (Mod 1349799880)
+- **变体场景与切面**：收录来自工坊 Mod 1349799880 (`Basements`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1349799880)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+	TELEBASES = Waffles.GetUpvalue(_G.FindNearestActiveTelebase, "TELEBASES")
+	Waffles.Parallel(_G, "FindNearestActiveTelebase", DisableCoveredTelebases)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+	if ToggleOffPhysics == nil then
+		ToggleOffPhysics = Waffles.GetUpvalue(sg.states.jumpout.onenter, "ToggleOffPhysics")
+		ToggleOnPhysics = Waffles.GetUpvalue(sg.states.jumpout.onexit, "ToggleOnPhysics")
+	end
+	
+	Waffles.Branch(sg.states.jumpin, "onenter", function(onenter, inst, data, ...)
+		if Waffles.Browse(data, "teleporter") and data.teleporter:HasTag("stairs") then
+			inst.sg:GoToState("jump_stairs", data)
+		else
+			onenter(inst, data)
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:telestaff
+
+AddPrefabPostInit("telestaff", function(inst)
+	Waffles.Branch(inst.components.spellcaster, "spell", TelestaffSpellRedirect)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:sinkholespawner
+
+AddComponentPostInit("sinkholespawner", function(self, inst)
+	Waffles.Branch(self, "SpawnSinkhole", SpawnSinkholeRedirect)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cavein_boulder
+
+AddPrefabPostInit("cavein_boulder", function(inst)
+	inst:ListenForEvent("startfalling", OverrideCaveinDebris)
+end)
+
+```
+
