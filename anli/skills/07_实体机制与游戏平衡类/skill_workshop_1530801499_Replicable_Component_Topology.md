@@ -11742,3 +11742,100 @@ end)
 
 ```
 
+
+
+### 变体演进：Eternal Glowcaps & Mushlights (Mod 1242093526)
+- **变体场景与切面**：收录来自工坊 Mod 1242093526 (`Eternal Glowcaps & Mushlights`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1242093526)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:hermitcrab_lightpost
+if conf_hermitcrab_lightpost == 1 then
+    AddPrefabPostInit('hermitcrab_lightpost', AddEternalFn)
+end
+
+if conf_yots_lantern_post == 1 then
+    AddPrefabPostInit('yots_lantern_post', AddEternalFn)
+end
+
+if conf_mushlight == 1 then
+    AddPrefabPostInit('mushroom_light', AddEternalFn)
+end
+
+if conf_glowcap == 1 then
+    AddPrefabPostInit('mushroom_light2', AddEternalFn)
+end
+
+if conf_winter_tree == 1 then
+    AddPrefabPostInit('winter_tree', AddEternalFn)
+    AddPrefabPostInit('winter_deciduoustree', AddEternalFn)
+    AddPrefabPostInit('winter_twiggytree', AddEternalFn)
+end
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:yots_lantern_post
+if conf_yots_lantern_post == 1 then
+    AddPrefabPostInit('yots_lantern_post', AddEternalFn)
+end
+
+if conf_mushlight == 1 then
+    AddPrefabPostInit('mushroom_light', AddEternalFn)
+end
+
+if conf_glowcap == 1 then
+    AddPrefabPostInit('mushroom_light2', AddEternalFn)
+end
+
+if conf_winter_tree == 1 then
+    AddPrefabPostInit('winter_tree', AddEternalFn)
+    AddPrefabPostInit('winter_deciduoustree', AddEternalFn)
+    AddPrefabPostInit('winter_twiggytree', AddEternalFn)
+end
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mushroom_light
+if conf_mushlight == 1 then
+    AddPrefabPostInit('mushroom_light', AddEternalFn)
+end
+
+if conf_glowcap == 1 then
+    AddPrefabPostInit('mushroom_light2', AddEternalFn)
+end
+
+if conf_winter_tree == 1 then
+    AddPrefabPostInit('winter_tree', AddEternalFn)
+    AddPrefabPostInit('winter_deciduoustree', AddEternalFn)
+    AddPrefabPostInit('winter_twiggytree', AddEternalFn)
+end
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mushroom_light2
+if conf_glowcap == 1 then
+    AddPrefabPostInit('mushroom_light2', AddEternalFn)
+end
+
+if conf_winter_tree == 1 then
+    AddPrefabPostInit('winter_tree', AddEternalFn)
+    AddPrefabPostInit('winter_deciduoustree', AddEternalFn)
+    AddPrefabPostInit('winter_twiggytree', AddEternalFn)
+end
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winter_tree
+if conf_winter_tree == 1 then
+    AddPrefabPostInit('winter_tree', AddEternalFn)
+    AddPrefabPostInit('winter_deciduoustree', AddEternalFn)
+    AddPrefabPostInit('winter_twiggytree', AddEternalFn)
+end
+
+
+```
+

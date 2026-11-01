@@ -7797,8 +7797,53 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 13:19:54",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1242093526",
+      "name": "Eternal Glowcaps & Mushlights",
+      "author": "adai1198",
+      "version": "26.6.6",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 13:27:15",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3040893393",
+      "name": "amulet_slot",
+      "author": "朋也",
+      "version": "1.0.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:27:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3399807252",
+      "name": "建筑师包",
+      "author": "The Builders Society，蛋挞",
+      "version": "4.6-Bfix6",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 13:27:16",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3635035690",
+      "name": "蕾缪安",
+      "author": "whaaaatfne（最终能量）",
+      "version": "1.1.04",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:27:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3723913746",
+      "name": "Open Backpacks on Ground | 地上背包可打开",
+      "author": "mlas_233",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:27:16",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:19:54"
+  "lastUpdated": "2026-11-01 13:27:16"
 }

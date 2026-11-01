@@ -8936,3 +8936,159 @@ end)
 
 ```
 
+
+
+### 变体演进：建筑师包 (Mod 3399807252)
+- **变体场景与切面**：收录来自工坊 Mod 3399807252 (`建筑师包`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3399807252)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:endtable
+
+AddPrefabPostInit("endtable", EndTablePostinit)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mushroom_light
+if conf_mushlight == 1 then
+	AddPrefabPostInit("mushroom_light", InfiniteLightFn)
+end
+
+if conf_glowcap == 1 then
+	AddPrefabPostInit("mushroom_light2", InfiniteLightFn)
+end
+
+if conf_winter_tree == 1 then
+	AddPrefabPostInit("winter_tree", InfiniteLightFn)
+	AddPrefabPostInit("winter_deciduoustree", InfiniteLightFn)
+	AddPrefabPostInit("winter_twiggytree", InfiniteLightFn)
+	AddPrefabPostInit("winter_palmconetree", InfiniteLightFn)
+end
+
+-- Festive lights placed on the ground as decorations do not run out.
+local function InfiniteFestiveLight(inst)
+	inst:AddTag("festive_infinite")
+
+	if not _G.TheWorld.ismastersim or inst.components.fueled == nil then
+		return inst
+	end
+
+	local inventoryitem = inst.components.inventoryitem
+	if inventoryitem ~= nil then
+		local _ondropfn = inventoryitem.ondropfn
+		inventoryitem:SetOnDroppedFn(function(inst, ...)
+			if _ondropfn ~= nil then
+				_ondropfn(inst, ...)
+			end
+			if inst.components.fueled ~= nil then
+				inst.components.fueled:StopConsuming()
+			end
+		end)
+	end
+	inst.components.fueled:StopConsuming()
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mushroom_light2
+if conf_glowcap == 1 then
+	AddPrefabPostInit("mushroom_light2", InfiniteLightFn)
+end
+
+if conf_winter_tree == 1 then
+	AddPrefabPostInit("winter_tree", InfiniteLightFn)
+	AddPrefabPostInit("winter_deciduoustree", InfiniteLightFn)
+	AddPrefabPostInit("winter_twiggytree", InfiniteLightFn)
+	AddPrefabPostInit("winter_palmconetree", InfiniteLightFn)
+end
+
+-- Festive lights placed on the ground as decorations do not run out.
+local function InfiniteFestiveLight(inst)
+	inst:AddTag("festive_infinite")
+
+	if not _G.TheWorld.ismastersim or inst.components.fueled == nil then
+		return inst
+	end
+
+	local inventoryitem = inst.components.inventoryitem
+	if inventoryitem ~= nil then
+		local _ondropfn = inventoryitem.ondropfn
+		inventoryitem:SetOnDroppedFn(function(inst, ...)
+			if _ondropfn ~= nil then
+				_ondropfn(inst, ...)
+			end
+			if inst.components.fueled ~= nil then
+				inst.components.fueled:StopConsuming()
+			end
+		end)
+	end
+	inst.components.fueled:StopConsuming()
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winter_tree
+if conf_winter_tree == 1 then
+	AddPrefabPostInit("winter_tree", InfiniteLightFn)
+	AddPrefabPostInit("winter_deciduoustree", InfiniteLightFn)
+	AddPrefabPostInit("winter_twiggytree", InfiniteLightFn)
+	AddPrefabPostInit("winter_palmconetree", InfiniteLightFn)
+end
+
+-- Festive lights placed on the ground as decorations do not run out.
+local function InfiniteFestiveLight(inst)
+	inst:AddTag("festive_infinite")
+
+	if not _G.TheWorld.ismastersim or inst.components.fueled == nil then
+		return inst
+	end
+
+	local inventoryitem = inst.components.inventoryitem
+	if inventoryitem ~= nil then
+		local _ondropfn = inventoryitem.ondropfn
+		inventoryitem:SetOnDroppedFn(function(inst, ...)
+			if _ondropfn ~= nil then
+				_ondropfn(inst, ...)
+			end
+			if inst.components.fueled ~= nil then
+				inst.components.fueled:StopConsuming()
+			end
+		end)
+	end
+	inst.components.fueled:StopConsuming()
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winter_deciduoustree
+	AddPrefabPostInit("winter_tree", InfiniteLightFn)
+	AddPrefabPostInit("winter_deciduoustree", InfiniteLightFn)
+	AddPrefabPostInit("winter_twiggytree", InfiniteLightFn)
+	AddPrefabPostInit("winter_palmconetree", InfiniteLightFn)
+end
+
+-- Festive lights placed on the ground as decorations do not run out.
+local function InfiniteFestiveLight(inst)
+	inst:AddTag("festive_infinite")
+
+	if not _G.TheWorld.ismastersim or inst.components.fueled == nil then
+		return inst
+	end
+
+	local inventoryitem = inst.components.inventoryitem
+	if inventoryitem ~= nil then
+		local _ondropfn = inventoryitem.ondropfn
+		inventoryitem:SetOnDroppedFn(function(inst, ...)
+			if _ondropfn ~= nil then
+				_ondropfn(inst, ...)
+			end
+			if inst.components.fueled ~= nil then
+				inst.components.fueled:StopConsuming()
+			end
+		end)
+	end
+	inst.components.fueled:StopConsuming()
+end
+
+```
+

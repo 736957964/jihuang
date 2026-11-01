@@ -55839,3 +55839,628 @@ end)
 
 ```
 
+
+
+### 变体演进：amulet_slot (Mod 3040893393)
+- **变体场景与切面**：收录来自工坊 Mod 3040893393 (`amulet_slot`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3040893393)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+    if not TheWorld.ismastersim then
+        if GLOBAL.Prefabs.inventory_classified and GLOBAL.Prefabs.inventory_classified.fn then
+            local _GetOverflowContainer = upvaluehelper.Get(GLOBAL.Prefabs.inventory_classified.fn, "GetOverflowContainer")
+            local _GetEquippedItem = upvaluehelper.Get(GLOBAL.Prefabs.inventory_classified.fn, "GetEquippedItem")
+            if _GetOverflowContainer then
+                local function newGetOverflowContainer(inst)
+                    if inst.ignoreoverflow then
+                        return
+                    end
+                    local item = _GetEquippedItem(inst, EQUIPSLOTS.BACKPACK)
+                    return item ~= nil and item.replica.container or nil
+                end
+                upvaluehelper.Set(GLOBAL.Prefabs.inventory_classified.fn, "GetOverflowContainer", newGetOverflowContainer)
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    local amulet_rebirth = sg.states["amulet_rebirth"]
+    local old_onenter = amulet_rebirth.onenter
+    amulet_rebirth.onenter = function(inst, ...)
+        if old_onenter ~= nil then
+            old_onenter(inst, ...)
+        end
+        local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.AMULET)
+        if item ~= nil and item.prefab == "amulet" then
+            item = inst.components.inventory:RemoveItem(item)
+            if item ~= nil then
+                item:Remove()
+                inst.sg.statemem.usedamulet = true
+            end
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：蕾缪安 (Mod 3635035690)
+- **变体场景与切面**：收录来自工坊 Mod 3635035690 (`蕾缪安`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3635035690)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+
+AddComponentPostInit("inventory", function(self)
+    local oldCanTakeItemInSlot = self.CanTakeItemInSlot
+    function self:CanTakeItemInSlot(item, slot)
+        if IsLemuenSniper(item) and IsNonPlayerCreature(self.inst) then
+            return false
+        end
+        return oldCanTakeItemInSlot(self, item, slot)
+    end
+
+    local oldGiveItem = self.GiveItem
+    function self:GiveItem(item, ...)
+        if IsLemuenSniper(item) and IsNonPlayerCreature(self.inst) then
+            return false
+        end
+        return oldGiveItem(self, item, ...)
+    end
+
+    local oldGiveActiveItem = self.GiveActiveItem
+    function self:GiveActiveItem(item, ...)
+        if IsLemuenSniper(item) and IsNonPlayerCreature(self.inst) then
+            return false
+        end
+        return oldGiveActiveItem(self, item, ...)
+    end
+
+    local oldSetActiveItem = self.SetActiveItem
+    function self:SetActiveItem(item, ...)
+        if IsLemuenSniper(item) and IsNonPlayerCreature(self.inst) then
+            return false
+        end
+        return oldSetActiveItem(self, item, ...)
+    end
+
+    local oldEquip = self.Equip
+    function self:Equip(item, ...)
+        if IsLemuenSniper(item) and IsNonPlayerCreature(self.inst) then
+            return false
+        end
+        return oldEquip(self, item, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+--容器类也不能放入狙击枪
+AddComponentPostInit("container", function(self)
+    local oldCanTakeItemInSlot = self.CanTakeItemInSlot
+    function self:CanTakeItemInSlot(item, slot)
+        if IsLemuenSniper(item) and IsNonPlayerCreatureStorage(self.inst) then
+            return false
+        end
+        return oldCanTakeItemInSlot(self, item, slot)
+    end
+
+    local oldGiveItem = self.GiveItem
+    function self:GiveItem(item, ...)
+        if IsLemuenSniper(item) and IsNonPlayerCreatureStorage(self.inst) then
+            return false
+        end
+        return oldGiveItem(self, item, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+--战斗组件相关
+AddComponentPostInit(
+    'combat',
+    function(self, inst)
+        local oldGetAttacked_Internal = self.GetAttacked_Internal
+        function self:GetAttacked_Internal(attacker, damage, weapon, stimuli, spdamage, from_doattack)
+            if self.inst and attacker and type(attacker) == "table" and attacker.IsValid and attacker:IsValid() then
+                if  
+                    attacker.lemuen_talent_target
+                then
+                    attacker = attacker.lemuen_talent_target
+                end
+
+                local has_lemuen = false
+                local lemuen_e1 = false
+                local lemuen_e2 = false
+                for i, v in ipairs(AllPlayers) do
+                    if v:HasTag("lemuen") then
+                        has_lemuen = true
+                        lemuen_e1 = v.lemuen_e1
+                        lemuen_e2 = v.lemuen_e2
+                    end
+                end
+
+                local mult = 0
+                if lemuen_e2 then
+                    mult = .25
+                elseif lemuen_e1 then
+                    mult = .15
+                end
+
+                if has_lemuen and attacker:HasTag("laterano") then
+                    self.inst.lemuen_laterano_mark = math.min((self.inst.lemuen_laterano_mark or 0) + 1, 10)
+                    if self.inst.lemuen_laterano_mark ~= nil and self.inst.lemuen_laterano_mark >= 10 then
+                        damage = damage * (1 + mult)
+                        if spdamage then
+                            spdamage = SpDamageUtil.ApplyMult(spdamage, 1 + mult)
+                        end
+                    end
+                end
+
+                if attacker:HasTag("lemuen") and damage then
+                    local weapon = attacker.components.combat and attacker.components.combat:GetWeapon() or nil
+                    if weapon and weapon.components.weapon then
+                        local weapon_damage = weapon.components.weapon.damage
+                        local ratio = damage / weapon_damage
+                        if ratio >= TUNING.LEMUEN_PIERCING then
+                            if TUNING.LEMUEN_PIERCING_TYPE == 1 then
+                                if spdamage == nil then
+                                    spdamage = {planar = damage * .5}
+                                elseif spdamage ~= nil then
+                                    spdamage.planar = damage * .5
+                                end
+                            elseif TUNING.LEMUEN_PIERCING_TYPE == 2 then
+                                if spdamage == nil then
+                                    spdamage = {planar = damage * .25}
+                                elseif spdamage ~= nil then
+                                    spdamage.planar = damage * .25
+                                end
+                                DoTrueDamage(self.inst, damage * .25, false, false, "lemuen_piercing", attacker, true)
+                            elseif TUNING.LEMUEN_PIERCING_TYPE == 3 then
+                                DoTrueDamage(self.inst, damage * .5, false, false, "lemuen_piercing", attacker, true)
+                            end
+                            damage = damage * .5
+                        end
+                    end
+                end
+            end
+            return oldGetAttacked_Internal(self, attacker, damage, weapon, stimuli, spdamage, from_doattack)
+        end
+
+        --设置目标
+        local oldSetTarget = self.SetTarget 
+        function self:SetTarget(target)
+            if (self.inst and not (self.inst:HasTag("lemuen") and self.inst:HasTag("lemuen_talent")))
+            and (target ~= nil and target:HasTag("lemuen_shadow_fx"))
+			then
+                return
+            end
+            return oldSetTarget(self, target)
+        end
+
+        --进行攻击
+        local oldDoAttack = self.DoAttack
+        function self:DoAttack(targ, ...)
+            if (self.inst and not (self.inst:HasTag("lemuen") and self.inst:HasTag("lemuen_talent")))
+            and (targ ~= nil and targ:HasTag("lemuen_shadow_fx"))
+			then
+                return
+            end
+            return oldDoAttack(self, targ, ...)
+        end
+
+        local old_in_cooldown = self.InCooldown
+        function self:InCooldown()
+            if (self.inst.components.inventory and self.inst.components.inventory:EquipHasTag("lemuen_sniper_slow")) then
+                return self.laststartattacktime ~= nil and self.laststartattacktime + self.min_attack_period * 3 > GetTime()
+            else
+                return old_in_cooldown(self)
+            end
+        end
+    end
+)
+AddClassPostConstruct("components/combat_replica", function(self)
+    local old_in_cooldown = self.InCooldown
+    function self:InCooldown()
+        if self.inst.components.combat ~= nil then
+            return self.inst.components.combat:InCooldown()
+        elseif not (self.inst.replica.inventory and self.inst.replica.inventory:EquipHasTag("lemuen_sniper_slow")) then
+            return old_in_cooldown(self)
+        elseif self.classified ~= nil then
+            return self._laststartattacktime ~= nil and self._laststartattacktime +
+                       self.classified.minattackperiod:value() * 3 > GetTime()
+        end
+        return false
+    end
+
+    local old_CanBeAttacked = self.CanBeAttacked
+	function self:CanBeAttacked(attacker)
+        if attacker and (attacker:HasTag("lemuen_skill") or attacker:HasTag("lemuen_forceattack") and (attacker.replica.inventory and attacker.replica.inventory:EquipHasTag("lemuen_sniper_slow")))
+        and not (attacker.replica.combat and attacker.replica.combat:IsAlly(self.inst))
+        and (TheNet:GetPVPEnabled() or not self.inst:HasTag("player"))
+        then
+			return true
+		end
+		return old_CanBeAttacked(self, attacker)
+	end
+
+    --使蕾缪安虚影不被非蕾缪安玩家视为可设为目标的单位
+    local old_IsValidTarget = self.IsValidTarget
+    function self:IsValidTarget(target)
+		if not self.inst:HasTag("lemuen") and (target and target:HasTag("lemuen_shadow_fx")) then
+			return false
+		end
+        return old_IsValidTarget(self, target)
+    end
+
+    --使蕾缪安虚影不被非蕾缪安玩家视为可被索敌的单位
+	local old_CanTarget = self.CanTarget
+	function self:CanTarget(target)
+		if not self.inst:HasTag("lemuen") and (target and target:HasTag("lemuen_shadow_fx")) then
+			return false
+		end
+		return old_CanTarget(self, target)
+	end
+end)
+--[[AddClassPostConstruct("components/combat_replica", function(self)
+    local old = self.GetAttackRangeWithWeapon
+    function self:GetAttackRangeWithWeapon()
+        if self.inst.components.combat ~= nil then
+            return self.inst.components.combat:GetAttackRange()
+        elseif not self.inst:HasTag("lemuen_talent") then
+            return old(self)
+        elseif (self.inst:HasTag("lemuen") and self.inst:HasTag("lemuen_talent")) then
+            local weapon = self:GetWeapon()
+            return (weapon ~= nil and weapon:HasTag("lemuen_sniper_slow"))
+                and math.max(0, self._attackrange:value() + weapon.replica.inventoryitem:AttackRange() + 4096)
+                or self._attackrange:value()
+        end
+        return false
+    end
+end)
+AddComponentPostInit("combat", function(self)
+    local OldGetAttackRange = self.GetAttackRange
+    function self:GetAttackRange()
+        if (self.inst:HasTag("lemuen_talent") or self.inst:HasTag("lemuen_skill")) then
+            local weapon = self:GetWeapon()
+            local skill_extra_range = 4096
+            return weapon ~= nil and weapon.components.weapon.attackrange ~= nil and
+                       math.max(0, self.attackrange + weapon.components.weapon.attackrange + skill_extra_range) or self.attackrange
+        else
+            return OldGetAttackRange(self)
+        end
+    end
+end)
+AddComponentPostInit("combat", function(self)
+    local OldGetHitRange = self.GetHitRange
+    function self:GetHitRange()
+        if (self.inst:HasTag("lemuen_talent") or self.inst:HasTag("lemuen_skill")) then
+            local weapon = self:GetWeapon()
+            local skill_extra_range = 4096
+            return self.temprange or weapon ~= nil and weapon.components.weapon.hitrange ~= nil and self.hitrange +
+                       weapon.components.weapon.hitrange + skill_extra_range or self.hitrange
+        else
+            return OldGetHitRange(self)
+        end
+    end
+end)]]
+-------------------------------------------------------------------
+
+--[[AddStategraphPostInit("wilson", function(sg)
+    local state_long = sg.states["wakeup"]
+    local plong = state_long.onenter
+    state_long.onenter = function(inst, data)
+        if inst:HasTag("lemuen") then
+
+        else
+            return plong(inst, data)
+        end
+    end
+    table.insert(state_long.timeline, TimeEvent(2 * FRAMES, function(inst)
+        if inst:HasTag("lemuen") then
+            inst.sg:RemoveStateTag("busy")
+        end
+    end))
+end)]]
+
+AddPrefabPostInitAny(function(inst)--蕾缪安读书耐久消耗减半
+    if inst:HasTag("book") then
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        if inst.components.finiteuses then
+            local old_use = inst.components.finiteuses.Use
+            inst.components.finiteuses.Use = function(self, numuses)
+                local owner = inst.components.inventoryitem and inst.components.inventoryitem:GetGrandOwner() or nil
+                if owner and owner:HasTag("lemuen") then
+                    if numuses then
+                        numuses = numuses * .5
+                    end
+                end
+
+                -- 如果旧函数存在，则调用它
+                if old_use then
+                    old_use(self, numuses)
+                end
+            end
+        end
+    end
+end)
+
+--快捷施法动作
+local function NewAoeSg(sg)
+    local old_castaoe = sg.actionhandlers[ACTIONS.CASTAOE].deststate
+    sg.actionhandlers[ACTIONS.CASTAOE].deststate = function(inst, action)
+        if action.invobject ~= nil and (action.invobject:HasTag('lemuen_sniper')) then
+            return 'lemuen_quickshoot'
+        end
+        return old_castaoe(inst, action)
+    end
+end
+AddStategraphPostInit('wilson', NewAoeSg)
+AddStategraphPostInit('wilson_client', NewAoeSg)
+
+AddComponentPostInit("cursable", function(self)--免疫猴子诅咒
+    local oldapplycurse = self.ApplyCurse
+    function self:ApplyCurse(item, curse)
+        if self.inst:HasTag("lemuen") then
+            return
+        end
+        oldapplycurse(self, item, curse)
+    end
+
+    local OldIsCursable = self.IsCursable
+    function self:IsCursable(item)
+        if self.inst:HasTag("lemuen") then
+            return nil
+        end
+        return OldIsCursable(self, item)
+    end
+
+    local oldforceontoowner = self.ForceOntoOwner
+    function self:ForceOntoOwner(item)
+        if self.inst:HasTag("lemuen") then
+            return
+        end
+        oldforceontoowner(self, item)
+    end
+end)
+
+AddComponentPostInit("stewer", function(self)
+    local OldHarvest = self.Harvest
+    function self:Harvest(harvester)
+        if harvester ~= nil and harvester:HasTag("lemuen") then
+            if self.product then
+                local loot = SpawnPrefab(self.product)
+                if self.spoiltime ~= nil and loot.components.perishable ~= nil then
+                    local spoilpercent = self:GetTimeToSpoil() / self.spoiltime
+                    loot.components.perishable:SetPercent(self.product_spoilage * spoilpercent)
+                    loot.components.perishable:StartPerishing()
+                end
+                if loot:HasTag("lemuen_sweet_food") and math.random() <= .5 then
+                    if harvester.components.inventory then
+                        harvester.components.inventory:GiveItem(loot, nil, self.inst:GetPosition())
+                    end
+                else
+                    loot:Remove()
+                end
+            end
+        end
+        return OldHarvest(self, harvester)
+    end
+end)
+
+local sweet_foods = {"honeyham", "honeynuggets", "powcake", "freshfruitcrepes", "sweettea", "jellybean", "taffy", "voltgoatjelly", "leafymeatsouffle"}
+for _, food in ipairs(sweet_foods) do
+    AddPrefabPostInit(food, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        inst:AddTag("lemuen_sweet_food")
+    end)
+end
+
+local lunar_hats = {"alterguardianhat", "lunarplanthat", "wagpunkhat"}
+for _, hat in ipairs(lunar_hats) do
+    AddPrefabPostInit(hat, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        inst:AddTag("lemuen_lunar_hat")
+    end)
+end
+
+for _,v in pairs({"transistor", "moonglass", "thulecite", "deerclops_eyeball", "minotaurhorn", "moonstorm_spark", "alterguardianhatshard", "lunarplant_husk"}) do
+    AddPrefabPostInit(v, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+    
+        if not inst.components.tradable then
+            inst:AddComponent("tradable")
+        end
+    end)
+end
+
+local buzzards = {"circlingbuzzard", "circlingbuzzard_lunar"}
+for _, buzzard in ipairs(buzzards) do
+    AddPrefabPostInit(buzzard, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        inst:RemoveTag("FX")
+        inst:AddTag("lemuen_attackskycantarget")
+    end)
+end
+
+local players = {"archetto", "mostima", "lemuen", "virtuosa", "exusiai"}--空弦、莫斯提马、蕾缪安、塑心、能天使
+for _, player in ipairs(players) do
+    AddPrefabPostInit(player, function(inst)
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        if not inst:HasTag("laterano") then
+            inst:AddTag("laterano")
+        end
+    end)
+end
+
+local lemuen_ui = require("widgets/lemuen_skills") 
+local function AddLemuenWidget(self)
+    if self.owner and self.owner:HasTag("lemuen") then
+        self.lemuen_ui = self:AddChild(lemuen_ui(self.owner)) 
+    end   
+end
+AddClassPostConstruct("widgets/controls", AddLemuenWidget) --
+
+local function ondeath(inst)
+    if inst.lemuen_viewer then
+        inst.lemuen_viewer:PushEvent("lemuen_endviewing")
+    end
+end
+
+AddPlayerPostInit(function(inst)
+    if inst:HasTag("lemuen") then
+        return
+    end
+
+	local pOnDespawn = inst.OnDespawn
+	inst.OnDespawn = function(inst, migrationdata)
+        if inst.lemuen_viewer then
+            inst.lemuen_viewer:PushEvent("lemuen_endviewing")
+        end
+		pOnDespawn(inst, migrationdata)
+	end
+    inst:ListenForEvent("death", ondeath)
+    inst:ListenForEvent("remove", ondeath)
+    inst:ListenForEvent("player_despawn", ondeath)
+    inst:ListenForEvent("ms_playerleft", ondeath) -- TheWorld
+end)
+------------------------------------------------------------------------------------------------------------------------
+--免疫催眠
+--受催眠时长减半
+AddComponentPostInit("grogginess", function(self)
+	local oldAddGrogginess = self.AddGrogginess
+	function self:AddGrogginess(grogginess, knockoutduration)
+		if self.inst.components.timer and self.inst.components.timer:TimerExists("lemuen_knockout_immune") then
+			return
+        elseif self.inst:HasTag("lemuen") and knockoutduration then
+            knockoutduration = knockoutduration * .5
+		end
+		return oldAddGrogginess(self, grogginess, knockoutduration)
+	end
+end)
+
+--AddComponentPostInit("grogginess", function(self)
+--	local oldComeTo = self.ComeTo
+--	function self:ComeTo(...)
+--		if self.inst.components.timer and self.inst.components.timer:TimerExists("lemuen_knockout_imuune") then--TAG自己换
+--			return
+--		end
+--		return oldComeTo(self,...)
+--	end
+--end)
+
+AddComponentPostInit("grogginess", function(self)
+	local oldKnockOut = self.KnockOut
+	function self:KnockOut(...)
+		if self.inst.components.timer and self.inst.components.timer:TimerExists("lemuen_knockout_imuune") then--TAG自己换
+			return
+		end
+		return oldKnockOut(self,...)
+	end
+end)
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+--[[AddStategraphPostInit("wilson", function(sg)
+    local state_long = sg.states["wakeup"]
+    local plong = state_long.onenter
+    state_long.onenter = function(inst, data)
+        if inst:HasTag("lemuen") then
+
+        else
+            return plong(inst, data)
+        end
+    end
+    table.insert(state_long.timeline, TimeEvent(2 * FRAMES, function(inst)
+        if inst:HasTag("lemuen") then
+            inst.sg:RemoveStateTag("busy")
+        end
+    end))
+end)]]
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit('wilson', NewAoeSg)
+AddStategraphPostInit('wilson_client', NewAoeSg)
+
+AddComponentPostInit("cursable", function(self)--免疫猴子诅咒
+    local oldapplycurse = self.ApplyCurse
+    function self:ApplyCurse(item, curse)
+        if self.inst:HasTag("lemuen") then
+            return
+        end
+        oldapplycurse(self, item, curse)
+    end
+
+    local OldIsCursable = self.IsCursable
+    function self:IsCursable(item)
+        if self.inst:HasTag("lemuen") then
+            return nil
+        end
+        return OldIsCursable(self, item)
+    end
+
+    local oldforceontoowner = self.ForceOntoOwner
+    function self:ForceOntoOwner(item)
+        if self.inst:HasTag("lemuen") then
+            return
+        end
+        oldforceontoowner(self, item)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Open Backpacks on Ground | 地上背包可打开 (Mod 3723913746)
+- **变体场景与切面**：收录来自工坊 Mod 3723913746 (`Open Backpacks on Ground | 地上背包可打开`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3723913746)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
