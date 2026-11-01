@@ -6213,8 +6213,35 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 09:31:36",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2383756168",
+      "name": "Starving Floor",
+      "author": "Willow & What the Duck",
+      "version": "16.09",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:36:25",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3480275368",
+      "name": "Mod 3480275368",
+      "author": "朋也",
+      "version": "1.0.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 09:36:25",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3722717879",
+      "name": "心心小合集",
+      "author": "心心",
+      "version": "2026.10.31.02",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:36:25",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 09:31:36"
+  "lastUpdated": "2026-11-01 09:36:25"
 }

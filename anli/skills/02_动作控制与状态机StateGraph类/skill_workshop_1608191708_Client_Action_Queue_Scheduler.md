@@ -33153,3 +33153,651 @@ AddComponentPostInit("playercontroller", addActionButtonPostInit)
 
 ```
 
+
+
+### 变体演进：Starving Floor (Mod 2383756168)
+- **变体场景与切面**：收录来自工坊 Mod 2383756168 (`Starving Floor`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2383756168)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+	overwrite(self, "Enable", function(self, switch)
+		if switch == false then 
+			return false 
+		end 
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:focalpoint
+
+AddComponentPostInit("focalpoint", function(self)	
+	self.StartFocusSource = NOTHING_FUNCTION
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+				
+AddPrefabPostInit("world", function(TheWorld)
+	if TheNet:IsDedicated() then 
+		overwrite(GLOBAL, "c_regenerateworld", function()
+			if #AllPlayers > 0 then 
+				return false 
+			end 
+		end, nil, false)
+	end
+	
+	local COMMANDS = {
+		regenerate = function(self)
+--			self.votetimeout = 480
+		end, 
+		rollback = true
+	}
+	
+	for name, data in pairs(COMMANDS) do 
+		local command = require"usercommands".GetCommandFromName(name)
+		command.voteminpasscount = 1
+		command.voteminstartage = 10
+		
+		if type(data) == "function" then 
+			data(command)
+		end 
+	end 
+
+	local getexectype = Hacker.GetUpvalue(require"usercommands".GetUserActions, 
+		"getsomecommands", 
+		"getexectype")
+
+	local replacement = function(command, caller, ...)
+		local guy = TheNet:GetClientTableForUser(caller.userid)
+		if guy and guy.admin  and (COMMANDS[command.name] ~= nil) then 
+			return COMMAND_RESULT.VOTE
+		else 
+			return getexectype(command, caller, ...)
+		end  
+	end
+	
+	Hacker.SetUpvalue(require"usercommands".GetUserActions, 
+		replacement, 
+		"getsomecommands", 
+		"getexectype")
+end)
+
+				-----------------------------------------------------
+							if not MASTER then return end 
+				-----------------------------------------------------
+
+-- getmetatable(TheSim).__index.VerifyModVersions = function() end 				
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:finiteuses
+
+AddComponentPostInit("finiteuses", function(self)
+	overwrite(self, "SetUses", function(self, uses)
+		if self.inst:HasAnyTag{"hide_percentage"} 
+		and uses and (uses < self.total) then 
+			return 0
+		end 
+	end, nil, 0)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+	overwrite(self, "ShouldAggro", function(self, target, ignore_forbidden)
+		if self.inst:HasOneOfTags{"companion", "shadowminion", "abigail"} then 
+		
+			if target and target:HasOneOfTags{"companion", "wall"} then 
+				return false 
+				
+			elseif target and target:HasTag"player" and (not ignore_forbidden) then 
+				return false 
+			end 
+		end 
+	end)
+end)
+
+AddComponentPostInit("planarentity", function(self)
+	overwrite(self, "AbsorbDamage", function(self, damage, attacker, weapon, spdmg)
+		if self.inst:HasAnyTag{"companion", "wall"} 
+		and attacker and attacker:HasTag"player" then  
+			return damage, spdmg
+		end 
+	end)
+end)
+
+AddPrefabPostInitAny(function(inst)
+	if inst.components.follower then 
+		inst.components.follower.neverexpire = true
+		inst.components.follower.keepdeadleader = true 
+	end 
+end)
+
+------------------------------------------------------------------------------
+--			*			*			HEALTH:KILL 	*			*			--
+------------------------------------------------------------------------------
+-- this means that mobs cant insta kill turrets, spider dens, etc
+-- maxwell chunk moved to maxwell file 
+
+AddComponentPostInit("health", function(self)
+	overwrite(self, "Kill", function(self)
+				
+		if self.inst:HasOneOfTags{
+			"companion", 
+			"wall", 
+			"sfhostile"			}-- sfhostile added
+		and (not self.inst:HasOneOfTags{
+			"groundspike", 
+			"eyeplant", 
+			"lavae"				}) 
+		and (not self._ignore_maxdamagetakenperhit)
+		and self.inst.components.combat then   
+		
+			print("health:Kill()", self.inst)
+		 	self.inst.components.combat:GetAttacked(nil, 200)
+			return true
+		end 
+	end)
+end)
+
+AddComponentPostInit("petleash", function(self)
+	overwrite(self, "DespawnPet", function(self, pet)
+		if pet and pet.components.health then 
+			pet.components.health._ignore_maxdamagetakenperhit = true
+		end 
+	end)
+end)
+
+--[[
+local function shadowminion_timerdone(inst, data)
+	if data and data.name == "obliviate" then 
+		if inst.components.health then 
+			inst.components.health._ignore_maxdamagetakenperhit = true
+		end
+		inst.sg:GoToState("quickdespawn")
+	end 
+end
+
+AddPrefabPostInitAny(function(inst)
+	if inst:HasTag"shadowminion" then 
+		inst:ListenForEvent("timerdone", shadowminion_timerdone)
+	end
+end)
+]]
+
+--[[
+AddStategraphPostInit("shadowmaxwell", function(self)
+	overwrite(self.states.quickdespawn, "onenter", function(inst)
+		print("quickdespawn", inst)
+		if inst.components.health then 
+			inst.components.health._ignore_maxdamagetakenperhit = true
+			inst.components.health:Kill()
+		end 
+	end)
+end)
+]]
+
+------------------------------------------------------------------------------
+--			*			*			BIPEDS			 *			*			--
+------------------------------------------------------------------------------
+-- you need to leave builder some useless things for fun 
+-- and this sense of abuse, of secrets. 
+
+PIGHOUSE_SPAWN_TIME = 480 / 4--sameas sfsalve
+RABBITHOUSE_SPAWN_TIME = 480 / 4--sameas sfsalve
+MERMHOUSE_REGEN_TIME = 480 / 4--sameas sfsalve
+MERMWATCHTOWER_REGEN_TIME = 480 / 4--sameas sfsalve
+
+--[[
+PIGHOUSE_SPAWN_TIME = 60
+RABBITHOUSE_SPAWN_TIME = 30
+MERMHOUSE_REGEN_TIME = 60
+MERMWATCHTOWER_REGEN_TIME = 30
+
+MultiPrefabPostInit({
+	"fence", 
+	"pighouse", 
+	"rabbithouse", 
+	"mermhouse_crafted", 
+	"mermwatchtower", 
+}, function(inst)
+	if inst.components.workable then 
+		inst.components.workable:SetWorkLeft(1)
+	end 
+end)
+]]
+
+-- remember that this is less of a buff than for the purpose of delag
+-- so they go off and die 
+local function locomotor_retarget(inst)
+	if inst.components.follower and inst.components.follower.leader then 
+		return nil 
+	else 
+		local target = FindEntity(
+			inst,
+			ArenaRadius * 2, -- default is 4 and investigative is 6
+			nil, 
+			{ "_combat"}, 
+			{
+				"INLIMBO", 
+				
+				"player", 
+				"companion", 
+				"wall", 
+				
+				"shadow", 
+				
+				"lureplant", 
+				"eyeplant", 
+				"gnarwail", 
+			}, 
+			{"hostile", "sfhostile", "berrythief"})
+		if target then 
+			return target, true
+		end 
+	end 
+end
+
+-- for the one biome mobs we'll be adding
+function SF.DoLocomotorRetargetAndAllyFixes(inst)
+	DoAllyFix(inst)
+	if inst.components.combat then 
+		inst.components.combat:SetRetargetFunction(1, locomotor_retarget)
+		inst.components.combat.SetRetargetFunction = function(inst)
+			print("Denying combat:SetRetargetFunction on " .. tostring(inst))
+		end	
+		inst.components.combat:TryRetarget()
+		-- (they keep their native keeptarget function)
+	end 
+end
+
+for prefab, func in pairs{
+	pigman = false, 
+	bunnyman = false, 
+	
+	mermguard = function(inst)
+		inst:AddTag"stronggrip" 
+	end, 
+	
+	merm = function(inst)
+		inst:AddTag"stronggrip" 
+	end, 
+} do 
+	PrefabSpecialness(prefab, function(inst)
+		DoLocomotorRetargetAndAllyFixes(inst)
+		if func then 
+			func(inst)
+		end 
+	end)
+end 
+
+------------------------------------------------------------------------------
+--			*			*		PIG WARRIORS		 *			*			--
+------------------------------------------------------------------------------
+
+local function pigelite_startfollowing(inst, data)
+--	print("startfollowing", inst, data and data.leader)
+	if data and data.leader and data.leader.components.leader then 
+		local pigelite_followers = {}
+		for k in pairs(data.leader.components.leader.followers) do 
+			if k == inst then 
+				-- pass
+			elseif (inst:HasTag"pigelite" and k:HasTag"pigelite") then  
+				SetOwnerInstance(k, data.leader)
+				if inst.components.follower then 
+					inst.components.follower:SetLeader(nil)
+				end 
+			end  
+		end
+	end 
+end
+
+AddPrefabPostInitAny(function(inst)
+	if inst:HasAnyTag{"pigelite"} then 
+		inst:ListenForEvent("startfollowing", pigelite_startfollowing)
+	end 
+end)
+
+local function pigelite_attacked(inst, data)
+--	print("pigelite_attacked", inst, data and data.attacker)
+	if data and data.attacker and data.attacker:HasTag"player" then 		
+		if data.attacker == (inst.components.follower 
+		and inst.components.follower.leader) then
+			if inst.components.combat:HasTarget() then 
+				inst.components.combat:DropTarget()
+			else  
+				data.attacker.components.leader:RemoveFollower(inst)
+			end
+		end 
+		
+	elseif data and data.attacker then 
+		inst.components.combat:SetTarget(data.attacker)
+	end 
+end
+
+local function pigelite_keeptarget(inst, target)
+	return inst.components.combat
+		and inst.components.combat:CanTarget(target) 
+end
+
+--PIG_ELITE_FIGHTER_DESPAWN_TIME = 480 * 10
+AddPrefabPostInitAny(function(inst)
+	if not inst:HasTag"pigelite" then 
+		return 
+	elseif inst:HasTag"minigame_participator" then 
+		return 
+	end  
+		
+	DoLocomotorRetargetAndAllyFixes(inst)
+	
+	if inst.components.combat then 
+		inst.components.combat:SetKeepTargetFunction(pigelite_keeptarget)
+	end 
+	
+--	inst:AddComponent"planardamage"
+--	inst.components.planardamage:SetBaseDamage(1)
+
+	inst.event_listeners.newcombattarget = nil 
+	
+	if inst.components.timer then 
+		inst.components.timer:StopTimer("despawn_timer")
+	end 
+	
+	inst:ListenForEvent("attacked", pigelite_attacked)
+	
+--		inst:AddComponent"trader"
+--		inst:AddComponent"inventory"
+--		inst:SetBrain(require "brains/pigbrain")
+	
+--		inst:AddComponent"lootdropper"
+--		inst.components.lootdropper:SetLoot({})
+--		inst.components.lootdropper:AddRandomLoot("meat", 3)
+--		inst.components.lootdropper:AddRandomLoot("pigskin", 1)
+--		inst.components.lootdropper.numrandomloot = 1
+	
+--		if inst.components.follower then 
+--			inst.components.follower.StopFollowing = NOTHING_FUNCTION
+--		end 
+	
+--		inst:ListenForEvent("newcombattarget", function(inst, data)
+--			inst._should_despawn = false
+--			inst.persists = true
+--		end)
+	
+	inst:SetBrain(require("brains/sfpigelitefighterbrain"))
+	
+	
+	inst:AddComponent"drownable"	
+end)
+
+AddStategraphPostInit("pigelite",function(self)
+	self.events.onsink = CommonHandlers.OnSink()
+--	self.events.death.fn = function(inst)
+--		inst.sg:GoToState"despawn"
+--	end
+	
+	local states = {}
+	CommonStates.AddSinkAndWashAshoreStates(states)
+	for _, data in pairs(states) do 
+		self.states[data.name] = data
+	end 
+end)
+
+AddPrefabPostInit("pig_coin", function(inst)
+	inst:RemoveComponent"stackable"
+	inst:AddTag"molebait" 
+end)
+
+PrefabPostInitAfterLoaded("pigelitefighter1", function(fn)
+	Hacker.SetUpvalue(
+		fn, 
+		NOTHING_FUNCTION, 
+		"OnFullMoon")	
+end)
+
+------------------------------------------------------------------------------
+--			*			*		GETTING ALLIES 		*			*			--
+------------------------------------------------------------------------------
+
+local function DoAllyFixAndOwnership(child, userid)
+	if child.sfinfinityfn then 
+		child:sfinfinityfn() 
+	else 
+		DoAllyFix(child)
+	end
+	
+	if userid then 
+		SetOwnerID(child, userid)
+	end 
+end
+
+AddComponentPostInit("childspawner", function(self)	
+-- this happens when the game reloads and they're spawned outside 
+	overwrite(self, "DoTakeOwnership", function(self, child)
+		if not child then 
+			return 
+			
+		elseif (self.inst:HasTag"bedazzled" or GetOwnerID(self.inst)) then 
+			DoAllyFixAndOwnership(child, GetOwnerID(self.inst))
+		end
+	end)
+	
+	-- why was this chunk commented out?
+	local DoSpawnChild = self.DoSpawnChild
+	self.DoSpawnChild = function(self, target, ...)
+		if (GetOwnerID(self.inst) or self.inst:HasTag"bedazzled") 
+		and target and target:HasTag"player" then 
+			target = nil
+		end 
+		return DoSpawnChild(self, target, ...)
+	end
+end)
+
+AddComponentPostInit("spawner", function(self)
+	overwrite(self, "TakeOwnership", function(self, child)
+		if GetOwnerID(self.inst) and child and child.components.follower then  
+		
+			DoAllyFixAndOwnership(child, GetOwnerID(self.inst))
+		end 
+	end)
+end)	
+
+AddComponentPostInit("leader", function(self)
+--	print("leader")
+	overwrite(self, "AddFollower", function(self, follower)
+--		print("AddFollower", self.inst:HasTag"player", follower, follower:HasTag"sfhostile")
+		if self.inst:HasTag"player" then 
+			if follower and follower:HasTag"sfhostile" then 
+				return false 
+			else 
+				DoAllyFixAndOwnership(follower, self.inst.userid)
+			end 
+		end 
+	end)
+end)
+
+-- this chunk should be in the webber file, but kept here for unity
+local function spider_mutate(inst)
+	DoAllyFixAndOwnership(inst)
+end	
+
+AddPrefabPostInitAny(function(inst)
+	if inst:HasTag"spider" then 
+		inst:ListenForEvent("mutate", spider_mutate)
+	end 
+end)
+
+-- for wurt
+AddComponentPostInit("follower", function(self)
+	overwrite(self, "SetLeader", function(self, leader)
+		if leader and leader:HasTag"player" then 
+			self.inst.old_leader = leader
+		end 
+	end)
+end)
+
+------------------------------------------------------------------------------
+--			*			*		SPECIFIC ALLIES 	*			*			--
+------------------------------------------------------------------------------
+
+--[[
+local function beefalo_tryregen(inst)
+	if inst.components.health then
+		local rider = inst.components.rideable 
+			and inst.components.rideable:GetRider()
+			
+		if rider and rider.components.combat then  
+			if (GetTime() - rider.components.combat.laststartattacktime) < 20)
+			or ((GetTime() - rider.components.combat.lastwasattackedtime) < 20) then 
+				return inst.components.health:DoDelta(1, nil, "regen")
+			end 
+			
+		elseif inst.components.combat 
+		and ((GetTime() - inst.components.combat.laststartattacktime) > 20)
+		and ((GetTime() - inst.components.combat.lastwasattackedtime) > 20) then 
+			inst.components.health:DoDelta(10, nil, "regen")
+			
+		else
+			inst.components.health:DoDelta(1, nil, "regen")
+		end
+	end 
+end
+]]
+
+for prefab, func in pairs{
+	babybeefalo = function(inst)
+		if inst.components.health then 
+			inst.components.health:StartRegen(1, 1)
+		end
+	end, 
+	
+	beefalo = function(inst)
+		inst:AddTag"noturret"
+	
+		if inst.components.health then 
+			inst.components.health:StartRegen(1, 1)
+		end 
+	end, 
+	
+	chester = false, 
+	hutch = false, 
+	grassgekko = false, 
+	moonstorm_static = false, 
+	
+	glommer = function(inst)
+		if inst.components.health then 
+			inst.components.health:StartRegen(1, 1)
+		end
+	end, 
+} do 
+	AddPrefabPostInit(prefab, function(inst)
+		DoAllyFix(inst)
+		if func then 
+			func(inst)
+		end 
+	end)
+end 
+
+
+--[[			*			*		JUNK CHUNK		*			*			--
+]]
+
+```
+
+
+
+### 变体演进：心心小合集 (Mod 3722717879)
+- **变体场景与切面**：收录来自工坊 Mod 3722717879 (`心心小合集`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3722717879)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:stafflight
+if GetModConfigData("stafflightjj") then
+    AddPrefabPostInit("stafflight", function(inst)
+        inst:RemoveComponent("propagator")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:emberlight
+if GetModConfigData("emberlightjj") then
+    AddPrefabPostInit("emberlight", function(inst)
+        inst:RemoveComponent("propagator")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:seedpouch
+if GetModConfigData("seedpouchjj") then
+    AddPrefabPostInit("seedpouch", function(inst)
+        inst:AddComponent("preserver")
+        inst.components.preserver:SetPerishRateMultiplier(function(inst, item)
+            return (item ~= nil) and -0 or nil
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dock_kit
+    }
+    AddPrefabPostInit("dock_kit", function(inst)
+        if inst._custom_candeploy_fn then
+            inst._custom_candeploy_fn = function(inst, pt, ...)
+                local tile = TheWorld.Map:GetTileAtPoint(pt.x, 0, pt.z)
+
+                return water_tile[tile] ~= nil
+            end
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:firesuppressor
+
+    AddPrefabPostInit("firesuppressor", function(inst)
+        if not TheWorld.ismastersim then
+            inst.OnEntityReplicated = function(inst)
+                inst.replica.container:WidgetSetup("treasurechest")
+            end
+
+            return
+        end
+
+        inst:AddComponent("container")
+        inst.components.container:WidgetSetup("treasurechest")
+        inst.components.container.onopenfn = onopen
+        inst.components.container.onclosefn = onclose
+
+        if inst.components.fueled then
+            local oldfn = inst.components.fueled.sectionfn
+            inst.components.fueled.sectionfn = function(new, old, inst)
+                local ret = oldfn and oldfn(new, old, inst)
+                if (inst._fuellevel > new or old > new) and new < 6 then
+                    autoaddfuel(inst)
+                end
+                return ret
+            end
+        end
+
+        if inst.components.workable then
+            local old = inst.components.workable.onfinish
+            inst.components.workable.onfinish = function(inst, ...)
+                if inst.components.container then
+                    inst.components.container:DropEverything()
+                end
+                return old and old(inst, ...)
+            end
+        end
+
+        inst:DoTaskInTime(0, autoaddfuel)
+    end)
+
+```
+
