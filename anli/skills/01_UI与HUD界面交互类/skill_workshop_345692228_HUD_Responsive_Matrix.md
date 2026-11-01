@@ -690,3 +690,33 @@ AddPrefabPostInit(
 
 ```
 
+
+
+### 变体演进：[Gorge] Victorian HUD (Mod 1583765151)
+- **变体场景与切面**：收录来自工坊 Mod 1583765151 (`[Gorge] Victorian HUD`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1583765151)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player
+-- delay to make sure it runs after other mods
+AddPrefabPostInit("player", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", BadgePostConstruct)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
+	end
+end)
+
+```
+

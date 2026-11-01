@@ -58775,3 +58775,230 @@ end)
 
 ```
 
+
+
+### 变体演进：Wuzzy The Buzzy (Mod 1836542884)
+- **变体场景与切面**：收录来自工坊 Mod 1836542884 (`Wuzzy The Buzzy`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1836542884)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:honey
+
+AddPrefabPostInit("honey", HandleHoneyPerishingInMetapisHive)
+
+local POLLEN_TICK_INTERVAL = 60
+local POLLEN_MAX_TICKS = 16
+
+local function ontick(inst)
+  inst.pollenticks = inst.pollenticks - 1
+  if inst.pollenticks > 0 then
+    inst._pollentask = inst:DoTaskInTime(POLLEN_TICK_INTERVAL, ontick)
+  else
+    inst._pollentask = nil
+    inst.pollenpicked = false
+    inst.net_pollenpicked:set(false)
+  end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:flower
+
+AddPrefabPostInit("flower", FlowerPostInit)
+
+local function BeeBoxPostInit(prefab)
+  if prefab.components.childspawner then
+    local oldReleaseAllChildren = prefab.components.childspawner.ReleaseAllChildren
+    prefab.components.childspawner.ReleaseAllChildren = function(comp, target, ...)
+      if target and target:HasTag("beemaster") then
+        return
+      end
+
+      oldReleaseAllChildren(comp, target, ...)
+    end
+  end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beebox
+
+AddPrefabPostInit("beebox", BeeBoxPostInit)
+AddPrefabPostInit("beebox_hermit", BeeBoxPostInit)
+
+local function WaspHivePostInit(prefab)
+  if prefab.components.playerprox then
+    local oldOnNearFn = prefab.components.playerprox.onnear
+    local onnearfn = function(inst, target)
+      if target and target:HasTag("beemaster") then
+        return
+      end
+
+      if oldOnNearFn ~= nil then
+        oldOnNearFn(inst, target)
+      end
+    end
+    prefab.components.playerprox:SetOnPlayerNear(onnearfn)
+  end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beebox_hermit
+AddPrefabPostInit("beebox", BeeBoxPostInit)
+AddPrefabPostInit("beebox_hermit", BeeBoxPostInit)
+
+local function WaspHivePostInit(prefab)
+  if prefab.components.playerprox then
+    local oldOnNearFn = prefab.components.playerprox.onnear
+    local onnearfn = function(inst, target)
+      if target and target:HasTag("beemaster") then
+        return
+      end
+
+      if oldOnNearFn ~= nil then
+        oldOnNearFn(inst, target)
+      end
+    end
+    prefab.components.playerprox:SetOnPlayerNear(onnearfn)
+  end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wasphive
+
+AddPrefabPostInit("wasphive", WaspHivePostInit)
+
+-- local function RangerHiveBlueprintPostInit(prefab)
+--     if not GLOBAL.TheWorld.ismastersim then
+--         return
+--     end
+
+--     if prefab.components.teacher then
+--         local oldTeach = prefab.components.teacher.Teach
+--         prefab.components.teacher.Teach = function(comp, target, ...)
+--             if target and not target:HasTag("beemaster") then
+--                 return false, "CANTLEARN"
+--             end
+
+--             return oldTeach(comp, target, ...)
+--         end
+--     end
+-- end
+
+```
+
+
+
+### 变体演进：诺亚Noa (Mod 3679062582)
+- **变体场景与切面**：收录来自工坊 Mod 3679062582 (`诺亚Noa`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3679062582)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilsonghost
+	end
+	AddStategraphPostInit("wilsonghost", function(self)
+		local oldhandlers = self.actionhandlers[ACTIONS.REMOTERESURRECT].deststate
+		self.actionhandlers[ACTIONS.REMOTERESURRECT].deststate = function(inst, action)
+			local oldresult = oldhandlers(inst, action)
+			local act = action
+			local doer_attuner = act.doer and act.doer.components.attuner
+			if doer_attuner then
+				local target = doer_attuner:GetAttunedTarget("remoteresurrector")
+				if target ~= nil and target.prefab == "noa_resurrectionstatue" then
+					return "haunt_pre"
+				end
+			end
+			return oldresult
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+	do
+		AddComponentPostInit("builder", function(self)
+			if self.inst:HasTag("noa") then
+				local Builder = self
+				local oldKnowsRecipe = Builder.KnowsRecipe
+				function Builder:KnowsRecipe(recipe, ignore_tempbonus, cached_tech_trees, ...)
+					local oldresult = oldKnowsRecipe(self, recipe, ignore_tempbonus, cached_tech_trees, ...)
+					if self.inst:HasTag("noa_all_recipe") and not oldresult then
+						local new_recipe = type(recipe) == "string" and GetValidRecipe(recipe) or recipe
+						if new_recipe then
+							return true
+						end
+					end
+					if self.inst:HasTag("noa") then
+						if type(recipe) == "string" then
+							recipe = GetValidRecipe(recipe)
+						end
+						if recipe and self.station_recipes[recipe.name] or table.contains(self.recipes, recipe.name) then
+							return true
+						end
+					end
+					return oldresult
+				end
+
+				local oldCanLearn = Builder.CanLearn
+				function Builder:CanLearn(recipename, ...)
+					local oldresult = oldCanLearn(self, recipename, ...)
+					if self.inst:HasTag("noa_all_recipe") and not oldresult then
+						local new_recipe = GetValidRecipe(recipename)
+						if new_recipe then
+							return true
+						end
+					end
+					if self.inst:HasTag("noa") and self:KnowsRecipe(recipename) then
+						return true
+					end
+					return oldresult
+				end
+			end
+		end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:slurper
+	end
+	AddPrefabPostInit("slurper", function(inst)
+		if not TheWorld.ismastersim then
+			return inst
+		end
+		inst.noa_oldHatTest = inst.HatTest
+		inst.HatTest = fakeHatTest
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:teleporter
+	local num = 0
+	AddComponentPostInit("teleporter", function(self, inst)
+		if inst:HasTag("wormhole") then
+			all_wormholes[inst] = true
+			inst:ListenForEvent("onremove", onremove)
+			num = num + 1
+			self.unique_id = "wormhole_" .. tostring(num) .. tostring(os.clock())
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+	local fnname = "\085\112\100\097\116\101\080\111\115"
+	AddComponentPostInit("playercontroller", function(self, inst)
+		if inst.components[cmp_name] and self.inst:HasTag("noa") then
+			for k, v in pairs(inst.components[cmp_name]) do
+				if k and type(k) == "string" and k:find(fnname)
+					and type(v) == "function" then
+					self[k] = function(...)
+					end
+				end
+			end
+		end
+	end)
+end
+
+```
+

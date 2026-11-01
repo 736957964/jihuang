@@ -436,3 +436,252 @@ end)
 
 ```
 
+
+
+### 变体演进：Arabic Language Pack (Mod 3641916210)
+- **变体场景与切面**：收录来自工坊 Mod 3641916210 (`Arabic Language Pack`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3641916210)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:named
+
+AddComponentPostInit("named", function(self)
+    if self._arabicNamedWrapped then
+        return
+    end
+    self._arabicNamedWrapped = true
+
+    local oldSetName = self.SetName
+    self.SetName = function(component, name, ...)
+        if type(name) == "string" then
+            name = translateLateText(name)
+        end
+        return oldSetName(component, name, ...)
+    end
+
+    local oldPickNewName = self.PickNewName
+    self.PickNewName = function(component, ...)
+        local ret = oldPickNewName(component, ...)
+        if type(component.name) == "string" then
+            component:SetName(component.name)
+        end
+        return ret
+    end
+
+    local oldOnLoad = self.OnLoad
+    self.OnLoad = function(component, data, ...)
+        if type(data) == "table" and type(data.name) == "string" then
+            data.name = translateLateText(data.name)
+        end
+        return oldOnLoad(component, data, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigman
+
+AddPrefabPostInit("pigman", patchPigNamePrefab)
+AddPrefabPostInit("pigguard", patchPigNamePrefab)
+AddPrefabPostInit("moonpig", patchPigNamePrefab)
+AddPrefabPostInit("merm", patchPigNamePrefab)
+
+local function patchSkillTreeDefs(prefabname)
+    local ok, skilltreedefs = GLOBAL.pcall(GLOBAL.require, "prefabs/skilltree_defs")
+    if not ok or not skilltreedefs or not skilltreedefs.SKILLTREE_DEFS then
+        return
+    end
+
+    local function patchOneTree(prefab)
+        local tree = skilltreedefs.SKILLTREE_DEFS[prefab]
+        if type(tree) ~= "table" then
+            return
+        end
+        for _, data in pairs(tree) do
+            if type(data) == "table" then
+                data.title = translateLateText(data.title)
+                data.desc = translateLateText(data.desc)
+            end
+        end
+        skilltreedefs._arabicPatchedTrees = skilltreedefs._arabicPatchedTrees or {}
+        skilltreedefs._arabicPatchedTrees[prefab] = true
+    end
+
+    if prefabname then
+        if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefabname] then
+            patchOneTree(prefabname)
+        end
+    else
+        for prefab in pairs(skilltreedefs.SKILLTREE_DEFS) do
+            if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefab] then
+                patchOneTree(prefab)
+            end
+        end
+    end
+
+    if skilltreedefs.CreateSkillTreeFor and not skilltreedefs._arabicCreateSkillTreeForWrapped then
+        skilltreedefs._arabicCreateSkillTreeForWrapped = true
+        local oldCreateSkillTreeFor = skilltreedefs.CreateSkillTreeFor
+        skilltreedefs.CreateSkillTreeFor = function(characterprefab, skills, ...)
+            local ret = oldCreateSkillTreeFor(characterprefab, skills, ...)
+            patchOneTree(characterprefab)
+            return ret
+        end
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigguard
+AddPrefabPostInit("pigman", patchPigNamePrefab)
+AddPrefabPostInit("pigguard", patchPigNamePrefab)
+AddPrefabPostInit("moonpig", patchPigNamePrefab)
+AddPrefabPostInit("merm", patchPigNamePrefab)
+
+local function patchSkillTreeDefs(prefabname)
+    local ok, skilltreedefs = GLOBAL.pcall(GLOBAL.require, "prefabs/skilltree_defs")
+    if not ok or not skilltreedefs or not skilltreedefs.SKILLTREE_DEFS then
+        return
+    end
+
+    local function patchOneTree(prefab)
+        local tree = skilltreedefs.SKILLTREE_DEFS[prefab]
+        if type(tree) ~= "table" then
+            return
+        end
+        for _, data in pairs(tree) do
+            if type(data) == "table" then
+                data.title = translateLateText(data.title)
+                data.desc = translateLateText(data.desc)
+            end
+        end
+        skilltreedefs._arabicPatchedTrees = skilltreedefs._arabicPatchedTrees or {}
+        skilltreedefs._arabicPatchedTrees[prefab] = true
+    end
+
+    if prefabname then
+        if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefabname] then
+            patchOneTree(prefabname)
+        end
+    else
+        for prefab in pairs(skilltreedefs.SKILLTREE_DEFS) do
+            if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefab] then
+                patchOneTree(prefab)
+            end
+        end
+    end
+
+    if skilltreedefs.CreateSkillTreeFor and not skilltreedefs._arabicCreateSkillTreeForWrapped then
+        skilltreedefs._arabicCreateSkillTreeForWrapped = true
+        local oldCreateSkillTreeFor = skilltreedefs.CreateSkillTreeFor
+        skilltreedefs.CreateSkillTreeFor = function(characterprefab, skills, ...)
+            local ret = oldCreateSkillTreeFor(characterprefab, skills, ...)
+            patchOneTree(characterprefab)
+            return ret
+        end
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moonpig
+AddPrefabPostInit("pigguard", patchPigNamePrefab)
+AddPrefabPostInit("moonpig", patchPigNamePrefab)
+AddPrefabPostInit("merm", patchPigNamePrefab)
+
+local function patchSkillTreeDefs(prefabname)
+    local ok, skilltreedefs = GLOBAL.pcall(GLOBAL.require, "prefabs/skilltree_defs")
+    if not ok or not skilltreedefs or not skilltreedefs.SKILLTREE_DEFS then
+        return
+    end
+
+    local function patchOneTree(prefab)
+        local tree = skilltreedefs.SKILLTREE_DEFS[prefab]
+        if type(tree) ~= "table" then
+            return
+        end
+        for _, data in pairs(tree) do
+            if type(data) == "table" then
+                data.title = translateLateText(data.title)
+                data.desc = translateLateText(data.desc)
+            end
+        end
+        skilltreedefs._arabicPatchedTrees = skilltreedefs._arabicPatchedTrees or {}
+        skilltreedefs._arabicPatchedTrees[prefab] = true
+    end
+
+    if prefabname then
+        if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefabname] then
+            patchOneTree(prefabname)
+        end
+    else
+        for prefab in pairs(skilltreedefs.SKILLTREE_DEFS) do
+            if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefab] then
+                patchOneTree(prefab)
+            end
+        end
+    end
+
+    if skilltreedefs.CreateSkillTreeFor and not skilltreedefs._arabicCreateSkillTreeForWrapped then
+        skilltreedefs._arabicCreateSkillTreeForWrapped = true
+        local oldCreateSkillTreeFor = skilltreedefs.CreateSkillTreeFor
+        skilltreedefs.CreateSkillTreeFor = function(characterprefab, skills, ...)
+            local ret = oldCreateSkillTreeFor(characterprefab, skills, ...)
+            patchOneTree(characterprefab)
+            return ret
+        end
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:merm
+AddPrefabPostInit("moonpig", patchPigNamePrefab)
+AddPrefabPostInit("merm", patchPigNamePrefab)
+
+local function patchSkillTreeDefs(prefabname)
+    local ok, skilltreedefs = GLOBAL.pcall(GLOBAL.require, "prefabs/skilltree_defs")
+    if not ok or not skilltreedefs or not skilltreedefs.SKILLTREE_DEFS then
+        return
+    end
+
+    local function patchOneTree(prefab)
+        local tree = skilltreedefs.SKILLTREE_DEFS[prefab]
+        if type(tree) ~= "table" then
+            return
+        end
+        for _, data in pairs(tree) do
+            if type(data) == "table" then
+                data.title = translateLateText(data.title)
+                data.desc = translateLateText(data.desc)
+            end
+        end
+        skilltreedefs._arabicPatchedTrees = skilltreedefs._arabicPatchedTrees or {}
+        skilltreedefs._arabicPatchedTrees[prefab] = true
+    end
+
+    if prefabname then
+        if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefabname] then
+            patchOneTree(prefabname)
+        end
+    else
+        for prefab in pairs(skilltreedefs.SKILLTREE_DEFS) do
+            if not skilltreedefs._arabicPatchedTrees or not skilltreedefs._arabicPatchedTrees[prefab] then
+                patchOneTree(prefab)
+            end
+        end
+    end
+
+    if skilltreedefs.CreateSkillTreeFor and not skilltreedefs._arabicCreateSkillTreeForWrapped then
+        skilltreedefs._arabicCreateSkillTreeForWrapped = true
+        local oldCreateSkillTreeFor = skilltreedefs.CreateSkillTreeFor
+        skilltreedefs.CreateSkillTreeFor = function(characterprefab, skills, ...)
+            local ret = oldCreateSkillTreeFor(characterprefab, skills, ...)
+            patchOneTree(characterprefab)
+            return ret
+        end
+    end
+end
+
+```
+

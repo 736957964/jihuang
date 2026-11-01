@@ -7977,8 +7977,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 13:53:22",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1583765151",
+      "name": "[Gorge] Victorian HUD",
+      "author": "The Victorian Team",
+      "version": "7.3",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-01 14:00:27",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "1836542884",
+      "name": "Wuzzy The Buzzy",
+      "author": "Zeta",
+      "version": "1.9.8.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:00:28",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3641916210",
+      "name": "Arabic Language Pack",
+      "author": "Azaam",
+      "version": "3.6.1",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-01 14:00:28",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "3679062582",
+      "name": "诺亚Noa",
+      "author": "无辜的白羊座",
+      "version": "1.1.24",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 14:00:28",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:53:22"
+  "lastUpdated": "2026-11-01 14:00:28"
 }
