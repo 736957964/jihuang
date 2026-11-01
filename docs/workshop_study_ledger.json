@@ -6114,8 +6114,35 @@
       "category": "08_语言本地化与字体渲染类",
       "studied_at": "2026-11-01 09:12:42",
       "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "2496686961",
+      "name": "Flaire The Spellblade",
+      "author": "summerscorcher",
+      "version": "3.28",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:16:27",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3773846377",
+      "name": "Ryusui & sai",
+      "author": "WaferShiba",
+      "version": "2.1.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:16:27",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3802676080",
+      "name": "command_wheel_extra_key",
+      "author": "阮秀",
+      "version": "2.5.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 09:16:27",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 09:12:42"
+  "lastUpdated": "2026-11-01 09:16:27"
 }

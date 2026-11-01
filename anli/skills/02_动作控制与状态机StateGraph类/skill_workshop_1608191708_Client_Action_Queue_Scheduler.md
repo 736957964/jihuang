@@ -32104,3 +32104,226 @@ end)
 
 ```
 
+
+
+### 变体演进：Flaire The Spellblade (Mod 2496686961)
+- **变体场景与切面**：收录来自工坊 Mod 2496686961 (`Flaire The Spellblade`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2496686961)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+
+AddPrefabPostInit("beefalo", function(inst)
+    inst.net_flaire_skin_update_trigger = commonFns.InitNetvar(net_event, inst, "skin_update_trigger")
+
+    if not TheNet:IsDedicated() then
+        inst:ListenForEvent("net_flaire_mana_current_dirty", ClientOnManaCurrentDirty)
+        inst:ListenForEvent("net_flaire_skin_update_trigger", UpdateManaHornFxSkin)
+        inst:DoStaticTaskInTime(0, ClientOnManaCurrentDirty)
+        inst:DoStaticTaskInTime(0, UpdateManaHornFxSkin)
+    end
+
+    if not TheWorld.ismastersim then return end
+
+    inst.flaire_manaRecoveryMinHungerPercent = TUNING.FLAIRE_BEEFALO_MANA_NATURAL_REGEN_MIN_HUNGER_PERCENT
+    inst.flaire_manaRecoveryHungerRateMult = TUNING.FLAIRE_BEEFALO_MANA_RECOVERY_HUNGER_RATE_MULT
+
+    commonFns.InitComponent(inst, "flaire_mana")
+
+    inst:ListenForEvent("flaire_skinner_clothing_change", UpdateClientManaHornFxSkin)
+    inst:ListenForEvent("flaire_onnatureturf_changed", UpdateManaHungerDrain)
+    inst:ListenForEvent("flaire_rider_spell_cast", OnRiderSpellCast)
+    inst:ListenForEvent("domesticationdelta", UpdateMaxMana)
+    inst:ListenForEvent("flaire_manadelta", UpdateManaHungerDrain)
+    inst:ListenForEvent("domesticated", UpdateMaxMana)
+    inst:ListenForEvent("timerdone", OnTimerDone)
+    inst:ListenForEvent("oneat", OnEat)
+
+    inst.OnSave = commonFns.PrependFunction(inst.OnSave, OnSave)
+    inst.OnLoad = commonFns.PrependFunction(inst.OnLoad, OnLoad)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:beefalobrain
+
+AddBrainPostInit("beefalobrain", function(self)
+    local function CanCastSpell()
+        local mana = self.inst.components.flaire_mana
+        if mana == nil or mana:GetMax() <= 0 then return end
+
+        return GetMountManaProficiency(self.inst) >= TUNING.FLAIRE_BEEFALO_SOLO_CAST_SPELL_MANA_PROFICIENCY_REQ
+            and mana:GetAvailableMana() >= TUNING.FLAIRE_BEEFALO_SOLO_CAST_SPELL_MANA_COST
+            and not commonFns.IsOnCooldown(self.inst, "soloCastSpell")
+    end
+
+    table.insert(self.bt.root.children, 4,
+        IfNode(CanCastSpell, "Can Cast Spell",
+            DoAction(self.inst, GetCastSpellAction, "Cast Spell", true, TUNING.FLAIRE_BEEFALO_SOLO_CAST_SPELL_TIMEOUT)))
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+AddComponentPostInit("combat", function(self)
+    if self.inst.AnimState ~= nil then
+        local _, combatHeight = commonFns.GetBoundingBoxSize(self.inst)
+        self.flaire_combatHeight = combatHeight
+    end
+
+    self.inst:ListenForEvent("newstate", InitCombatHeight)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:wavemanager
+------
+AddComponentPostInit("wavemanager", function(self)
+    if self.shimmer == nil then return end
+
+    for _, data in pairs(self.shimmer) do
+        local _tryspawn = data.tryspawn
+        data.tryspawn = function(_self, map, x, y, ...)
+            if ThePlayer ~= nil and commonFns.GetNetvarValue(ThePlayer, "net_flaire_flying") == true then y = 0 end
+            return _tryspawn(_self, map, x, y, ...)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:sword_lunarplant
+
+AddPrefabPostInit("sword_lunarplant", function(inst)
+    inst:ListenForEvent("equipped", BrightshadeSwordOnEquipped)
+    inst:ListenForEvent("unequipped", BrightshadeSwordOnUnquipped)
+end)
+
+```
+
+
+
+### 变体演进：Ryusui & sai (Mod 3773846377)
+- **变体场景与切面**：收录来自工坊 Mod 3773846377 (`Ryusui & sai`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3773846377)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：command_wheel_extra_key (Mod 3802676080)
+- **变体场景与切面**：收录来自工坊 Mod 3802676080 (`command_wheel_extra_key`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3802676080)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:teleporter
+AddClassPostConstruct("components/container_replica", ContainerCompat.WrapReplica)
+AddComponentPostInit("teleporter", require("my_friend_wormhole").Configure)
+require("my_friend_shadow_compat").Install()
+
+AddShardModRPCHandler("MyFriends", "HomeChunk", ShardHome.ReceiveChunk)
+AddShardModRPCHandler("MyFriends", "HomeAck", ShardHome.ReceiveAck)
+AddShardModRPCHandler("MyFriends", "PresenceProbe", ShardHome.ReceiveProbe)
+AddShardModRPCHandler("MyFriends", "Presence", ShardHome.ReceivePresence)
+
+local function OpenFriendContainer(doer, target, container)
+    local leader = doer.components ~= nil and doer.components.follower ~= nil
+        and doer.components.follower:GetLeader() or nil
+    local opened_by_leader = leader ~= nil and container:IsOpenedBy(leader)
+    local own_overflow = target ~= nil and target.prefab == "beargerfur_sack"
+        and doer.components ~= nil and doer.components.inventory ~= nil
+        and doer.components.inventory:GetOverflowContainer() == container
+    if not own_overflow and not opened_by_leader
+        and not InventoryAI.CanReachContainer(doer, target) then return false end
+    if opened_by_leader then return true end
+    if not container:IsOpenedBy(doer) then
+        doer:PushEvent("opencontainer", { container = target })
+        container:Open(doer)
+    end
+    return container:IsOpenedBy(doer)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:container
+AddStategraphActionHandler("wilson", _G.ActionHandler(FriendSpiceAdd, "doshortaction"))
+AddComponentPostInit("container", function(container)
+    require("my_friend_item_reactions").WrapContainer(container)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilsonghost
+AddStategraphActionHandler("wilson", _G.ActionHandler(FriendSpearCharge, "dolongaction"))
+AddStategraphPostInit("wilsonghost", Dialogue.ProtectStategraph)
+
+AddStategraphPostInit("wilson", function(sg)
+    Dialogue.ProtectStategraph(sg)
+    for _, name in ipairs({"eat", "quickeat"}) do
+        local state = sg.states[name]
+        if state ~= nil then
+            local onexit = state.onexit
+            state.onexit = function(inst)
+                if onexit ~= nil then onexit(inst) end
+                Feeding.OnMealExit(inst)
+            end
+        end
+    end
+    require("my_friend_work_states").Configure(sg)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    Dialogue.ProtectStategraph(sg)
+    for _, name in ipairs({"eat", "quickeat"}) do
+        local state = sg.states[name]
+        if state ~= nil then
+            local onexit = state.onexit
+            state.onexit = function(inst)
+                if onexit ~= nil then onexit(inst) end
+                Feeding.OnMealExit(inst)
+            end
+        end
+    end
+    require("my_friend_work_states").Configure(sg)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:skeleton_player
+-- what stopped a world from starting again after the mod was removed.
+AddPrefabPostInit("skeleton_player", function(inst)
+    if not _G.TheWorld.ismastersim then return end
+    local oldsave, oldload = inst.OnSave, inst.OnLoad
+    inst.OnSave = function(self, data)
+        local refs = oldsave ~= nil and oldsave(self, data) or nil
+        if self._my_friend_remains then data.my_friend_remains = true end
+        local remains = self.components.my_friend_remains
+        if remains ~= nil then data.my_friend_remains_remaining = math.max(0, remains.expires - _G.GetTime()) end
+        data.my_friend_remains_expired = self._my_friend_remains_expired or nil
+        return refs
+    end
+    inst.OnLoad = function(self, data, ents)
+        if oldload ~= nil then oldload(self, data, ents) end
+        self._my_friend_remains_expired = data ~= nil and data.my_friend_remains_expired or nil
+        if data ~= nil and data.my_friend_remains
+            and not self._my_friend_remains_expired
+            and self.components.my_friend_remains == nil then
+            self:AddComponent("my_friend_remains")
+            self.components.my_friend_remains:SetLifetime(data.my_friend_remains_remaining or 120)
+        end
+    end
+end)
+
+```
+
