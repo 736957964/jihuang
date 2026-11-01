@@ -56,7 +56,7 @@ end)
 ### 变体演进：Houndius Shootius protects Chester (and beefalo) (Mod 3476470130)
 - **变体场景与切面**：收录来自工坊 Mod 3476470130 (`Houndius Shootius protects Chester (and beefalo)`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3476470130)
 -- ============================================================================
@@ -99,11 +99,11 @@ AddPrefabPostInit("world", function(inst)
     end
     UpvalueHacker.SetUpvalue(GLOBAL.Prefabs.eyeturret.fn, retargetfn, "retargetfn")
 end)
-`
+```
 ### 变体演进：45 Inventory Slots with Equip Inventory (Mod 2802552738)
 - **变体场景与切面**：收录来自工坊 Mod 2802552738 (`45 Inventory Slots with Equip Inventory`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2802552738)
 -- ============================================================================
@@ -131,11 +131,11 @@ function(inst)
         end
     end
 end )
-`
+```
 ### 变体演进：装备大师 (Mod 3123028409)
 - **变体场景与切面**：收录来自工坊 Mod 3123028409 (`装备大师`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3123028409)
 -- ============================================================================
@@ -461,7 +461,7 @@ AddPrefabPostInit("inventory_classified", function(inst)
 		end)
 	end
 end)
-`
+```
 --------------------模组设置界面-------------------
 if MOD_util:CanAddSetting() then
 	local pagename = "装备大师"
@@ -564,7 +564,7 @@ end)
 ### 变体演进：Backpack Amulet Drop (Mod 2844520721)
 - **变体场景与切面**：收录来自工坊 Mod 2844520721 (`Backpack Amulet Drop`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2844520721)
 -- ============================================================================
@@ -612,11 +612,11 @@ AddPrefabPostInit("treasurechest", onhauntfn)
 AddPrefabPostInit("dragonflychest", onhauntfn)
 AddPrefabPostInit("hutch", onhauntfn)
 AddPrefabPostInit("chester", onhauntfn)
-`
+```
 ### 变体演进：群鸟绘卷 · 春󰀜 (Mod 3161117403)
 - **变体场景与切面**：收录来自工坊 Mod 3161117403 (`群鸟绘卷 · 春󰀜`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3161117403)
 -- ============================================================================
@@ -739,11 +739,11 @@ local screen_data = {{
     fn = function()
         VisitURL("https://www.bilibili.com/video/BV16FUZBEE32/", true)
     end
-`
+```
 ### 变体演进：enable_sunkenchest (Mod 3749766414)
 - **变体场景与切面**：收录来自工坊 Mod 3749766414 (`enable_sunkenchest`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3749766414)
 -- ============================================================================
@@ -866,11 +866,11 @@ AddPrefabPostInit("wardrobe", function(inst)
     end
     inst:ListenForEvent("onignite", dropall)
 end)
-`
+```
 ### 变体演进：Large Chest (HD) (Mod 2087177552)
 - **变体场景与切面**：收录来自工坊 Mod 2087177552 (`Large Chest (HD)`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2087177552)
 -- ============================================================================
@@ -968,11 +968,11 @@ AddPrefabPostInit("reskin_tool", function(inst)
         inst.components.spellcaster:SetCanCastFn(CanCast)
     end
 end)
-`
+```
 ### 变体演进：Ground Chest (Mod 2480826828)
 - **变体场景与切面**：收录来自工坊 Mod 2480826828 (`Ground Chest`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2480826828)
 -- ============================================================================
@@ -994,11 +994,11 @@ AddComponentPostInit("playercontroller", function(self, inst)
         PlayerControllerOnControl(self, control, down)
     end
 end)
-`
+```
 ### 变体演进：Automatic chest sorting (Mod 2321974509)
 - **变体场景与切面**：收录来自工坊 Mod 2321974509 (`Automatic chest sorting`) 的生产级切面。
 - **核心切面代码**：
-`lua
+```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2321974509)
 -- ============================================================================
@@ -1037,9 +1037,7 @@ AddPrefabPostInit("storeroom", function(inst)
 	old_open = inst.components.container.onopenfn
 	inst.components.container.onopenfn = onopen
 end)
-`
-
-
+```
 ### 变体演进：Simple Controller (Mod 3116978471)
 - **变体场景与切面**：收录来自工坊 Mod 3116978471 (`Simple Controller`) 的生产级切面。
 - **核心切面代码**：
@@ -1048,7 +1046,5 @@ end)
 -- 生产级架构复刻切面范式 (提取自 Mod 3116978471)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 -- 暂无高频切面钩子
 ```
-
