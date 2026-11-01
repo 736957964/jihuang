@@ -8805,8 +8805,44 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-01 16:51:31",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2464402864",
+      "name": "Klee",
+      "author": "Cá Khô",
+      "version": "1.6.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:53:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3266382108",
+      "name": "火只因皮肤材质包",
+      "author": "eins, 雨荧QAQ",
+      "version": "0.0.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:53:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3520023946",
+      "name": "lan",
+      "author": "nyoya",
+      "version": "2.0.4",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 16:53:20",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3741952331",
+      "name": "Language",
+      "author": "Lilith",
+      "version": "1.0.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:53:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 16:51:31"
+  "lastUpdated": "2026-11-01 16:53:20"
 }

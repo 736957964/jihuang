@@ -140,7 +140,7 @@ def download_mod(mod_id):
         with _download_lock:
             if os.path.isdir(target) and os.listdir(target):
                 return target
-            subprocess.run(cmd, capture_output=True, timeout=900)
+            subprocess.run(cmd, capture_output=True, timeout=900, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     except Exception as e:
         log("SteamCMD 调用异常 %s: %s" % (mod_id, e))
     if os.path.isdir(target) and os.listdir(target):
@@ -513,10 +513,10 @@ def notify_owner_batch(new_skills):
 def git_push_auto():
     """每次批次完成后自动执行 git commit & push"""
     try:
-        subprocess.run(["git", "add", "-A"], cwd=WORK_DIR, capture_output=True, timeout=60)
-        commit_res = subprocess.run(["git", "commit", "-m", "chore(pipeline): 24h 6+1 daemon auto-sync new master skills"], cwd=WORK_DIR, capture_output=True, timeout=60)
+        subprocess.run(["git", "add", "-A"], cwd=WORK_DIR, capture_output=True, timeout=60, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        commit_res = subprocess.run(["git", "commit", "-m", "chore(pipeline): 24h 6+1 daemon auto-sync new master skills"], cwd=WORK_DIR, capture_output=True, timeout=60, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         if commit_res.returncode == 0:
-            subprocess.run(["git", "push", "origin", "main"], cwd=WORK_DIR, capture_output=True, timeout=120)
+            subprocess.run(["git", "push", "origin", "main"], cwd=WORK_DIR, capture_output=True, timeout=120, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
             log("Git 自动提交并推送成功！")
     except Exception as e:
         log("Git 自动推送异常: %s" % e)
