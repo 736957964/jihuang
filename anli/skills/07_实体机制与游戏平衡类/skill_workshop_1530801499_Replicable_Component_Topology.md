@@ -11437,3 +11437,184 @@ end)
 
 ```
 
+
+
+### 变体演进：Matikanefukukitaru (Mod 2680126885)
+- **变体场景与切面**：收录来自工坊 Mod 2680126885 (`Matikanefukukitaru`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2680126885)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:catpack
+end
+AddPrefabPostInit("catpack", AddMap)
+AddMinimapAtlas("images/inventoryimages/catpack.xml")
+
+-- This is the function that will actually run every time a flower is picked.
+local function flowerPostPrefab(inst)
+    -- This will assign the new function in place of the old one
+	if not GLOBAL.TheWorld.ismastersim
+	then
+		return
+	end
+
+	local pickable = inst.components.pickable
+
+	if not pickable
+	then
+		return
+	end
+
+	local onpickedfn_old = pickable.onpickedfn
+	pickable.onpickedfn = function(inst, picker, ...)
+		local rets = {}
+		if picker and picker:HasTag("matikanefukukitaru")
+		then
+			local pos = inst:GetPosition()
+
+			if picker ~= nil then
+				if picker.components.sanity ~= nil and not picker:HasTag("plantkin") then
+					local luck = math.random(100)
+					local GetString = GLOBAL.GetString
+
+					if luck <= 10 then
+
+						picker.components.sanity:DoDelta(-20)
+						picker.AnimState:PlayAnimation("emoteXL_annoyed")
+						picker.components.talker:Say(GetString(picker, "ANNOUNCE_TERRIBLE_LUCK"))
+
+					elseif luck <= 40 then
+						picker.components.sanity:DoDelta(-1)
+						picker.components.talker:Say(GetString(picker, "ANNOUNCE_BAD_LUCK"))
+
+					elseif luck <= 80 then
+						picker.components.sanity:DoDelta(5)
+						picker.components.talker:Say(GetString(picker, "ANNOUNCE_GOOD_LUCK"))
+
+					else
+						picker.components.sanity:DoDelta(20)
+						picker.AnimState:PlayAnimation("emoteXL_happycheer")
+						picker.components.talker:Say(GetString(picker, "ANNOUNCE_GREAT_LUCK"))
+
+					end
+				end
+
+				if inst.animname == ROSE_NAME and
+					picker.components.combat ~= nil and
+					not (picker.components.inventory ~= nil and picker.components.inventory:EquipHasTag("bramble_resistant")) then
+					picker.components.combat:GetAttacked(inst, TUNING.ROSE_DAMAGE)
+					picker:PushEvent("thorns")
+				end
+			end
+
+			if not inst.planted then
+				GLOBAL.TheWorld:PushEvent("beginregrowth", inst)
+			end
+
+			inst:Remove()
+
+			GLOBAL.TheWorld:PushEvent("plantkilled", { doer = picker, pos = pos }) --this event is pushed in other places too
+
+			return
+		end
+		if onpickedfn_old
+		then
+			rets = {onpickedfn_old(inst, picker, ...)}
+		end
+		return GLOBAL.unpack(rets)
+	end
+end
+
+local require = GLOBAL.require
+local STRINGS = GLOBAL.STRINGS
+
+local Ingredient = GLOBAL.Ingredient
+local RECIPETABS = GLOBAL.RECIPETABS
+local Recipe = GLOBAL.Recipe
+local TECH = GLOBAL.TECH
+
+GLOBAL.TUNING.MATIKANEFUKUKITARU = {}
+if GetModConfigData("Fortune Bringer") == "Off" then
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.FORTUNE_BRINGER = false
+else
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.FORTUNE_BRINGER = true
+end
+
+if GetModConfigData("Flower fortune telling") == "Off" then
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.FLOWER_FORTUNE_TELLING = false
+else
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.FLOWER_FORTUNE_TELLING = true
+	AddPrefabPostInit(
+    "flower",
+	flowerPostPrefab
+	)
+end
+
+if GetModConfigData("Catpack") == "Off" then
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.CATPACK = false
+else
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.CATPACK = true
+end
+
+AddRecipe("catpack",
+{Ingredient("coontail", 2), Ingredient("goldnugget", 3), Ingredient("rope", 3)},
+RECIPETABS.SURVIVAL, TECH.NONE, nil, nil, nil, nil, "matikanefukukitaru", "images/inventoryimages/catpack.xml", "catpack.tex" )
+
+
+-- The character select screen lines
+STRINGS.CHARACTER_TITLES.matikanefukukitaru = "Lucky Comes True!"
+STRINGS.CHARACTER_NAMES.matikanefukukitaru = "Matikanefukukitaru"
+STRINGS.CHARACTER_DESCRIPTIONS.matikanefukukitaru = "*Fortune Bringer\n*Flower fortune telling\n*Catpack"
+STRINGS.CHARACTER_QUOTES.matikanefukukitaru = "\"Yes! I'm Matikanefukukitaru!\""
+STRINGS.CHARACTER_SURVIVABILITY.matikanefukukitaru = "Slim"
+
+-- Custom speech strings
+STRINGS.CHARACTERS.MATIKANEFUKUKITARU = require "speech_matikanefukukitaru"
+
+-- The character's name as appears in-game
+STRINGS.NAMES.MATIKANEFUKUKITARU = "MatikaneFukukitaru"
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("matikanefukukitaru", "FEMALE")
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:flower
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.FLOWER_FORTUNE_TELLING = true
+	AddPrefabPostInit(
+    "flower",
+	flowerPostPrefab
+	)
+end
+
+if GetModConfigData("Catpack") == "Off" then
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.CATPACK = false
+else
+	GLOBAL.TUNING.MATIKANEFUKUKITARU.CATPACK = true
+end
+
+AddRecipe("catpack",
+{Ingredient("coontail", 2), Ingredient("goldnugget", 3), Ingredient("rope", 3)},
+RECIPETABS.SURVIVAL, TECH.NONE, nil, nil, nil, nil, "matikanefukukitaru", "images/inventoryimages/catpack.xml", "catpack.tex" )
+
+
+-- The character select screen lines
+STRINGS.CHARACTER_TITLES.matikanefukukitaru = "Lucky Comes True!"
+STRINGS.CHARACTER_NAMES.matikanefukukitaru = "Matikanefukukitaru"
+STRINGS.CHARACTER_DESCRIPTIONS.matikanefukukitaru = "*Fortune Bringer\n*Flower fortune telling\n*Catpack"
+STRINGS.CHARACTER_QUOTES.matikanefukukitaru = "\"Yes! I'm Matikanefukukitaru!\""
+STRINGS.CHARACTER_SURVIVABILITY.matikanefukukitaru = "Slim"
+
+-- Custom speech strings
+STRINGS.CHARACTERS.MATIKANEFUKUKITARU = require "speech_matikanefukukitaru"
+
+-- The character's name as appears in-game
+STRINGS.NAMES.MATIKANEFUKUKITARU = "MatikaneFukukitaru"
+
+-- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
+AddModCharacter("matikanefukukitaru", "FEMALE")
+
+```
+

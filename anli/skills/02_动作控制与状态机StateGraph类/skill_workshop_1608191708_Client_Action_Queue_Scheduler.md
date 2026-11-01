@@ -51226,3 +51226,1421 @@ end
 
 ```
 
+
+
+### 变体演进：Whiskey, the Fleet Admiral (Mod 3118176896)
+- **变体场景与切面**：收录来自工坊 Mod 3118176896 (`Whiskey, the Fleet Admiral`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3118176896)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+	local actionhandlers = sg.actionhandlers
+	for i, v in pairs(actionhandlers) do
+		if v.action == ACTIONS.ATTACK then
+			originalAttack = actionhandlers[i].deststate
+			actionhandlers[i].deststate = NewDestStateATTACK
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(sg)
+	local actionhandlers = sg.actionhandlers
+	for i, v in pairs(actionhandlers) do
+		if v.action == ACTIONS.ATTACK then
+			originalClientAttack = actionhandlers[i].deststate
+			actionhandlers[i].deststate = NewClientDestStateATTACK
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wurt
+--Make sure to use (AllRecipes["whiskeyhat"] and AllRecipes["whiskeyflag"]) so that this only runs if Whiskey is enabled on the server.
+AddPrefabPostInit("wurt", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return inst
+	end
+	inst.components.foodaffinity:AddPrefabAffinity ("hardtack", 1.33) -- minor wurt buff
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:eater
+
+AddComponentPostInit("eater", function(self)
+	local oldPrefersToEat = self.PrefersToEat
+	
+	function self:PrefersToEat(food, ...)
+		if food ~= nil then
+			if self.inst.prefab == "wurt" and food.prefab == "hardtack" then
+				return true
+			end
+			if food.prefab == "whiskeydrink" and tooYoung[self.inst.prefab] then
+				return false
+			end
+		end
+		
+		return oldPrefersToEat(self, food, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:razor
+
+AddPrefabPostInit("razor", StripWoodPostInit)
+
+--------------------------------------------------------------------------
+-- Modded Recipes --------------------------------------------------------
+-- Island Adventures Recipes
+if TUNING.ADMIRAL_ISLAND_ADVENTURE_ENABLED then
+	local RECIPE_GAMETYPE_DEFS = require("prefabs/recipe_gametype_defs")
+	local RECIPE_GAME_TYPE = GLOBAL.RECIPE_GAME_TYPE
+	--local RECIPE_BOAT_TYPE = GLOBAL.RECIPE_BOAT_TYPE
+	--local VALID_FOR_DST_BOATS_ONLY = {} -- to exclude boat recipes not meant for IA
+	
+	local SetRecipeIngredientsForGameTypes = RECIPE_GAMETYPE_DEFS.SetRecipeIngredientsForGameTypes
+	local SetRecipeValidForGameTypes = RECIPE_GAMETYPE_DEFS.SetRecipeValidForGameTypes
+	local SetRecipeValidForBoatType = RECIPE_GAMETYPE_DEFS.SetRecipeValidForBoatType
+	--[[
+	for k, v in pairs(VALID_FOR_DST_BOATS_ONLY) do
+		if AllRecipes[v] ~= nil then
+			SetRecipeValidForBoatType(v, RECIPE_BOAT_TYPE.DST)
+		end
+	end
+	--]]
+	SetRecipeIngredientsForGameTypes("whiskeyhat", RECIPE_GAME_TYPE.SW, { Ingredient("strawhat", 1), Ingredient("nitre", 1), Ingredient("seaweed", 4) })
+	SetRecipeIngredientsForGameTypes("depthsword", RECIPE_GAME_TYPE.SW, { Ingredient("driftwood_log", 1), Ingredient("flint", 1), Ingredient("goldnugget", 1) })
+	SetRecipeIngredientsForGameTypes("whiskeysonar", RECIPE_GAME_TYPE.SW, { Ingredient("messagebottleempty", 2), Ingredient("wagpunk_bits", 4), Ingredient("coral", 6) })
+	SetRecipeIngredientsForGameTypes("whiskeyanchor", RECIPE_GAME_TYPE.SW, { Ingredient("horrorfuel", 4), Ingredient("whip", 1) })
+	SetRecipeIngredientsForGameTypes("whiskeyflag", RECIPE_GAME_TYPE.SW, { Ingredient("dragoonheart", 2), Ingredient("driftwood_log", 2) })
+	
+	-- genuinely don't know what to do... IA just doesn't have enough bosses for medals.
+	SetRecipeIngredientsForGameTypes("medal_red", RECIPE_GAME_TYPE.SW, { Ingredient("compass", 1), Ingredient("shark_gills", 2), Ingredient("redgem", 2) })
+	SetRecipeIngredientsForGameTypes("medal_blue", RECIPE_GAME_TYPE.SW, { Ingredient("compass", 1), Ingredient("quackenbeak", 1), Ingredient("bluegem", 2) })
+	SetRecipeIngredientsForGameTypes("medal_purple", RECIPE_GAME_TYPE.SW, { Ingredient("compass", 1), Ingredient("magic_seal", 1), Ingredient("purplegem", 1) })
+	SetRecipeIngredientsForGameTypes("medal_orange", RECIPE_GAME_TYPE.SW, { Ingredient("compass", 1), Ingredient("tigereye", 1), Ingredient("orangegem", 1) })
+	SetRecipeIngredientsForGameTypes("medal_wind", RECIPE_GAME_TYPE.SW, { Ingredient("compass", 1), Ingredient("turbine_blades", 1), Ingredient("yellowgem", 1) })
+end
+
+--------------------------------------------------------------------------
+-- Balatro Joker ---------------------------------------------------------
+
+require("utils/whiskey_util")
+modimport("scripts/balatro_whiskey")
+
+--------------------------------------------------------------------------
+-- Stage Performance -----------------------------------------------------
+
+local general_scripts = require("play_generalscripts")
+
+STRINGS.STAGEACTOR.WHISKEY1 = {
+	"Admiral Whiskey, reporting for duty!", --1
+	"Stand easy, shipmates,", --2
+	"Churchill once said;", --3
+	"\"Success is stumblin' from failure to failure with no loss of enthusiasm.\"", --4
+	"But he was a bloody idiot driven by ambition and glory.", --5 -- bonesaw
+	"In my fleet, we do not take losses,", --6
+	"we do not celebrate until every mate is back at the table!", --7
+	"With our suppers full of dishes and our enemies with the fishes.", --8
+	"Because the drowned don't care who won the battle.", --9 shrug
+	"We're not fallin' to these madness-inducing,", --10
+	"lily-livered,", --11
+	"shadow-lovin',", --12
+	"ne'er-do-welling,", --13
+	"malingering gormless scallywags!", --14
+	"If you see one of ours go down, you haul 'em back up!", --15
+	"We're the anchor that halts any threat and travels any depth,", --16
+	"our battles will salt the ocean and our deeds will choke the abyss,", --17
+	"and when we sail into hell, it'll answer to our names!", --18
+	"So raise yer chins, raise yer sails, and give 'em a taste!", --19
+	"Salt and sail!" --20
+} -- sail and sing
+
+general_scripts.WHISKEY1 = {
+	cast = { "whiskey" },
+	lines = {
+	{roles = {"whiskey"}, duration = 2.5, line = STRINGS.STAGEACTOR.WHISKEY1[1]},
+	{roles = {"whiskey"}, duration = 2.0, line = STRINGS.STAGEACTOR.WHISKEY1[2]},
+	{roles = {"whiskey"}, duration = 2.0, line = STRINGS.STAGEACTOR.WHISKEY1[3]},
+	{roles = {"whiskey"}, duration = 4.0, line = STRINGS.STAGEACTOR.WHISKEY1[4]},
+	{roles = {"whiskey"}, duration = 3.0, line = STRINGS.STAGEACTOR.WHISKEY1[5], anim="emoteXL_bonesaw"},
+	{roles = {"whiskey"}, duration = 2.5, line = STRINGS.STAGEACTOR.WHISKEY1[6]},
+	{roles = {"whiskey"}, duration = 3.0, line = STRINGS.STAGEACTOR.WHISKEY1[7]},
+	{roles = {"whiskey"}, duration = 3.5, line = STRINGS.STAGEACTOR.WHISKEY1[8]},
+	{roles = {"whiskey"}, duration = 3.0, line = STRINGS.STAGEACTOR.WHISKEY1[9]},
+	{roles = {"whiskey"}, duration = 2.0, line = STRINGS.STAGEACTOR.WHISKEY1[10]},
+	{roles = {"whiskey"}, duration = 1.0, line = STRINGS.STAGEACTOR.WHISKEY1[11], anim="emote_fistshake"},
+	{roles = {"whiskey"}, duration = 1.0, line = STRINGS.STAGEACTOR.WHISKEY1[12], anim="emote_fistshake"},
+	{roles = {"whiskey"}, duration = 1.0, line = STRINGS.STAGEACTOR.WHISKEY1[13], anim="emote_fistshake"},
+	{roles = {"whiskey"}, duration = 2.5, line = STRINGS.STAGEACTOR.WHISKEY1[14], anim="emoteXL_angry"},
+	{roles = {"whiskey"}, duration = 3.0, line = STRINGS.STAGEACTOR.WHISKEY1[15]},
+	{roles = {"whiskey"}, duration = 4.0, line = STRINGS.STAGEACTOR.WHISKEY1[16]},
+	{roles = {"whiskey"}, duration = 4.0, line = STRINGS.STAGEACTOR.WHISKEY1[17]},
+	{roles = {"whiskey"}, duration = 4.0, line = STRINGS.STAGEACTOR.WHISKEY1[18]},
+	{roles = {"whiskey"}, duration = 3.5, line = STRINGS.STAGEACTOR.WHISKEY1[19]},
+	{roles = {"whiskey"}, duration = 3.0, line = STRINGS.STAGEACTOR.WHISKEY1[20], anim="emote_happycheer"},
+	}
+}
+--{actionfn = fn.crowdcomment,    duration = 3,        line = STRINGS.STAGEACTOR.WATHOM1[6], anim = "emote_fistshake", prefabs = {"winky"},},
+-- anim = { "emoteXL_pre_dance4", "emoteXL_loop_dance4", "emoteXL_pst_dance4" }
+--, anim = { "emote_pre_sit3", "emote_loop_sit3", "emote_pst_sit3" }, anim = { "emote_pre_sit3", "emote_loop_sit3", "emote_pst_sit3" }
+--{roles = {"whiskey"}, duration = 2.0, anim = { "emote_laugh"}},
+
+--------------------------------------------------------------------------
+-- Status Announcements --------------------------------------------------
+
+if GLOBAL.KnownModIndex:IsModEnabled("workshop-343753877") then
+	if not GLOBAL.STRINGS._STATUS_ANNOUNCEMENTS then GLOBAL.STRINGS._STATUS_ANNOUNCEMENTS = {} end
+	GLOBAL.STRINGS._STATUS_ANNOUNCEMENTS.WHISKEY = {
+		HUNGER = {
+			FULL  = "I'm fed, carry on.", -- >75%
+			HIGH  = "Got plenty in the tank, cease trackin'.", -- >55%
+			MID   = "What a day, huh?", -- >35%
+			LOW   = "I could use a square meal.", -- >15%
+			EMPTY = "I'm as good as marooned...", -- <15%
+		},
+		SANITY = {
+			FULL  = "Feeling well, stand easy.", -- >75%
+			HIGH  = "By and large, I'm well.", -- >55%
+			MID   = "I'm fine, pipe down.", -- >35%
+			LOW   = "I miss my crew...", -- >15%
+			EMPTY = "I've got the devil to pay...", -- <15%
+		},
+		HEALTH = {
+			FULL  = "Everythin' is shipshape.", -- 100%
+			HIGH  = "I'm fine, it's only a scratch.", -- >75%
+			MID   = "Bit battered, but afloat.", -- >50%
+			LOW   = "Between the devil and the deep blue sea.", -- >25%
+			EMPTY = "I'm fine...", -- <25%
+		},
+		WETNESS = {
+			FULL  = "Thar she blows!", -- >75%
+			HIGH  = "That ship has sailed.", -- >55%
+			MID   = "I'm feeling blue.", -- >35%
+			LOW   = "Bit under the weather.", -- >15%
+			EMPTY = "A smooth sea never made a skilled sailor.", -- <15%
+		},
+	}
+end
+
+--------------------------------------------------------------------------
+-- Loading Tips ----------------------------------------------------------
+
+function whiskey_setup_custom_loading_tips()
+	for _tipid, _tipstring in pairs(STRINGS.WHISKEY_LOADING_TIPS.SURVIVAL) do
+		AddLoadingTip(STRINGS.UI.LOADING_SCREEN_SURVIVAL_TIPS, _tipid, _tipstring, nil)
+	end
+
+	for _tipid, _tipstring in pairs(STRINGS.WHISKEY_LOADING_TIPS.LORE) do
+		AddLoadingTip(STRINGS.UI.LOADING_SCREEN_LORE_TIPS, _tipid, _tipstring, nil)
+	end
+
+	GLOBAL.TheLoadingTips = require("loadingtipsdata")()
+
+	local TheLoadingTips = GLOBAL.TheLoadingTips
+	TheLoadingTips.loadingtipweights = TheLoadingTips:CalculateLoadingTipWeights()
+	TheLoadingTips.categoryweights = TheLoadingTips:CalculateCategoryWeights()
+	
+	GLOBAL.TheLoadingTips:Load()
+end
+
+whiskey_setup_custom_loading_tips()
+
+--------------------------------------------------------------------------
+-- Cheaper Seafaring -----------------------------------------------------
+
+TUNING.WHISKEY_CHEAPER_SEA = {
+	"boatpatch",
+	"steeringwheel_item",
+	"boat_rotator_kit",
+	"mastupgrade_lamp_item",
+	"winch",
+	"waterpump", "waterpump_item",
+	"boat_magnet_kit", "boat_magnet_beacon",
+	"dock_kit", "dock_woodposts_item", "pirate_flag_pole", "cannonball_rock_item",
+	"boat_lograft", "boat_raft", "boat_row", "boat_cargo", "boat_armoured", "boat_encrusted", "boatrepairkit", "boat_torch", "boat_lantern", "sail_palmleaf", "sail_cloth", "sail_feather", "sail_snakeskin", "boatcannon", "trawlnet", "armor_lifejacket", "buoy", "quackeringram", "tar_extractor", "sea_yard", "captainhat", "piratehat", "supertelescope", "telescope", "seatrap", "shark_teethhat", "tarlamp", "ironwind", "quackendrill", "oar_bamboo", "oar_tigershark", "boat_bumper_limestone_kit", "mast_doydoy_item", "boat_cannon_coconut_kit", "corkboat", "ia_boat_nameplate", "mussel_stick", "mussel_bed", "fish_farm", -- IA
+	"mastupgrade_crownest", "barrel_l", "keg_1", "monster_barrel_l", "polarice_plow_item", "compass_polar", "kyno_brainrock_nubbin", "portableboat_item", "boatpatch_sludge", "cannonball_sludge_item", "armor_sharksuit_um", "boat_bumper_sludge_kit", "sludge_cork", "mastupgrade_windturbine_item", "um_boatbottle", "oar_monkey", "beakbasher", -- mods
+}
+
+TUNING.WHISKEY_CHEAPER_OCEAN = {
+	"oar", "oar_driftwood", "compass", "flotationcushion", "gunpowder", "fishingrod", -- these get no discount but are still crafted faster
+	"seafaring_prototyper",
+	"boat_item",
+	"boat_grass_item",
+	"mastupgrade_lamp_item",
+	"mastupgrade_lightningrod_item",
+	"boatpatch", -- 2 item recipe
+	"steeringwheel_item",
+	"boat_rotator_kit",
+	"cannonball_rock_item",
+	"ocean_trawler_kit",
+	"winch",
+	"waterpump",
+	"waterpump_item",
+	"boat_magnet_kit",
+	"boat_magnet_beacon",
+	"dock_woodposts_item",
+	"boatpatch_kelp", -- 3 item recipe gets discount
+	"boat_bumper_kelp_kit",
+	"boat_bumper_shell_kit",
+	"anchor_item",
+	"mast_item",
+	"mast_malbatross_item",
+	"boat_cannon_kit",
+	"fish_box",
+	"dock_kit",
+	"oceanfishingrod",
+	"pirate_flag_pole",
+	"hermitshop_turf_shellbeach_blueprint", "hermitshop_tacklecontainer", "hermitshop_supertacklecontainer", "hermitshop_chum_blueprint", "hermitshop_winter_ornament_boss_hermithouse", "hermitshop_winter_ornament_boss_pearl", "hermitcrab_relocation_kit", "hermitcrab_teashop", "shellweaver", "hermitcrab_lightpost", "hermithotspring_constr", "meatrack_hermit_multi", "shellweaver_messagebottleempty", "shellweaver_salty_doghat", "shellweaver_hermitcrab_shell", "hermit_chair_rocking", -- pearl shop
+	"hermitcrabtea_petals_1", "hermitcrabtea_petals_2", "hermitcrabtea_petals_3", "hermitcrabtea_petals_evil_1", "hermitcrabtea_petals_evil_2", "hermitcrabtea_petals_evil_3", "hermitcrabtea_foliage_1", "hermitcrabtea_foliage_2", "hermitcrabtea_foliage_3", "hermitcrabtea_succulent_picked_1", "hermitcrabtea_succulent_picked_2", "hermitcrabtea_succulent_picked_3", "hermitcrabtea_moon_tree_blossom_1", "hermitcrabtea_moon_tree_blossom_2", "hermitcrabtea_moon_tree_blossom_3", "hermitcrabtea_firenettles_1", "hermitcrabtea_firenettles_2", "hermitcrabtea_firenettles_3", "hermitcrabtea_tillweed_1", "hermitcrabtea_tillweed_2", "hermitcrabtea_tillweed_3", "hermitcrabtea_forgetmelots_1", "hermitcrabtea_forgetmelots_2", "hermitcrabtea_forgetmelots_3", "hermitcrabtea_petals_polar", "hermitcrabtea_petals_polar_1", "hermitcrabtea_petals_polar_2", "hermitcrabtea_petals_polar_3", -- this hurt
+	"yotd_steeringwheel_item", "yotd_oar", "yotd_anchor_item", "mast_yotd_item", "boat_bumper_yotd_kit", "boatrace_seastack_throwable_deploykit", "boatrace_seastack_monkey_throwable_deploykit", "mastupgrade_lamp_item_yotd", "dragonboat_kit", "dragonboat_pack", "boatrace_checkpoint_throwable_deploykit", "boatrace_start_throwable_deploykit", -- year of the dragonfly
+	--"whiskeyhat", "whiskeysonar", "whiskeyflag", "whiskeyrifle", "depthsword", -- mods
+	"barrel_l", "keg_1", "monster_barrel_l", -- pirate barrels
+	"boat_lograft", "boat_raft", "boat_row", "boat_cargo", "boat_armoured", "boat_encrusted", "boatrepairkit", "boat_torch", "boat_lantern", "sail_palmleaf", "sail_cloth", "sail_feather", "sail_snakeskin", "boatcannon", "trawlnet", "armor_lifejacket", "buoy", "quackeringram", "tar_extractor", "sea_yard", "captainhat", "piratehat", "supertelescope", "telescope", "seatrap", "shark_teethhat", "tarlamp", "ironwind", "quackendrill", "oar_bamboo", "oar_tigershark", "boat_bumper_limestone_kit", "mast_doydoy_item", "boat_cannon_coconut_kit", "corkboat", "ia_boat_nameplate", "mussel_stick", "mussel_bed", "fish_farm", -- IA
+	"mastupgrade_crownest", -- crow nest
+	"shoes_waterplant", -- shoetime
+	"kyno_brainrock_nubbin", -- hof
+	"hermit_beebox_kit", "hermit_rack_kit", -- bwb
+	"polarice_plow_item", "compass_polar", "boat_ice_item", -- winterlands
+	"jelly_lantern", "snorkel", "hat_submarine", "pearl_amulet", "diving_suit_summer", "diving_suit_winter", "coral_cluster", -- creeps in the deeps
+	"boat_pirate_item", "boat_pirate", "walkingplank_kit", "boat_rectangle", "boat_moon", "boat_bridge", "boat_caravel", "boat_custom", -- new boat shapes
+	"des_boat_torch", "gt_boat_spotlight", "gt_boat_spotlight_moon", "gt_steam_engine", "des_bcannon", "des_cannon_stick", "des_cb_ground_stone", "des_cb_ground_red", "des_cb_ground_glass", -- seafaring and else
+	"boatpatch_sludge", "sludge_sack", "boat_bumper_sludge_kit", "cannonball_sludge_item", "armor_sharksuit_um", "sludge_cork", "portableboat_item", "mastupgrade_windturbine_item", "um_boatbottle", "oar_monkey", "boat_bumper_copper_kit", "steeringwheel_copper_item", "hermitshop_boat_ancient_blueprint", "hermitshop_bootleg", "boat_ancient_item", "beakbasher", -- uncomp
+}
+
+if TUNING.WHISKEY_SEAFARING_DISCOUNT then
+	-- Discount Code with help from Skylarr
+	AddClassPostConstruct("widgets/redux/craftingmenu_pinslot", function(self)
+		local _ShowRecipe = self.ShowRecipe
+		
+		self.ShowRecipe = function(self)
+			local product = self.recipe_name ~= nil and self.craftingmenu:GetRecipeState(self.recipe_name) ~= nil and self.craftingmenu:GetRecipeState(self.recipe_name).recipe.product
+
+			if self.owner:HasTag("fleetadmiral") then
+				local oceandiscount = 1
+				for k, v in pairs(TUNING.WHISKEY_CHEAPER_OCEAN) do
+					if v == product or string.find(product, "gemprefab_" .. v .. "_0")  then
+						
+						oceandiscount = TUNING.WHISKEY_DISCOUNT_SMALL
+						
+						for _, i in pairs(TUNING.WHISKEY_CHEAPER_SEA) do
+							if i == v then
+								oceandiscount = TUNING.WHISKEY_DISCOUNT_BIG
+								break
+							end
+						end
+						
+						break
+					end
+				end
+
+				-- Green Amulet Fix
+				local body = self.owner.replica.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
+				if (body and body.prefab ~= "greenamulet") or not body then
+					if oceandiscount ~= 1 then
+						self.owner.replica.builder:SetIngredientMod(oceandiscount)
+					else
+						self.owner.replica.builder:SetIngredientMod(1)
+					end
+				end
+			end
+			_ShowRecipe(self)
+		end
+		
+	end)
+	
+	-- Client full menu "fake" discount
+	AddClassPostConstruct("widgets/redux/craftingmenu_details", function(self)
+		local _PopulateRecipeDetailPanel = self.PopulateRecipeDetailPanel
+
+		self.PopulateRecipeDetailPanel = function(self, data, skin_name)
+			if self.owner:HasTag("fleetadmiral") then
+				local oceandiscount = 1
+				for k, v in pairs(TUNING.WHISKEY_CHEAPER_OCEAN) do
+					if data and (v == data.recipe.product or string.find(data.recipe.product, "gemprefab_" .. v .. "_0")) then
+						
+						oceandiscount = TUNING.WHISKEY_DISCOUNT_SMALL
+						
+						for _, i in pairs(TUNING.WHISKEY_CHEAPER_SEA) do
+							if i == v then
+								oceandiscount = TUNING.WHISKEY_DISCOUNT_BIG
+								break
+							end
+						end
+						
+						break
+					end
+				end
+
+				-- Green Amulet Fix
+				local body = self.owner.replica.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
+				if (body and body.prefab ~= "greenamulet") or not body then
+					if oceandiscount ~= 1 then
+						self.owner.replica.builder:SetIngredientMod(oceandiscount)
+					else
+						self.owner.replica.builder:SetIngredientMod(1)
+					end
+				end
+			end
+
+			return _PopulateRecipeDetailPanel(self, data, skin_name)
+		end
+	end)
+
+	-- Server-side Discount
+	AddComponentPostInit("builder", function(self)
+		local _HasIngredients = self.HasIngredients
+
+		self.HasIngredients = function(self, recipe)
+			if type(recipe) == "string" then 
+				recipe = GLOBAL.GetValidRecipe(recipe)
+			end
+			if self.inst:HasTag("fleetadmiral") then
+				local oceandiscount = 1
+				for k, v in pairs(TUNING.WHISKEY_CHEAPER_OCEAN) do
+					if v == recipe.product or string.find(recipe.product, "gemprefab_" .. v .. "_0") then
+						
+						oceandiscount = TUNING.WHISKEY_DISCOUNT_SMALL
+						
+						for _, i in pairs(TUNING.WHISKEY_CHEAPER_SEA) do
+							if i == v then
+								oceandiscount = TUNING.WHISKEY_DISCOUNT_BIG
+								break
+							end
+						end
+						
+						break
+					end
+				end
+
+				-- Green Amulet Fix, again
+				local body = self.inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.BODY)
+				-- if we're wearing something that isn't the green amulet or we aren't wearing anything at all, go ahead with the discount
+				if (body and body.prefab ~= "greenamulet") or not body then
+					if oceandiscount ~= 1 then
+						self.ingredientmod = oceandiscount
+					else
+						self.ingredientmod = 1
+					end
+				end
+			end
+
+			return _HasIngredients(self, recipe)
+		end
+	end)
+end
+
+--------------------------------------------------------------------------
+-- Permanent Books & Buffs -----------------------------------------------
+
+modimport("scripts/weatheredbooks_whiskey")
+
+```
+
+
+
+### 变体演进：languages (Mod 3597364782)
+- **变体场景与切面**：收录来自工坊 Mod 3597364782 (`languages`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3597364782)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:pond
+
+AddPrefabPostInit("pond", function(inst)
+    if not TheWorld.ismastersim then return end
+    
+    inst.components.fishable.fish = {}
+    inst.components.fishable:AddFish("pacufish", 6)     
+    inst.components.fishable:AddFish("pondfish", 1) 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pond_mos
+
+AddPrefabPostInit("pond_mos", function(inst)
+    if not TheWorld.ismastersim then return end
+    
+    inst.components.fishable.fish = {}
+    inst.components.fishable:AddFish("pacufish", 6)
+    inst.components.fishable:AddFish("pondfish", 1)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:oasislake
+
+AddPrefabPostInit("oasislake", function(inst)
+    if TheWorld.ismastersim and inst.components.fishable then
+        inst.components.fishable:SetGetFishFn(function()
+            local r = math.random()
+            if r < 0.25 then return "wetpouch"
+            elseif r < 0.25 then return "pondfish"
+            else return "pacutropical" end
+        end)
+    end
+end)
+
+AddPrefabPostInit("pond_cave", function(inst)
+    if not TheWorld.ismastersim then return end
+    
+    inst.components.fishable.fish = {}
+    inst.components.fishable:AddFish("pacucleaner", 6) 
+    inst.components.fishable:AddFish("pondeel", 3)
+end)
+
+local catchfish = GLOBAL.State{
+    name = "catchfish",
+    tags = { "fishing", "catchfish", "busy" },
+    onenter = function(inst, build)
+    inst.AnimState:PlayAnimation("fish_catch")
+	local equippedTool = inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+	local tipodepeixe = equippedTool.components.fishingrod.caughtfish.prefab
+    if tipodepeixe then
+		if tipodepeixe == "fish" then	
+        inst.AnimState:OverrideSymbol("fish01", "fish01", "fish01")
+		elseif tipodepeixe == "pacufish" or tipodepeixe == "pacufish" then	
+        inst.AnimState:OverrideSymbol("fish01", "pacufish01", "fish01")
+		elseif tipodepeixe == "pacucleaner" then	
+        inst.AnimState:OverrideSymbol("fish01", "pacucleaner01", "fish01")
+		elseif tipodepeixe == "pacutropical" then	
+        inst.AnimState:OverrideSymbol("fish01", "pacutropical01", "fish01")
+        elseif tipodepeixe == "pondeel" then	
+        inst.AnimState:OverrideSymbol("fish01", "eel01", "fish01")
+        elseif tipodepeixe == "wetpouch" then	
+        inst.AnimState:OverrideSymbol("fish01", "wetpouch", "fish01")
+		else
+		inst.AnimState:OverrideSymbol("fish01", "fish01", "fish01")
+		end			
+	end			
+end,
+
+    timeline =
+    {
+        GLOBAL.TimeEvent(8*GLOBAL.FRAMES, function(inst) inst.SoundEmitter:PlaySound("dontstarve/common/fishingpole_fishcaught") end),
+        GLOBAL.TimeEvent(10*GLOBAL.FRAMES, function(inst) inst.sg:RemoveStateTag("fishing") end),
+        GLOBAL.TimeEvent(23*GLOBAL.FRAMES, function(inst) inst.SoundEmitter:PlaySound("dontstarve/common/fishingpole_fishland") end),
+        GLOBAL.TimeEvent(24*GLOBAL.FRAMES, function(inst)
+            local equippedTool = inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+            if equippedTool and equippedTool.components.fishingrod then
+                    equippedTool.components.fishingrod:Collect()
+            end
+        end),
+    },
+
+    events =
+    {
+        GLOBAL.EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+    end,
+}
+
+AddStategraphState("wilson", catchfish)	
+
+----------------------------------------------------------------------------------------
+-------------------------------------oni火椒粉相关---------------------------------------
+
+local spicedfoods = require("oni_spicedfoods")
+local cooking = require("cooking")
+
+local oldRegisterPrefabs = GLOBAL.ModManager.RegisterPrefabs 
+GLOBAL.ModManager.RegisterPrefabs = function(self,...)
+    for k,v in pairs(cooking.recipes) do
+        if k and v then
+			for recipename, recipe in pairs(v) do
+                if recipe and recipe.spice == nil then
+                    spicedfoods.GenerateSpicedFoods({ [recipename] = recipe })
+                end
+            end
+        end
+    end
+    for k,v in pairs(spicedfoods.spicedfoods) do
+        AddCookerRecipe("portablespicer",v)
+    end
+    oldRegisterPrefabs(self,...)
+end
+
+local function showmespice(inst)
+	if not inst:HasTag("burnt") then
+		local product = inst.components.stewer.product
+		local recipe = cooking.GetRecipe(inst.prefab, product)
+		if recipe ~= nil then
+			product = recipe.basename or product
+			if recipe.spice ~= nil and spicedfoods.SPICES[recipe.spice] then
+				inst.AnimState:OverrideSymbol("swap_garnish", "spice_spicevine", string.lower(recipe.spice))
+			end
+		end
+	end	
+end
+
+AddPrefabPostInit("portablespicer",function(inst)
+	if inst.components.stewer then
+		local old_continue = inst.components.stewer.oncontinuedone
+		inst.components.stewer.oncontinuedone = function(inst,...)
+			if old_continue then
+				old_continue(inst,...)
+			end
+			showmespice(inst)
+		end
+		local old_done = inst.components.stewer.ondonecooking
+		inst.components.stewer.ondonecooking = function(inst,...)
+			if old_done then
+				old_done(inst,...)
+			end
+			showmespice(inst)
+		end
+	end
+end)
+
+------------------------------------------------------------------------------
+------------------------------oni舒适的床相关----------------------------------
+
+local function NewSleep(sg)
+    local old_handler = sg.actionhandlers[ACTIONS.SLEEPIN].deststate
+    sg.actionhandlers[ACTIONS.SLEEPIN].deststate = function(inst, action)
+    if action.target and action.target:HasTag("luxurybed") then
+        return "tent_luxurybed"
+
+    else
+        return old_handler(inst, action)
+    end
+    end
+end
+
+local function NewSleep_Client(sg)
+    local old_handler = sg.actionhandlers[ACTIONS.SLEEPIN].deststate
+    sg.actionhandlers[ACTIONS.SLEEPIN].deststate = function(inst, action)
+    if action.target and action.target:HasTag("luxurybed") then
+        return "tent_luxurybed"
+
+    else
+        return old_handler(inst, action)
+    end
+    end
+end
+
+AddStategraphPostInit("wilson", NewSleep)
+AddStategraphPostInit("wilson_client", NewSleep_Client)
+
+local function SetSleeperSleepState(inst)
+    if inst.components.grue ~= nil then
+        inst.components.grue:AddImmunity("sleeping")
+    end
+    if inst.components.talker ~= nil then
+        inst.components.talker:IgnoreAll("sleeping")
+    end
+    if inst.components.firebug ~= nil then
+        inst.components.firebug:Disable()
+    end
+    if inst.components.playercontroller ~= nil then
+        inst.components.playercontroller:EnableMapControls(false)
+        inst.components.playercontroller:Enable(false)
+    end
+    inst:OnSleepIn()
+    inst.components.inventory:Hide()
+    inst:PushEvent("ms_closepopups")
+    inst:ShowActions(false)
+end
+
+local function SetSleeperAwakeState(inst)
+    if inst.components.grue ~= nil then
+        inst.components.grue:RemoveImmunity("sleeping")
+    end
+    if inst.components.talker ~= nil then
+        inst.components.talker:StopIgnoringAll("sleeping")
+    end
+    if inst.components.firebug ~= nil then
+        inst.components.firebug:Enable()
+    end
+    if inst.components.playercontroller ~= nil then
+        inst.components.playercontroller:EnableMapControls(true)
+        inst.components.playercontroller:Enable(true)
+    end
+    inst:OnWakeUp()
+    inst.components.inventory:Show()
+    inst:ShowActions(true)
+end
+
+AddStategraphState('wilson',
+    State{
+        name = "tent_luxurybed",
+        tags = { "tent", "busy", "silentmorph" },
+
+        onenter = function(inst)
+            inst.components.locomotor:Stop()
+
+            local target = inst:GetBufferedAction().target
+            local siesta = target:HasTag("siestahut")
+            local failreason =
+                (siesta ~= TheWorld.state.isday and
+                    (siesta
+                    and (TheWorld:HasTag("cave") and "ANNOUNCE_NONIGHTSIESTA_CAVE" or "ANNOUNCE_NONIGHTSIESTA")
+                    or (TheWorld:HasTag("cave") and "ANNOUNCE_NODAYSLEEP_CAVE" or "ANNOUNCE_NODAYSLEEP"))
+                )
+                or (target.components.burnable ~= nil and
+                    target.components.burnable:IsBurning() and
+                    "ANNOUNCE_NOSLEEPONFIRE")
+                or (inst.IsNearDanger(inst) and "ANNOUNCE_NODANGERSLEEP")
+                -- you can still sleep if your hunger will bottom out, but not absolutely
+                or (inst.components.hunger.current < TUNING.CALORIES_MED and "ANNOUNCE_NOHUNGERSLEEP")
+                or nil
+
+            if failreason ~= nil then
+                inst:PushEvent("performaction", { action = inst.bufferedaction })
+                inst:ClearBufferedAction()
+                inst.sg:GoToState("idle")
+                if inst.components.talker ~= nil then
+                    inst.components.talker:Say(GetString(inst, failreason))
+                end
+                return
+            end
+
+            local buffaction = inst:GetBufferedAction()
+            if buffaction ~= nil then
+            if buffaction.target ~= nil and buffaction.target:IsValid() then
+                 local x, y, z = buffaction.target.Transform:GetWorldPosition()
+
+                --  inst.Physics:Teleport( x, 1.7, z )
+                 inst.Physics:Teleport(x + 0.3, 1.7, z + 0.3)
+                 inst.Physics:SetActive(false)
+                 inst.Transform:SetRotation(0)  -- 头永远朝右倒下
+            end
+            end
+
+            inst.AnimState:PlayAnimation("yawn", false)
+            inst.AnimState:PushAnimation("dozy", false)
+            inst.sg:SetTimeout(40 * FRAMES)
+
+            SetSleeperSleepState(inst)
+        end,
+
+        ontimeout = function(inst)
+            local bufferedaction = inst:GetBufferedAction()
+            if bufferedaction == nil then
+                inst.AnimState:PlayAnimation("pickup_pst")
+                inst.sg:GoToState("idle", true)
+                return
+            end
+            local tent = bufferedaction.target
+            if tent == nil or
+                not tent.components.sleepingbag or
+                not tent:HasTag("tent") or
+                tent:HasTag("hassleeper") or
+                tent:HasTag("siestahut") ~= TheWorld.state.isday or
+                (tent.components.burnable ~= nil and tent.components.burnable:IsBurning()) then
+                --Edge cases, don't bother with fail dialogue
+                --Also, think I will let smolderig pass this one
+                inst:PushEvent("performaction", { action = inst.bufferedaction })
+                inst:ClearBufferedAction()
+                inst.AnimState:PlayAnimation("pickup_pst")
+                inst.sg:GoToState("idle", true)
+            else
+                inst:PerformBufferedAction()
+                inst.components.health:SetInvincible(true)
+                --inst:Hide()
+                if inst.Physics ~= nil then
+                    inst.Physics:Teleport(inst.Transform:GetWorldPosition())
+                end
+                if inst.DynamicShadow ~= nil then
+                    inst.DynamicShadow:Enable(false)
+                end
+                inst.sg:AddStateTag("sleeping")
+                inst.sg:RemoveStateTag("busy")
+                if inst.components.playercontroller ~= nil then
+                    inst.components.playercontroller:Enable(true)
+                end
+            end
+        end,
+
+        onexit = function(inst)
+            inst.components.health:SetInvincible(false)
+            inst:Show()
+
+            local x, y, z = inst.Transform:GetWorldPosition()
+            inst.Physics:SetActive(true)
+            -- inst.Physics:Teleport( x + 1, 0, z )
+            inst.Physics:Teleport( x + 0.6, 0, z + 1.1 )
+
+            if inst.DynamicShadow ~= nil then
+                inst.DynamicShadow:Enable(true)
+            end
+            if inst.sleepingbag ~= nil then
+                --Interrupted while we are "sleeping"
+                inst.sleepingbag.components.sleepingbag:DoWakeUp(true)
+                inst.sleepingbag = nil
+                SetSleeperAwakeState(inst)
+            elseif not inst.sg.statemem.iswaking then
+                --Interrupted before we are "sleeping"
+                SetSleeperAwakeState(inst)
+            end
+        end,
+    }
+)
+
+AddStategraphState('wilson_client',
+    State{
+        name = "tent_luxurybed",
+        tags = { "tent", "busy" },
+
+        onenter = function(inst)
+            inst.components.locomotor:Stop()
+            inst.AnimState:PlayAnimation("yawn", false)
+            --inst.AnimState:PushAnimation("dozy", false)
+
+            local buffaction = inst:GetBufferedAction()
+            if buffaction ~= nil then
+
+            if buffaction.target ~= nil and buffaction.target:IsValid() then
+                 local x, y, z = buffaction.target.Transform:GetWorldPosition()
+                --  inst.Physics:Teleport( x, 1.7, z )
+                 inst.Physics:Teleport(x + 0.3, 1.7, z + 0.3)
+                 inst.Physics:SetActive(false)
+                 inst.Transform:SetRotation(0)  -- 头永远朝右倒下
+            end
+            end
+
+            inst:PerformPreviewBufferedAction()
+            inst.sg:SetTimeout(40 * FRAMES)
+        end,
+
+        onupdate = function(inst)
+            if inst:HasTag("busy") or inst:HasTag("sleeping") then
+                if inst.entity:FlattenMovementPrediction() then
+                    inst.sg:GoToState("idle", "noanim")
+                end
+            elseif inst.bufferedaction == nil then
+                inst.AnimState:PlayAnimation("pickup_pst")
+                inst.sg:GoToState("idle", true)
+            end
+        end,
+
+        ontimeout = function(inst)
+            inst:ClearBufferedAction()
+            inst.AnimState:PlayAnimation("pickup_pst")
+            inst.sg:GoToState("idle", true)
+        end,
+
+        onexit = function(inst)
+           local x, y, z = inst.Transform:GetWorldPosition()
+           inst.Physics:SetActive(true)
+        --    inst.Physics:Teleport( x + 1, 0, z )
+           inst.Physics:Teleport( x + 0.6, 0, z + 1.1 )
+        end,
+    }
+)
+
+------------------------------------------------------------------------------
+---------------------------------oni地砖相关-----------------------------------
+
+AddTile("GREENTILE", "LAND", {ground_name = "Greentile"},
+  {
+    name = "levels/tiles/carpet.tex",
+    noise_texture = "noise_oni_greentile",
+    runsound = "dontstarve/movement/run_marble",
+    walksound = "dontstarve/movement/walk_marble",
+    snowsound = "dontstarve/movement/run_ice",
+    mudsound = "dontstarve/movement/run_mud",
+    flooring = true,
+    hard = true,
+  },
+  {
+    name = "map_edge",
+    noise_texture = "mini_noise_oni_greentile"
+  },
+  {
+    name = "greentile",
+    pickupsound = "rock",
+    anim = "oni_turf_greentile",
+    bank_build = "oni_turfs"
+  }
+)
+
+------------------------------------------------------------------------------
+---------------------------------oni复制人相关---------------------------------
+
+GLOBAL.PREFAB_SKINS["pei"] = {	"pei_none"	}
+
+local skin_modes = {
+    { 
+        type = "ghost_skin",
+        anim_bank = "ghost",
+        idle_anim = "idle", 
+        scale = 0.75, 
+        offset = { 0, -25 } 
+    },
+}
+
+AddModCharacter("pei", "FEMALE", skin_modes)
+
+--技能树
+
+local skilltree_defs = require('prefabs/skilltree_defs')
+local BuildSkillsData = require('prefabs/skilltree_pei')
+if BuildSkillsData then
+    local data = BuildSkillsData(skilltree_defs.FN)
+
+    if data then
+        skilltree_defs.CreateSkillTreeFor('pei', data.SKILLS)
+        skilltree_defs.SKILLTREE_ORDERS['pei'] = data.ORDERS
+    end
+end
+
+local old_get_bg = GetSkilltreeBG
+function GLOBAL.GetSkilltreeBG(imagename, ...)
+	if imagename ~= nil and imagename:find("pei") then
+		return MODROOT.."images/pei_background.xml" 
+	else
+		return old_get_bg(imagename, ...)
+	end
+end
+
+local SkillTreeBuilder = require("widgets/redux/skilltreebuilder")
+local OldCreateTree = SkillTreeBuilder.CreateTree
+
+local old_get_icon = GetSkilltreeIconAtlas
+function GLOBAL.GetSkilltreeIconAtlas(imagename, ...)
+	if imagename ~= nil and imagename:find("pei") then
+		print("name="..imagename)
+		return MODROOT.."images/pei_skillicon.xml"
+	else
+		return old_get_icon(imagename, ...)
+	end
+end
+
+AddPlayerPostInit(function(inst)
+    inst:ListenForEvent("equip", function(inst, data)
+        if inst:HasTag("toughwork") and data.item and data.item.components.tool then
+            data.item.components.tool:EnableToughWork(true)
+            data.item.components.tool:SetAction(ACTIONS.MINE,   TUNING.PICKAXE_LUNARPLANT_EFFICIENCY)
+            data.item.components.tool:SetAction(ACTIONS.HAMMER, TUNING.PICKAXE_LUNARPLANT_EFFICIENCY)
+        end
+    end)
+end)
+
+local function ChangeAction(action, fn, name)
+    if name then
+        AddStategraphActionHandler(name, GLOBAL.ActionHandler(action, fn))
+    else
+        AddStategraphActionHandler("wilson", GLOBAL.ActionHandler(action, fn))
+        AddStategraphActionHandler("wilson_client", GLOBAL.ActionHandler(action, fn))
+    end
+end
+
+ChangeAction(GLOBAL.ACTIONS.BUILD, function(inst, action)
+    if inst and inst:HasTag("fasterbuilder") then
+        return "doshortaction"
+    elseif inst and inst:HasTag("fastbuilder") then
+        return "domediumaction"
+    else
+        return "dolongaction"
+    end
+end)
+
+AddPrefabPostInitAny(function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    if inst.components.equippable ~= nil then
+        local original_OnEquip = inst.components.equippable.onequipfn
+        inst.components.equippable:SetOnEquip(function(self, owner)
+            if original_OnEquip then
+                original_OnEquip(self, owner)
+            end
+            if inst:HasTag("heavy") and owner:HasTag("strongpei") then
+                inst.components.equippable.walkspeedmult = 1
+            end
+        end)
+    end
+end)
+
+AddPrefabPostInit("charcoal", function(inst)
+    if inst.components.fuel then
+        inst.components.fuel.fueltype = FUELTYPE.CHARCOAL
+        inst.components.fuel.fuelvalue = TUNING.LARGE_FUEL
+    end
+end)
+
+AddPrefabPostInit("spoiled_food", function(inst)
+    if inst.components.fuel then
+        inst.components.fuel.fueltype = FUELTYPE.SPOILED
+        inst.components.fuel.fuelvalue = TUNING.LARGE_FUEL
+    end
+end)
+
+-- Hook junk_pile prefab
+AddPrefabPostInit("junk_pile", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    
+    local old_SpawnLoot = inst.SpawnLoot
+    inst._has_dropped_iron = false -- 标记是否已掉落
+    
+    inst.SpawnLoot = function(inst2, digger, nopickup)
+        if old_SpawnLoot then
+            old_SpawnLoot(inst2, digger, nopickup)
+        end
+        
+        -- 确保每个垃圾堆只掉落一次铁矿石
+        if not inst2._has_dropped_iron then
+            inst2._has_dropped_iron = true
+            
+            -- 随机掉落1-2个铁矿石
+            local num_iron = math.random(1, 2)
+            
+            for i = 1, num_iron do
+                local loot = SpawnPrefab("ironore")
+                if loot ~= nil then
+                    -- 稍微分散掉落位置
+                    local x, y, z = inst2.Transform:GetWorldPosition()
+                    local offset_x = (math.random() - 0.5) * 0.5
+                    local offset_z = (math.random() - 0.5) * 0.5
+                    loot.Transform:SetPosition(x + offset_x, y, z + offset_z)
+                    
+                    if digger ~= nil and not nopickup then
+                        if digger.components.inventory ~= nil then
+                            digger.components.inventory:GiveItem(loot, nil, inst2:GetPosition())
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Hook daywalker prefab
+AddPrefabPostInit("daywalker", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    
+    -- 保存原始的LootSetupFn
+    local old_LootSetupFn = inst.components.lootdropper.lootsetupfn
+    
+    -- 重写LootSetupFn
+    inst.components.lootdropper:SetLootSetupFn(function(lootdropper)
+        -- 先调用原始函数设置掉落物
+        if old_LootSetupFn then
+            old_LootSetupFn(lootdropper)
+        end
+        
+        -- 获取当前的掉落列表
+        local current_loot = lootdropper.loot or {}
+        
+        -- 添加7-9个铅矿石
+        local num_lead = math.random(7, 9)
+        for i = 1, num_lead do
+            table.insert(current_loot, "lead")
+        end
+        
+        -- 设置新的掉落列表
+        lootdropper:SetLoot(current_loot)
+    end)
+end)
+
+--非自然传送门
+AddPrefabPostInit("monkeyisland_portal", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    
+    -- 保存原始的onaccept函数
+    local old_onaccept = inst.components.trader.onaccept
+    
+    inst.components.trader.onaccept = function(inst2, giver, item)
+        -- 如果是moonstorm_spark，生成必定掉落
+        if item and item.prefab == "moonstorm_spark" then
+            -- 在事件结束后生成必定掉落物品
+            inst2:DoTaskInTime(4.0, function(inst)
+                local function spawn_loot(prefab)
+                    local loot = SpawnPrefab(prefab)
+                    if loot ~= nil then
+                        -- 使用传送门自身的lootdropper组件来弹射物品
+                        if inst.components.lootdropper then
+                            local portal_pos = inst:GetPosition()
+                            local fling_pos = portal_pos + Vector3(0, 4, 0)
+                            
+                            -- 播放音效
+                            inst.SoundEmitter:PlaySound("monkeyisland/portal/spit_item")
+                            
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pond_cave
+
+AddPrefabPostInit("pond_cave", function(inst)
+    if not TheWorld.ismastersim then return end
+    
+    inst.components.fishable.fish = {}
+    inst.components.fishable:AddFish("pacucleaner", 6) 
+    inst.components.fishable:AddFish("pondeel", 3)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablespicer
+
+AddPrefabPostInit("portablespicer",function(inst)
+	if inst.components.stewer then
+		local old_continue = inst.components.stewer.oncontinuedone
+		inst.components.stewer.oncontinuedone = function(inst,...)
+			if old_continue then
+				old_continue(inst,...)
+			end
+			showmespice(inst)
+		end
+		local old_done = inst.components.stewer.ondonecooking
+		inst.components.stewer.ondonecooking = function(inst,...)
+			if old_done then
+				old_done(inst,...)
+			end
+			showmespice(inst)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：Mod 3791423105 (Mod 3791423105)
+- **变体场景与切面**：收录来自工坊 Mod 3791423105 (`Mod 3791423105`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3791423105)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:shujin_bag
+
+AddPrefabPostInit("shujin_bag", NormalizeShujinBagEquipSlot2hm)
+
+-- Integrated Backpack ignores containers.params.slotpos and builds its own
+-- horizontal bottom row in inventorybar. Recenter only Shujin Bag and reduce
+-- the vanilla 80px pitch to 72px; all other backpacks retain vanilla layout.
+local SHUJIN_INTEGRATED_SLOT_SPACING2HM = 72
+AddClassPostConstruct("widgets/inventorybar", function(self)
+    if self._shujin_integrated_layout_wrapped2hm then
+        return
+    end
+    self._shujin_integrated_layout_wrapped2hm = true
+
+    local old_Rebuild2hm = self.Rebuild
+    self.Rebuild = function(invbar, ...)
+        if old_Rebuild2hm ~= nil then
+            old_Rebuild2hm(invbar, ...)
+        end
+
+        if not invbar.integrated_backpack
+            or invbar.backpack == nil
+            or invbar.backpack.prefab ~= "shujin_bag"
+            or invbar.backpackinv == nil
+        then
+            return
+        end
+
+        local count2hm = #invbar.backpackinv
+        local left2hm = -0.5 * (count2hm - 1) * SHUJIN_INTEGRATED_SLOT_SPACING2HM
+        for index2hm, slot2hm in ipairs(invbar.backpackinv) do
+            slot2hm:SetPosition(left2hm + (index2hm - 1) * SHUJIN_INTEGRATED_SLOT_SPACING2HM, 0, 0)
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- hand item equipped avoids losing it when the inventory is full.
+AddComponentPostInit("playercontroller", function(self)
+    if self._amamiya_throw_autoequip_wrapped2hm then
+        return
+    end
+    self._amamiya_throw_autoequip_wrapped2hm = true
+
+    local old_DoActionAutoEquip2hm = self.DoActionAutoEquip
+    self.DoActionAutoEquip = function(controller, buffaction, ...)
+        if buffaction ~= nil and buffaction.action == ACTIONS.THROW_SENT_LETTER then
+            return
+        end
+        return old_DoActionAutoEquip2hm(controller, buffaction, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playeractionpicker
+-- override DoGetMouseActions，原版未生成右键动作时调用 mod 自定义查询
+AddComponentPostInit("playeractionpicker", function(self)
+    local _DoGetMouseActions = self.DoGetMouseActions
+    self.DoGetMouseActions = function(self, position, target, spellbook, ...)
+        local leftaction, rightaction = _DoGetMouseActions(self, position, target, spellbook, ...)
+        local local_player2hm = rawget(_G, "ThePlayer")
+        -- 配置了冲刺快捷键后，冲刺由该按键触发，右键不再注入冲刺动作（modinfo 文案
+        -- 承诺的语义）；关闭快捷键则保留原右键空地冲刺。
+        local replace_right_click2hm = local_player2hm ~= nil
+            and local_player2hm == self.inst
+            and IsAmamiyaDodgeKeyConfigured2hm()
+        if replace_right_click2hm then
+            if rightaction ~= nil
+                and rightaction.action == ACTIONS.AMAMIYA_DODGE then
+                rightaction = nil
+            end
+        elseif rightaction == nil
+            and self.amamiya_rightaction2hm ~= nil
+            and (_G.TheInput == nil or not _G.TheInput:GetHUDEntityUnderMouse())
+        then
+            local actions = self.amamiya_rightaction2hm(self.inst,
+                position or _G.TheInput:GetWorldPosition() or (target and target:GetPosition()),
+                nil, true)
+            rightaction = self:SortActionList(actions)[1]
+            if position and rightaction then
+                if not rightaction.pos then
+                    rightaction.pos = _G.DynamicPosition(position)
+                    rightaction.pos.local_pt = Vector3(position:Get())
+                elseif rightaction.pos and rightaction.pos.local_pt then
+                    rightaction.pos.local_pt = Vector3(position:Get())
+                end
+            end
+        end
+        return leftaction, rightaction
+    end
+end)
+
+-- ===========================================================================
+-- Transform SG state + EventHandler
+-- Persona-style remote-cast pose, with the form swap hidden by the blue-fire peak.
+-- ===========================================================================
+
+local function CommitAmamiyaTransform2hm(inst)
+    if inst.sg.statemem.committed2hm then return end
+    inst.sg.statemem.committed2hm = true
+    if inst.CommitAmamiyaState2hm ~= nil then
+        inst:CommitAmamiyaState2hm(inst.sg.statemem.mode2hm)
+    end
+end
+
+local function CommitInterruptedAmamiyaTransform2hm(inst)
+    if not inst.sg.statemem.committed2hm then
+        local fx2hm = SpawnPrefab("shadow_despawn")
+        if fx2hm ~= nil then
+            fx2hm.Transform:SetPosition(inst.Transform:GetWorldPosition())
+        end
+    end
+    CommitAmamiyaTransform2hm(inst)
+end
+
+local AMAMIYA_TRANSFORM_QUEUE_INTERVAL2HM = 3 * FRAMES
+local AMAMIYA_TRANSFORM_QUEUE_TIMEOUT2HM = 1.5
+local AMAMIYA_TRANSFORM_SOUND_HANDLE2HM = "amamiya_transform_sound2hm"
+
+local function CanStartQueuedAmamiyaTransform2hm(inst)
+    return inst.sg ~= nil
+        and inst.components.health ~= nil
+        and not inst.components.health:IsDead()
+        and not inst:HasTag("playerghost")
+        and not (inst.components.rider ~= nil and inst.components.rider:IsRiding())
+end
+
+local function RequestAmamiyaDismount2hm(inst)
+    if inst.components.rider ~= nil and inst.components.rider:IsRiding() then
+        inst.components.rider:Dismount()
+        return true
+    end
+    return false
+end
+
+local function ClearQueuedAmamiyaTransform2hm(inst)
+    local retry_task2hm = inst._amamiya_transform_retry_task2hm
+    inst._amamiya_transform_retry_task2hm = nil
+    if retry_task2hm ~= nil then
+        retry_task2hm:Cancel()
+    end
+
+    local timeout_task2hm = inst._amamiya_transform_timeout_task2hm
+    inst._amamiya_transform_timeout_task2hm = nil
+    if timeout_task2hm ~= nil then
+        timeout_task2hm:Cancel()
+    end
+
+    inst._amamiya_transform_queue_data2hm = nil
+end
+
+local function QueueAmamiyaTransform2hm(inst, data)
+    ClearQueuedAmamiyaTransform2hm(inst)
+    inst._amamiya_transform_queue_data2hm = data
+    RequestAmamiyaDismount2hm(inst)
+
+    inst._amamiya_transform_retry_task2hm = inst:DoPeriodicTask(
+        AMAMIYA_TRANSFORM_QUEUE_INTERVAL2HM,
+        function(inst)
+            if not inst._amamiya_transform_pending2hm then
+                ClearQueuedAmamiyaTransform2hm(inst)
+                return
+            end
+            if CanStartQueuedAmamiyaTransform2hm(inst) then
+                local queued_data2hm = inst._amamiya_transform_queue_data2hm
+                ClearQueuedAmamiyaTransform2hm(inst)
+                inst.sg:GoToState("amamiya_transform2hm", queued_data2hm)
+            end
+        end,
+        AMAMIYA_TRANSFORM_QUEUE_INTERVAL2HM
+    )
+
+    inst._amamiya_transform_timeout_task2hm = inst:DoTaskInTime(
+        AMAMIYA_TRANSFORM_QUEUE_TIMEOUT2HM,
+        function(inst)
+            inst._amamiya_transform_timeout_task2hm = nil
+            local queued_data2hm = inst._amamiya_transform_queue_data2hm
+            ClearQueuedAmamiyaTransform2hm(inst)
+            if inst._amamiya_transform_pending2hm
+                and inst.sg ~= nil
+                and inst.components.health ~= nil
+                and not inst.components.health:IsDead()
+                and not inst:HasTag("playerghost")
+            then
+                -- 正常路径先走原版 dismount 状态；极端情况下 1.5 秒仍未下牛，
+                -- 用 rider 的清理入口完成强制下牛，再进入高优先级变身 SG。
+                if inst.components.rider ~= nil and inst.components.rider:IsRiding() then
+                    inst.components.rider:ActualDismount()
+                end
+                inst.sg:GoToState("amamiya_transform2hm", queued_data2hm)
+            end
+        end
+    )
+end
+
+AddStategraphState("wilson", State {
+    name = "amamiya_transform2hm",
+    tags = {"busy", "pausepredict", "nomorph", "nodangle"},
+    onenter = function(inst, data)
+        if inst.components.rider ~= nil and inst.components.rider:IsRiding() then
+            inst.components.rider:ActualDismount()
+        end
+        ClearQueuedAmamiyaTransform2hm(inst)
+        inst.components.locomotor:Stop()
+        inst.sg.statemem.mode2hm = data ~= nil and data.mode or inst._amamiya_pending_mode2hm
+        inst.Transform:SetNoFaced()
+        inst.AnimState:PlayAnimation("remotecast_nodir_pre", false)
+        inst.AnimState:PushAnimation("remotecast_nodir_trigger", false)
+        inst.AnimState:PushAnimation("remotecast_nodir_pst", false)
+        local transform_fx2hm = SpawnPrefab("joker_transform_bluefire_fx2hm")
+        if transform_fx2hm ~= nil then
+            transform_fx2hm.entity:SetParent(inst.entity)
+            transform_fx2hm.Transform:SetPosition(0, 0, 0)
+        end
+        if inst.components.playercontroller ~= nil then
+            inst.components.playercontroller:RemotePausePrediction()
+        end
+        if inst.SetAmamiyaInvincibilityOwner2hm ~= nil then
+            inst:SetAmamiyaInvincibilityOwner2hm("transform2hm", true)
+        end
+        inst.sg:SetTimeout(2)
+    end,
+    timeline = {
+        TimeEvent(8 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound(
+                "dontstarve/common/together/skin_change",
+                AMAMIYA_TRANSFORM_SOUND_HANDLE2HM
+            )
+        end),
+        TimeEvent(10 * FRAMES, CommitAmamiyaTransform2hm),
+    },
+    events = {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                CommitAmamiyaTransform2hm(inst)
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+    ontimeout = function(inst)
+        CommitAmamiyaTransform2hm(inst)
+        inst.sg:GoToState("idle")
+    end,
+    onexit = function(inst)
+        inst.SoundEmitter:KillSound(AMAMIYA_TRANSFORM_SOUND_HANDLE2HM)
+        CommitInterruptedAmamiyaTransform2hm(inst)
+        inst.Transform:SetFourFaced()
+        if inst.SetAmamiyaInvincibilityOwner2hm ~= nil then
+            inst:SetAmamiyaInvincibilityOwner2hm("transform2hm", false)
+        end
+    end,
+})
+
+AddStategraphState("wilson_client", State {
+    name = "amamiya_transform2hm",
+    tags = {"busy", "pausepredict", "nomorph", "nodangle"},
+    server_states = {"amamiya_transform2hm"},
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.entity:FlattenMovementPrediction()
+        inst.Transform:SetNoFaced()
+        inst.AnimState:PlayAnimation("remotecast_nodir_pre", false)
+        inst.AnimState:PushAnimation("remotecast_nodir_trigger", false)
+        inst.AnimState:PushAnimation("remotecast_nodir_pst", false)
+        inst.sg:SetTimeout(2)
+    end,
+    events = {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+    onexit = function(inst)
+        inst.Transform:SetFourFaced()
+    end,
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle")
+    end,
+})
+
+AddStategraphPostInit("wilson", function(sg)
+    sg.events["amamiya_joker_transform2hm"] = EventHandler("amamiya_joker_transform2hm", function(inst, data)
+        if inst.sg ~= nil and inst.components.health ~= nil and not inst.components.health:IsDead() then
+            if data ~= nil and data.queue_if_busy2hm and not CanStartQueuedAmamiyaTransform2hm(inst) then
+                QueueAmamiyaTransform2hm(inst, data)
+            else
+                inst.sg:GoToState("amamiya_transform2hm", data)
+            end
+        end
+    end)
+end)
+
+-- Real dedicated-server regression tests are only registered when the local test harness is enabled.
+local test_cases2hm = _G.rawget(_G, "TEST_CASES2HM")
+if _G.type(test_cases2hm) == "table" then
+    require("amamiya_joker_tests")(test_cases2hm, ACTIONS)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit("wilson", function(sg)
+    sg.events["amamiya_joker_transform2hm"] = EventHandler("amamiya_joker_transform2hm", function(inst, data)
+        if inst.sg ~= nil and inst.components.health ~= nil and not inst.components.health:IsDead() then
+            if data ~= nil and data.queue_if_busy2hm and not CanStartQueuedAmamiyaTransform2hm(inst) then
+                QueueAmamiyaTransform2hm(inst, data)
+            else
+                inst.sg:GoToState("amamiya_transform2hm", data)
+            end
+        end
+    end)
+end)
+
+```
+
