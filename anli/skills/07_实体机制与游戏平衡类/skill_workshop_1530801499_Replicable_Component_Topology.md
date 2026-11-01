@@ -11390,3 +11390,50 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：Wendy Keybinds+ (Mod 3435680056)
+- **变体场景与切面**：收录来自工坊 Mod 3435680056 (`Wendy Keybinds+`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3435680056)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:spellbookcooldown
+
+AddPrefabPostInit("spellbookcooldown", function(inst)
+	if _G.ThePlayer:HasTag("ghostlyfriend") then
+		for k, v in ipairs(tiles) do
+			v:SetChargePercent(0)
+		end
+
+		inst:ListenForEvent("pctdirty", function(inst)
+			local pct = 1 - inst:GetPercent()
+			for k, v in ipairs(tiles) do
+				if v.inst:IsValid() then
+					-- sync only on >0.05 variance to prevent micro stutters
+					if math.abs(pct - v.rechargepct) > 0.05 then
+						if inst:GetSpellName() == _G.hash("do_ghost_attackat") then
+							if _G.ThePlayer.components.spellbookcooldowns:GetSpellCooldownPercent("ghostcommand") == nil then
+								v:SetChargeTime(inst:GetLength())
+								v:SetChargePercent(1 - inst:GetPercent())
+								v.recharge:GetAnimState():SetMultColour(.2, .2, 0, 0.64) -- 'Extra cooldown until' with YELLOW colour.
+							end
+						else
+							v:SetChargeTime(TUNING.WENDYSKILL_COMMAND_COOLDOWN)
+							v:SetChargePercent(1 - inst:GetPercent())
+							v.recharge:GetAnimState():SetMultColour(0, 0, 0.4, 0.64) -- 'Cooldown until' with BLUE colour.
+						end
+					end
+				else
+					table.remove(tiles, k)
+				end
+			end
+		end)
+	end
+end)
+
+```
+
