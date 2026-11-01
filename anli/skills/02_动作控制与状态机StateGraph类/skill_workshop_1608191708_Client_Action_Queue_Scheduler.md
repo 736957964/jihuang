@@ -63075,3 +63075,48 @@ AddPrefabPostInit(
 
 ```
 
+
+
+### 变体演进：Breaking Together (Mod 2844346170)
+- **变体场景与切面**：收录来自工坊 Mod 2844346170 (`Breaking Together`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2844346170)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:bullet
+
+AddPrefabPostInit("bullet",function(inst)
+    inst:AddComponent("tradable")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+
+AddStategraphPostInit('wilson', function(sg)
+  actionhandlers = sg.actionhandlers
+  for i,v in pairs(actionhandlers) do
+    if v.action == ACTIONS.ATTACK then
+      originalAttack = actionhandlers[i].deststate
+      actionhandlers[i].deststate = NewDestStateATTACK
+    end
+  end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+end)
+AddStategraphPostInit('wilson_client', function(sg)
+  actionhandlers = sg.actionhandlers
+  for i,v in pairs(actionhandlers) do
+    if v.action == ACTIONS.ATTACK then
+      originalClientAttack = actionhandlers[i].deststate
+      actionhandlers[i].deststate = NewClientDestStateATTACK
+    end
+  end
+end)
+
+```
+

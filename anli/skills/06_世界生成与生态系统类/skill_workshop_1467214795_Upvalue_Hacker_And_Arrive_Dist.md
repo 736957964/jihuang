@@ -5586,3 +5586,33 @@ if GLOBAL.KnownModIndex:IsModEnabled("workshop-3193922031")  then
 
 ```
 
+
+
+### 变体演进：BetterNightVision (Mod 1684135933)
+- **变体场景与切面**：收录来自工坊 Mod 1684135933 (`BetterNightVision`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1684135933)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playervision
+
+    AddComponentPostInit("playervision", function (self)
+
+        -- checks on whether to run is whithin
+
+        OnPostInit_OverrideVision(self.inst)
+
+        OnPostInit_PatchVision(self)
+
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+Usually you'll want to be making these changes from an AddPrefabPostInit("world", function(inst) end),
+
+```
+
