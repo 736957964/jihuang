@@ -8769,8 +8769,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 16:48:58",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3354479198",
+      "name": "language",
+      "author": "绯世行",
+      "version": "1.0.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:51:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3452360823",
+      "name": "Title",
+      "author": "龙炎、Dim cat、晴浅",
+      "version": "1.8.35",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:51:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3452922217",
+      "name": "史尔特尔",
+      "author": "whaaaatfne（最终能量）",
+      "version": "2.0.16",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 16:51:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3535620803",
+      "name": "龙鳞烤炉Scaled Stove",
+      "author": "LichKing",
+      "version": "1.0.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 16:51:31",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 16:48:58"
+  "lastUpdated": "2026-11-01 16:51:31"
 }
