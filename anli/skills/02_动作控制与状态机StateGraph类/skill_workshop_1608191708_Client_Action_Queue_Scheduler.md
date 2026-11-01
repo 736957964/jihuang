@@ -42019,3 +42019,1444 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Camp Security (Mod 1416161108)
+- **变体场景与切面**：收录来自工坊 Mod 1416161108 (`Camp Security`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1416161108)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:container
+end
+AddComponentPostInit("container", DropNotSelectedInBackpackComponentPostInit)
+
+local function DropNotSelectedComponentPostInit(self)
+	-- сам цикл для дропа вещей при выходе с сервера
+	function self:DropNotSelected()
+		if self.activeitem ~= nil then
+			self:DropItem(self.activeitem)
+			self:SetActiveItem(nil)
+		end
+		for k = 1, self.maxslots do
+			local v = self.itemslots[k]
+			if v ~= nil and not notdropped[v.prefab] then
+				self:DropItem(v, true, true)
+			end
+		end
+		for k, v in pairs(self.equipslots) do
+			if v ~= nil and not notdropped[v.prefab] then
+				if v.components.container ~= nil then
+					v.components.container:DropNotSelectedInBackpack()
+				end
+				self:DropItem(v, true, true)
+			end
+		end
+		if self.inst.woby ~= nil and self.inst.woby.components.container ~= nil then
+			self.inst.woby.components.container:DropNotSelectedInBackpack()
+		end
+	end
+	-- сам цикл для дропа сердца и амулета
+	function self:DropAmulet()
+		for k, v in pairs(self.equipslots) do
+			if v ~= nil and v.components.container ~= nil then
+				v.components.container:DropAmuletInBackpack()
+			end
+			if v ~= nil and dropped[v.prefab] then
+				self:DropItem(v, true, true)
+			end
+			if v ~= nil and v.prefab == "orangeamulet" then
+				self:DropItem(v, true, true)
+			end			
+		end
+		for k = 1, self.maxslots do
+			local v = self.itemslots[k]
+			if v ~= nil and dropped[v.prefab] then
+				self:DropItem(v, true, true)
+			end
+		end
+	end
+	-- при смерти выбрасывать только сердце и амулет
+	local old_Inventory_DropEverything = self.DropEverything
+	function self:DropEverything(ondeath, keepequip)
+		if dont_drop_when_died and self.inst:HasTag("player") and ondeath then
+			self:DropAmulet()
+		else
+			return old_Inventory_DropEverything(self, ondeath, keepequip)
+		end
+	end
+	
+	-- добавляет возможность оживить призрака с полным инвентарем
+	if dont_drop_when_died then
+		local old_CanAcceptCount = self.CanAcceptCount
+		function self:CanAcceptCount(item, count)
+			-- Если владелец инвентаря — призрак
+			if self.inst:HasTag("playerghost") and item ~= nil then
+				local is_reviver = false
+
+				if type(item) == "string" then
+					-- Если передано название префаба строкой
+					is_reviver = (item == "reviver" or item == "pocketwatch_revive")
+				elseif type(item) == "table" and item.IsValid and item:IsValid() then
+					-- Если передан сам объект предмета
+					is_reviver = item.prefab == "reviver" 
+						or item.prefab == "pocketwatch_revive" 
+						or item:HasTag("reviver") 
+						or (item.components ~= nil and item.components.reviver ~= nil)
+				end
+
+				if is_reviver then
+					return count or 1
+				end
+			end
+
+			return old_CanAcceptCount(self, item, count)
+		end
+	end	
+
+end
+AddComponentPostInit("inventory", DropNotSelectedComponentPostInit)
+
+-- выбросить все при выходе с сервера
+AddComponentPostInit("playerspawner", function(PlayerSpawner, inst)
+	inst:ListenForEvent("ms_playerdespawn", function (inst, player)
+		if player and player.components.inventory ~= nil and not checkPermissionAdminOrInWhite(player, true) then
+			local state = DropList:GetState()
+			if state then
+				if not DropList:Check(player.userid) then
+					player.components.inventory:DropNotSelected()
+				end	
+			end	
+		end	
+	end) 
+end)
+
+-- для автоматического добавления в белый список
+local function OnDayChange(inst, cycles)
+	local function AddToWhite(p)
+		if p.playerage ~= nil and p.playerage == auto_add_to_list then
+			if WhiteList:Insert(p.userid) then
+				SyncWhitelist()
+			end	
+		end		
+	end
+	
+	local function AddToDrop(p)
+		if p.playerage ~= nil and p.playerage == auto_add_to_list_drop then
+			if DropList:Insert(p.userid) then
+				SyncDropList()
+			end
+		end		
+	end	
+	
+	local function CheckPlayer(p)
+		if auto_add_to_list then
+			AddToWhite(p)
+		end
+		
+		if auto_add_to_list_drop then
+			AddToDrop(p)
+		end	
+	end
+	
+	local isdedicated = not TheNet:GetServerIsClientHosted()
+	for _, p in ipairs(TheNet:GetClientTable()) do
+		if not isdedicated or p.performance == nil then
+			CheckPlayer(p)
+		end
+	end
+end
+
+AddPrefabPostInit("world", function(inst)
+	inst:WatchWorldState("cycles", OnDayChange)
+end)
+
+-- тут решаем как и кого наказать
+local function punishDoer(player)
+	local msg = ""
+	if destruction_warning then
+		if player.warnings == nil or player.warnings < 0 then
+			player.warnings = warnings_count - 1
+			player.warnings_count = warnings_count
+		elseif player.warnings >= 0 then
+			if player.warnings_count and player.warnings_count == warnings_count then
+				player.warnings = player.warnings - 1
+			else
+				player.warnings_count = warnings_count
+				player.warnings = warnings_count - 1
+			end	
+		end
+		if player.warnings < 0 then	
+			if ban_time == "perm" then
+				BanList:Insert(player.userid, "SYSTEM", "auto-punish", true, nil)
+				print(string.format("[CampSecurity] Player %s (%s) was auto banned permanently.", player.name, player.userid))
+				SyncBanlist()
+				msg = "[banned permanently] "
+			else
+				local btime = tonumber(ban_time) or 1800
+				BanList:Insert(player.userid, "SYSTEM", "auto-punish", false, btime)
+				print(string.format("[CampSecurity] Player %s (%s) was auto banned for %s minutes.", player.name, player.userid, math.floor(btime / 60)))
+				SyncBanlist()				
+				msg = "[banned for ".. math.floor(btime / 60) .." min] "
+			end
+		elseif player.warnings >= 0 then
+			msg = "["..player.warnings.."/"..player.warnings_count.."] "
+		end	
+	end
+	if destruction_punishment and destruction_protection ~= 3 then
+		if destruction_warning and player.warnings <= 0 then
+			if player:HasTag("player") and not player:HasTag("playerghost") then
+				local punish = punishmentTip
+				if punishmentTip == 5 then
+					punish = math.random(1, 4)
+				end
+				if punish == 1 and player.components.freezable ~= nil then
+					player.components.freezable:Freeze(12)
+				elseif punish == 2 and player.components.health ~= nil then
+					player:DoTaskInTime(2, function()
+						if not player.components.health:IsDead() then
+							player.components.health:DoDelta(-10^3)
+						end
+					end)
+				elseif punish == 3 and player.components.combat ~= nil and player.components.health ~= nil then
+					if player.components.health.currenthealth >= 12 then 
+						player.components.combat:GetAttacked(nil, 10, nil, "electric")
+					end
+				elseif punish == 4 and player.components.inventory ~= nil then
+					player.components.inventory:DropNotSelected()			
+				end	
+			end
+		end	
+	end
+	if player.components.talker ~= nil then
+		player:DoTaskInTime(0.2, function()
+			local say = STRINGS.CHARACTERS.WALTER.ACTIONFAIL.RUMMAGE.GENERIC .. "\n" .. msg
+			player.components.talker:Say(say, nil, true)
+		end)
+	end
+	return msg
+end
+
+-- просто получаем оружие в руках
+function GetWeapon(inst)
+	local item = nil
+    if inst then
+        item =inst.components.inventory ~= nil and inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+    end
+	if inst and not item then
+		item = inst.components.combat ~= nil and inst.components.combat:GetWeapon()
+	end	
+    return item
+end
+
+-- Достаём "истинного" исполнителя действия (с учётом посоха ветра)
+local function ResolveCaster(entity)
+	if entity ~= nil and entity.WINDSTAFF_CASTER ~= nil and entity.WINDSTAFF_CASTER:IsValid() then
+		return entity.WINDSTAFF_CASTER
+	end
+	return entity
+end
+
+-- Имя сущности с учётом кастомных переводов (form: 1 или 2, см. lang())
+local function GetName(entity, form)
+	if entity == nil then return ANYTHING end
+	return lang(entity.prefab, form or 1) or (entity.GetDisplayName and entity:GetDisplayName()) or ANYTHING
+end
+
+-- Строка вида "владелец Имя." для построек
+local function GetOwnerString(target)
+	return (target and target.playerOwner ~= nil) and (OWN.." "..target.playerOwner.name..".") or ""
+end
+
+-- Ставит временный флаг "предупреждение уже показано", чтобы не спамить
+local function SetWarnTimeout(worker)
+	if worker.timeout_warn_msg then return end
+	worker.timeout_warn_msg = worker:DoTaskInTime(5, function(w)
+		if w ~= nil and w:IsValid() then w.timeout_warn_msg = nil end
+	end)
+end
+
+-- тут запрещаем поджигать что либо
+local check_actions = {
+	LIGHT=1,
+	ATTACK=1,
+	CASTSPELL=1,
+}
+
+local fire_weapon = {
+	torch=1,
+	lighter=1,
+	firestaff=1,
+	blowdart_fire=1,
+	firepen=1,
+	dumbbell_redgem=1,
+}
+
+local destroy_weapon = {
+	greenstaff=1,
+}
+
+local can_onfire = {
+	stagehand=1,
+	trashcan=1,
+}
+
+local cant_attack = {}
+
+if reeds_cactus then
+	cant_attack["cactus"] = 1
+	cant_attack["reeds"] = 1
+end
+
+if glommer_protect then
+	cant_attack["glommer"] = 1
+end
+
+if chester_protect then
+	cant_attack["chester"] = 1
+	cant_attack["hutch"] = 1
+end
+
+if lavae_protect then
+	cant_attack["lavae_pet"] = 1
+end
+
+local ANNOUNCE_COOLDOWN = 5 -- Кулдаун анонсов в чат (в секундах) для одного игрока
+
+local function CheckZone(act)
+	local doer = act.doer
+    -- Определяем предмет, которым совершается действие (экипированный или в курсоре/руке)
+    local use_item = act.invobject or GetWeapon(doer)
+    
+    if use_item ~= nil and fire_weapon[use_item.prefab] then
+        local target = act.target
+        
+        if target ~= nil and (can_onfire[target.prefab] or ignorefirepits[target.prefab]) and use_item.prefab ~= "dumbbell_redgem" then
+            return true
+        end
+
+        -- Безопасное получение координат (поддерживает объекты и клики по земле)
+        local pos = act:GetActionPoint()
+        local x, y, z
+        if pos ~= nil then
+            x, y, z = pos:Get()
+        elseif target ~= nil then
+            x, y, z = target.Transform:GetWorldPosition()
+        end
+        if x == nil then return true end 
+		local try_or = destruction_protection == 3 and SET_FIRE or SET_FIRE_TRY
+		local ents = TheSim:FindEntities(x, y, z, fire_radius, {VAR.HASOWNER, VAR.BUILD, "can_onfire"}, {"burnt"})          
+		for k, v in ipairs(ents) do
+			if not ignorefirepits[v.prefab] and not can_onfire[v.prefab] and not checkPermissionDestroy(doer, v) then
+				local now = GLOBAL.GetTime()
+				if doer._last_arson_warn == nil or (now - doer._last_arson_warn) >= ANNOUNCE_COOLDOWN then
+					doer._last_arson_warn = now
+					local warn_msg = punishDoer(doer)    
+					local display_target = target or use_item
+					if destruction_protection == 1 or destruction_protection == 3 then
+						if display_target == v then
+							TheNet:Announce(GetName(doer).." "..warn_msg..try_or.." "..GetName(display_target, 2)..". "..GetOwnerString(display_target))
+						else
+							TheNet:Announce(GetName(doer).." "..warn_msg..try_or.." "..GetName(display_target, 2).." "..NEAR.." "..GetName(v, 3)..". "..GetOwnerString(v))
+						end 
+					end
+				end                    
+				if destruction_protection == 1 or destruction_protection == 2 then
+					return false
+				end
+				break
+			end
+		end
+	end	
+    return true
+end
+
+for k, v in pairs(check_actions) do
+	if ACTIONS[k] then
+		local old_ACTION = ACTIONS[k].fn
+		ACTIONS[k].fn = function(act)
+			if act.doer ~= nil and act.doer:IsValid() then
+                local doer = act.doer
+                local target = act.target
+                local use_item = act.invobject or GetWeapon(doer)
+				if k ~= "LIGHT" and target ~= nil and target:IsValid() then
+					-- защита от разрушения посохом
+					if destruction_protection and use_item and destroy_weapon[use_item.prefab] and not allow_destroy[target.prefab] and not checkPermissionDestroy(doer, target) then
+						local try_or = destruction_protection == 3 and DESTROY or DESTROY_TRY
+						local warn_msg = punishDoer(doer)
+						if destruction_protection == 1 or destruction_protection == 3 then
+							TheNet:Announce(GetName(doer).." "..warn_msg..try_or.." "..GetName(target, 2)..". "..GetOwnerString(target))
+						end
+						if destruction_protection == 3 then
+							return old_ACTION(act)
+						else
+							return false, "INOPE"
+						end	
+					end
+					
+					if beefalo_protected and target:HasTag(VAR.ITSBEEFALO) and not checkPermissionDestroy(doer, target) then -- запретить атаку бифало чем угодно
+						if use_item and use_item.prefab == "telestaff" then
+							act.target = act.doer
+							return old_ACTION(act)
+						end
+						if doer.components.freezable ~= nil then 
+							doer.components.freezable:Freeze(6)
+						end		
+						return false, "INOPE"
+					end 
+					-- запретить атаку честера, гломмера и т.д. чем угодно
+					if cant_attack[target.prefab] then 
+						if doer.components.freezable ~= nil then 
+							doer.components.freezable:Freeze(6) 
+						end
+						return false, "INOPE"
+					end				
+				end
+				-- основная защита от поджога
+				if destruction_protection and doer:HasTag("player") and not CheckZone(act) then
+					return false, "INOPE"
+				end
+			end	
+			return old_ACTION(act)
+		end	
+	end	
+end
+
+local old_ACTION_TOSS = ACTIONS.TOSS.fn
+ACTIONS.TOSS.fn = function(act)
+	if act.doer ~= nil and act.doer:IsValid() then
+		if destruction_protection and act.doer:HasTag("player") and not CheckZone(act) then
+			return false, "INOPE"
+		end
+	end	
+	return old_ACTION_TOSS(act)
+end	
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- модификации некоторых обработчиков действий
+
+if read_radius then
+-- READ
+	local old_ACTION_READ = ACTIONS.READ.fn
+	ACTIONS.READ.fn = function(act)
+		if act.doer ~= nil and (act.target ~= nil or act.invobject ~= nil) then
+			local doer = act.doer; local target = act.target or act.invobject;
+			if target.prefab == "book_tentacles" then			
+				if not checkPermissionAdminOrInWhite(doer) then
+					if #Find(target, read_radius, nil, nil, {"near_portal", "spawnpoint", "migration_portal"}) > 0 then 
+						return false, "INOPE"
+					end
+				end
+			end
+		end
+		return old_ACTION_READ(act)
+	end
+end
+
+if beebox_radius then
+-- PICK
+	local old_ACTION_PICK = ACTIONS.PICK.fn
+	ACTIONS.PICK.fn = function(act)
+		if act.doer ~= nil and (act.target ~= nil or act.invobject ~= nil) then
+			local target = act.target or act.invobject; local doer = act.doer;
+			if target.prefab == "flower" then				
+				if not checkPermissionAdminOrInWhite(doer) then
+					for i, v in ipairs(Find(target, beebox_radius, {"beebox", VAR.HASOWNER}, {"burnt"})) do
+						if not checkPermissionUse(doer, v) then
+							return false, "INOPE"
+						end
+					end
+				end
+			end
+		end
+		return old_ACTION_PICK(act)
+	end
+end
+
+-- DISMANTLE
+local old_ACTION_DISMANTLE = ACTIONS.DISMANTLE.fn
+ACTIONS.DISMANTLE.fn = function(act)
+	if act.doer ~= nil and (act.target ~= nil or act.invobject ~= nil) then
+		local target = act.target or act.invobject; local doer = act.doer;
+		if not checkPermissionDestroy(doer, target) then
+			return false, "INOPE"
+		end
+	end
+	return old_ACTION_DISMANTLE(act)
+end
+
+-- проверки на право использования
+for k, v in pairs(actions_list) do
+	if ACTIONS[k] then
+		local old_action = ACTIONS[k].fn
+		ACTIONS[k].fn = function(act)
+			if act.doer ~= nil and (act.target ~= nil or act.invobject ~= nil) then
+				local target = act.target or act.invobject; local doer = act.doer;
+				if target.prefab == "gemsocket" and target.proxy_destroy_entity ~= nil then
+					if target.proxy_destroy_entity:HasTag(VAR.HASOWNER) and not checkPermissionUseTelebaseWithFriends(doer, target.proxy_destroy_entity) then
+						return false, "INOPE"
+					end
+				end
+				if k == "USEITEMON" then
+					if target:HasTag(VAR.HASOWNER) and target:HasTag(VAR.ITSBEEFALO) and not checkPermissionUse(doer, target) then
+						return false, "INOPE"
+					else
+						return old_action(act)
+					end
+				end
+				if not checkPermissionUse(doer, target) then
+					return false, "INOPE"
+				end
+				if k == "MOUNT" then
+					if target.components.combat ~= nil and target.components.combat:HasTarget() then
+						target.components.combat:DropTarget()
+					end		
+				end
+			end	
+			return old_action(act)
+		end
+	end	
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- нужно для запрета некоторых действий около портала
+local portal_list = {multiplayer_portal=1, multiplayer_portal_moonrock=1, multiplayer_portal_moonrock_constr=1}
+for k, v in pairs(portal_list) do AddPrefabPostInit(k, function(inst) inst:AddTag("near_portal") end) end
+
+-- модификация onBuild для автоматического назначения владельца
+local function OnBuildOwn(doer, inst)
+	if inst ~= nil and doer ~= nil and inst:HasTag(VAR.BUILD) then
+		inst:AddTag(doer.userid)
+		inst:AddTag(VAR.HASOWNER)
+		inst.playerOwner = {
+			userid = doer.userid,
+			name = doer:GetDisplayName()
+		}
+		inst.locklist = {}
+	end
+	if doer.components.builder.old_onBuild ~= nil then
+		doer.components.builder.old_onBuild(doer, inst)
+	end
+end
+
+AddPrefabPostInit("world", function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+
+    inst:ListenForEvent("ms_playerjoined", function(world, player)
+        if player ~= nil and player.userid then
+			if WhiteList and WhiteList.GetData then
+				local whitelist = WhiteList:GetData()
+				if type(whitelist) == "table" then
+					if GLOBAL.table.contains(whitelist, player.userid) then
+						player:AddTag(VAR.WLIST)
+					end
+				end
+			end
+			
+            if BanList and BanList:Check(player.userid) and not checkPermissionAdminOrInWhite(player, true) then
+                TheNet:Kick(player.userid)
+                
+                player:DoTaskInTime(0.5, function(p)
+                    if p:IsValid() then
+                        p:Remove()
+                    end
+                end)
+                
+                return
+            end
+        end
+    end)
+end)
+
+-- при входе игрока на сервер отправляем ему списоки друзей на клиент
+local function RequestFriendlist(player)
+    SendFriendlistToClient(player)
+end
+AddModRPCHandler(modname, "RequestFriendlist", RequestFriendlist)
+
+AddClassPostConstruct("widgets/controls", function(self)
+    SendModRPCToServer(MOD_RPC[modname]["RequestFriendlist"])
+end)
+
+AddPlayerPostInit(function(inst)
+    if not GLOBAL.TheWorld.ismastersim then
+        return
+    end
+	
+    -- Подмена функции строительства (авто-владелец)
+    if auto_add_owner and inst.components.builder ~= nil then
+        if inst.components.builder.onBuild ~= OnBuildOwn then
+            inst.components.builder.old_onBuild = inst.components.builder.onBuild
+            inst.components.builder.onBuild = OnBuildOwn
+        end
+    end
+
+    local _OnSave = inst.OnSave
+    inst.OnSave = function(inst, data)
+        if _OnSave then _OnSave(inst, data) end
+        if inst.warnings then data.warnings = inst.warnings end
+        if inst.warnings_count then data.warnings_count = inst.warnings_count end
+    end
+
+    local _OnLoad = inst.OnLoad
+    inst.OnLoad = function(inst, data)
+        if _OnLoad then _OnLoad(inst, data) end
+        if data then
+            if data.warnings then inst.warnings = data.warnings end
+            if data.warnings_count then inst.warnings_count = data.warnings_count end
+        end
+    end
+
+    -- Сохранение данных при смене персонажа
+    local _SaveForReroll = inst.SaveForReroll
+    inst.SaveForReroll = function(inst)
+        local data = _SaveForReroll and _SaveForReroll(inst) or {}
+        if inst.warnings then data.warnings = inst.warnings end
+        if inst.warnings_count then data.warnings_count = inst.warnings_count end
+        return GLOBAL.next(data) ~= nil and data or nil
+    end
+
+    local _LoadForReroll = inst.LoadForReroll
+    inst.LoadForReroll = function(inst, data)
+        if _LoadForReroll then _LoadForReroll(inst, data) end
+        if data then
+            if data.warnings then inst.warnings = data.warnings end
+            if data.warnings_count then inst.warnings_count = data.warnings_count end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+end
+AddComponentPostInit("inventory", DropNotSelectedComponentPostInit)
+
+-- выбросить все при выходе с сервера
+AddComponentPostInit("playerspawner", function(PlayerSpawner, inst)
+	inst:ListenForEvent("ms_playerdespawn", function (inst, player)
+		if player and player.components.inventory ~= nil and not checkPermissionAdminOrInWhite(player, true) then
+			local state = DropList:GetState()
+			if state then
+				if not DropList:Check(player.userid) then
+					player.components.inventory:DropNotSelected()
+				end	
+			end	
+		end	
+	end) 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playerspawner
+-- выбросить все при выходе с сервера
+AddComponentPostInit("playerspawner", function(PlayerSpawner, inst)
+	inst:ListenForEvent("ms_playerdespawn", function (inst, player)
+		if player and player.components.inventory ~= nil and not checkPermissionAdminOrInWhite(player, true) then
+			local state = DropList:GetState()
+			if state then
+				if not DropList:Check(player.userid) then
+					player.components.inventory:DropNotSelected()
+				end	
+			end	
+		end	
+	end) 
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit("world", function(inst)
+	inst:WatchWorldState("cycles", OnDayChange)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cactus
+if reeds_cactus then
+	AddPrefabPostInit("cactus", function(inst)
+		inst:AddTag("cactus_def")
+	end)
+
+```
+
+
+
+### 变体演进：六格装备栏 (Mod 3281681895)
+- **变体场景与切面**：收录来自工坊 Mod 3281681895 (`六格装备栏`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3281681895)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:hermitcrab
+    -- See `scripts/prefabs/hermitcrab.lua`.
+    AddPrefabPostInit("hermitcrab", function(inst)
+        if not GLOBAL.TheWorld.ismastersim then
+            return
+        end
+
+        local function iscoat(item)
+            return item.components.insulator and
+                    item.components.insulator:GetInsulation() >= GLOBAL.TUNING.INSULATION_SMALL and
+                    item.components.insulator:GetType() == GLOBAL.SEASONS.WINTER and
+                    item.components.equippable and
+                    item.components.equippable.equipslot == EQUIPSLOTS_MAP.CLOTHING
+        end
+
+        local function getcoat(inst1)
+            local equipped = inst1.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return inst1.components.inventory:FindItem(function(testitem) return iscoat(testitem) end)
+                    or (equipped and iscoat(equipped) and equipped)
+        end
+
+        -- Add an extra "itemget" listener.
+        -- See `scripts/prefabs/hermitcrab.lua:1011`.
+        inst:ListenForEvent("itemget", function(_, data)
+            if iscoat(data.item) and GLOBAL.TheWorld.state.issnowing then
+                local TASKS_GIVE_PUFFY_VEST = 11 -- Copy from `prefabs/hermitcrab.lua:57`.
+                inst.components.inventory:Equip(data.item)
+                inst.components.friendlevels:CompleteTask(TASKS_GIVE_PUFFY_VEST)
+            end
+        end)
+
+        -- Override `ShouldAcceptItem`.
+        -- See `scripts/prefabs/hermitcrab.lua:122-123,127`.
+        local ShouldAcceptItem_Base = inst.components.trader.test
+        inst.components.trader:SetAcceptTest(function(inst1, item)
+            return (iscoat(item) and GLOBAL.TheWorld.state.issnowing and not getcoat(inst1))
+                    or ShouldAcceptItem_Base(inst1, item)
+        end)
+
+        -- Override `OnRefuseItem`.
+        -- See `scripts/prefabs/hermitcrab.lua:144-146`.
+        local OnRefuseItem_Base = inst.components.trader.onrefuse
+        inst.components.trader.onrefuse = function(inst1, giver, item)
+            if iscoat(item) then
+                if getcoat(inst1) then
+                    inst1.components.npc_talker:Say(GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT_HASONE[math.random(#GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT_HASONE)])
+                elseif not GLOBAL.TheWorld.state.issnowing then
+                    inst1.components.npc_talker:Say(GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT[math.random(#GLOBAL.STRINGS.HERMITCRAB_REFUSE_COAT)])
+                end
+            end
+            OnRefuseItem_Base(inst, giver, item)
+        end
+
+        -- Override `iscoat`.
+        -- See `scripts/prefabs/hermitcrab.lua:1363`.
+        inst.iscoat = iscoat
+        inst.getcoat = getcoat
+    end)
+
+
+    -- 6. Crabby Hermit has a brain which allows her to equip/unequip a coat to/from the old equip slot. Let's use the new one too.
+    -- See `scripts/brains/hermitcrabbrain.lua`.
+    AddBrainPostInit("hermitcrabbrain", function(brain)
+        local function using_coat(inst)
+            local equipped = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return equipped and inst.iscoat(equipped) or nil
+        end
+
+        local function has_coat(inst)
+            return inst.components.inventory:FindItem(function(testitem) return inst.iscoat(testitem) end)
+        end
+
+        local function EquipCoat(inst)
+            local coat = inst.getcoat(inst)
+            if coat then
+                inst.components.inventory:Equip(coat)
+            end
+        end
+
+        local function UnequipCoat(inst)
+            local item = inst.components.inventory:Unequip(EQUIPSLOTS_MAP.CLOTHING)
+            inst.components.inventory:GiveItem(item)
+        end
+
+        local new_children = {}
+        for _, child in ipairs(brain.bt.root.children) do
+            if child.name == "Sequence" and child.children[1].name == "coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and GLOBAL.TheWorld.state.issnowing and has_coat(brain.inst) and not using_coat(brain.inst) end,
+                                "coat",
+                                GLOBAL.DoAction(brain.inst, EquipCoat, "coat", true))
+                )
+            elseif child.name == "Sequence" and child.children[1].name == "stop coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and not GLOBAL.TheWorld.state.issnowing and using_coat(brain.inst) end,
+                                "stop coat",
+                                GLOBAL.DoAction(brain.inst, UnequipCoat, "stop coat", true))
+                )
+            else
+                table.insert(new_children, child)
+            end
+        end
+        brain.bt = GLOBAL.BT(brain.inst, GLOBAL.PriorityNode(new_children, 0.5))
+    end)
+
+end
+
+
+if EQUIPSLOTS_MAP.AMULET ~= GLOBAL.EQUIPSLOTS.BODY then
+
+    -- 7. There is a state related to the Life Giving Amulet equipped in the old slot. Let's use the new slot too.
+    -- See `scripts/stategraphs/SGwilson.lua`.
+    AddStategraphPostInit("wilson", function(self)
+        local amulet_rebirth_state = self.states["amulet_rebirth"]
+
+        -- Override `onenter` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9372`.
+        local amulet_rebirth_state_onenter_base = amulet_rebirth_state.onenter
+        amulet_rebirth_state.onenter = function(inst)
+            amulet_rebirth_state_onenter_base(inst)
+            local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+            if item ~= nil and item.prefab == "amulet" then
+                item = inst.components.inventory:RemoveItem(item)
+                if item ~= nil then
+                    item:Remove()
+                    inst.sg.statemem.usedamulet_2 = true -- Mod note: `usedamulet_2` is set instead of `usedamulet`.
+                end
+            end
+        end
+
+        -- Override `onexit` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9414`.
+        local amulet_rebirth_state_onexit_base = amulet_rebirth_state.onexit
+        amulet_rebirth_state.onexit = function(inst)
+            -- Mod note: `usedamulet_2` is checked instead of `usedamulet`.
+            if inst.sg.statemem.usedamulet_2 and inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET) == nil then
+                inst.AnimState:ClearOverrideSymbol("swap_body")
+            end
+            amulet_rebirth_state_onexit_base(inst)
+        end
+    end)
+
+
+    -- 8. In the recipe popup the icon of the Construction Amulet is shown when it is equipped in the old slot. Let's use the new slot too.
+    -- See `scripts/widgets/recipepopup.lua:334`.
+
+    RecipePopup = GLOBAL.require "widgets/recipepopup"
+
+    AddGlobalClassPostConstruct("widgets/recipepopup", "RecipePopup", function(self)
+        local RecipePopup_Refresh_Base = RecipePopup.Refresh
+        function RecipePopup:Refresh()
+            RecipePopup_Refresh_Base(self)
+            if self.button:IsVisible() then
+                local equipped = self.owner.replica.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+                local showamulet = equipped and equipped.prefab == "greenamulet"
+                if showamulet then
+                    self.amulet:Show()
+                end
+            end
+        end
+    end)
+
+end
+
+
+-- 9. Render items from the new equip slots.
+if GetModConfigData("config_render") then
+
+    local anim_build_symbols = {
+        -- Backpacks
+        ["backpack"]     = {"swap_backpack",     "swap_body"}, -- Backpack
+        ["candybag"]     = {"candybag",          "swap_body"}, -- Candybag
+        ["icepack"]      = {"swap_icepack",      "swap_body"}, -- Insulated Pack
+        ["krampus_sack"] = {"swap_krampus_sack", "swap_body"}, -- Krampus Sack
+        ["piggyback"]    = {"swap_piggyback",    "swap_body"}, -- Piggyback
+        ["seedpouch"]    = {"seedpouch",         "swap_body"}, -- Seed Pack-It
+        ["spicepack"]    = {"swap_chefpack",     "swap_body"}, -- Chef Pouch
+
+        -- Band
+        ["onemanband"]        = {"swap_one_man_band",  "swap_body_tall"}, -- One-man Band
+
+        -- Shell
+        ["armorsnurtleshell"] = {"armor_slurtleshell", "swap_body_tall"}, -- Snurtle Shell Armor
+
+        -- Life vests
+        ["balloonvest"]     = {"balloonvest",     "swap_body"}, -- Inflatable Vest
+
+        -- Armors
+        ["armor_bramble"]   = {"armor_bramble",   "swap_body"}, -- Bramble Husk
+        ["armordragonfly"]  = {"torso_dragonfly", "swap_body"}, -- Scalemail
+        ["armorgrass"]      = {"armor_grass",     "swap_body"}, -- Grass Suit
+        ["armormarble"]     = {"armor_marble",    "swap_body"}, -- Marble Suit
+        ["armorruins"]      = {"armor_ruins",     "swap_body"}, -- Thulecite Suit
+        ["armor_sanity"]    = {"armor_sanity",    "swap_body"}, -- Night Armour
+        ["armorskeleton"]   = {"armor_skeleton",  "swap_body"}, -- Bone Armor
+        ["armorwood"]       = {"armor_wood",      "swap_body"}, -- Log Suit
+
+        -- Armors: from the mod "More Armor" (<https://steamcommunity.com/sharedfiles/filedetails/?id=1153998909>)
+        ["armor_bone"]  = {"armor_bone",  "armor_my_folder"}, -- Bone Suite
+        ["armor_stone"] = {"armor_stone", "armor_my_folder"}, -- Stone Suite
+
+        -- Clothing
+        ["armorslurper"]     = {"armor_slurper",          "swap_body"}, -- Belt of Hunger
+        ["beargervest"]      = {"torso_bearger",          "swap_body"}, -- Hibearnation Vest
+        ["hawaiianshirt"]    = {"torso_hawaiian",         "swap_body"}, -- Floral Shirt
+        ["raincoat"]         = {"torso_rain",             "swap_body"}, -- Rain Coat
+        ["reflectivevest"]   = {"torso_reflective",       "swap_body"}, -- Summer Frest
+        ["sweatervest"]      = {"armor_sweatervest",      "swap_body"}, -- Dapper Vest
+        ["trunkvest_summer"] = {"armor_trunkvest_summer", "swap_body"}, -- Breezy Vest
+        ["trunkvest_winter"] = {"armor_trunkvest_winter", "swap_body"}, -- Puffy Vest
+
+        -- Amulets
+        ["amulet"]       = {"torso_amulets", "redamulet"   }, -- Life Giving Amulet
+        ["blueamulet"]   = {"torso_amulets", "blueamulet"  }, -- Chilled Amulet
+        ["purpleamulet"] = {"torso_amulets", "purpleamulet"}, -- Nightmare Amulet
+        ["orangeamulet"] = {"torso_amulets", "orangeamulet"}, -- The Lazy Forager
+        ["greenamulet"]  = {"torso_amulets", "greenamulet" }, -- Construction Amulet
+        ["yellowamulet"] = {"torso_amulets", "yellowamulet"}, -- Magiluminescence
+
+        -- Heavy
+        ["cavein_boulder"]       = {"swap_cavein_boulder", "swap_body"}, -- Boulder -- TODO: variations.
+        ["glassspike_short"]     = {"swap_glass_spike", "swap_body_short"}, -- Glass Spike - Short
+        ["glassspike_med"]       = {"swap_glass_spike", "swap_body_med"},   -- Glass Spike - Medium
+        ["glassspike_tall"]      = {"swap_glass_spike", "swap_body_tall"},  -- Glass Spike - Tall
+        ["glassblock"]           = {"swap_glass_block", "swap_body"},       -- Glass Castle
+        ["moon_altar_idol"]      = {"swap_altar_idolpiece",  "swap_body"}, -- Celestial Altar Idol
+        ["moon_altar_glass"]     = {"swap_altar_glasspiece", "swap_body"}, -- Celestial Altar Base
+        ["moon_altar_seed"]      = {"swap_altar_seedpiece",  "swap_body"}, -- Celestial Altar Orb
+        ["moon_altar_crown"]     = {"swap_altar_crownpiece", "swap_body"}, -- Inactive Celestial Tribute
+        ["moon_altar_ward"]      = {"swap_altar_wardpiece",  "swap_body"}, -- Celestial Sanctum Ward
+        ["moon_altar_icon"]      = {"swap_altar_iconpiece",  "swap_body"}, -- Celestial Sanctum Icon
+        ["sculpture_knighthead"] = {"swap_sculpture_knighthead", "swap_body"}, -- Suspicious Marble - Knight Head
+        ["sculpture_bishophead"] = {"swap_sculpture_bishophead", "swap_body"}, -- Suspicious Marble - Bishop Head
+        ["sculpture_rooknose"]   = {"swap_sculpture_rooknose",   "swap_body"}, -- Suspicious Marble - Rook Nose
+        ["shell_cluster"]        = {"singingshell_cluster", "swap_body"}, -- Shell Cluster
+        ["sunkenchest"]          = {"swap_sunken_treasurechest", "swap_body"}, -- Sunken Chest
+
+        -- Heavy: from the mod "Moving Box" (<https://steamcommunity.com/sharedfiles/filedetails/?id=1079538195>)
+        ["moving_box_full"]      = {"swap_box_full", "swap_body"} -- Moving Box (Full)
+    }
+
+    -- Heavy: chess pieces
+    local CHESS_PIESES = {
+        "pawn", "rook", "knight", "bishop", "muse", "formal", "hornucopia", "pipe", "deerclops", "bearger",
+        "moosegoose", "dragonfly", "clayhound", "claywarg", "butterfly", "anchor", "moon", "carrat", "crabking",
+        "malbatross", "toadstool", "stalker", "klaus", "beequeen", "antlion", "minotaur"
+    }
+    local CHESS_MATERIALS = {"marble", "stone", "moonglass"}
+    for p = 1, #CHESS_PIESES do
+        anim_build_symbols["chesspiece_" .. p] = {"swap_chesspiece_" .. p, "swap_body"}
+        for m = 1, #CHESS_MATERIALS do
+            anim_build_symbols["chesspiece_" .. p .. "_" .. m] = {"swap_chesspiece_" .. p .. "_" .. m, "swap_body"}
+        end
+    end
+
+    -- Heavy: veggies
+    local PLANT_DEFS = require("prefabs/farm_plant_defs").PLANT_DEFS
+    for name, def in pairs(PLANT_DEFS) do
+        local build_symbol = {def.build or "farm_plant_" .. name, "swap_body"}
+        anim_build_symbols[name .. "_oversized"]       = build_symbol
+        anim_build_symbols[name .. "_oversized_waxed"] = build_symbol
+    end
+
+    local function get_equipped_item(inventory, type)
+        local candidate = inventory:GetEquippedItem(EQUIPSLOTS_MAP[string.upper(type)])
+        return ((candidate ~= nil) and candidate:HasTag(type)) and candidate or nil
+    end
+
+    local function render_equipped_item(owner, render_slot, item)
+        if item ~= nil then
+            local build_symbol = anim_build_symbols[item.prefab]
+            if build_symbol ~= nil then
+                local skin_build = item:GetSkinBuild()
+                if skin_build ~= nil then
+                    owner.AnimState:OverrideItemSkinSymbol(render_slot, skin_build, "swap_body", item.GUID, build_symbol[1])
+                else
+                    owner.AnimState:OverrideSymbol(render_slot, build_symbol[1], build_symbol[2])
+                end
+            end
+        else
+            owner.AnimState:ClearOverrideSymbol(render_slot)
+        end
+    end
+
+    local function render_body_equipment(owner)
+        local inventory = owner.replica.inventory
+
+        local item1 =
+                   get_equipped_item(inventory, EQUIP_TYPES.BACKPACK)
+                or get_equipped_item(inventory, EQUIP_TYPES.BAND)
+                or get_equipped_item(inventory, EQUIP_TYPES.SHELL)
+        local item2 =
+                   get_equipped_item(inventory, EQUIP_TYPES.HEAVY)
+                or get_equipped_item(inventory, EQUIP_TYPES.LIFEVEST)
+                or get_equipped_item(inventory, EQUIP_TYPES.ARMOR)
+                or get_equipped_item(inventory, EQUIP_TYPES.CLOTHING)
+                or get_equipped_item(inventory, EQUIP_TYPES.AMULET)
+
+        render_equipped_item(owner, "swap_body_tall", item1)
+        render_equipped_item(owner, "swap_body",      item2)
+    end
+
+    local function on_equip_or_unequip(owner, data)
+        if (data.eslot == GLOBAL.EQUIPSLOTS.BODY) or table.contains(EXTRA_EQUIPSLOTS, data.eslot) then
+            render_body_equipment(owner)
+        end
+    end
+
+    AddComponentPostInit("inventory", function(_, inst)
+        inst:ListenForEvent("equip",   on_equip_or_unequip)
+        inst:ListenForEvent("unequip", on_equip_or_unequip)
+    end)
+
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:hermitcrabbrain
+    -- See `scripts/brains/hermitcrabbrain.lua`.
+    AddBrainPostInit("hermitcrabbrain", function(brain)
+        local function using_coat(inst)
+            local equipped = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.CLOTHING)
+            return equipped and inst.iscoat(equipped) or nil
+        end
+
+        local function has_coat(inst)
+            return inst.components.inventory:FindItem(function(testitem) return inst.iscoat(testitem) end)
+        end
+
+        local function EquipCoat(inst)
+            local coat = inst.getcoat(inst)
+            if coat then
+                inst.components.inventory:Equip(coat)
+            end
+        end
+
+        local function UnequipCoat(inst)
+            local item = inst.components.inventory:Unequip(EQUIPSLOTS_MAP.CLOTHING)
+            inst.components.inventory:GiveItem(item)
+        end
+
+        local new_children = {}
+        for _, child in ipairs(brain.bt.root.children) do
+            if child.name == "Sequence" and child.children[1].name == "coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and GLOBAL.TheWorld.state.issnowing and has_coat(brain.inst) and not using_coat(brain.inst) end,
+                                "coat",
+                                GLOBAL.DoAction(brain.inst, EquipCoat, "coat", true))
+                )
+            elseif child.name == "Sequence" and child.children[1].name == "stop coat" then
+                table.insert(new_children,
+                        GLOBAL.IfNode(function() return not brain.inst.sg:HasStateTag("busy") and not GLOBAL.TheWorld.state.issnowing and using_coat(brain.inst) end,
+                                "stop coat",
+                                GLOBAL.DoAction(brain.inst, UnequipCoat, "stop coat", true))
+                )
+            else
+                table.insert(new_children, child)
+            end
+        end
+        brain.bt = GLOBAL.BT(brain.inst, GLOBAL.PriorityNode(new_children, 0.5))
+    end)
+
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+    -- See `scripts/stategraphs/SGwilson.lua`.
+    AddStategraphPostInit("wilson", function(self)
+        local amulet_rebirth_state = self.states["amulet_rebirth"]
+
+        -- Override `onenter` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9372`.
+        local amulet_rebirth_state_onenter_base = amulet_rebirth_state.onenter
+        amulet_rebirth_state.onenter = function(inst)
+            amulet_rebirth_state_onenter_base(inst)
+            local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET)
+            if item ~= nil and item.prefab == "amulet" then
+                item = inst.components.inventory:RemoveItem(item)
+                if item ~= nil then
+                    item:Remove()
+                    inst.sg.statemem.usedamulet_2 = true -- Mod note: `usedamulet_2` is set instead of `usedamulet`.
+                end
+            end
+        end
+
+        -- Override `onexit` for the "amulet_rebirth" state.
+        -- See `scripts/stategraphs/SGwilson.lua:9414`.
+        local amulet_rebirth_state_onexit_base = amulet_rebirth_state.onexit
+        amulet_rebirth_state.onexit = function(inst)
+            -- Mod note: `usedamulet_2` is checked instead of `usedamulet`.
+            if inst.sg.statemem.usedamulet_2 and inst.components.inventory:GetEquippedItem(EQUIPSLOTS_MAP.AMULET) == nil then
+                inst.AnimState:ClearOverrideSymbol("swap_body")
+            end
+            amulet_rebirth_state_onexit_base(inst)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+
+    AddComponentPostInit("inventory", function(_, inst)
+        inst:ListenForEvent("equip",   on_equip_or_unequip)
+        inst:ListenForEvent("unequip", on_equip_or_unequip)
+    end)
+
+```
+
+
+
+### 变体演进：成就_A (Mod 3612200776)
+- **变体场景与切面**：收录来自工坊 Mod 3612200776 (`成就_A`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3612200776)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:multitool_axe_pickaxe
+-- TUNING.MULTITOOL_AXE_PICKAXE_USES = 3000000000000000	--斧镐无限耐久
+-- AddPrefabPostInit("multitool_axe_pickaxe", function(inst)
+  -- if inst.components.equippable then
+	 -- inst.components.equippable.walkspeedmult = 1.1			--斧镐装备移动速度
+  -- end
+-- end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:halloweenpotion_health_large
+--厨师能吃药水  给药水添加tag
+AddPrefabPostInit("halloweenpotion_health_large", function(inst)
+	inst:AddTag("preparedfood")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:halloweenpotion_sanity_large
+end)
+AddPrefabPostInit("halloweenpotion_sanity_large", function(inst)
+	inst:AddTag("preparedfood")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:skilltreeupdater
+if TUNING.ACHV_Checskill then
+	AddComponentPostInit("skilltreeupdater", function(self)
+		local old_IsActivated = self.IsActivated
+		function self:IsActivated(skill)
+			local inst = self.inst
+			local Find = inst and inst.components.achievementskill 
+			Find = Find and Find.ACHV_ActivatedFind or {} --ACHV_ActivatedFind应该为table	备注薇诺娜一个技能为不怕天黑
+			for k,v in pairs(Find) do
+				if k~='' and type(k) == 'string' and string.find(skill, k) then --如Find['winona']则所有含winona的技能都会被有效
+					return true
+				end
+			end
+			return old_IsActivated(self,skill)
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:tentacle
+    
+    AddPrefabPostInit("tentacle", function(inst)
+        local function retargetfn2(inst)
+            return GLOBAL.FindEntity(
+            inst,
+            TUNING.TENTACLE_ATTACK_DIST,
+            function(guy) 
+                return guy.prefab ~= inst.prefab and not guy:HasTag("dont_target") and guy.entity:IsVisible() and not guy.components.health:IsDead()
+                    and (guy.components.combat.target == inst or guy:HasTag("character") or guy:HasTag("monster") or  guy:HasTag("animal"))
+            end,
+            { "_combat", "_health" },
+            { "prey" })
+        end
+        local function shouldKeepTarget2(inst, target)
+            return target ~= nil and not target:HasTag("dont_target")  and target:IsValid()  and target.entity:IsVisible() and target.components.health ~= nil
+                and not target.components.health:IsDead() and target:IsNear(inst, TUNING.TENTACLE_STOPATTACK_DIST)
+            end
+            if inst.components.combat then
+                inst.components.combat:SetRetargetFunction(GLOBAL.GetRandomWithVariance(2, 0.5), retargetfn2)
+                inst.components.combat:SetKeepTargetFunction(shouldKeepTarget2)
+            end
+        end)
+
+```
+
+
+
+### 变体演进：KNUCKLES: The Echidna (Mod 3775433900)
+- **变体场景与切面**：收录来自工坊 Mod 3775433900 (`KNUCKLES: The Echidna`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3775433900)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+-- ============================================================
+ENV.AddStategraphPostInit("wilson", function(sg)
+    -- ------------------------------------------------------------
+    -- attack: mientras Counter está activo, no se puede atacar (ni con
+    -- puños ni con arma). Si no está activo, Knuckles sin arma va a
+    -- attack_knuckles (toolpunch); el resto sigue el flujo normal.
+    -- ------------------------------------------------------------
+    local attack_state = sg.states["attack"]
+    local old_attack_onenter = attack_state.onenter
+
+    attack_state.onenter = function(inst, ...)
+        if inst:HasTag("counter_active")
+            or inst:HasTag("counter_dashing")
+            or inst:HasTag("punch_charging")
+            or inst:HasTag("punch_dashing") then
+            inst:ClearBufferedAction()
+            inst.sg:GoToState("idle", true)
+            return
+        end
+
+        if inst.prefab == "knuckles"
+            and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) == nil then
+            inst.sg:GoToState("attack_knuckles")
+            return
+        end
+        old_attack_onenter(inst, ...)
+    end
+
+    -- ------------------------------------------------------------
+    -- run_start / run / run_stop: mientras Counter está activo, se
+    -- redirige a la versión "counter_walk_*" (animación walk en vez de
+    -- run). counter_walk_* se auto-corrige de vuelta a run_start en su
+    -- propio onupdate en cuanto counter_active se saca.
+    -- ------------------------------------------------------------
+    local run_redirect = {
+        run_start = "counter_walk_start",
+        run       = "counter_walk",
+        run_stop  = "counter_walk_stop",
+    }
+
+    for name, walk_name in pairs(run_redirect) do
+        local target_state = sg.states[name]
+        local old_onenter = target_state.onenter
+
+        target_state.onenter = function(inst, ...)
+            if UsesKCounterVisuals(inst) then
+                inst.sg:GoToState(walk_name)
+                return
+            end
+            old_onenter(inst, ...)
+        end
+    end
+
+    -- ------------------------------------------------------------
+    -- idle: mientras Counter está activo, reproduce "k_counter" en loop
+    -- (el motor resuelve _down/_up/_side solo, igual que con idle_loop)
+    -- en vez de toda la lógica normal de idle (sanity, temperatura,
+    -- storms, funnyidle/bow por timeout, etc.)
+    -- ------------------------------------------------------------
+    local idle_state = sg.states["idle"]
+    local old_idle_onenter = idle_state.onenter
+
+    idle_state.onenter = function(inst, pushanim)
+        if UsesKCounterVisuals(inst) then
+            if inst.sg.lasttags and not inst.sg.lasttags["busy"] then
+                inst.components.locomotor:StopMoving()
+            else
+                inst.components.locomotor:Stop()
+                inst.components.locomotor:Clear()
+            end
+            inst:ClearBufferedAction()
+
+            inst.sg.statemem.ignoresandstorm = true
+
+            if pushanim then
+                inst.AnimState:PushAnimation("k_counter", true)
+            else
+                inst.AnimState:PlayAnimation("k_counter", true)
+            end
+            return -- sin dofunny: no queremos funnyidle/bow mientras bloquea
+        end
+
+        old_idle_onenter(inst, pushanim)
+    end
+
+    -- ------------------------------------------------------------
+    -- chop_start/chop/mine_start/mine: cuando Knuckles talla/pica SIN
+    -- nada equipado en las manos (ver leftclickoverride en knuckles.lua),
+    -- reemplazamos la animación de hacha/pico por "toolpunch" (la misma
+    -- que ya usamos en attack_knuckles para el ataque desarmado).
+    --
+    -- Dejamos que el onenter ORIGINAL corra primero sin tocarlo (así
+    -- statemem.action, los tags prechop/premine, iswoodcutter, etc.
+    -- quedan exactamente como el juego los espera -- eso es lo que
+    -- mueve el TimeEvent que dispara PerformBufferedAction) y recién
+    -- DESPUÉS pisamos el clip visual con PlayAnimation("toolpunch").
+    -- Los TimeEvent son por frame absoluto, no dependen de qué
+    -- animación esté puesta, así que el golpe real (talar/picar) sigue
+    -- disparando en el mismo frame de siempre -- lo único que cambia es
+    -- lo que se ve. Nota: "toolpunch" es más corta que chop_loop/
+    -- pickaxe_loop, así que el chequeo de "seguir repitiendo si mantengo
+    -- el click" (frame 14/16) puede no llegar a evaluarse en golpes
+    -- consecutivos muy rápidos -- en ese caso el jugador simplemente
+    -- vuelve a clickear; el golpe en sí nunca se pierde.
+    -- ------------------------------------------------------------
+    local function KnucklesIsBarehanded(inst)
+        return inst.prefab == "knuckles"
+            and inst.components.inventory ~= nil
+            and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) == nil
+    end
+
+    -- chop_start/mine_start solo reproducen la animación de "carga"
+    -- (chop_pre/pickaxe_pre) y recién al terminar (evento "animover")
+    -- pasan al estado principal, que es donde se llama
+    -- PerformBufferedAction. Por eso el primer click a mano limpia
+    -- "no hacía nada": se iba en la carga. Para Knuckles sin nada
+    -- equipado saltamos directo al estado principal, sin pasar por acá,
+    -- así el primer click ya conecta.
+    --
+    -- Replicamos el único efecto colateral de _start que sí importa
+    -- (parar el movimiento); el resto (statemem.action, tags
+    -- prechop/premine, iswoodcutter) lo arma el propio estado principal
+    -- en su onenter, así que no se pierde nada al saltear _start.
+    local KNUCKLES_WORK_START_TO_MAIN =
+    {
+        chop_start = "chop",
+        mine_start = "mine",
+    }
+
+    for start_name, main_name in pairs(KNUCKLES_WORK_START_TO_MAIN) do
+        local start_state = sg.states[start_name]
+        local old_start_onenter = start_state.onenter
+
+        start_state.onenter = function(inst, ...)
+            if KnucklesIsBarehanded(inst) then
+                inst.components.locomotor:Stop()
+                inst.sg:GoToState(main_name)
+                return
+            end
+            old_start_onenter(inst, ...)
+        end
+    end
+
+    -- chop/mine: dejamos correr el onenter original (así el golpe real
+    -- sigue disparando en el mismo frame de siempre) y solo pisamos el
+    -- clip visual con "toolpunch" para Knuckles a mano limpia.
+    for _, name in ipairs({ "chop", "mine" }) do
+        local work_state = sg.states[name]
+        local old_work_onenter = work_state.onenter
+
+        work_state.onenter = function(inst, ...)
+            old_work_onenter(inst, ...)
+            if KnucklesIsBarehanded(inst) then
+                inst.AnimState:PlayAnimation("toolpunch")
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+-- patrón que components/dropdash.lua (mod de Sonic) usa para su
+-- inmunidad. Se hace así, y NO con un AddComponentPostInit("combat", ...)
+-- global en modmain.lua, porque de esa otra forma se parchearía el
+-- combat de TODAS las entidades del juego (cada mob, cada jugador),
+-- cuando en realidad solo Knuckles tiene este componente. Parcheando la
+-- instancia acá, el efecto queda acotado solo a quien realmente tiene
+-- "counter" agregado.
+
+local TICK = 1/30 -- mismo TICK que usa punch.lua para su barrido de proximidad
+
+local Counter = Class(function(self, inst)
+    self.inst = inst
+
+    self.isblocking = false
+    self.oncooldown = false
+    self.hasdamagebonus = false
+
+    self.duration              = TUNING.KNUCKLES_COUNTER_DURATION or 3
+    self.cooldown               = TUNING.KNUCKLES_COUNTER_COOLDOWN or 2
+    self.slowmult                = TUNING.KNUCKLES_COUNTER_SLOWMULT or 0.3
+    self.damagebonus             = TUNING.KNUCKLES_COUNTER_DAMAGEBONUS or 0.25
+    self.damagebonusduration     = TUNING.KNUCKLES_COUNTER_DAMAGEBONUS_DURATION or 3
+
+    self._durationtask = nil
+    self._cooldowntask = nil
+    self._damagebonustask = nil
+
+    -- ------------------------------------------------------------
+    -- Counter-dash: mini-Punch automático que se dispara al bloquear con
+    -- éxito (ver TryBlock/_StartCounterDash más abajo). A diferencia del
+    -- dash de Punch: distancia/duración más cortas, daño fijo (no
+    -- escala con nada), solo puede golpear al atacante que fue
+    -- bloqueado (no barrido de "primer objetivo en el camino"), no tala
+    -- ni mina, e inmuniza a Knuckles SOLO contra el daño de ESE
+    -- atacante puntual mientras dura (ver el patch de GetAttacked más
+    -- abajo).
+    -- ------------------------------------------------------------
+    self.iscounterdashing = false
+    self.counterdashtarget = nil
+    self.counterdashhashit = false
+    self._pendingcounterdashtarget = nil
+    self._counterdashhitchecktask = nil
+
+    self.counterdashdamage     = TUNING.KNUCKLES_COUNTERDASH_DAMAGE or 58.5
+    self.counterdashspeedmult  = TUNING.KNUCKLES_COUNTERDASH_SPEED_MULT or 3
+    self.counterdashduration   = TUNING.KNUCKLES_COUNTERDASH_DURATION or 0.15
+    self.counterdashhitradius  = TUNING.KNUCKLES_COUNTERDASH_HIT_RADIUS or 2
+
+    -- Mismo patrón que usa punch.lua para sostener el impulso del dash
+    -- contra cortes de velocidad nativos (ver comentario ahí). Cada
+    -- componente chequea su PROPIO flag de "estoy dasheando ahora" y
+    -- delega al Stop() anterior si no aplica -- como Counter se agrega
+    -- ANTES que Punch en master_postinit (knuckles.lua), este wrapper
+    -- queda por DENTRO del de Punch (Punch se evalúa primero).
+    if inst.components.locomotor ~= nil and not inst._knuckles_counter_stop_patched then
+        inst._knuckles_counter_stop_patched = true
+        local _OldStop = inst.components.locomotor.Stop
+        inst.components.locomotor.Stop = function(loco_self, sgparams)
+            if self.iscounterdashing then
+                return
+            end
+            return _OldStop(loco_self, sgparams)
+        end
+    end
+
+    -- ------------------------------------------------------------
+    -- Bloqueo del golpe entrante: parchea GetAttacked una sola vez.
+    -- Requiere que el componente "combat" ya exista en inst (en
+    -- MakePlayerCharacter, combat se agrega en el setup común, ANTES de
+    -- que corra el master_postinit del personaje -- que es donde se
+    -- hace inst:AddComponent("counter") -- así que ya está disponible).
+    -- ------------------------------------------------------------
+    if inst.components.combat ~= nil and not inst._knuckles_counter_getattacked_patched then
+        inst._knuckles_counter_getattacked_patched = true
+        local _OldGetAttacked = inst.components.combat.GetAttacked
+        inst.components.combat.GetAttacked = function(combat_self, attacker, damage, weapon, stimuli, ...)
+            if self.isblocking and self:TryBlock(attacker, weapon) then
+                return -- bloqueo perfecto: golpe anulado, no se aplica daño
+            end
+            -- Inmunidad del counter-dash: SOLO contra el atacante que fue
+            -- bloqueado (self.counterdashtarget), y solo mientras dura el
+            -- dash. Cualquier otro atacante sigue pegando normal.
+            if self.iscounterdashing and self.counterdashtarget ~= nil and attacker == self.counterdashtarget then
+                return
+            end
+            return _OldGetAttacked(combat_self, attacker, damage, weapon, stimuli, ...)
+        end
+    end
+
+    -- ------------------------------------------------------------
+    -- Bonus de +25% de daño SOLO a puño limpio (sin arma equipada),
+    -- mientras self.hasdamagebonus == true.
+    -- ------------------------------------------------------------
+    if inst.components.combat ~= nil and not inst._knuckles_counter_calcdamage_patched then
+        inst._knuckles_counter_calcdamage_patched = true
+        local _OldCalcDamage = inst.components.combat.CalcDamage
+        inst.components.combat.CalcDamage = function(combat_self, target, weapon, spdamage, ...)
+            local dmg = _OldCalcDamage(combat_self, target, weapon, spdamage, ...)
+            if weapon == nil and self.hasdamagebonus then
+                dmg = dmg * (1 + self.damagebonus)
+            end
+            return dmg
+        end
+    end
+end)
+
+```
+
