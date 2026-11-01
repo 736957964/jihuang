@@ -7779,8 +7779,26 @@
       "category": "05_战斗AI行为树与Boss机制类",
       "studied_at": "2026-11-01 13:15:25",
       "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "3007127329",
+      "name": "霍尔海雅",
+      "author": "乌拉",
+      "version": "2.6",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-01 13:19:53",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_378160973_Global_Positions_Beacon.md"
+    },
+    {
+      "id": "3765351270",
+      "name": "双•极",
+      "author": "一个玥",
+      "version": "2.4.16",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 13:19:54",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 13:15:25"
+  "lastUpdated": "2026-11-01 13:19:54"
 }

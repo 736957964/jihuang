@@ -8868,3 +8868,71 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：霍尔海雅 (Mod 3007127329)
+- **变体场景与切面**：收录来自工坊 Mod 3007127329 (`霍尔海雅`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3007127329)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:nightmarefuel
+
+AddPrefabPostInit("nightmarefuel", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    if inst.components.tradable == nil then
+        inst:AddComponent("tradable")
+    end
+end) 
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:hlhy
+
+AddPrefabPostInit("hlhy", function(inst)
+    if inst.components.talker then
+    local OldSay = inst.components.talker.Say
+    inst.components.talker.Say = function(self, script, time, noanim, force, nobroadcast, colour, text_filter_context, original_author_netid, onfinishedlinesfn, sgparam)   
+        if script and script == "only_used_by_waxwell_and_wicker" then
+            script = "" 
+            return
+        end    
+                         
+        return OldSay(self, script, time, noanim, force, nobroadcast, colour, text_filter_context, original_author_netid, onfinishedlinesfn, sgparam) 
+    end
+    end
+
+    if not TheWorld.ismastersim then
+        return
+    end
+--[[
+    local _calcDamage = inst.components.combat.CalcDamage
+    inst.components.combat.CalcDamage = function(self, target, weapon, multiplier) 
+        local damage, spdamage = _calcDamage(self, target, weapon, multiplier) 
+        return damage, spdamage
+    end 
+]]    
+end) 
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:equippable
+
+AddComponentPostInit("equippable", function(self)
+    local _OldGetWalkSpeedMult = self.GetWalkSpeedMult
+    function self:GetWalkSpeedMult(...)
+        local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner or nil
+        if owner and owner:HasTag("hlhy") and self.walkspeedmult and self.walkspeedmult < 1 then
+            return 1
+        end 
+
+        return _OldGetWalkSpeedMult(self, ...)
+    end    
+end)
+
+```
+

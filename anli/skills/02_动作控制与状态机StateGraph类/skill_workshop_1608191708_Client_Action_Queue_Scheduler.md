@@ -55752,3 +55752,90 @@ if DIRECT_PICKUP_POSSESSED_SHADOWHEART then
 
 ```
 
+
+
+### 变体演进：双•极 (Mod 3765351270)
+- **变体场景与切面**：收录来自工坊 Mod 3765351270 (`双•极`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3765351270)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:klaus_sack
+-------------------------------------------------------------------------------
+AddPrefabPostInit("klaus_sack", function(inst)
+	if not TheWorld.ismastersim then
+		return
+	end
+
+	inst:DoTaskInTime(0, function()
+		if not inst:IsValid() or inst._vh_global_map_icon ~= nil then
+			return
+		end
+
+		local icon = SpawnPrefab("globalmapicon")
+		if icon ~= nil then
+			icon.MiniMapEntity:SetPriority(11)
+			icon:TrackEntity(inst)
+			inst._vh_global_map_icon = icon
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:daywalker2
+	-- 拾荒疯猪在 defeat 状态结算掉落，追加必掉项以沿用官方 looted 防重复逻辑。
+	AddPrefabPostInit("daywalker2", function(inst)
+		if not TheWorld.ismastersim then return end
+		inst.components.lootdropper:AddChanceLoot("chestupgrade_stacksize_blueprint", 1)
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddRecipePostInit:chestupgrade_stacksize
+	-------------------------------------------------------------------------------
+	AddRecipePostInit("chestupgrade_stacksize", function(recipe)
+		recipe.ingredients =
+		{
+			Ingredient("wagpunk_bits", 2),--废料
+			Ingredient("moonglass", 4),--月亮碎片
+			Ingredient("moonrocknugget", 1),--月岩
+		}
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:treasurechest
+	end
+	AddPrefabPostInit("treasurechest", _chest)
+	AddPrefabPostInit("dragonflychest", _chest)
+	-------------------------------------------------------------------------------
+	local function RemoveRebuildShard(prefab)
+		local plan = CONSTRUCTION_PLANS[prefab]
+		if plan ~= nil then
+			for i = #plan, 1, -1 do
+				if plan[i].type == "alterguardianhatshard" then
+					table.remove(plan, i)
+				end
+			end
+		end
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:dragonflychest
+	AddPrefabPostInit("treasurechest", _chest)
+	AddPrefabPostInit("dragonflychest", _chest)
+	-------------------------------------------------------------------------------
+	local function RemoveRebuildShard(prefab)
+		local plan = CONSTRUCTION_PLANS[prefab]
+		if plan ~= nil then
+			for i = #plan, 1, -1 do
+				if plan[i].type == "alterguardianhatshard" then
+					table.remove(plan, i)
+				end
+			end
+		end
+	end
+
+```
+
