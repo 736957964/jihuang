@@ -62697,3 +62697,291 @@ end
 
 ```
 
+
+
+### 变体演进：LANGUAGE (Mod 2486802405)
+- **变体场景与切面**：收录来自工坊 Mod 2486802405 (`LANGUAGE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2486802405)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:trader
+local player = GLOBAL.UserToPlayer(userid)
+AddComponentPostInit("trader", function(Trader)    end) ---- 修改已有组件
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:heavyobstaclephysics
+AddClassPostConstruct("components/builder_replica", function(self) end)
+AddComponentPostInit("heavyobstaclephysics", function(self) end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:leif
+----- 怪物把玩家击飞（猪人活动的击飞倒地效果）
+AddPrefabPostInit("leif", function(inst)
+    local function OnHitOther(inst, other)
+        other:PushEvent("knockback", {
+            knocker = inst, -- 攻击者
+            radius = 200, -- 击飞范围
+            strengthmult = 1 -- 力量倍率
+        })
+    end
+    if inst.components.combat ~= nil then
+        inst.components.combat.onhitotherfn = OnHitOther
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:lootdropper
+----- 可被玩家搬动的物品拥有的重量组件
+AddComponentPostInit("lootdropper", function(self)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    self.GenerateLoot___npc_old = self.GenerateLoot
+    self.GenerateLoot = function(self,...)
+        if self.inst and self.inst.components.inventoryitem and self.inst.components.health then
+            TheWorld:PushEvent("entity_death_npc_in_container",{ inst = self.inst })
+        end
+        local ret = {self:GenerateLoot___npc_old(...) }
+        return unpack(ret)
+    end
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+
+AddPrefabPostInit(
+    "world",
+    function(inst)
+        inst:DoTaskInTime(0,function()
+            Upgrade_func()            
+        end)
+end)
+
+```
+
+
+
+### 变体演进：HEALTH (Mod 3351340256)
+- **变体场景与切面**：收录来自工坊 Mod 3351340256 (`HEALTH`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3351340256)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+end
+AddStategraphPostInit("wilson", state_idle)
+
+local function state_idle_client(sg)
+    local old_state_onenter = sg.states.idle.onenter
+    sg.states.idle.onenter = function(inst, pushanim)
+        if inst:HasTag("alipheese") then
+            inst.entity:SetIsPredictingMovement(false)
+
+			if pushanim == "cancel" or inst:HasTag("nopredict") or inst:HasTag("pausepredict") then
+				--prediction interrupted by server state
+				inst.components.locomotor:Stop()
+				inst.components.locomotor:Clear()
+                inst:ClearBufferedAction()
+                return
+            elseif pushanim == "noanim" then
+				--server confirmed our preview action
+				inst.components.locomotor:Stop()
+				inst.components.locomotor:Clear()
+				ClearCachedServerState(inst)
+				--use timeout for clearing preview bufferedaction
+                inst.sg:SetTimeout(TIMEOUT)
+                return
+            end
+
+			--predicted idle state
+			if inst.sg.lasttags and not inst.sg.lasttags["busy"] then
+				inst.components.locomotor:StopMoving()
+			else
+				inst.components.locomotor:Stop()
+				inst.components.locomotor:Clear()
+			end
+			inst:ClearBufferedAction()
+
+            --V2C: Only predict looped anims. For idles with a pre, stick with
+            --     "alipheese_idle_loop" and wait for server to trigger the custom anims
+            local anim
+            if inst.replica.rider ~= nil and inst.replica.rider:IsRiding() then
+                anim = "alipheese_idle_loop"
+            elseif inst:HasTag("wereplayer") then
+                --V2C: groggy moose and goose go straight back to idle_groggy (don't play idle_groggy_pre everytime like others do)
+                if not inst:HasTag("groggy") or inst:HasTag("beaver") then
+                    anim = "alipheese_idle_loop"
+                elseif inst:HasTag("weremoose") then
+                    anim = (inst.AnimState:IsCurrentAnimation("idle_walk_pst") or
+                            inst.AnimState:IsCurrentAnimation("idle_walk") or
+                            inst.AnimState:IsCurrentAnimation("idle_walk_pre")) and
+                        "idle_groggy" or
+                        "alipheese_idle_loop"
+                else--if inst:HasTag("weregoose") then
+                    anim = (inst.AnimState:IsCurrentAnimation("idle_walk_pst") or
+                            inst.AnimState:IsCurrentAnimation("idle_walk") or
+                            inst.AnimState:IsCurrentAnimation("idle_walk_pre")) and
+                        "idle_groggy" or
+                        "alipheese_idle_loop"
+                end
+            elseif inst.player_classified ~= nil and inst.player_classified.inmightygym:value() > 0 then
+				anim = "mighty_gym_active_loop"
+			else
+                anim =
+                    (inst.replica.inventory ~= nil and inst.replica.inventory:IsHeavyLifting() and "heavy_idle") or
+					(	IsChannelCasting(inst) and
+						(IsChannelCastingItem(inst) and "channelcast_idle" or "channelcast_oh_idle")
+					) or
+					(   inst:IsInAnyStormOrCloud() and not inst.components.playervision:HasGoggleVision() and
+                        (   inst.AnimState:IsCurrentAnimation("sand_walk_pst") or
+                            inst.AnimState:IsCurrentAnimation("sand_walk") or
+                            inst.AnimState:IsCurrentAnimation("sand_walk_pre")
+                        ) and
+                        "sand_idle_loop"
+                    ) or
+                    "alipheese_idle_loop"
+            end
+
+            if pushanim then
+                inst.AnimState:PushAnimation(anim, true)
+            else
+                inst.AnimState:PlayAnimation(anim, true)
+            end
+
+            if inst.AnimState:IsCurrentAnimation("alipheese_idle_loop") then
+                inst.AnimState:HideSymbol("leg")
+                inst.AnimState:HideSymbol("foot")
+            end
+        elseif old_state_onenter then
+            old_state_onenter(inst, pushanim)
+        end
+    end
+
+    local old_state_onexit = sg.states.idle.onexit
+    sg.states.idle.onexit = function(inst, ...)
+        if old_state_onexit then
+            old_state_onexit(inst, ...)
+        end
+        inst.AnimState:ShowSymbol("leg")
+        inst.AnimState:ShowSymbol("foot")
+    end
+end
+AddStategraphPostInit("wilson_client", state_idle_client)
+--
+local function state_run_start(sg)
+    local old_state_onenter = sg.states.run_start.onenter
+    sg.states.run_start.onenter = function(inst, ...)
+        if old_state_onenter then
+            old_state_onenter(inst, ...)
+        end
+        if inst:HasTag("alipheese") and not inst.sg.statemem.riding and not inst.sg.statemem.heavy then
+            inst.AnimState:HideSymbol("leg")
+            inst.AnimState:HideSymbol("foot")
+            inst.AnimState:PlayAnimation("alipheese_run_pre")
+        end
+    end
+
+    local old_state_onexit = sg.states.run_start.onexit
+    sg.states.run_start.onexit = function(inst, ...)
+        if old_state_onexit then
+            old_state_onexit(inst, ...)
+        end
+        inst.AnimState:ShowSymbol("leg")
+        inst.AnimState:ShowSymbol("foot")
+    end
+end
+AddStategraphPostInit("wilson", state_run_start)
+AddStategraphPostInit("wilson_client", state_run_start)
+--
+local function state_run(sg)
+    local old_state_onenter = sg.states.run.onenter
+    sg.states.run.onenter = function(inst, ...)
+        if old_state_onenter then
+            old_state_onenter(inst, ...)
+        end
+        if inst:HasTag("alipheese") and not inst.sg.statemem.riding and not inst.sg.statemem.heavy then
+            if not inst.AnimState:IsCurrentAnimation("alipheese_run_loop") then
+                inst.AnimState:HideSymbol("leg")
+                inst.AnimState:HideSymbol("foot")
+                inst.AnimState:PlayAnimation("alipheese_run_loop", true)
+            end
+            inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength())
+        end
+    end
+
+    local old_state_onexit = sg.states.run.onexit
+    sg.states.run.onexit = function(inst, ...)
+        if old_state_onexit then
+            old_state_onexit(inst, ...)
+        end
+        inst.AnimState:ShowSymbol("leg")
+        inst.AnimState:ShowSymbol("foot")
+    end
+end
+AddStategraphPostInit("wilson", state_run)
+AddStategraphPostInit("wilson_client", state_run)
+--
+local function state_run_stop(sg)
+    local old_state_onenter = sg.states.run_stop.onenter
+    sg.states.run_stop.onenter = function(inst, ...)
+        if old_state_onenter then
+            old_state_onenter(inst, ...)
+        end
+        if inst:HasTag("alipheese") and not inst.sg.statemem.riding and not inst.sg.statemem.heavy then
+            inst.AnimState:HideSymbol("leg")
+            inst.AnimState:HideSymbol("foot")
+            inst.AnimState:PlayAnimation("alipheese_run_pst")
+        end
+    end
+
+    local old_state_onexit = sg.states.run_stop.onexit
+    sg.states.run_stop.onexit = function(inst, ...)
+        if old_state_onexit then
+            old_state_onexit(inst, ...)
+        end
+        inst.AnimState:ShowSymbol("leg")
+        inst.AnimState:ShowSymbol("foot")
+    end
+end
+AddStategraphPostInit("wilson", state_run_stop)
+AddStategraphPostInit("wilson_client", state_run_stop)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+end
+AddStategraphPostInit("wilson_client", state_idle_client)
+--
+local function state_run_start(sg)
+    local old_state_onenter = sg.states.run_start.onenter
+    sg.states.run_start.onenter = function(inst, ...)
+        if old_state_onenter then
+            old_state_onenter(inst, ...)
+        end
+        if inst:HasTag("alipheese") and not inst.sg.statemem.riding and not inst.sg.statemem.heavy then
+            inst.AnimState:HideSymbol("leg")
+            inst.AnimState:HideSymbol("foot")
+            inst.AnimState:PlayAnimation("alipheese_run_pre")
+        end
+    end
+
+    local old_state_onexit = sg.states.run_start.onexit
+    sg.states.run_start.onexit = function(inst, ...)
+        if old_state_onexit then
+            old_state_onexit(inst, ...)
+        end
+        inst.AnimState:ShowSymbol("leg")
+        inst.AnimState:ShowSymbol("foot")
+    end
+end
+
+```
+

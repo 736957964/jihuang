@@ -7298,3 +7298,26 @@
 [2026-11-01 14:23:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
 [2026-11-01 14:23:15] Reducer: 成功将 Mod 3780650262 (Wurt: A Rainha do Pantano (Rework) [DEV]) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-01 14:23:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:23:23] Git 自动提交并推送成功！
+[2026-11-01 14:23:23] 已向老爹私聊推送批次进度播报 (HTTP 200)
+[2026-11-01 14:23:23] 【批次结算】：本批归约出 5 篇母本，休眠 30 秒进入下一批次...
+[2026-11-01 14:23:53] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3351340256', '2074508776', '2494336473', '2486802405', '1659235004', '397794465']
+[2026-11-01 14:23:53] SteamCMD 下载 3351340256 ...
+[2026-11-01 14:23:53] SteamCMD 下载 2074508776 ...
+[2026-11-01 14:23:53] SteamCMD 下载 2494336473 ...
+[2026-11-01 14:23:53] SteamCMD 下载 2486802405 ...
+[2026-11-01 14:23:53] SteamCMD 下载 1659235004 ...
+[2026-11-01 14:23:53] SteamCMD 下载 397794465 ...
+[2026-11-01 14:25:15] Worker [3351340256] 成功解析入库暂存区 -> HEALTH (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:26:27] Worker [2074508776] 成功解析入库暂存区 -> Auto Door (类别: 07_实体机制与游戏平衡类)
+[2026-11-01 14:27:40] Worker [2494336473] 下载失败或工坊条目不存在，标记跳过
+[2026-11-01 14:29:17] Worker [2486802405] 成功解析入库暂存区 -> LANGUAGE (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-01 14:31:02] Worker [1659235004] 过滤拦截: Drop your lantern on the ground by pressing k (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-01 14:32:21] Worker [397794465] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-01 14:32:21] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-01 14:32:21] Reducer: 成功将 Mod 2074508776 (Auto Door) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 14:32:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-01 14:32:21] Reducer: 成功将 Mod 2486802405 (LANGUAGE) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:32:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:32:21] Reducer: 成功将 Mod 3351340256 (HEALTH) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-01 14:32:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
