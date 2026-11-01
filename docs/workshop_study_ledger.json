@@ -5736,8 +5736,26 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 08:08:29",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2952056856",
+      "name": "伤害显示",
+      "author": "vvyang",
+      "version": "0.72",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-01 08:12:43",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_boss_stategraph_and_aggro_system.md"
+    },
+    {
+      "id": "3139646616",
+      "name": "Maxwell the Cat",
+      "author": "Cliffford W.",
+      "version": "1.6.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 08:12:43",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 08:08:29"
+  "lastUpdated": "2026-11-01 08:12:43"
 }

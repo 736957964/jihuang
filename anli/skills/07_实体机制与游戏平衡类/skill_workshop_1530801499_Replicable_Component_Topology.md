@@ -7082,3 +7082,111 @@ end
 
 ```
 
+
+
+### 变体演进：Maxwell the Cat (Mod 3139646616)
+- **变体场景与切面**：收录来自工坊 Mod 3139646616 (`Maxwell the Cat`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3139646616)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:telebase
+
+AddPrefabPostInit("telebase", function(inst)
+
+	local function ShouldAcceptItem(inst, item)
+		if item:HasTag("spinnercat")  then
+			return true
+		else
+			return false
+		end
+	end
+
+	local function OnGetItemFromPlayer(inst, giver, item)
+		if item and item.prefab == "catspinner" then
+			SpawnPrefab("catspinner_event").Transform:SetPosition(inst.Transform:GetWorldPosition())
+		end
+
+		item:Remove()
+	end
+
+
+
+	inst.entity:SetPristine()
+
+    if not GLOBAL.TheWorld.ismastersim then
+        return inst
+    end
+
+	inst:AddComponent("trader")
+    inst.components.trader:SetAcceptTest(ShouldAcceptItem)
+    inst.components.trader.onaccept = OnGetItemFromPlayer
+    inst.components.trader.deleteitemonaccept = true
+	inst.components.trader.acceptnontradable = true
+
+
+
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:deerclops
+
+AddPrefabPostInit("deerclops", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    inst:DoTaskInTime(0, function()
+        -- Ensure lootdropper exists and today is the birthday
+        if not (inst.components and inst.components.lootdropper and HasBirthday()) then
+            return
+        end
+
+        -- Check if the birthday player is currently connected on the server
+        local birthday_player = UserToPlayer("KU_3t9gIjos")
+        if birthday_player ~= nil then
+            inst.components.lootdropper:AddChanceLoot("projecttar", 1)
+            inst.components.lootdropper:AddChanceLoot("projecttar", 1)
+            inst.components.lootdropper:AddChanceLoot("projecttar", 1)
+            inst.components.lootdropper:AddChanceLoot("projecttar_pickable", 1)
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wanderingtrader
+
+    AddPrefabPostInit("wanderingtrader", function(inst)
+        if not TheWorld.ismastersim then return inst end
+
+        local custom_wares = {
+            [data.product] = {
+                recipe = data.recipe_name,
+                min = data.min or 1,
+                max = data.max or 1,
+                limit = data.limit or 1,
+
+
+            },
+        }
+
+        local old_reroll = inst.RerollWares or function() end
+
+        inst.RerollWares = function(inst, ...)
+            old_reroll(inst, ...)
+            inst:AddWares(custom_wares)
+            if inst.AddPrototyper then
+				inst:AddPrototyper()
+			end
+        end
+
+        inst:DoTaskInTime(0.5, function()
+            inst:RerollWares()
+        end)
+    end)
+
+```
+

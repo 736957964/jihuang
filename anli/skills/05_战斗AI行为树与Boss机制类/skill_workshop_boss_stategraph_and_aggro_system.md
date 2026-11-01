@@ -647,3 +647,42 @@ end)
 
 ```
 
+
+
+### 变体演进：伤害显示 (Mod 2952056856)
+- **变体场景与切面**：收录来自工坊 Mod 2952056856 (`伤害显示`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2952056856)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:health
+
+AddComponentPostInit("health", function(Health, inst)
+	inst:ListenForEvent("healthdelta", function(inst, data)
+		if inst.components.health then
+			local amount = data.newpercent * inst.components.health.maxhealth - data.oldpercent * inst.components.health.maxhealth
+			if data.amount and math.abs(data.amount) < math.abs(amount) then
+				amount = data.amount
+			end
+			if amount == 0 then
+				return
+			end
+			if math.abs(amount) > TUNING.SHOW_NUMBERS_THRESHOLD then
+				if not (TUNING.SHOW_DAMAGE_ONLY and amount > 0) then
+					local CDI = GLOBAL.SpawnPrefab("dmgind")
+					CDI.Transform:SetPosition(inst.Transform:GetWorldPosition())
+					CDI.isheal:set_local(false)
+					CDI.isheal:set(amount > 0)
+					CDI.indicator:set_local(0)
+					CDI.indicator:set(math.abs(amount))
+				end
+			end
+		end
+	end)
+end)
+
+```
+
