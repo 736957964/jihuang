@@ -4311,3 +4311,206 @@ end)
 
 ```
 
+
+
+### 变体演进：set1 (Mod 3477371295)
+- **变体场景与切面**：收录来自工坊 Mod 3477371295 (`set1`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3477371295)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:oceancolor
+-- too, keeping the existing dusk/night fade and the game's update function.
+AddComponentPostInit("oceancolor", function(self)
+    local has_ocean = false
+    local initialized = false
+    local Initialize = self.Initialize
+    self.Initialize = function(component, ocean, ...)
+        has_ocean = ocean == true
+        local result = Initialize(component, ocean, ...)
+        if has_ocean then
+            if not initialized then
+                initialized = true
+                component.start_color = Lighten(component.start_color, 1 / 255)
+                component.current_color = Lighten(component.current_color, 1 / 255)
+                component.end_color = Lighten(component.end_color, 1 / 255)
+            end
+            component.inst.Map:SetClearColor(G.unpack(component.current_color))
+        end
+        return result
+    end
+
+    local OnPhaseChanged = self.OnPhaseChanged
+    self.OnPhaseChanged = function(component, source, phase, ...)
+        local result = OnPhaseChanged(component, source, phase, ...)
+        if has_ocean and phase == "day" then
+            component.end_color = Lighten(component.end_color, 1 / 255)
+        end
+        return result
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+if set1 < 1 then
+	AddPrefabPostInit("world", function(inst)
+		local map = getmetatable(inst.Map).__index
+		if map then
+			local old_SetOverlayLerp =	map.SetOverlayLerp
+			map.SetOverlayLerp = function(self,val1,...)
+				val1 = val1 * set1
+				return old_SetOverlayLerp(self,val1,...)
+			end
+		end
+	end)	
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:woodie
+if set18 then 
+	AddPrefabPostInit("woodie", function(inst)
+		inst:DoTaskInTime(0.1,function()
+			if inst.HUD and inst.HUD.beaverOL then
+				inst.HUD.beaverOL:Hide()
+				inst.HUD.beaverOL.Show = Empty
+			end
+		end)
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playervision
+
+AddComponentPostInit("playervision",function(self)
+	local old = self.PushForcedNightVision
+	function self:PushForcedNightVision(source, priority, customcctable, blend, customambienttable)
+		if customcctable and type(customcctable) == "table" then
+			if set10 and customcctable.day == "images/colour_cubes/nightvision_fruit_cc.tex" then
+				customcctable = "images/colour_cubes/beaver_vision_cc.tex"
+				blend = true
+				customambienttable = nil
+			elseif set18 and customcctable.day == "images/colour_cubes/beaver_vision_cc.tex" then
+				customcctable = "images/colour_cubes/beaver_vision_cc.tex"
+				blend = true
+				customambienttable = nil
+			elseif set17 and  checkentity(source) and source.prefab == "ghostvision_buff" then
+				customcctable = "images/colour_cubes/beaver_vision_cc.tex"
+				blend = true
+				customambienttable = nil
+			end
+		end
+		return old(self,source, priority, customcctable, blend, customambienttable)
+	end
+end)
+
+---19
+if set19 then 
+	AddComponentPostInit("playervision", function(self)
+		local NIGHTVISION_COLOURCUBES = GetUpValve(self.UpdateCCTable,"NIGHTVISION_COLOURCUBES")	
+		if NIGHTVISION_COLOURCUBES ~= nil then
+			NIGHTVISION_COLOURCUBES.day = nil--"images/colour_cubes/beaver_vision_cc.tex"
+			NIGHTVISION_COLOURCUBES.dusk = nil--"images/colour_cubes/beaver_vision_cc.tex"
+			NIGHTVISION_COLOURCUBES.night = nil--"images/colour_cubes/beaver_vision_cc.tex"
+			NIGHTVISION_COLOURCUBES.full_moon = nil--"images/colour_cubes/beaver_vision_cc.tex"
+		end
+	end)
+end
+
+if set20 then
+	AddComponentPostInit("playervision", function(self)
+		self.SetGhostVision = function() end
+	end)
+end
+
+
+local SEASON_COLOURCUBES_NEW =
+{
+    autumn =
+    {
+		day = "images/colour_cubes/identity_colourcube.tex",
+		dusk = "images/colour_cubes/identity_colourcube.tex",
+		night = "images/colour_cubes/identity_colourcube.tex",
+		full_moon = "images/colour_cubes/identity_colourcube.tex",
+    },
+    winter =
+    {
+		day = "images/colour_cubes/identity_colourcube.tex",
+		dusk = "images/colour_cubes/identity_colourcube.tex",
+		night = "images/colour_cubes/identity_colourcube.tex",
+		full_moon = "images/colour_cubes/identity_colourcube.tex",
+    },
+    spring =
+    {
+		day = "images/colour_cubes/identity_colourcube.tex",
+		dusk = "images/colour_cubes/identity_colourcube.tex",
+		night = "images/colour_cubes/identity_colourcube.tex",
+		full_moon = "images/colour_cubes/identity_colourcube.tex",
+    },
+    summer =
+    {
+		day = "images/colour_cubes/identity_colourcube.tex",
+		dusk = "images/colour_cubes/identity_colourcube.tex",
+		night = "images/colour_cubes/identity_colourcube.tex",
+		full_moon = "images/colour_cubes/identity_colourcube.tex",
+    },
+}
+
+if set21 then
+	local changereason = true
+	AddComponentPostInit("colourcube",function(self)
+		local fn = GetEventHandle(self.inst,"playeractivated","components/colourcube")
+		if fn and changereason then
+			changereason = false
+			local SEASON_COLOURCUBES = GetUpValve(fn,"SEASON_COLOURCUBES",30)	
+			if SEASON_COLOURCUBES ~= nil then
+				for k,v in pairs(SEASON_COLOURCUBES) do
+					if SEASON_COLOURCUBES_NEW[k] then
+						local new = SEASON_COLOURCUBES_NEW[k]
+						for k1,v1 in pairs(v) do
+							if new[k1] then
+								v[k1] = new[k1]
+							end
+						end
+					end
+				end
+				local _iscave = self.inst:HasTag("cave")
+				local _phase = _iscave and "night" or "day"
+				local _ambientcctable = _iscave and CAVE_COLOURCUBES or SEASON_COLOURCUBES_NEW.autumn
+				local _ambientcc = { _ambientcctable[_phase], _ambientcctable[_phase] }
+				PostProcessor:SetColourCubeData(0, _ambientcc[1], _ambientcc[2])
+			end
+		end
+	end)	
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:colourcube
+	local changereason = true
+	AddComponentPostInit("colourcube",function(self)
+		local fn = GetEventHandle(self.inst,"playeractivated","components/colourcube")
+		if fn and changereason then
+			changereason = false
+			local SEASON_COLOURCUBES = GetUpValve(fn,"SEASON_COLOURCUBES",30)	
+			if SEASON_COLOURCUBES ~= nil then
+				for k,v in pairs(SEASON_COLOURCUBES) do
+					if SEASON_COLOURCUBES_NEW[k] then
+						local new = SEASON_COLOURCUBES_NEW[k]
+						for k1,v1 in pairs(v) do
+							if new[k1] then
+								v[k1] = new[k1]
+							end
+						end
+					end
+				end
+				local _iscave = self.inst:HasTag("cave")
+				local _phase = _iscave and "night" or "day"
+				local _ambientcctable = _iscave and CAVE_COLOURCUBES or SEASON_COLOURCUBES_NEW.autumn
+				local _ambientcc = { _ambientcctable[_phase], _ambientcctable[_phase] }
+				PostProcessor:SetColourCubeData(0, _ambientcc[1], _ambientcc[2])
+			end
+		end
+	end)	
+
+```
+

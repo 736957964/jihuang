@@ -10943,3 +10943,114 @@ if TUNING.SMART_SIGN_DRAW_ENABLE then
 
 ```
 
+
+
+### 变体演进：巨鹿增强 (Mod 2457092634)
+- **变体场景与切面**：收录来自工坊 Mod 2457092634 (`巨鹿增强`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2457092634)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:deerclops
+
+AddPrefabPostInit(
+    "deerclops",
+    function(inst)
+        inst.AnimState:SetBuild("deerclops_build_mods") --打包一个模型 然后给他设置名字就行
+    end
+
+```
+
+
+
+### 变体演进：冰箱保鲜/IceBox Preserver (Mod 3681217084)
+- **变体场景与切面**：收录来自工坊 Mod 3681217084 (`冰箱保鲜/IceBox Preserver`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3681217084)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:icebox
+-- 应用到冰箱 (icebox)
+AddPrefabPostInit("icebox", function(inst)
+    inst:DoTaskInTime(0, function()
+        if GLOBAL.TheWorld.ismastersim then
+            if not IS_VANILLA then
+                -- 保留原有的fridge标签（维持暖石降温等原版行为）
+                -- 叠加preserver组件实现反鲜/保鲜
+                AddPreserverToContainer(inst)
+            end
+            -- IS_VANILLA时完全不修改，冰箱保持原版行为
+            if ENABLE_INFINITE_STACK then
+                inst.components.container:EnableInfiniteStackSize(true)
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:saltbox
+-- 应用到盐箱 (saltbox)
+AddPrefabPostInit("saltbox", function(inst)
+    inst:DoTaskInTime(0, function()
+        if GLOBAL.TheWorld.ismastersim then
+            if not IS_VANILLA then
+                AddPreserverToContainer(inst)
+            end
+            if ENABLE_INFINITE_STACK then
+                inst.components.container:EnableInfiniteStackSize(true)
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+-- 应用到坎普斯背包 (krampus_sack) - 添加极地熊獾桶的保鲜效果
+AddPrefabPostInit("krampus_sack", function(inst)
+    inst:DoTaskInTime(0, function()
+        if GLOBAL.TheWorld.ismastersim then
+            if not IS_VANILLA then
+                -- 原版模式不修改；非原版模式固定20倍保鲜（不反鲜）
+                if not inst.components.preserver then
+                    inst:AddComponent("preserver")
+                end
+                inst.components.preserver:SetPerishRateMultiplier(0.05)
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:saltrock
+    -- 修改盐石的返鲜效果
+    AddPrefabPostInit("saltrock", function(inst)
+        inst:DoTaskInTime(0, function()
+            if GLOBAL.TheWorld.ismastersim then
+                -- 增强盐石的返鲜效果
+                if inst.components.preservative then
+                    inst.components.preservative.percent_increase = 1.0  -- 100%恢复新鲜度
+                end
+            end
+        end)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ice
+    -- 冰块在冰箱里会走preserver组件路径正常减缓腐烂，不会加速腐烂
+    AddPrefabPostInit("ice", function(inst)
+        inst:DoTaskInTime(0, function()
+            if GLOBAL.TheWorld.ismastersim then
+                inst:AddComponent("preservative")
+                inst.components.preservative.percent_increase = 0.5  -- 50%恢复新鲜度
+            end
+        end)
+    end)
+
+```
+

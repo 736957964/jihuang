@@ -47677,3 +47677,96 @@ local GLOBAL = GLOBAL
 
 ```
 
+
+
+### 变体演进：HEADER_PRESET (Mod 3490905522)
+- **变体场景与切面**：收录来自工坊 Mod 3490905522 (`HEADER_PRESET`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3490905522)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:moondial
+-- 月晷原版只挂了一个 "structure" 标签，这里补一个自己的标签，方便上面那条 USEITEM 判断目标
+AddPrefabPostInit("moondial", function(inst)
+    inst:AddTag("moondial")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moon_fissure
+-- 天体裂缝原版只挂 "antlion_sinkhole_blocker"，同样补个自己的标签
+AddPrefabPostInit("moon_fissure", function(inst)
+    inst:AddTag("moon_conquest_fissure")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+
+AddComponentPostInit("playercontroller", function(self)
+    local OldGetActionButtonAction = self.GetActionButtonAction
+    self.GetActionButtonAction = function(self, force_target)
+        -- 检查玩家状态是否允许执行动作
+        local isenabled, ishudblocking = self:IsEnabled()
+        if (not self.ismastersim and (self.remote_controls[CONTROL_ACTION] or 0) > 0) or
+           (not isenabled and not ishudblocking) or
+           self:IsBusy() or
+           (force_target ~= nil and (not force_target.entity:IsVisible() or
+            force_target:HasTag("INLIMBO") or
+            force_target:HasTag("NOCLICK"))) then
+            return
+        end
+        
+        local inst = self.inst
+        local action = OldGetActionButtonAction and OldGetActionButtonAction(self, force_target)
+        
+        if inst:HasTag("plantkin_moonsprout") then
+            local target = (CanHarvestOversized(force_target) and force_target)
+                       or (not force_target and FindEntity(inst, 8, CanHarvestOversized))
+            
+            if target and target:IsValid() then
+                local action_dist = action and action.target and inst:GetDistanceSqToInst(action.target)
+                local harvest_dist = inst:GetDistanceSqToInst(target)
+                if not action_dist or harvest_dist <= action_dist then
+                    return BufferedAction(inst, target, ACTIONS.WORMWOOD_HARVEST_OVERSIZED)
+                end
+            end
+        end
+        
+        return action
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:actionqueuer
+-- self.AddActionList(category, ...)：批量添加 action
+AddComponentPostInit("actionqueuer", function(self)
+    if not self.AddAction then return end
+
+    -- 左键队列：徒手动作 + 手持物品对着目标做的动作
+    self.AddAction("leftclick", "WORMWOOD_HARVEST_OVERSIZED", CanQueueHarvestOversized)
+    -- 森林线关了，就不往队列里登记这两个森林动作（不登记 = 永远不允许排队）
+    if FOREST_LINE then
+        self.AddAction("leftclick", "WORMWOOD_TRADE_LEIF", CanQueueTradeLeif)
+        -- 徒手采摘：靠树上的 FOREST_PICKED_TAG 跳过今天已经采过的树（天亮由组件摘掉）
+        self.AddAction("leftclick", "WORMWOOD_PICK_TREEGIFT", CanQueuePickTreeGift)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wormwood_mushroombag
+
+AddPrefabPostInit("wormwood_mushroombag", function(inst)
+    if not TheWorld.ismastersim then
+        inst.OnEntityReplicated = function(inst) 
+			inst.replica.container:WidgetSetup("wormwood_mushroombag_container") 
+		end
+    else
+        inst.components.container:WidgetSetup("wormwood_mushroombag_container")
+        inst.components.container.canbeopened = true
+    end
+end)
+
+```
+

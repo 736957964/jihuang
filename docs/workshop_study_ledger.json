@@ -7410,8 +7410,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-01 12:23:48",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2457092634",
+      "name": "巨鹿增强",
+      "author": "自己写",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:25:45",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3477371295",
+      "name": "set1",
+      "author": "澈先生",
+      "version": "1.8.4",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-01 12:25:45",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3490905522",
+      "name": "HEADER_PRESET",
+      "author": "Lemonade",
+      "version": "1.21.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-01 12:25:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3681217084",
+      "name": "冰箱保鲜/IceBox Preserver",
+      "author": "Beefalo",
+      "version": "1.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-01 12:25:45",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-01 12:23:48"
+  "lastUpdated": "2026-11-01 12:25:45"
 }
