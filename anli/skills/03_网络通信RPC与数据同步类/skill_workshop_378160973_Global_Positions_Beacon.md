@@ -6025,3 +6025,44 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：简易血条(重构版) (Mod 3759757365)
+- **变体场景与切面**：收录来自工坊 Mod 3759757365 (`简易血条(重构版)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3759757365)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wx78
+    if debug_enabled(config) then
+        api.AddPrefabPostInit("wx78", function(inst)
+            if TheWorld ~= nil and TheWorld.ismastersim then
+                install_wx_spin_diagnostic_listener(inst, config)
+            end
+        end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:health
+    end
+    api.AddComponentPostInit("health", function(health)
+        if TheWorld ~= nil and TheWorld.ismastersim then
+            log_server_diagnostic_ready(config)
+            install_health_listener(health, config, api)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+
+    api.AddComponentPostInit("combat", function(combat)
+        if TheWorld ~= nil and TheWorld.ismastersim then
+            log_server_diagnostic_ready(config)
+            install_combat_listener(combat, config, api)
+        end
+    end)
+
+```
+

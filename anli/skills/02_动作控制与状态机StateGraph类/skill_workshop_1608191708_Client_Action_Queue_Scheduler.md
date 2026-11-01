@@ -34263,3 +34263,82 @@ end)
 
 ```
 
+
+
+### 变体演进：黄金船 (Mod 2888990177)
+- **变体场景与切面**：收录来自工坊 Mod 2888990177 (`黄金船`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2888990177)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:minisign
+
+AddPrefabPostInit("minisign", draw)
+AddPrefabPostInit("minisign_drawn", draw)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minisign_drawn
+AddPrefabPostInit("minisign", draw)
+AddPrefabPostInit("minisign_drawn", draw)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:gears
+
+AddPrefabPostInit("gears", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    if inst.components.tradable == nil then
+         inst:AddComponent("tradable")
+    end    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+--------------=======================
+AddStategraphPostInit("wilson", function(sg)
+    local old_ATTACK = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action,...)
+    local weapon = inst.components.combat:GetWeapon()
+    local is_riding = inst.components.rider:IsRiding()
+    local is_dead = (inst.components.health and inst.components.health:IsDead()) or inst.sg:HasStateTag("dead") or inst:HasTag("playerghost")
+    if weapon and weapon:HasTag("goldship_gun") and not is_ridingthen then
+        if not weapon:HasTag("nouse") then 
+           return "goldship_shoot"
+        else
+           return
+        end   
+    end 
+        
+    return old_ATTACK(inst, action,...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+
+AddStategraphPostInit("wilson_client", function(sg)
+    local old_ATTACK = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action,...)
+    local weapon = inst.replica.combat:GetWeapon()
+    local is_dead = inst.replica.health:IsDead()
+    local is_riding = inst.replica.rider:IsRiding()
+
+    if weapon and weapon:HasTag("goldship_gun") and not is_riding then 
+        if not weapon:HasTag("nouse") then 
+           return "goldship_shoot"
+        else
+           return
+        end 
+    end
+
+    return old_ATTACK(inst, action,...)
+    end
+end)
+
+```
+
