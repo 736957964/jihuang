@@ -9502,3 +9502,77 @@ end)
 
 ```
 
+
+
+### 变体演进：阿乐冰箱 (Mod 1992091838)
+- **变体场景与切面**：收录来自工坊 Mod 1992091838 (`阿乐冰箱`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1992091838)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:sisturn
+if cage_fridge then
+	AddPrefabPostInit(
+		"sisturn",
+		function(inst) 
+			local old_onload = inst.OnLoad
+			inst.OnLoad = function(inst, data)
+        old_onload(inst, data)
+        if inst.components.preserver then
+					inst.components.preserver:SetPerishRateMultiplier(0)
+					inst.components.preserver:SetTemperatureRateMultiplier(0)
+				end
+			end
+			
+			if inst.components.preserver then
+				inst.components.preserver:SetPerishRateMultiplier(0)
+				inst.components.preserver:SetTemperatureRateMultiplier(0)
+			end
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+if krampus_sack_ice then
+	AddPrefabPostInit(
+		"krampus_sack",
+		function(inst)
+			inst:AddTag("fridge")
+			inst:AddTag("nocool")
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:backpack
+if backpack_ice then
+	AddPrefabPostInit(
+		"backpack",
+		function(inst)
+			inst:AddTag("fridge")
+			inst:AddTag("nocool")
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:piggyback
+if piggyback_ice then
+	AddPrefabPostInit(
+		"piggyback",
+		function(inst)
+			inst:AddTag("fridge")
+			inst:AddTag("nocool")
+		end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablecookpot
+if cook_pot then
+	AddPrefabPostInit(
+		"portablecookpot",
+		function(inst)
+			if inst.components.stewer then
+				inst.components.stewer.onspoil = nil
+			end
+		end
+
+```
+
