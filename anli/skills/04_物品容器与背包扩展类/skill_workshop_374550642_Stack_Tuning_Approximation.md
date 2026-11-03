@@ -568,3 +568,616 @@ AddPrefabPostInit("shieldofterror", function(inst)
 
 ```
 
+
+
+### 变体演进：25 / 46 Inventory Slots (Mod 3710538435)
+- **变体场景与切面**：收录来自工坊 Mod 3710538435 (`25 / 46 Inventory Slots`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3710538435)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+AddPrefabPostInit("inventory_classified", AddItemSlotNetvarsInInventory)
+
+local HUD_ATLAS = "images/hud.xml"
+local W = 64
+local SEP = 7
+local INTERSEP = 15
+
+--------------------------------------------------
+-- WX-78 backup body container layout compatibility
+-- Make the backup body use a real 25 / 46 / 47-slot container widget.
+--------------------------------------------------
+
+local function BuildCenteredRowSlotPositions(slotpos, slots, y, spacing)
+    if slotpos == nil or slots == nil then
+        return
+    end
+
+    local count = #slots
+    if count <= 0 then
+        return
+    end
+
+    local start_x = -((count - 1) * spacing) * 0.5
+    for index, slot in ipairs(slots) do
+        slotpos[slot] = Vector3(start_x + (index - 1) * spacing, y, 0)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beefalo
+AddPrefabPostInit("beefalo", function(inst)
+    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+        _G.rawget(_G, "TIDY2546_BEEF_BELL_GUARD"):InstallBeefaloPrefabPatch(inst)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78_backupbody
+AddPrefabPostInit("wx78_backupbody", ConfigureWX78BackupBodyContainer)
+
+
+--------------------------------------------------
+-- WX-78 stacksize circuit inventory container sync
+-- Fixes duplicate disabled wx78_inventorycontainer items after backup body swaps.
+--------------------------------------------------
+
+local WX78_STACKSIZE_MODULE_PREFAB = "wx78module_stacksize"
+local WX78_STACKSIZE_CONTAINER_PREFAB = "wx78_inventorycontainer"
+
+local function IsWX78StacksizeContainer(item)
+    return item ~= nil and item.prefab == WX78_STACKSIZE_CONTAINER_PREFAB
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wx78_possessedbody
+AddPrefabPostInit("wx78_possessedbody", InstallWX78StacksizeContainerSync)
+
+AddComponentPostInit("upgrademoduleowner", function(self)
+    local PushModule_base = self.PushModule
+    if PushModule_base ~= nil and self._tidy_wx78_pushmodule_wrapped ~= true then
+        self._tidy_wx78_pushmodule_wrapped = true
+        self.PushModule = function(owner_self, ...)
+            local result = PushModule_base(owner_self, ...)
+            if owner_self.inst ~= nil
+                and owner_self.is_swapping ~= true
+                and owner_self.inst._backupbody_transferring ~= true then
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+            end
+            return result
+        end
+    end
+
+    local PopModule_base = self.PopModule
+    if PopModule_base ~= nil and self._tidy_wx78_popmodule_wrapped ~= true then
+        self._tidy_wx78_popmodule_wrapped = true
+        self.PopModule = function(owner_self, ...)
+            local result = PopModule_base(owner_self, ...)
+            if owner_self.inst ~= nil
+                and owner_self.is_swapping ~= true
+                and owner_self.inst._backupbody_transferring ~= true then
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+            end
+            return result
+        end
+    end
+
+    local SwapUpgradeModules_base = self.SwapUpgradeModules
+    if SwapUpgradeModules_base ~= nil and self._tidy_wx78_swapmodules_wrapped ~= true then
+        self._tidy_wx78_swapmodules_wrapped = true
+        self.SwapUpgradeModules = function(owner_self, other_owner, ...)
+            local result = SwapUpgradeModules_base(owner_self, other_owner, ...)
+            if owner_self.inst ~= nil then
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+            end
+            if other_owner ~= nil and other_owner.inst ~= nil then
+                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0)
+                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0.2)
+            end
+            return result
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:upgrademoduleowner
+AddComponentPostInit("upgrademoduleowner", function(self)
+    local PushModule_base = self.PushModule
+    if PushModule_base ~= nil and self._tidy_wx78_pushmodule_wrapped ~= true then
+        self._tidy_wx78_pushmodule_wrapped = true
+        self.PushModule = function(owner_self, ...)
+            local result = PushModule_base(owner_self, ...)
+            if owner_self.inst ~= nil
+                and owner_self.is_swapping ~= true
+                and owner_self.inst._backupbody_transferring ~= true then
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+            end
+            return result
+        end
+    end
+
+    local PopModule_base = self.PopModule
+    if PopModule_base ~= nil and self._tidy_wx78_popmodule_wrapped ~= true then
+        self._tidy_wx78_popmodule_wrapped = true
+        self.PopModule = function(owner_self, ...)
+            local result = PopModule_base(owner_self, ...)
+            if owner_self.inst ~= nil
+                and owner_self.is_swapping ~= true
+                and owner_self.inst._backupbody_transferring ~= true then
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+            end
+            return result
+        end
+    end
+
+    local SwapUpgradeModules_base = self.SwapUpgradeModules
+    if SwapUpgradeModules_base ~= nil and self._tidy_wx78_swapmodules_wrapped ~= true then
+        self._tidy_wx78_swapmodules_wrapped = true
+        self.SwapUpgradeModules = function(owner_self, other_owner, ...)
+            local result = SwapUpgradeModules_base(owner_self, other_owner, ...)
+            if owner_self.inst ~= nil then
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+            end
+            if other_owner ~= nil and other_owner.inst ~= nil then
+                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0)
+                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0.2)
+            end
+            return result
+        end
+    end
+end)
+
+```
+
+
+
+### 变体演进：Beefalo Storage (Mod 2519350133)
+- **变体场景与切面**：收录来自工坊 Mod 2519350133 (`Beefalo Storage`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2519350133)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:beefalo
+AddPrefabPostInit("beefalo", BeefaloWidget)
+
+local function AddTag(inst)
+	inst:AddTag("healer")
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:bandage
+AddPrefabPostInit("bandage", AddTag)
+AddPrefabPostInit("healingsalve", AddTag)
+AddPrefabPostInit("mosquitosack", AddTag)
+AddPrefabPostInit("spidergland", AddTag)
+AddPrefabPostInit("lifeinjector", AddTag)
+
+local cant_eat =
+{	
+	-- Mineral
+	"flint",
+	"goldnugget",
+	"rocks",
+	"nitre",
+	"saltrock",
+	"moonrocknugget",
+	"moonglass",
+	"moonglass_charged",
+	"thulecite",
+	"thulecite_pieces",
+	"dreadstone",
+	-- Gems crafting
+	"bluegem",
+	"redgem",
+	"purplegem",
+	"yellowgem",
+	"greengem",
+	"orangegem",
+	"opalpreciousgem",
+	"bluemooneye",
+	"greenmooneye",
+	"redmooneye",
+	"orangemooneye",
+	"purplemooneye",
+	"yellowmooneye",
+	-- Veggie
+	"red_cap",
+	"red_cap_cooked",
+	"blue_cap",
+	"blue_cap_cooked",
+	"green_cap",
+	"green_cap_cooked",
+	"moon_cap",
+	"moon_cap_cooked",
+	-- Seed
+	"pinecone",
+	"acorn",
+	"acorn_cooked",
+	"carrot_seeds",
+	"corn_seeds",
+	"dragonfruit_seeds",
+	"durian_seeds",
+	"eggplant_seeds",
+	"pomegranate_seeds",
+	"pumpkin_seeds",
+	"watermelon_seeds",
+	"asparagus_seeds",
+	"tomato_seeds",
+	"potato_seeds",
+	"onion_seeds",
+	"pepper_seeds",
+	"garlic_seeds",
+	--walter ammo
+	"slingshotammo_rock",
+	"slingshotammo_gold",
+	"slingshotammo_marble",
+	"slingshotammo_poop",
+	"slingshotammo_freeze",
+	"slingshotammo_slow",
+	"slingshotammo_thulecite",
+	--other
+	"pigskin",
+	"manrabbit_tail",
+	"papyrus",
+	"dustmeringue",
+	"deerclops_eyeball",
+	"lightbulb",
+	"ice",
+	"honey",
+	"goatmilk",
+	"royal_jelly",
+	"foliage",
+	"petals_evil",
+	"succulent_picked",
+}
+-- CODE from Serpens 
+AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
+	if target.prefab == "beefalo" then
+        for k, v in pairs(GLOBAL.FOODTYPE) do
+			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
+            end
+        end
+		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
+		end
+		for k, v in pairs(cant_eat) do
+			if not right and inst.prefab == v and target:HasTag("beefalo") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
+            end
+        end
+		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
+		end]]--
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:healingsalve
+AddPrefabPostInit("healingsalve", AddTag)
+AddPrefabPostInit("mosquitosack", AddTag)
+AddPrefabPostInit("spidergland", AddTag)
+AddPrefabPostInit("lifeinjector", AddTag)
+
+local cant_eat =
+{	
+	-- Mineral
+	"flint",
+	"goldnugget",
+	"rocks",
+	"nitre",
+	"saltrock",
+	"moonrocknugget",
+	"moonglass",
+	"moonglass_charged",
+	"thulecite",
+	"thulecite_pieces",
+	"dreadstone",
+	-- Gems crafting
+	"bluegem",
+	"redgem",
+	"purplegem",
+	"yellowgem",
+	"greengem",
+	"orangegem",
+	"opalpreciousgem",
+	"bluemooneye",
+	"greenmooneye",
+	"redmooneye",
+	"orangemooneye",
+	"purplemooneye",
+	"yellowmooneye",
+	-- Veggie
+	"red_cap",
+	"red_cap_cooked",
+	"blue_cap",
+	"blue_cap_cooked",
+	"green_cap",
+	"green_cap_cooked",
+	"moon_cap",
+	"moon_cap_cooked",
+	-- Seed
+	"pinecone",
+	"acorn",
+	"acorn_cooked",
+	"carrot_seeds",
+	"corn_seeds",
+	"dragonfruit_seeds",
+	"durian_seeds",
+	"eggplant_seeds",
+	"pomegranate_seeds",
+	"pumpkin_seeds",
+	"watermelon_seeds",
+	"asparagus_seeds",
+	"tomato_seeds",
+	"potato_seeds",
+	"onion_seeds",
+	"pepper_seeds",
+	"garlic_seeds",
+	--walter ammo
+	"slingshotammo_rock",
+	"slingshotammo_gold",
+	"slingshotammo_marble",
+	"slingshotammo_poop",
+	"slingshotammo_freeze",
+	"slingshotammo_slow",
+	"slingshotammo_thulecite",
+	--other
+	"pigskin",
+	"manrabbit_tail",
+	"papyrus",
+	"dustmeringue",
+	"deerclops_eyeball",
+	"lightbulb",
+	"ice",
+	"honey",
+	"goatmilk",
+	"royal_jelly",
+	"foliage",
+	"petals_evil",
+	"succulent_picked",
+}
+-- CODE from Serpens 
+AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
+	if target.prefab == "beefalo" then
+        for k, v in pairs(GLOBAL.FOODTYPE) do
+			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
+            end
+        end
+		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
+		end
+		for k, v in pairs(cant_eat) do
+			if not right and inst.prefab == v and target:HasTag("beefalo") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
+            end
+        end
+		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
+		end]]--
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:mosquitosack
+AddPrefabPostInit("mosquitosack", AddTag)
+AddPrefabPostInit("spidergland", AddTag)
+AddPrefabPostInit("lifeinjector", AddTag)
+
+local cant_eat =
+{	
+	-- Mineral
+	"flint",
+	"goldnugget",
+	"rocks",
+	"nitre",
+	"saltrock",
+	"moonrocknugget",
+	"moonglass",
+	"moonglass_charged",
+	"thulecite",
+	"thulecite_pieces",
+	"dreadstone",
+	-- Gems crafting
+	"bluegem",
+	"redgem",
+	"purplegem",
+	"yellowgem",
+	"greengem",
+	"orangegem",
+	"opalpreciousgem",
+	"bluemooneye",
+	"greenmooneye",
+	"redmooneye",
+	"orangemooneye",
+	"purplemooneye",
+	"yellowmooneye",
+	-- Veggie
+	"red_cap",
+	"red_cap_cooked",
+	"blue_cap",
+	"blue_cap_cooked",
+	"green_cap",
+	"green_cap_cooked",
+	"moon_cap",
+	"moon_cap_cooked",
+	-- Seed
+	"pinecone",
+	"acorn",
+	"acorn_cooked",
+	"carrot_seeds",
+	"corn_seeds",
+	"dragonfruit_seeds",
+	"durian_seeds",
+	"eggplant_seeds",
+	"pomegranate_seeds",
+	"pumpkin_seeds",
+	"watermelon_seeds",
+	"asparagus_seeds",
+	"tomato_seeds",
+	"potato_seeds",
+	"onion_seeds",
+	"pepper_seeds",
+	"garlic_seeds",
+	--walter ammo
+	"slingshotammo_rock",
+	"slingshotammo_gold",
+	"slingshotammo_marble",
+	"slingshotammo_poop",
+	"slingshotammo_freeze",
+	"slingshotammo_slow",
+	"slingshotammo_thulecite",
+	--other
+	"pigskin",
+	"manrabbit_tail",
+	"papyrus",
+	"dustmeringue",
+	"deerclops_eyeball",
+	"lightbulb",
+	"ice",
+	"honey",
+	"goatmilk",
+	"royal_jelly",
+	"foliage",
+	"petals_evil",
+	"succulent_picked",
+}
+-- CODE from Serpens 
+AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
+	if target.prefab == "beefalo" then
+        for k, v in pairs(GLOBAL.FOODTYPE) do
+			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
+            end
+        end
+		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
+		end
+		for k, v in pairs(cant_eat) do
+			if not right and inst.prefab == v and target:HasTag("beefalo") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
+            end
+        end
+		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
+		end]]--
+    end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:spidergland
+AddPrefabPostInit("spidergland", AddTag)
+AddPrefabPostInit("lifeinjector", AddTag)
+
+local cant_eat =
+{	
+	-- Mineral
+	"flint",
+	"goldnugget",
+	"rocks",
+	"nitre",
+	"saltrock",
+	"moonrocknugget",
+	"moonglass",
+	"moonglass_charged",
+	"thulecite",
+	"thulecite_pieces",
+	"dreadstone",
+	-- Gems crafting
+	"bluegem",
+	"redgem",
+	"purplegem",
+	"yellowgem",
+	"greengem",
+	"orangegem",
+	"opalpreciousgem",
+	"bluemooneye",
+	"greenmooneye",
+	"redmooneye",
+	"orangemooneye",
+	"purplemooneye",
+	"yellowmooneye",
+	-- Veggie
+	"red_cap",
+	"red_cap_cooked",
+	"blue_cap",
+	"blue_cap_cooked",
+	"green_cap",
+	"green_cap_cooked",
+	"moon_cap",
+	"moon_cap_cooked",
+	-- Seed
+	"pinecone",
+	"acorn",
+	"acorn_cooked",
+	"carrot_seeds",
+	"corn_seeds",
+	"dragonfruit_seeds",
+	"durian_seeds",
+	"eggplant_seeds",
+	"pomegranate_seeds",
+	"pumpkin_seeds",
+	"watermelon_seeds",
+	"asparagus_seeds",
+	"tomato_seeds",
+	"potato_seeds",
+	"onion_seeds",
+	"pepper_seeds",
+	"garlic_seeds",
+	--walter ammo
+	"slingshotammo_rock",
+	"slingshotammo_gold",
+	"slingshotammo_marble",
+	"slingshotammo_poop",
+	"slingshotammo_freeze",
+	"slingshotammo_slow",
+	"slingshotammo_thulecite",
+	--other
+	"pigskin",
+	"manrabbit_tail",
+	"papyrus",
+	"dustmeringue",
+	"deerclops_eyeball",
+	"lightbulb",
+	"ice",
+	"honey",
+	"goatmilk",
+	"royal_jelly",
+	"foliage",
+	"petals_evil",
+	"succulent_picked",
+}
+-- CODE from Serpens 
+AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
+	if target.prefab == "beefalo" then
+        for k, v in pairs(GLOBAL.FOODTYPE) do
+			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
+            end
+        end
+		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
+		end
+		for k, v in pairs(cant_eat) do
+			if not right and inst.prefab == v and target:HasTag("beefalo") then
+				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
+            end
+        end
+		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
+			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
+		end]]--
+    end
+
+```
+

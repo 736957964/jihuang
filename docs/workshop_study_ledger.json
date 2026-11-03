@@ -13260,8 +13260,512 @@
       "category": "03_网络通信RPC与数据同步类",
       "studied_at": "2026-11-03 23:44:03",
       "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2832720392",
+      "name": "佩奇的神奇手杖",
+      "author": "󰀉Peppa󰀉",
+      "version": "5.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-03 23:48:58",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2892856427",
+      "name": "ActionQueue Expansion: Extra Actions",
+      "author": "Kitty Cat",
+      "version": "1.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-03 23:48:58",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2949289474",
+      "name": "Wathom, the Forgotten Parody",
+      "author": "󰀈 The Uncomp Dev Team 󰀈",
+      "version": "1.0.3.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-03 23:48:58",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3358844136",
+      "name": "「ウマ娘」爱丽数码",
+      "author": "蜜仆",
+      "version": "1.2.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-03 23:48:58",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1553396970",
+      "name": "lan",
+      "author": "蠢嗷嗷&傻啾啾",
+      "version": "3.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-03 23:53:23",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1593181898",
+      "name": "Ralsei",
+      "author": "Daniel",
+      "version": "1.2.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-03 23:53:23",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3066450615",
+      "name": "Wires, The Constructive",
+      "author": "RexySeven",
+      "version": "1.1.8",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-03 23:53:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3413499817",
+      "name": "Language",
+      "author": "馨儿喵",
+      "version": "2.0.8.4",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-03 23:53:23",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3435607934",
+      "name": "Heavy, But Throwable",
+      "author": "doctorCatster, ADM, Feything",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-03 23:53:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3475572750",
+      "name": "桐藤渚",
+      "author": "小星",
+      "version": "1.2.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-03 23:53:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1275167632",
+      "name": "MyPet",
+      "author": "sunnyyyyholic",
+      "version": "2.4.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-03 23:57:40",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2995757113",
+      "name": "CTRL",
+      "author": "rezecib",
+      "version": "3.2.0.04",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-03 23:57:40",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3276915747",
+      "name": "Onboard Gardens",
+      "author": "The Cherry Team 󰀃",
+      "version": "1.0.6",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-03 23:57:40",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2619326732",
+      "name": "Shirakami Fubuki",
+      "author": "ZeroRyuk, CoolChilli",
+      "version": "1.2.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:01:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2865408620",
+      "name": "Mod 2865408620",
+      "author": "未知",
+      "version": "未声明",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:01:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3276916561",
+      "name": "Marblestack Beans",
+      "author": "The Cherry Team 󰀃",
+      "version": "1.0.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:01:31",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3516139710",
+      "name": "幻想乡 人类魔法使 雾雨魔理沙",
+      "author": "犬塚霜冥（狗王）",
+      "version": "2.0.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:01:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3641135121",
+      "name": "HEADER_FLOWER",
+      "author": "leo2468",
+      "version": "3.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:01:32",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2797919119",
+      "name": "Zhongli",
+      "author": "Cá Khô",
+      "version": "1.1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:04:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3253411834",
+      "name": "Freezer",
+      "author": "Larkin",
+      "version": "3.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:04:47",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3398706801",
+      "name": "蔚蓝档案——永恒大陆探索队",
+      "author": "蓝鲸先生 彼阳晚意 蜘蛛",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:04:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3427829223",
+      "name": "infinite_logs",
+      "author": "未知",
+      "version": "5.3.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-04 00:04:47",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "1911090638",
+      "name": "Wyrd the Cursed",
+      "author": "IceWolf",
+      "version": "1.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:08:35",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2107826859",
+      "name": "Show Range",
+      "author": "ACLegend",
+      "version": "1.3.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:08:35",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3239843335",
+      "name": "Mod 3239843335",
+      "author": "川小胖",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:08:35",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3710538435",
+      "name": "25 / 46 Inventory Slots",
+      "author": "fmo080308 / Fix Upload: 镜夏希",
+      "version": "1.6.6",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-04 00:08:35",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3289111378",
+      "name": "Message bottle indicator",
+      "author": "Cutlass",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:14:05",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3318453902",
+      "name": "I want my items to be safe!",
+      "author": "Cutlass",
+      "version": "3.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-04 00:14:06",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3702502928",
+      "name": "Wormhole Icons (Redux)",
+      "author": "Oofioznis",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:14:06",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2519350133",
+      "name": "Beefalo Storage",
+      "author": "Sorry Late",
+      "version": "2.1",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-04 00:18:36",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3026023095",
+      "name": "to_funnel_follow",
+      "author": "懒散随性&????&HPMY(rainbow)",
+      "version": "1.10",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:18:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3397112148",
+      "name": "守林人",
+      "author": "醨",
+      "version": "1.0.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:18:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3569101848",
+      "name": "Winona",
+      "author": "Rhomer",
+      "version": "2.25",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:18:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3606136448",
+      "name": "Sadako - A Onryo",
+      "author": "Luiz Lopes",
+      "version": "1.0.6",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-04 00:18:36",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3004905930",
+      "name": "Reset Insight",
+      "author": "Godless",
+      "version": "1.41",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:22:22",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3113451317",
+      "name": "Archipelago Randomizer",
+      "author": "Niko",
+      "version": "0.1.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-04 00:22:22",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2527328931",
+      "name": "Quick Work (Updated)",
+      "author": "Meliodas update by V_xiaonuo",
+      "version": "2.0.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:26:04",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3242898567",
+      "name": "哥布林杀手：浪迹幽暗",
+      "author": "不优秀",
+      "version": "3.2.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:26:04",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1419605993",
+      "name": "Puppet",
+      "author": "魔法少女唐间竹子and半夏微暖半夏凉",
+      "version": "3.0.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:30:09",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1839858501",
+      "name": "Large boats",
+      "author": "Trololarion",
+      "version": "1.1.3",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-04 00:30:09",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3218471273",
+      "name": "Archipelago Randomizer",
+      "author": "Dragon Wolf Leo",
+      "version": "1.3.3.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:30:09",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3258648335",
+      "name": "key_to_view",
+      "author": "未知",
+      "version": "未声明",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:30:09",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2598943907",
+      "name": "IRyS",
+      "author": "Yang, ZeroRyuk, CoolChilli",
+      "version": "1.0.12",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:33:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3350333731",
+      "name": "language",
+      "author": "绯世行、锡徐",
+      "version": "1.0.15",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:33:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3384030282",
+      "name": "EP Tweaked",
+      "author": "sauktux, tweaked by Remi",
+      "version": "1.5b",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:33:32",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3603994937",
+      "name": "Chest Collection",
+      "author": "Formingrain, Letitbe & EldVarg",
+      "version": "1.0.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:33:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2643644562",
+      "name": "Language",
+      "author": "丧芝，vandoordeep，LUOXIA11",
+      "version": "0.0.8.9",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:37:17",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2803841740",
+      "name": "Modular Color Cubes",
+      "author": "tarosceptic",
+      "version": "1.01",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:37:17",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3315377966",
+      "name": "Vera·Nair",
+      "author": "发条奶牛/泡椒",
+      "version": "1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:37:17",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3444169023",
+      "name": "ghostflowerhat",
+      "author": "TUTU",
+      "version": "v1.4.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 00:37:17",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3426512803",
+      "name": "fish_box_on_rope_bridge",
+      "author": "create by PigKing886",
+      "version": "1.3.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:41:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3591949271",
+      "name": "Title",
+      "author": "锦官  特别策划：HaZel   代码指导：花菜",
+      "version": "3.1.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:41:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3709302599",
+      "name": "乘骑考拉象・多元素福音 Ridable Koalefants Gospel of ManyElements",
+      "author": "玉萍经纬 Raccoon Superhero  _Q_",
+      "version": "13",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:41:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3276916105",
+      "name": "Marotter Crew",
+      "author": "The Cherry Team 󰀃",
+      "version": "1.1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:46:04",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3341006200",
+      "name": "lang_mansui",
+      "author": "唯の小诺",
+      "version": "1.1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 00:46:04",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3404115730",
+      "name": "Selective Item Customization",
+      "author": "Niko",
+      "version": "0.4",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-04 00:46:04",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-03 23:44:03"
+  "lastUpdated": "2026-11-04 00:46:04"
 }
