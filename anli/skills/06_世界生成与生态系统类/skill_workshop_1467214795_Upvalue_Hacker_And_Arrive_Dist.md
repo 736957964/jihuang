@@ -695,3 +695,216 @@ end)
 
 ```
 
+
+
+### 变体演进：1/10000 Chance for Withered Foxy Jumpscare Every Second [Server] (Mod 3527018254)
+- **变体场景与切面**：收录来自工坊 Mod 3527018254 (`1/10000 Chance for Withered Foxy Jumpscare Every Second [Server]`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3527018254)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world",function()
+        if not GLOBAL.TheWorld.ismastersim then
+            GLOBAL.TheFrontEnd.screenroot.inst:DoPeriodicTask(1,function()
+                if math.random(1,10000) == 1 then
+                    JumpscarePlayer()
+                end
+            end)
+        end
+    end)
+
+```
+
+
+
+### 变体演进：Beefalo Buck Timer (Mod 2858947939)
+- **变体场景与切面**：收录来自工坊 Mod 2858947939 (`Beefalo Buck Timer`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2858947939)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player_classified
+AddPrefabPostInit("player_classified", function(pc)
+   pc:DoTaskInTime(GLOBAL.FRAMES*2, function()
+      if pc._parent == GLOBAL.ThePlayer then
+         pc:ListenForEvent("isperformactionsuccessdirty", function(pc) pc:DoTaskInTime(GLOBAL.FRAMES*2, checkFed) end)
+      end
+   end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- AddComponentPostInit("playercontroller", function(self, inst)
+   -- if inst ~= _G.ThePlayer then return end
+   -- ThePlayer = _G.ThePlayer
+   -- TheWorld = _G.TheWorld
+   -- EQUIPSLOTS = _G.EQUIPSLOTS
+
+   -- local OriginalOnLeftClick = self.OnLeftClick
+
+   -- self.OnLeftClick = function(self, down)
+      -- if down or _G.TheInput:GetHUDEntityUnderMouse() or self:IsAOETargeting() or self.placer_recipe then
+         -- return OriginalOnLeftClick(self, down)
+      -- end
+      -- -- print("Heyyyyy Left Click! " .. tostring(self:GetLeftMouseAction()))
+      
+      -- local act = self:GetLeftMouseAction()
+      
+      -- if not act or act.action ~= _G.ACTIONS.BRUSH then
+         -- return OriginalOnLeftClick(self, down)
+      -- end
+      
+      -- print("Brush Action: " .. tostring(act.action) .. " in " .. tostring(act.action.time_direct_walking or ThePlayer.player_classified.time_direct_walking))
+      
+      -- -- vv(act)
+      -- -- vu(act)
+      -- if act.doer == ThePlayer and act.target and act.target.components.bucktimer then
+         -- -- act.target:DoTaskInTime(GLOBAL.FRAMES, function(inst)
+            -- -- inst.components.bucktimer:OnBrushed()
+         -- -- end)
+      -- end
+      -- return OriginalOnLeftClick(self, down)
+   -- end
+-- end)
+
+-- AddPrefabPostInit("world", function(inst)
+   -- inst:ListenForEvent("playeractivated", function(self)
+      -- _G.ThePlayer.player_classified:ListenForEvent("isperformactionsuccessdirty", function(inst) print("isperformactionsuccessdirty") print(_G.ThePlayer:GetDebugString()) vv(inst) vu(inst) end)
+      -- -- build_loop
+   -- end)
+-- end)
+
+-- local _SendRPCToServer
+-- AddPrefabPostInit("world", function(inst)
+	-- if not inst.ismastersim then
+		-- AddPlayerPostInit(function(inst)
+			-- inst:DoTaskInTime(0, function(inst)
+				-- if inst == _G.ThePlayer and inst.player_classified ~= nil then
+					-- if _SendRPCToServer == nil then
+						-- _SendRPCToServer = _G.SendRPCToServer
+						-- _G.SendRPCToServer = function(...)
+							-- local arg = { ... }
+
+							-- if arg[2] == _G.ACTIONS.BRUSH.code then
+                        -- print("here")
+							-- end
+
+							-- return _SendRPCToServer(...)
+						-- end
+               -- end
+            -- end
+         -- end)
+      -- end)
+   -- end
+-- end)
+
+
+AddPrefabPostInit("beefalo", function(inst)
+   inst:AddComponent("bucktimer")
+   inst:DoTaskInTime(1,function(inst)
+      local bname = inst.components.bucktimer:GetBeefaloName(false)
+      if not bname then
+         return
+      end
+      if KnownBeefalo and KnownBeefalo[bname] then
+         print("Beefalo loaded: " .. bname .. ", " .. KnownBeefalo[bname])
+         inst.components.bucktimer:LoadKnown(KnownBeefalo[bname])
+      end
+   end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+-- AddPrefabPostInit("world", function(inst)
+   -- inst:ListenForEvent("playeractivated", function(self)
+      -- _G.ThePlayer.player_classified:ListenForEvent("isperformactionsuccessdirty", function(inst) print("isperformactionsuccessdirty") print(_G.ThePlayer:GetDebugString()) vv(inst) vu(inst) end)
+      -- -- build_loop
+   -- end)
+-- end)
+
+-- local _SendRPCToServer
+-- AddPrefabPostInit("world", function(inst)
+	-- if not inst.ismastersim then
+		-- AddPlayerPostInit(function(inst)
+			-- inst:DoTaskInTime(0, function(inst)
+				-- if inst == _G.ThePlayer and inst.player_classified ~= nil then
+					-- if _SendRPCToServer == nil then
+						-- _SendRPCToServer = _G.SendRPCToServer
+						-- _G.SendRPCToServer = function(...)
+							-- local arg = { ... }
+
+							-- if arg[2] == _G.ACTIONS.BRUSH.code then
+                        -- print("here")
+							-- end
+
+							-- return _SendRPCToServer(...)
+						-- end
+               -- end
+            -- end
+         -- end)
+      -- end)
+   -- end
+-- end)
+
+
+AddPrefabPostInit("beefalo", function(inst)
+   inst:AddComponent("bucktimer")
+   inst:DoTaskInTime(1,function(inst)
+      local bname = inst.components.bucktimer:GetBeefaloName(false)
+      if not bname then
+         return
+      end
+      if KnownBeefalo and KnownBeefalo[bname] then
+         print("Beefalo loaded: " .. bname .. ", " .. KnownBeefalo[bname])
+         inst.components.bucktimer:LoadKnown(KnownBeefalo[bname])
+      end
+   end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beefalo
+AddPrefabPostInit("beefalo", function(inst)
+   inst:AddComponent("bucktimer")
+   inst:DoTaskInTime(1,function(inst)
+      local bname = inst.components.bucktimer:GetBeefaloName(false)
+      if not bname then
+         return
+      end
+      if KnownBeefalo and KnownBeefalo[bname] then
+         print("Beefalo loaded: " .. bname .. ", " .. KnownBeefalo[bname])
+         inst.components.bucktimer:LoadKnown(KnownBeefalo[bname])
+      end
+   end)
+end)
+
+```
+
+
+
+### 变体演进：消除脑残画面(Remove Insanity Vision) (Mod 1231473531)
+- **变体场景与切面**：收录来自工坊 Mod 1231473531 (`消除脑残画面(Remove Insanity Vision)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1231473531)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function(inst)
+        for _, v in pairs(inst.event_listeners.playeractivated[inst]) do
+            if CollectShit(v, "OnOverrideCCTable") then
+                EatShit(v, function()  end, "OnSanityDelta")
+            end
+        end
+    end)
+
+```
+

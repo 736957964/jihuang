@@ -517,7 +517,7 @@ def notify_owner_batch(new_skills):
             img_dir = os.path.join(WORK_DIR, "state", "screenshots")
             os.makedirs(img_dir, exist_ok=True)
             for s in new_skills:  # 老爹指示：多个母本全量生成长截图，一个不漏
-                rel_path = s.get("rel_path")
+                rel_path = s.get("skill_path") or s.get("rel_path")
                 if not rel_path:
                     continue
                 md_full_path = os.path.join(WORK_DIR, rel_path)
@@ -526,7 +526,7 @@ def notify_owner_batch(new_skills):
                 out_png = os.path.join(img_dir, "verify_%s.png" % os.path.splitext(os.path.basename(rel_path))[0])
                 if render_markdown_to_long_screenshot(md_full_path, out_png):
                     # 通过 OneBot 协议向老爹发送图片消息
-                    img_conn = http.client.HTTPConnection("127.0.0.1", 3000, timeout=20)
+                    img_conn = http.client.HTTPConnection("127.0.0.1", 3000, timeout=30)
                     cq_img = "[CQ:image,file=file:///%s]" % out_png.replace("\\", "/")
                     img_body = json.dumps({"user_id": 736957964, "message": cq_img}, ensure_ascii=False).encode("utf-8")
                     img_conn.request("POST", "/send_private_msg", img_body, headers)

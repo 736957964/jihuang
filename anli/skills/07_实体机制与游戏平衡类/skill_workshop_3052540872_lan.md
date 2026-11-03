@@ -622,6 +622,32 @@ local GLOBAL = GLOBAL
 			
 			if caster ~= nil and caster.components.sanity ~= nil then
 				caster.components.sanity:DoDelta(-5)
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
+end
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）

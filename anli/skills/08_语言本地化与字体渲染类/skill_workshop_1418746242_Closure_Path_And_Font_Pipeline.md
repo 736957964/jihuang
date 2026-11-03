@@ -112,6 +112,7 @@ return {
     HotReloadEngineFont = HotReloadEngineFont,
     PatchChinesePatternMatching = PatchChinesePatternMatching,
 }
+end
 ```
 
 ---

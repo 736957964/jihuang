@@ -338,6 +338,8 @@ AddPrefabPostInit("world", function(inst)
     end
     UpvalueHacker.SetUpvalue(_G.Prefabs.wood_table_round.fn, OnDecorTaken, "OnDecorTaken")
 end)
+end
+end
 ```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）

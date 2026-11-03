@@ -24,6 +24,7 @@ if (CSW or HML) and SHOWSTATNUMBERS then
 	AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
 	end)
+end
 ```
 
 ---

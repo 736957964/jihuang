@@ -102,3 +102,38 @@ end)
 
 ```
 
+
+
+### 变体演进：Save Equipment Slots (Mod 1598084686)
+- **变体场景与切面**：收录来自工坊 Mod 1598084686 (`Save Equipment Slots`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1598084686)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:inventory
+AddComponentPostInit("inventory", function(inventory)
+    -- AddPlayerPostInit triggers after Inventory.OnLoad
+    -- so we use AddComponentPostInit for this specific one
+    if type(inventory.OnLoad) == "function" then
+      inventory.OnLoad = fn.Inventory_OnLoad(inventory.OnLoad)
+    end
+  end)
+
+  AddClassPostConstruct("widgets/inventorybar", fn.InitInventorybar)
+
+  AddClassPostConstruct("widgets/invslot", function(invslot)
+    fn.OnNextCycle(function()
+      fn.RenderSlotIcons(invslot.num)
+    end)
+  end)
+
+  fn.InitPlayerHud()
+  fn.InitClasses()
+  fn.InitConfig()
+end
+
+```
+
