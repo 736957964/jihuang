@@ -78,7 +78,7 @@ def expand_queue_to_target(target=2000):
     with open(QUEUE_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         
-    print(f"\n[✓] 扩展完成！当前待处理队列总数: {len(ids)}")
+    print(f"\n[[OK]] 扩展完成！当前待处理队列总数: {len(ids)}")
 
 if __name__ == "__main__":
     expand_queue_to_target(2000)

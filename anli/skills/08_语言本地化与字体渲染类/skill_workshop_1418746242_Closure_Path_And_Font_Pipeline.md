@@ -116,7 +116,6 @@ end```
 2. **点分路径断言防御**：
    - 官方游戏在小版本更新后可能会重命名局部变量。在生产代码中使用 `ClosurePath.Set` 之前，必须对返回值 `parent` 和 `idx` 做严格的 `if parent and idx then` 断言，严禁无检查调用 `debug.setupvalue` 导致游戏在启动阶段死锁。
 
-
 ## 五、进阶拓扑演进与变体分支
 
 ### 变体演进：LANGUAGE (Mod 3506502333)
@@ -148,8 +147,6 @@ AddComponentPostInit("playercontroller", function(self, inst)
         end
 end)```
 
-
-
 ### 变体演进：Language (Mod 3152056502)
 - **变体场景与切面**：收录来自工坊 Mod 3152056502 (`Language`) 的生产级切面。
 - **核心切面代码**：
@@ -158,8 +155,6 @@ end)```
 -- ============================================================================
 local GLOBAL = GLOBAL
 ```
-
-
 
 ### 变体演进：Language (Mod 3328408598)
 - **变体场景与切面**：收录来自工坊 Mod 3328408598 (`Language`) 的生产级切面。

@@ -44,7 +44,6 @@ end)```
 2. **`extra_arrive_dist` 绝对不能无条件扩大**：
    - 必须通过 `TheWorld.Map:IsOceanTileAtPoint` 与 `doer:IsOnPassablePoint()` 双向交叉校验。若无脑扩大所有采集动作的到达距离，会导致玩家隔着高墙或长距离隔空吸取物品，彻底破坏游戏平衡与手感。
 
-
 ## 五、进阶拓扑演进与变体分支
 
 ### 变体演进：Slightly Cuter Wendy (Mod 3494013763)
@@ -56,7 +55,6 @@ end)```
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:world
-а всякие w и state будут инициализированы только после срабатывания AddPrefabPostInit("world").
 
 mods - список модов (и их элементов или обобщений).
 mods.lib - список переменных (и функций) для экспорта в любое пространство имен, где это нужно.
@@ -81,8 +79,6 @@ end
 -- 切面钩子：AddPrefabPostInit:forest
 
 local EmptyFunction = function() end```
-
-
 
 ### 变体演进：几何布局-汉化版 (Mod 3034588489)
 - **变体场景与切面**：收录来自工坊 Mod 3034588489 (`几何布局-汉化版`) 的生产级切面。
@@ -222,8 +218,6 @@ end
 end
 end```
 
-
-
 ### 变体演进：Chinese++ Pro (Mod 2941527805)
 - **变体场景与切面**：收录来自工坊 Mod 2941527805 (`Chinese++ Pro`) 的生产级切面。
 - **核心切面代码**：
@@ -331,8 +325,6 @@ end)
     end
 end)```
 
-
-
 ### 变体演进：T键物品增加 (Mod 2763963752)
 - **变体场景与切面**：收录来自工坊 Mod 2763963752 (`T键物品增加`) 的生产级切面。
 - **核心切面代码**：
@@ -392,8 +384,6 @@ AddPrefabPostInit("world", function (inst)
         controls.TMI:DebugMenu()
 end)
 end)```
-
-
 
 ### 变体演进：HEADER_GENERAL (Mod 3485366151)
 - **变体场景与切面**：收录来自工坊 Mod 3485366151 (`HEADER_GENERAL`) 的生产级切面。
@@ -473,8 +463,6 @@ AddPrefabPostInit("winona_remote", function(inst)
 	end
 end)```
 
-
-
 ### 变体演进：skill_1 (Mod 3378500626)
 - **变体场景与切面**：收录来自工坊 Mod 3378500626 (`skill_1`) 的生产级切面。
 - **核心切面代码**：
@@ -522,8 +510,6 @@ AddPrefabPostInit("world",function(inst)
         UpdatePlayerIndicators()
 end)
 end)```
-
-
 
 ### 变体演进：open_config_key (Mod 3372819329)
 - **变体场景与切面**：收录来自工坊 Mod 3372819329 (`open_config_key`) 的生产级切面。
@@ -614,8 +600,6 @@ end)
 end)
 end)```
 
-
-
 ### 变体演进：1/10000 Chance for Withered Foxy Jumpscare Every Second [Server] (Mod 3527018254)
 - **变体场景与切面**：收录来自工坊 Mod 3527018254 (`1/10000 Chance for Withered Foxy Jumpscare Every Second [Server]`) 的生产级切面。
 - **核心切面代码**：
@@ -634,8 +618,6 @@ AddPrefabPostInit("world",function()
 end)
         end
 end)```
-
-
 
 ### 变体演进：Beefalo Buck Timer (Mod 2858947939)
 - **变体场景与切面**：收录来自工坊 Mod 2858947939 (`Beefalo Buck Timer`) 的生产级切面。
@@ -668,8 +650,6 @@ end)
             -- -- inst.components.bucktimer:OnBrushed()
          -- -- end)
 
-      -- -- build_loop
-
 AddPrefabPostInit("beefalo", function(inst)
    inst:AddComponent("bucktimer")
    inst:DoTaskInTime(1,function(inst)
@@ -686,7 +666,6 @@ end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:world
-      -- -- build_loop
 
 AddPrefabPostInit("beefalo", function(inst)
    inst:AddComponent("bucktimer")
@@ -718,8 +697,6 @@ AddPrefabPostInit("beefalo", function(inst)
 end)
 end)```
 
-
-
 ### 变体演进：消除脑残画面(Remove Insanity Vision) (Mod 1231473531)
 - **变体场景与切面**：收录来自工坊 Mod 1231473531 (`消除脑残画面(Remove Insanity Vision)`) 的生产级切面。
 - **核心切面代码**：
@@ -736,4 +713,3 @@ AddPrefabPostInit("world", function(inst)
             end
         end
 end)```
-

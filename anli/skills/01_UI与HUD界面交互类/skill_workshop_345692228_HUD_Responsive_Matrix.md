@@ -93,7 +93,6 @@ end```
 2. **`controls.OnUpdate` 增量轻量比较**：
    - 监听窗口分辨率变化时，切忌每帧去调用复杂的布局计算。只在 `w ~= last_w or h ~= last_h` 时才触发一次 `Reposition`。
 
-
 ## 五、进阶拓扑演进与变体分支
 
 ### 变体演进：Minecraft HUD (Mod 3649427234)
@@ -118,8 +117,6 @@ AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
 end)```
-
-
 
 ### 变体演进：keep_hud_ui (Mod 2056032273)
 - **变体场景与切面**：收录来自工坊 Mod 2056032273 (`keep_hud_ui`) 的生产级切面。
@@ -148,8 +145,6 @@ end)
     end
 end)```
 
-
-
 ### 变体演进：[DST] Nautical HUD (Mod 2226345952)
 - **变体场景与切面**：收录来自工坊 Mod 2226345952 (`[DST] Nautical HUD`) 的生产级切面。
 - **核心切面代码**：
@@ -172,8 +167,6 @@ AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
 end)```
-
-
 
 ### 变体演进：[DST] Archive HUD (Mod 3456159081)
 - **变体场景与切面**：收录来自工坊 Mod 3456159081 (`[DST] Archive HUD`) 的生产级切面。
@@ -198,8 +191,6 @@ AddPrefabPostInit("world", function()
 	end
 end)```
 
-
-
 ### 变体演进：[DST] Mystery HUD (Mod 3548608555)
 - **变体场景与切面**：收录来自工坊 Mod 3548608555 (`[DST] Mystery HUD`) 的生产级切面。
 - **核心切面代码**：
@@ -223,8 +214,6 @@ AddPrefabPostInit("world", function()
 	end
 end)```
 
-
-
 ### 变体演进：Soul Infused HUD (Mod 2954087809)
 - **变体场景与切面**：收录来自工坊 Mod 2954087809 (`Soul Infused HUD`) 的生产级切面。
 - **核心切面代码**：
@@ -247,8 +236,6 @@ AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
 end)```
-
-
 
 ### 变体演进：Redux UI (Mod 3454549303)
 - **变体场景与切面**：收录来自工坊 Mod 3454549303 (`Redux UI`) 的生产级切面。
@@ -289,8 +276,6 @@ AddPrefabPostInit("voidclothhat_fx", function(inst)
 end)
 -- ----------------------------------------------------------------------------
 end)```
-
-
 
 ### 变体演进：[Forge] The Battle Arena HUD (Mod 1824509831)
 - **变体场景与切面**：收录来自工坊 Mod 1824509831 (`[Forge] The Battle Arena HUD`) 的生产级切面。

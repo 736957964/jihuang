@@ -107,7 +107,6 @@ return ClientActionScheduler```
 2. **`IsInLimbo()` 目标状态检查**：
    - 目标实体可能在排队等待期间被队友捡走、被火烧掉或掉入虚空（InLimbo）。在 `DoAction` 之前，必须严格执行 `not act.target:IsInLimbo()`，否则会引发寻路模块访问空位置崩溃。
 
-
 ## 五、进阶拓扑演进与变体分支
 
 ### 变体演进：󰀍 Cherry Forest 󰀍 (Mod 1289779251)
@@ -177,8 +176,6 @@ AddPrefabPostInit("leif_palm", function(inst)
 		inst.components.cherrybookmutable:SetOnMutateFn(MakeTree)
 		inst.components.cherrybookmutable.points = 5
 end)```
-
-
 
 ### 变体演进：Quick Work (Mod 1200745268)
 - **变体场景与切面**：收录来自工坊 Mod 1200745268 (`Quick Work`) 的生产级切面。
@@ -330,8 +327,6 @@ end
 end
 end```
 
-
-
 ### 变体演进：角色-以斯拉 (Mod 3694914776)
 - **变体场景与切面**：收录来自工坊 Mod 3694914776 (`角色-以斯拉`) 的生产级切面。
 - **核心切面代码**：
@@ -465,8 +460,6 @@ AddPrefabPostInit('cook_certificate',function (inst)
             return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
         end
 end)```
-
-
 
 ### 变体演进：Mystery, The Necromancer (Mod 3417353600)
 - **变体场景与切面**：收录来自工坊 Mod 3417353600 (`Mystery, The Necromancer`) 的生产级切面。
@@ -661,8 +654,6 @@ AddComponentPostInit("inventory", function(self)
 	end
 end)```
 
-
-
 ### 变体演进：[Arknights]明日方舟-维什戴尔Wiš (Mod 3627500499)
 - **变体场景与切面**：收录来自工坊 Mod 3627500499 (`[Arknights]明日方舟-维什戴尔Wiš`) 的生产级切面。
 - **核心切面代码**：
@@ -817,8 +808,6 @@ AddComponentPostInit(
         end
     end
 end```
-
-
 
 ### 变体演进：椎名立希 (Mod 3659173332)
 - **变体场景与切面**：收录来自工坊 Mod 3659173332 (`椎名立希`) 的生产级切面。
@@ -1037,8 +1026,6 @@ AddComponentPostInit("playeractionpicker", function(self)
 end)
 end```
 
-
-
 ### 变体演进：Gamma (Mod 3740646188)
 - **变体场景与切面**：收录来自工坊 Mod 3740646188 (`Gamma`) 的生产级切面。
 - **核心切面代码**：
@@ -1068,8 +1055,6 @@ AddStategraphPostInit("wilson", function(sg)
     end
     
 end)```
-
-
 
 ### 变体演进：dusk_lang (Mod 3467205041)
 - **变体场景与切面**：收录来自工坊 Mod 3467205041 (`dusk_lang`) 的生产级切面。
@@ -1206,8 +1191,6 @@ AddPrefabPostInit(
         end
     end```
 
-
-
 ### 变体演进：Sweet House (Mod 1951468597)
 - **变体场景与切面**：收录来自工坊 Mod 1951468597 (`Sweet House`) 的生产级切面。
 - **核心切面代码**：
@@ -1216,8 +1199,6 @@ AddPrefabPostInit(
 -- ============================================================================
 local GLOBAL = GLOBAL
 ```
-
-
 
 ### 变体演进：简易宠物增强 (Mod 3587643283)
 - **变体场景与切面**：收录来自工坊 Mod 3587643283 (`简易宠物增强`) 的生产级切面。

@@ -118,7 +118,6 @@ end)```
 2. **`Physics:Teleport` 与坐标直接赋值的分流**：
    - 传送具有物理刚体（Physics）的角色或生物时，必须调用 `inst.Physics:Teleport(x, y, z)`，严禁直接调用 `Transform:SetPosition`。直接改坐标会导致物理碰撞体残留在原地，引发隐形碰撞空气墙 bug。
 
-
 ## 五、进阶拓扑演进与变体分支
 
 ### 变体演进：Circular Placement (圆形摆放辅助) (Mod 2914336761)
@@ -161,8 +160,6 @@ AddComponentPostInit('playercontroller', function(PlayerController, inst)
         return oldOnUpdate(self, ...)
     end
 end)```
-
-
 
 ### 变体演进：快捷宣告(NoMu) (Mod 2784715091)
 - **变体场景与切面**：收录来自工坊 Mod 2784715091 (`快捷宣告(NoMu)`) 的生产级切面。
@@ -264,8 +261,6 @@ AddComponentPostInit('nightmareclock', function(clock)
     end
 end)```
 
-
-
 ### 变体演进：兔尾艾冰 (Mod 3402670530)
 - **变体场景与切面**：收录来自工坊 Mod 3402670530 (`兔尾艾冰`) 的生产级切面。
 - **核心切面代码**：
@@ -292,8 +287,6 @@ AddComponentPostInit("skinner",function(self)
         end
 end)```
 
-
-
 ### 变体演进：Paranoia [BETA] (Mod 3596740317)
 - **变体场景与切面**：收录来自工坊 Mod 3596740317 (`Paranoia [BETA]`) 的生产级切面。
 - **核心切面代码**：
@@ -308,8 +301,6 @@ AddPrefabPostInit("player_classified", function(inst)
         inst:DoStaticTaskInTime(0, RegisterNetListeners)
     end
 end)```
-
-
 
 ### 变体演进：Auto Stack and Pick Up (Mod 1803285852)
 - **变体场景与切面**：收录来自工坊 Mod 1803285852 (`Auto Stack and Pick Up`) 的生产级切面。
@@ -422,13 +413,11 @@ AddComponentPostInit("stackable", function(comp)
 			inst:ListenForEvent("ondropped", function(inst)
 				inst:DoTaskInTime(0, function(inst)
 					AutoStack(inst, manualDropStackRange, manualStackMakeNewStackMainStack)
-end)
-end)
+				end)
+			end)
 		end
-end)
+	end)
 end)```
-
-
 
 ### 变体演进：굶지마 다함께 한글화 [클라이언트 버전] (Mod 2391246365)
 - **变体场景与切面**：收录来自工坊 Mod 2391246365 (`굶지마 다함께 한글화 [클라이언트 버전]`) 的生产级切面。
@@ -507,6 +496,10 @@ end
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:player_common
 AddPrefabPostInit("player_common", player_common)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:yotc_carrat_race_finish
+AddPrefabPostInit("yotc_carrat_race_finish", function(inst)
 	if inst.components.inspectable ~= nil then
 		if inst.components.inspectable.getspecialdescription_old == nil then
 			inst.components.inspectable.getspecialdescription_old = inst.components.inspectable.getspecialdescription or function() end
@@ -517,21 +510,7 @@ AddPrefabPostInit("player_common", player_common)
 			return (winner ~= nil and pp.replacePP(str, winner)) or str
 		end
 	end
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:yotc_carrat_race_finish
-	if inst.components.inspectable ~= nil then
-		if inst.components.inspectable.getspecialdescription_old == nil then
-			inst.components.inspectable.getspecialdescription_old = inst.components.inspectable.getspecialdescription or function() end
-		end
-		function inst.components.inspectable.getspecialdescription(inst, ...)
-			local str = inst.components.inspectable.getspecialdescription_old(inst, ...)
-			local winner = inst._winner ~= nil and inst._winner.name
-			return (winner ~= nil and pp.replacePP(str, winner)) or str
-		end
-	end```
-
-
+end)```
 
 ### 变体演进：芙兰朵露·斯卡蕾特 (Mod 3615173314)
 - **变体场景与切面**：收录来自工坊 Mod 3615173314 (`芙兰朵露·斯卡蕾特`) 的生产级切面。
@@ -558,8 +537,6 @@ AddComponentPostInit("skinner", function(self)
         end
     end
 end)```
-
-
 
 ### 变体演进：Don (Mod 3495316998)
 - **变体场景与切面**：收录来自工坊 Mod 3495316998 (`Don`) 的生产级切面。
@@ -588,8 +565,6 @@ AddComponentPostInit("playercontroller", function(self)
     end
 end)```
 
-
-
 ### 变体演进：Auto Cooking (Mod 2033458869)
 - **变体场景与切面**：收录来自工坊 Mod 2033458869 (`Auto Cooking`) 的生产级切面。
 - **核心切面代码**：
@@ -604,8 +579,6 @@ ENV.AddComponentPostInit("playercontroller", function(self)
         self.inst:ListenForEvent("aqp_threadstart", StopCooking) -- For AttackQueue Plus
     end
 end)```
-
-
 
 ### 变体演进：Rock Beefalo (Mod 3468519821)
 - **变体场景与切面**：收录来自工坊 Mod 3468519821 (`Rock Beefalo`) 的生产级切面。
@@ -623,6 +596,6 @@ AddPrefabPostInit("beefalo", function(inst)
         else
             inst.AnimState:SetBank("beefalo")
         end
-end)
+    end)
 end)```
 

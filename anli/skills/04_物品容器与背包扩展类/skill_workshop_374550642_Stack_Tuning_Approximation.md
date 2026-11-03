@@ -68,7 +68,6 @@ end)```
 2. **`replica` 客户端显示对齐**：
    - 饥荒的 `stackable` 组件在主客机同步时，`replica.stackable:MaxSize()` 会自动拉取服务端的最新容量。无需在客户端手动再去 Hook `replica`，避免引发客户端本地与网络包的状态竞争（Race Condition）。
 
-
 ## 五、进阶拓扑演进与变体分支
 
 ### 变体演进：Personal Chesters (Mod 463740026)
@@ -89,8 +88,6 @@ end)
 AddPrefabPostInit("personal_chester", function(inst)
 	inst.prefab = "chester"
 end)```
-
-
 
 ### 变体演进：Save Equipment Slots (Mod 1598084686)
 - **变体场景与切面**：收录来自工坊 Mod 1598084686 (`Save Equipment Slots`) 的生产级切面。
@@ -119,8 +116,6 @@ end)
   fn.InitClasses()
   fn.InitConfig()
 end```
-
-
 
 ### 变体演进：Item Auto-Fuel Slots (Mod 2736043172)
 - **变体场景与切面**：收录来自工坊 Mod 2736043172 (`Item Auto-Fuel Slots`) 的生产级切面。
@@ -535,8 +530,6 @@ AddPrefabPostInit("shieldofterror", function(inst)
         inst:ListenForEvent("armordamaged", OnTick)
 end)```
 
-
-
 ### 变体演进：25 / 46 Inventory Slots (Mod 3710538435)
 - **变体场景与切面**：收录来自工坊 Mod 3710538435 (`25 / 46 Inventory Slots`) 的生产级切面。
 - **核心切面代码**：
@@ -697,8 +690,6 @@ AddComponentPostInit("upgrademoduleowner", function(self)
         end
     end
 end)```
-
-
 
 ### 变体演进：Beefalo Storage (Mod 2519350133)
 - **变体场景与切面**：收录来自工坊 Mod 2519350133 (`Beefalo Storage`) 的生产级切面。
