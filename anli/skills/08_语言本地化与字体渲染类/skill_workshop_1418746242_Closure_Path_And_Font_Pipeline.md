@@ -172,3 +172,79 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Language (Mod 3328408598)
+- **变体场景与切面**：收录来自工坊 Mod 3328408598 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3328408598)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:farm_plant_pumpkin
+AddPrefabPostInit("farm_plant_pumpkin",repickfn)
+local PLANT_DEFS = require("prefabs/farm_plant_defs").PLANT_DEFS
+for k, v in pairs(PLANT_DEFS) do
+    --if not v.data_only then --allow mods to skip our prefab constructor.
+        AddPrefabPostInit(v.prefab,repickfn)
+    --end
+end]]--
+local function reharvest(self)-- old farm
+	--local oldharvest = self.Harvest
+	self.Harvest= function(self,harvester)
+		if self.matured or self.inst:HasTag("withered") then
+			local product = nil
+			if self.grower ~= nil and
+				(self.grower.components.burnable ~= nil and self.grower.components.burnable:IsBurning()) or
+				(self.inst.components.burnable ~= nil and self.inst.components.burnable:IsBurning()) then
+				local temp = SpawnPrefab(self.product_prefab)
+				product = SpawnPrefab(temp.components.cookable ~= nil and temp.components.cookable.product or "seeds_cooked")
+				temp:Remove()
+			else
+				product = SpawnPrefab(self.product_prefab)
+			end
+
+			if self.onharvest ~= nil then
+				self.onharvest(self.inst, product, harvester)
+			end
+
+			if product ~= nil then
+				if product.components.inventoryitem ~= nil then
+					product.components.inventoryitem:InheritWorldWetnessAtTarget(self.inst)
+				end
+
+				if harvester ~= nil then
+					harvester.components.inventory:GiveItem(product, nil, self.inst:GetPosition())
+				else
+                -- just drop the thing (happens if you haunt the fully grown crop)
+					product.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
+				end
+				ProfileStatsAdd("grown_"..product.prefab)
+			end
+			
+			if self.grower ~= nil 
+			and self.grower:IsValid() 
+			and self.grower.components.grower ~= nil 
+			then
+				local item = SpawnPrefab(self.product_prefab.."_seeds")
+				self.grower.components.grower:RemoveCrop(self.inst)
+				if item~= nil and harvester~= nil then
+					item.Transform:SetPosition(self.grower.Transform:GetWorldPosition())
+					self.grower.components.grower:PlantItem(item, harvester)
+				end
+				self.grower = nil
+			else
+				self.inst:Remove()
+			end
+			self.matured = false
+			self.growthpercent = 0
+			self.product_prefab = nil
+			return true, product
+		end
+	end
+end
+
+```
+

@@ -159,3 +159,31 @@ end)
 
 ```
 
+
+
+### 变体演进：[DST] Nautical HUD (Mod 2226345952)
+- **变体场景与切面**：收录来自工坊 Mod 2226345952 (`[DST] Nautical HUD`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2226345952)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player
+AddPrefabPostInit("player", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", BadgePostConstruct)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
+	end
+end)
+
+```
+
