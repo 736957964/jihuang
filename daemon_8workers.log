@@ -11135,3 +11135,431 @@
 [2026-11-03 22:40:53] 母本变体展示已达上限 (10)，增量归约记录至总账本
 [2026-11-03 22:40:53] Reducer: 成功将 Mod 3380407188 (月影双修+全技能解锁（含恶魔温蒂沃尔特）) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
 [2026-11-03 22:40:54] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:41:07] Git 自动提交并推送成功！
+[2026-11-03 22:41:07] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 22:41:12] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:41:14] 【批次结算】：本批归约出 1 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 22:41:45] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3038630264', '2973455580', '1273382163', '703758203', '1253178451', '3345375881']
+[2026-11-03 22:41:45] SteamCMD 下载 3038630264 ...
+[2026-11-03 22:41:45] SteamCMD 下载 2973455580 ...
+[2026-11-03 22:41:45] SteamCMD 下载 1273382163 ...
+[2026-11-03 22:41:45] SteamCMD 下载 703758203 ...
+[2026-11-03 22:41:45] SteamCMD 下载 1253178451 ...
+[2026-11-03 22:41:45] SteamCMD 下载 3345375881 ...
+[2026-11-03 22:42:57] Worker [3038630264] 成功解析入库暂存区 -> Русификатор Uncompromising Mode (类别: 06_世界生成与生态系统类)
+[2026-11-03 22:43:13] Worker [2973455580] 成功解析入库暂存区 ->  (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 22:43:29] Worker [1273382163] 成功解析入库暂存区 -> Eyeplants Predicting [眼球预测] (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 22:43:46] Worker [703758203] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 22:44:03] Worker [1253178451] 成功解析入库暂存区 -> Reliable Wendy (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 22:44:32] Worker [3345375881] 成功解析入库暂存区 -> 饥荒江糊 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:44:32] Reducer Worker 7: 发现 5 份待存草稿，执行母本仲裁归约...
+[2026-11-03 22:44:32] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:44:32] Reducer: 成功将 Mod 1253178451 (Reliable Wendy) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:44:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:44:32] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:44:32] Reducer: 成功将 Mod 1273382163 (Eyeplants Predicting [眼球预测]) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:44:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:44:32] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:44:32] Reducer: 成功将 Mod 2973455580 (Mod 2973455580) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:44:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:44:32] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:44:32] Reducer: 成功将 Mod 3038630264 (Русификатор Uncompromising Mode) 增量归约合入既有权威母本 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-03 22:44:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-03 22:44:32] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:44:32] Reducer: 成功将 Mod 3345375881 (饥荒江糊) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:44:32] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:44:32] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 22:44:39] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 22:44:45] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 22:44:52] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_2281925291_mod_2281925291.png (HTTP 200)
+[2026-11-03 22:44:58] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.png (HTTP 200)
+[2026-11-03 22:45:05] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:45:07] 【批次结算】：本批归约出 5 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 22:45:37] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['2854270129', '398858801', '676503184', '1848571133', '3346767902', '3652755078']
+[2026-11-03 22:45:37] SteamCMD 下载 2854270129 ...
+[2026-11-03 22:45:37] SteamCMD 下载 398858801 ...
+[2026-11-03 22:45:37] SteamCMD 下载 676503184 ...
+[2026-11-03 22:45:37] SteamCMD 下载 1848571133 ...
+[2026-11-03 22:45:37] SteamCMD 下载 3346767902 ...
+[2026-11-03 22:45:37] SteamCMD 下载 3652755078 ...
+[2026-11-03 22:45:56] Worker [2854270129] 过滤拦截: Clean HUD (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 22:46:11] Worker [398858801] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 22:46:30] Worker [676503184] 成功解析入库暂存区 -> Deadpool (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:46:44] Worker [1848571133] 成功解析入库暂存区 -> Simple Map Editor Fix (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 22:46:59] Worker [3346767902] 成功解析入库暂存区 -> Language (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:47:23] Worker [3652755078] 成功解析入库暂存区 -> 维吉尔 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:47:23] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-03 22:47:23] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:47:23] Reducer: 成功将 Mod 1848571133 (Simple Map Editor Fix) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:47:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:47:23] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:47:23] Reducer: 成功将 Mod 3346767902 (Language) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:47:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:47:23] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:47:23] Reducer: 成功将 Mod 3652755078 (维吉尔) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:47:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:47:23] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:47:23] Reducer: 成功将 Mod 676503184 (Deadpool) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:47:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:47:23] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 22:47:27] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_2281925291_mod_2281925291.png (HTTP 200)
+[2026-11-03 22:47:34] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:47:43] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:47:50] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:47:52] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 22:48:22] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3574398629', '3775026497', '2688537717', '3511498282', '3336301387', '3096969640']
+[2026-11-03 22:48:22] SteamCMD 下载 3574398629 ...
+[2026-11-03 22:48:22] SteamCMD 下载 3775026497 ...
+[2026-11-03 22:48:22] SteamCMD 下载 2688537717 ...
+[2026-11-03 22:48:22] SteamCMD 下载 3511498282 ...
+[2026-11-03 22:48:22] SteamCMD 下载 3336301387 ...
+[2026-11-03 22:48:22] SteamCMD 下载 3096969640 ...
+[2026-11-03 22:49:35] Worker [3574398629] 成功解析入库暂存区 -> 45 Inventory Slots [Fixed + EquipSlot UI expand] 整合版 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:49:51] Worker [3775026497] 成功解析入库暂存区 -> plow_3x3 (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 22:50:07] Worker [2688537717] 成功解析入库暂存区 -> Winona Car (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:50:22] Worker [3511498282] 成功解析入库暂存区 -> 饥饥事件计时器 (类别: 06_世界生成与生态系统类)
+[2026-11-03 22:50:37] Worker [3336301387] 成功解析入库暂存区 -> Happy Farm Continued 开心农场（续） (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:51:14] Worker [3096969640] 成功解析入库暂存区 -> Log Friend (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 22:51:14] Reducer Worker 7: 发现 6 份待存草稿，执行母本仲裁归约...
+[2026-11-03 22:51:14] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:51:14] Reducer: 成功将 Mod 2688537717 (Winona Car) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:51:14] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:51:14] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:51:14] Reducer: 成功将 Mod 3096969640 (Log Friend) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:51:14] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:51:15] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:51:15] Reducer: 成功将 Mod 3336301387 (Happy Farm Continued 开心农场（续）) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:51:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:51:15] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:51:15] Reducer: 成功将 Mod 3511498282 (饥饥事件计时器) 增量归约合入既有权威母本 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-03 22:51:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md
+[2026-11-03 22:51:15] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:51:15] Reducer: 成功将 Mod 3574398629 (45 Inventory Slots [Fixed + EquipSlot UI expand] 整合版) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:51:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:51:15] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:51:15] Reducer: 成功将 Mod 3775026497 (plow_3x3) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:51:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:51:15] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 22:51:20] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:51:28] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 22:51:35] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:51:41] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.png (HTTP 200)
+[2026-11-03 22:51:47] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:51:57] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 22:51:59] 【批次结算】：本批归约出 6 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 22:52:29] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3444657411', '2971150022', '2410382718', '3645075395', '3423606810', '3421399119']
+[2026-11-03 22:52:29] SteamCMD 下载 3444657411 ...
+[2026-11-03 22:52:29] SteamCMD 下载 2971150022 ...
+[2026-11-03 22:52:29] SteamCMD 下载 2410382718 ...
+[2026-11-03 22:52:29] SteamCMD 下载 3645075395 ...
+[2026-11-03 22:52:29] SteamCMD 下载 3423606810 ...
+[2026-11-03 22:52:29] SteamCMD 下载 3421399119 ...
+[2026-11-03 22:53:12] Worker [3444657411] 成功解析入库暂存区 -> 每日任务系统 (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 22:53:32] Worker [2971150022] 过滤拦截: Ukrainian lang (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 22:53:50] Worker [2410382718] 成功解析入库暂存区 -> Ninomae Ina (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 22:54:07] Worker [3645075395] 成功解析入库暂存区 -> 寄居蟹隐士珍珠优化 (Better Pearl) (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 22:54:31] Worker [3423606810] 过滤拦截: Configurable Main Menu (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 22:54:47] Worker [3421399119] 成功解析入库暂存区 -> Language (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 22:54:47] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-03 22:54:47] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:54:47] Reducer: 成功将 Mod 2410382718 (Ninomae Ina) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:54:47] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 22:54:48] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:54:48] Reducer: 成功将 Mod 3421399119 (Language) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:54:48] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:54:48] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:54:48] Reducer: 成功将 Mod 3444657411 (每日任务系统) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:54:48] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 22:54:48] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:54:48] Reducer: 成功将 Mod 3645075395 (寄居蟹隐士珍珠优化 (Better Pearl)) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:54:48] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:54:48] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 22:54:54] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 22:55:03] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_2281925291_mod_2281925291.png (HTTP 200)
+[2026-11-03 22:55:08] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_2281925291_mod_2281925291.png (HTTP 200)
+[2026-11-03 22:55:14] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 22:55:17] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 22:55:47] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3449921056', '3379255218', '3064846414', '2351915881', '456028339', '3473179434']
+[2026-11-03 22:55:47] SteamCMD 下载 3449921056 ...
+[2026-11-03 22:55:47] SteamCMD 下载 3064846414 ...
+[2026-11-03 22:55:47] SteamCMD 下载 2351915881 ...
+[2026-11-03 22:55:47] SteamCMD 下载 3379255218 ...
+[2026-11-03 22:55:47] SteamCMD 下载 456028339 ...
+[2026-11-03 22:55:47] SteamCMD 下载 3473179434 ...
+[2026-11-03 22:56:36] Worker [3449921056] 过滤拦截: rhine_xin_lan (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 22:56:54] Worker [2351915881] 过滤拦截: Character Indicators | QoL (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 22:57:10] Worker [3064846414] 过滤拦截: Deluxe Cooking Pot - Updated (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 22:57:41] Worker [3379255218] 过滤拦截: Mike Morton (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 22:57:57] Worker [456028339] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 22:58:15] Worker [3473179434] 成功解析入库暂存区 ->  (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 22:58:15] Reducer Worker 7: 发现 1 份待存草稿，执行母本仲裁归约...
+[2026-11-03 22:58:15] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 22:58:15] Reducer: 成功将 Mod 3473179434 (Mod 3473179434) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:58:15] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 22:58:16] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 22:58:20] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 22:58:22] 【批次结算】：本批归约出 1 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 22:58:52] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3695636798', '3640859190', '3337826178', '1405120786', '3349132081', '3496094889']
+[2026-11-03 22:58:52] SteamCMD 下载 3695636798 ...
+[2026-11-03 22:58:52] SteamCMD 下载 3640859190 ...
+[2026-11-03 22:58:52] SteamCMD 下载 3337826178 ...
+[2026-11-03 22:58:52] SteamCMD 下载 1405120786 ...
+[2026-11-03 22:58:52] SteamCMD 下载 3349132081 ...
+[2026-11-03 22:58:52] SteamCMD 下载 3496094889 ...
+[2026-11-03 22:59:11] Worker [3695636798] 成功解析入库暂存区 -> T剑（键） (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 22:59:35] Worker [3640859190] 成功解析入库暂存区 -> Wormwood Speech Overhaul (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:00:21] Worker [3337826178] 成功解析入库暂存区 -> Weasel, the Cowardly Writer (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:00:35] Worker [1405120786] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:00:55] Worker [3349132081] 过滤拦截: Discord Rich Presence (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 23:01:14] Worker [3496094889] 过滤拦截: Map Icons Tweak (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 23:01:14] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:01:14] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:01:14] Reducer: 成功将 Mod 3337826178 (Weasel, the Cowardly Writer) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:01:14] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:01:14] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:01:14] Reducer: 成功将 Mod 3640859190 (Wormwood Speech Overhaul) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:01:14] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:01:14] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:01:14] Reducer: 成功将 Mod 3695636798 (T剑（键）) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:01:14] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:01:14] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:01:22] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:01:29] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:01:34] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:01:36] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:02:07] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3380257340', '2837274391', '2431606769', '3469412720', '1854353610', '1594846041']
+[2026-11-03 23:02:07] SteamCMD 下载 3380257340 ...
+[2026-11-03 23:02:07] SteamCMD 下载 2837274391 ...
+[2026-11-03 23:02:07] SteamCMD 下载 2431606769 ...
+[2026-11-03 23:02:07] SteamCMD 下载 3469412720 ...
+[2026-11-03 23:02:07] SteamCMD 下载 1854353610 ...
+[2026-11-03 23:02:07] SteamCMD 下载 1594846041 ...
+[2026-11-03 23:03:46] Worker [3380257340] 成功解析入库暂存区 -> Wilton the Haunted: Renewed (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:05:01] Worker [2837274391] 成功解析入库暂存区 -> Yzma & Kronk (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:06:07] Worker [2431606769] 成功解析入库暂存区 -> Hoshimachi Suisei (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:06:24] Worker [3469412720] 过滤拦截: Ice Soup (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 23:06:44] Worker [1854353610] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:07:01] Worker [1594846041] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:07:02] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:07:02] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:07:02] Reducer: 成功将 Mod 2431606769 (Hoshimachi Suisei) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:07:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:07:02] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:07:02] Reducer: 成功将 Mod 2837274391 (Yzma & Kronk) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:07:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:07:02] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:07:02] Reducer: 成功将 Mod 3380257340 (Wilton the Haunted: Renewed) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:07:02] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:07:04] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:07:20] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:07:27] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:07:34] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:07:36] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:08:09] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['2373346252', '3485293431', '2762334054', '2661284136', '1730366029', '3602958211']
+[2026-11-03 23:08:09] SteamCMD 下载 2373346252 ...
+[2026-11-03 23:08:09] SteamCMD 下载 3485293431 ...
+[2026-11-03 23:08:09] SteamCMD 下载 2762334054 ...
+[2026-11-03 23:08:09] SteamCMD 下载 2661284136 ...
+[2026-11-03 23:08:09] SteamCMD 下载 1730366029 ...
+[2026-11-03 23:08:13] SteamCMD 下载 3602958211 ...
+[2026-11-03 23:09:39] Worker [2373346252] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:09:58] Worker [3485293431] 成功解析入库暂存区 -> 整理箱子(ChestSorting) (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 23:10:26] Worker [2762334054] 成功解析入库暂存区 -> More Foods Pack (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:10:40] Worker [2661284136] 成功解析入库暂存区 -> 显示游戏内功能面板 (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 23:10:58] Worker [1730366029] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:13:13] Worker [3602958211] 成功解析入库暂存区 -> Potterswheel Plus (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:13:13] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:13:13] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:13:13] Reducer: 成功将 Mod 2661284136 (显示游戏内功能面板) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:13:13] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:13:13] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:13:13] Reducer: 成功将 Mod 2762334054 (More Foods Pack) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:13:13] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:13:13] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:13:13] Reducer: 成功将 Mod 3485293431 (整理箱子(ChestSorting)) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:13:13] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:13:13] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:13:13] Reducer: 成功将 Mod 3602958211 (Potterswheel Plus) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:13:13] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:13:14] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:13:26] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_2281925291_mod_2281925291.png (HTTP 200)
+[2026-11-03 23:13:35] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:13:42] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_2281925291_mod_2281925291.png (HTTP 200)
+[2026-11-03 23:13:49] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:13:51] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:14:21] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3426916088', '3212189550', '3062962781', '2736043172', '1242907291', '2238885511']
+[2026-11-03 23:14:21] SteamCMD 下载 3426916088 ...
+[2026-11-03 23:14:21] SteamCMD 下载 3212189550 ...
+[2026-11-03 23:14:21] SteamCMD 下载 2736043172 ...
+[2026-11-03 23:14:21] SteamCMD 下载 3062962781 ...
+[2026-11-03 23:14:21] SteamCMD 下载 1242907291 ...
+[2026-11-03 23:14:22] SteamCMD 下载 2238885511 ...
+[2026-11-03 23:15:44] Worker [3426916088] 成功解析入库暂存区 -> Underground Ocean (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:16:00] Worker [3212189550] 下载失败或工坊条目不存在，标记跳过
+[2026-11-03 23:16:16] Worker [2736043172] 成功解析入库暂存区 -> Item Auto-Fuel Slots (类别: 04_物品容器与背包扩展类)
+[2026-11-03 23:16:48] Worker [3062962781] 成功解析入库暂存区 -> 语言·Language (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:17:03] Worker [1242907291] 成功解析入库暂存区 -> Ultimate Perish Settings (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:17:23] Worker [2238885511] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:17:23] Reducer Worker 7: 发现 4 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:17:23] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:17:23] Reducer: 成功将 Mod 1242907291 (Ultimate Perish Settings) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:17:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:17:23] Reducer: 成功将 Mod 2736043172 (Item Auto-Fuel Slots) 增量归约合入既有权威母本 -> anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md
+[2026-11-03 23:17:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md
+[2026-11-03 23:17:23] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:17:23] Reducer: 成功将 Mod 3062962781 (语言·Language) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:17:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:17:23] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:17:23] Reducer: 成功将 Mod 3426916088 (Underground Ocean) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:17:23] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:17:24] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:17:30] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:17:40] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_374550642_Stack_Tuning_Approximation.png (HTTP 200)
+[2026-11-03 23:17:47] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:17:54] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:17:56] 【批次结算】：本批归约出 4 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:18:27] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3383621525', '3666083053', '436654027', '2571294157', '3703272454', '3703196068']
+[2026-11-03 23:18:27] SteamCMD 下载 3383621525 ...
+[2026-11-03 23:18:27] SteamCMD 下载 3666083053 ...
+[2026-11-03 23:18:27] SteamCMD 下载 436654027 ...
+[2026-11-03 23:18:27] SteamCMD 下载 2571294157 ...
+[2026-11-03 23:18:27] SteamCMD 下载 3703272454 ...
+[2026-11-03 23:18:27] SteamCMD 下载 3703196068 ...
+[2026-11-03 23:19:44] Worker [3383621525] 成功解析入库暂存区 -> 邪恶小法师维嘉 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:20:04] Worker [3666083053] 成功解析入库暂存区 -> 丰川祥子 (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:20:21] Worker [436654027] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:20:40] Worker [2571294157] 成功解析入库暂存区 -> Ganyu (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:20:56] Worker [3703272454] 成功解析入库暂存区 -> 工具垃圾场 (Tool Dump) (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:21:20] Worker [3703196068] 成功解析入库暂存区 -> 庄方宜 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:21:20] Reducer Worker 7: 发现 5 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:21:21] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:21:21] Reducer: 成功将 Mod 2571294157 (Ganyu) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:21:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:21:21] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:21:21] Reducer: 成功将 Mod 3383621525 (邪恶小法师维嘉) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:21:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:21:21] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:21:21] Reducer: 成功将 Mod 3666083053 (丰川祥子) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:21:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:21:21] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:21:21] Reducer: 成功将 Mod 3703196068 (庄方宜) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:21:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:21:21] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:21:21] Reducer: 成功将 Mod 3703272454 (工具垃圾场 (Tool Dump)) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:21:21] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:21:21] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:21:28] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:21:36] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:21:43] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:21:51] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:21:59] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:22:01] 【批次结算】：本批归约出 5 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:22:34] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3499932819', '1994005152', '3296416129', '3714792937', '3370476237', '1923504381']
+[2026-11-03 23:22:34] SteamCMD 下载 3499932819 ...
+[2026-11-03 23:22:34] SteamCMD 下载 1994005152 ...
+[2026-11-03 23:22:34] SteamCMD 下载 3296416129 ...
+[2026-11-03 23:22:34] SteamCMD 下载 3714792937 ...
+[2026-11-03 23:22:34] SteamCMD 下载 3370476237 ...
+[2026-11-03 23:22:35] SteamCMD 下载 1923504381 ...
+[2026-11-03 23:24:37] Worker [3499932819] 成功解析入库暂存区 -> Pack of Bill (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:24:54] Worker [1994005152] 下载失败或工坊条目不存在，标记跳过
+[2026-11-03 23:25:24] Worker [3296416129] 成功解析入库暂存区 -> Hollow Knight (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 23:25:43] Worker [3714792937] 下载失败或工坊条目不存在，标记跳过
+[2026-11-03 23:26:02] Worker [3370476237] 成功解析入库暂存区 -> 更多技能点！ (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:26:19] Worker [1923504381] 过滤拦截: Advanced Warning (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 23:26:19] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:26:20] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:26:20] Reducer: 成功将 Mod 3296416129 (Hollow Knight) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:26:20] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:26:20] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:26:20] Reducer: 成功将 Mod 3370476237 (更多技能点！) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:26:20] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:26:20] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:26:20] Reducer: 成功将 Mod 3499932819 (Pack of Bill) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:26:20] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:26:20] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:26:32] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_2281925291_mod_2281925291.png (HTTP 200)
+[2026-11-03 23:26:42] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1530801499_Replicable_Component_Topology.png (HTTP 200)
+[2026-11-03 23:26:57] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:26:59] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:27:32] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['714379083', '3721481256', '3649771461', '3631824824', '3232591891', '3203985090']
+[2026-11-03 23:27:32] SteamCMD 下载 714379083 ...
+[2026-11-03 23:27:32] SteamCMD 下载 3721481256 ...
+[2026-11-03 23:27:32] SteamCMD 下载 3649771461 ...
+[2026-11-03 23:27:32] SteamCMD 下载 3631824824 ...
+[2026-11-03 23:27:32] SteamCMD 下载 3232591891 ...
+[2026-11-03 23:27:32] SteamCMD 下载 3203985090 ...
+[2026-11-03 23:29:28] Worker [714379083] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:29:51] Worker [3721481256] 过滤拦截: ENABLE_UI_WOBBLE (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 23:31:10] Worker [3649771461] 成功解析入库暂存区 -> 黑色精子 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:31:35] Worker [3631824824] 成功解析入库暂存区 -> 结城希亚 (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:32:57] Worker [3232591891] 成功解析入库暂存区 -> 拉芙塔莉雅-Raphtalia (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:34:18] Worker [3203985090] 过滤拦截: Bigbackpack(大背包)3.0 (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 23:34:19] Reducer Worker 7: 发现 3 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:34:19] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:34:19] Reducer: 成功将 Mod 3232591891 (拉芙塔莉雅-Raphtalia) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:34:19] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:34:19] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:34:19] Reducer: 成功将 Mod 3631824824 (结城希亚) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:34:19] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:34:19] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:34:19] Reducer: 成功将 Mod 3649771461 (黑色精子) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:34:19] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:34:20] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:34:33] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:34:40] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:34:47] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:34:49] 【批次结算】：本批归约出 3 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:35:23] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['3174001190', '2877137784', '2733675253', '2406109752', '2043109179', '1788625832']
+[2026-11-03 23:35:23] SteamCMD 下载 3174001190 ...
+[2026-11-03 23:35:23] SteamCMD 下载 2877137784 ...
+[2026-11-03 23:35:23] SteamCMD 下载 2733675253 ...
+[2026-11-03 23:35:23] SteamCMD 下载 2406109752 ...
+[2026-11-03 23:35:23] SteamCMD 下载 2043109179 ...
+[2026-11-03 23:35:23] SteamCMD 下载 1788625832 ...
+[2026-11-03 23:36:43] Worker [3174001190] 下载失败或工坊条目不存在，标记跳过
+[2026-11-03 23:38:01] Worker [2877137784] 过滤拦截: Ukrainian Language Pack (无任何深度钩子，判定为资源或纯文本补丁)
+[2026-11-03 23:38:28] Worker [2733675253] 成功解析入库暂存区 -> Nanachi (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:38:49] Worker [2406109752] 成功解析入库暂存区 -> Playable Pets Essentials (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:39:09] Worker [2043109179] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:39:25] Worker [1788625832] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:39:25] Reducer Worker 7: 发现 2 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:39:25] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:39:25] Reducer: 成功将 Mod 2406109752 (Playable Pets Essentials) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:39:25] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:39:25] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:39:25] Reducer: 成功将 Mod 2733675253 (Nanachi) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:39:25] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:39:26] 已向老爹私聊推送批次文字简报 (HTTP 200)
+[2026-11-03 23:39:31] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:39:39] 已向老爹私聊推送母本长图自检截图: C:\Users\Administrator\Desktop\阿鲸工作文件夹\jihuang-main\state\screenshots\verify_skill_workshop_1608191708_Client_Action_Queue_Scheduler.png (HTTP 200)
+[2026-11-03 23:39:41] 【批次结算】：本批归约出 2 篇母本，休眠 30 秒进入下一批次...
+[2026-11-03 23:40:12] 【批次启动】：Worker 1~6 开始并发分析 6 个 Mod：['1416013613', '1907835622', '3762626450', '3565356900', '2959256145', '2477561322']
+[2026-11-03 23:40:12] SteamCMD 下载 1416013613 ...
+[2026-11-03 23:40:12] SteamCMD 下载 1907835622 ...
+[2026-11-03 23:40:12] SteamCMD 下载 3762626450 ...
+[2026-11-03 23:40:12] SteamCMD 下载 3565356900 ...
+[2026-11-03 23:40:12] SteamCMD 下载 2959256145 ...
+[2026-11-03 23:40:12] SteamCMD 下载 2477561322 ...
+[2026-11-03 23:41:51] Worker [1416013613] 过滤拦截:  (代码行数不足 30 行，属于纯配置或空壳模组)
+[2026-11-03 23:42:22] Worker [1907835622] 成功解析入库暂存区 -> Reliable Wortox (类别: 07_实体机制与游戏平衡类)
+[2026-11-03 23:42:39] Worker [3762626450] 成功解析入库暂存区 -> 全能信息面板 DST (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 23:43:01] Worker [3565356900] 成功解析入库暂存区 -> Challenge Board (类别: 03_网络通信RPC与数据同步类)
+[2026-11-03 23:43:22] Worker [2959256145] 成功解析入库暂存区 -> Ouro Kronii (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:44:03] Worker [2477561322] 成功解析入库暂存区 -> KEMOMIMI〔小狐狸〕！ (类别: 02_动作控制与状态机StateGraph类)
+[2026-11-03 23:44:03] Reducer Worker 7: 发现 5 份待存草稿，执行母本仲裁归约...
+[2026-11-03 23:44:03] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:44:03] Reducer: 成功将 Mod 1907835622 (Reliable Wortox) 增量归约合入既有权威母本 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:44:03] Reducer: 完成母本归约并清理草稿 -> anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md
+[2026-11-03 23:44:03] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:44:03] Reducer: 成功将 Mod 2477561322 (KEMOMIMI〔小狐狸〕！) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:44:03] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:44:03] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:44:03] Reducer: 成功将 Mod 2959256145 (Ouro Kronii) 增量归约合入既有权威母本 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:44:03] Reducer: 完成母本归约并清理草稿 -> anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md
+[2026-11-03 23:44:03] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:44:03] Reducer: 成功将 Mod 3565356900 (Challenge Board) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:44:03] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:44:03] 母本变体展示已达上限 (10)，增量归约记录至总账本
+[2026-11-03 23:44:03] Reducer: 成功将 Mod 3762626450 (全能信息面板 DST) 增量归约合入既有权威母本 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md
+[2026-11-03 23:44:03] Reducer: 完成母本归约并清理草稿 -> anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md

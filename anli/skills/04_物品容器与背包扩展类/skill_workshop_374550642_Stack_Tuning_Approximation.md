@@ -137,3 +137,434 @@ end
 
 ```
 
+
+
+### 变体演进：Item Auto-Fuel Slots (Mod 2736043172)
+- **变体场景与切面**：收录来自工坊 Mod 2736043172 (`Item Auto-Fuel Slots`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2736043172)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:lantern
+AddPrefabPostInit("lantern", function(inst)
+        local function OnTick(inst)
+            if inst.components.container and inst.components.container:GetItemInSlot(1) then
+                local owner = inst.components.inventoryitem.owner
+
+                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+                local currentfuel = inst.components.fueled.currentfuel
+                local maxfuel = inst.components.fueled.maxfuel
+
+                if (maxfuel - currentfuel) > fueltogive then
+                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
+                end
+            end
+        end
+
+        local function OnEquip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Open(owner)
+            end
+        end
+
+        local function OnUnequip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Close(owner)
+            end
+        end
+        
+        -- Start Container stuff ---------
+        local containers = GLOBAL.require("containers")
+        params = containers.params
+
+        params.lantern_inv =
+        {
+            widget =
+            {
+                slotpos =
+                {
+                    GLOBAL.Vector3(0,   32 + 4,  0),
+                },
+                animbank = "ui_cookpot_1x2",
+                animbuild = "ui_cookpot_1x2",
+                pos = GLOBAL.Vector3(0, 15, 0),
+            },
+            usespecificslotsforitems = true,
+            type = "hand_inv",
+        }
+        
+        function params.lantern_inv.itemtestfn(container, item, slot)
+            return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
+        end
+        -- End Container -------
+        
+
+        if not GLOBAL.TheWorld.ismastersim then
+            inst.OnEntityReplicated = function(inst) 
+                inst.replica.container:WidgetSetup("lantern_inv") 
+            end
+
+            return
+        end
+
+        inst:AddComponent("container")
+        inst.components.container:WidgetSetup("lantern_inv")
+        inst.components.container.canbeopened = false
+
+        if TUNING.AFS_PERISH ~= 1 then
+            inst:AddComponent("preserver")
+            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+        end
+
+        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+
+        inst:ListenForEvent("equipped", OnEquip)
+        inst:ListenForEvent("unequipped", OnUnequip)
+        inst:ListenForEvent("itemget", OnTick)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minerhat
+AddPrefabPostInit("minerhat", function(inst)
+        local function OnTick(inst)
+            if inst.components.container and inst.components.container:GetItemInSlot(1) then
+                local owner = inst.components.inventoryitem.owner
+
+                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+                local currentfuel = inst.components.fueled.currentfuel
+                local maxfuel = inst.components.fueled.maxfuel
+
+                if (maxfuel - currentfuel) > fueltogive then
+                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
+                end
+            end
+        end
+
+        local function OnEquip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Open(owner)
+            end
+        end
+
+        local function OnUnequip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Close(owner)
+            end
+        end
+        
+        -- Start Container stuff ---------
+        local containers = GLOBAL.require("containers")
+        params = containers.params
+
+        params.minerhat_inv =
+        {
+            widget =
+            {
+                slotpos =
+                {
+                    GLOBAL.Vector3(0,   32 + 4,  0),
+                },
+                animbank = "ui_cookpot_1x2",
+                animbuild = "ui_cookpot_1x2",
+                pos = GLOBAL.Vector3(0, 15, 0),
+            },
+            usespecificslotsforitems = true,
+            type = "head_inv",
+        }
+        
+        function params.minerhat_inv.itemtestfn(container, item, slot)
+            return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
+        end
+        -- End Container -------
+        
+
+        if not GLOBAL.TheWorld.ismastersim then
+            inst.OnEntityReplicated = function(inst) 
+                inst.replica.container:WidgetSetup("minerhat_inv") 
+            end
+
+            return
+        end
+
+        inst:AddComponent("container")
+        inst.components.container:WidgetSetup("minerhat_inv")
+        inst.components.container.canbeopened = false
+
+        if TUNING.AFS_PERISH ~= 1 then
+            inst:AddComponent("preserver")
+            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+        end
+
+        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+
+        inst:ListenForEvent("equipped", OnEquip)
+        inst:ListenForEvent("unequipped", OnUnequip)
+        inst:ListenForEvent("itemget", OnTick)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:armorskeleton
+AddPrefabPostInit("armorskeleton", function(inst)
+        local function OnTick(inst)
+            if inst.components.container and inst.components.container:GetItemInSlot(1) then
+                local owner = inst.components.inventoryitem.owner
+
+                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+                local currentfuel = inst.components.fueled.currentfuel
+                local maxfuel = inst.components.fueled.maxfuel
+
+                if (maxfuel - currentfuel) > fueltogive then
+                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
+                end
+            end
+        end
+
+        local function OnEquip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Open(owner)
+            end
+        end
+
+        local function OnUnequip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Close(owner)
+            end
+        end
+        
+        -- Start Container stuff ---------
+        local containers = GLOBAL.require("containers")
+        params = containers.params
+
+        params.armorskel_inv =
+        {
+            widget =
+            {
+                slotpos =
+                {
+                    GLOBAL.Vector3(0,   32 + 4,  0),
+                },
+                animbank = "ui_cookpot_1x2",
+                animbuild = "ui_cookpot_1x2",
+                pos = GLOBAL.Vector3(0, 15, 0),
+            },
+            usespecificslotsforitems = true,
+            type = "body_inv",
+        }
+        
+        function params.armorskel_inv.itemtestfn(container, item, slot)
+            return item:HasTag("nightmarefuel") -- Tag added by this mod, not in vanilla.
+        end
+        -- End Container -------
+        
+
+        if not GLOBAL.TheWorld.ismastersim then
+            inst.OnEntityReplicated = function(inst) 
+                inst.replica.container:WidgetSetup("armorskel_inv") 
+            end
+
+            return
+        end
+
+        inst:AddComponent("container")
+        inst.components.container:WidgetSetup("armorskel_inv")
+        inst.components.container.canbeopened = false
+
+        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+
+        inst:ListenForEvent("equipped", OnEquip)
+        inst:ListenForEvent("unequipped", OnUnequip)
+        inst:ListenForEvent("itemget", OnTick)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:molehat
+AddPrefabPostInit("molehat", function(inst)
+        local function OnTick(inst)
+            if inst.components.container and inst.components.container:GetItemInSlot(1) then
+                local owner = inst.components.inventoryitem.owner
+
+                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+                local currentfuel = inst.components.fueled.currentfuel
+                local maxfuel = inst.components.fueled.maxfuel
+
+                if (maxfuel - currentfuel) > fueltogive then
+                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
+                end
+            end
+        end
+
+        local function OnEquip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Open(owner)
+            end
+        end
+
+        local function OnUnequip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Close(owner)
+            end
+        end
+        
+        -- Start Container stuff ---------
+        local containers = GLOBAL.require("containers")
+        params = containers.params
+
+        params.moggles_inv =
+        {
+            widget =
+            {
+                slotpos =
+                {
+                    GLOBAL.Vector3(0,   32 + 4,  0),
+                },
+                animbank = "ui_cookpot_1x2",
+                animbuild = "ui_cookpot_1x2",
+                pos = GLOBAL.Vector3(0, 15, 0),
+            },
+            usespecificslotsforitems = true,
+            type = "head_inv",
+        }
+        
+        function params.moggles_inv.itemtestfn(container, item, slot)
+            return item:HasTag("wormfuel") -- Tag added by this mod, not in vanilla.
+        end
+        -- End Container -------
+        
+
+        if not GLOBAL.TheWorld.ismastersim then
+            inst.OnEntityReplicated = function(inst) 
+                inst.replica.container:WidgetSetup("moggles_inv") 
+            end
+
+            return
+        end
+
+        inst:AddComponent("container")
+        inst.components.container:WidgetSetup("moggles_inv")
+        inst.components.container.canbeopened = false
+
+        if TUNING.AFS_PERISH ~= 1 then
+            inst:AddComponent("preserver")
+            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+         end
+
+        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+
+        inst:ListenForEvent("equipped", OnEquip)
+        inst:ListenForEvent("unequipped", OnUnequip)
+        inst:ListenForEvent("itemget", OnTick)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:shieldofterror
+AddPrefabPostInit("shieldofterror", function(inst)
+        -- different ontick function for the shield, since it doesn't use the same system for durability as the other items covered in this mod
+        local function OnTick(inst) 
+            if inst.components.container and inst.components.container:GetItemInSlot(1) then
+                local owner = inst.components.inventoryitem.owner
+                local food = inst.components.container:GetItemInSlot(1)
+                -- inst is shield
+
+                if not food.components.edible then
+                    return -- return if we aren't edible somehow
+                end
+
+                local armortogive = math.abs((food.components.edible.healthvalue * 4)) + math.abs((food.components.edible.hungervalue * 1.75))
+                local currentarmor = inst.components.armor.condition
+                local maxarmor = inst.components.armor.maxcondition
+
+                if (maxarmor - currentarmor) > armortogive then
+                    inst.components.eater:Eat(food, owner)
+                end
+            end
+        end
+
+        local function OnEquip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Open(owner)
+            end
+        end
+
+        local function OnUnequip(inst, data)
+            local owner = data.owner
+            if inst.components.container ~= nil then
+                inst.components.container:Close(owner)
+            end
+        end
+        
+        -- Start Container stuff ---------
+        local containers = GLOBAL.require("containers")
+        params = containers.params
+
+        params.shieldofterror_inv =
+        {
+            widget =
+            {
+                slotpos =
+                {
+                    GLOBAL.Vector3(0,   32 + 4,  0),
+                },
+                animbank = "ui_cookpot_1x2",
+                animbuild = "ui_cookpot_1x2",
+                pos = GLOBAL.Vector3(0, 15, 0),
+            },
+            usespecificslotsforitems = true,
+            type = "hand_inv",
+        }
+        
+        function params.shieldofterror_inv.itemtestfn(container, item, slot)
+            for k, v in pairs(GLOBAL.FOODTYPE) do
+                if item:HasTag("edible_"..v) then
+                    return true
+                end
+            end
+
+            return false
+        end
+        -- End Container -------
+        
+
+        if not GLOBAL.TheWorld.ismastersim then
+            inst.OnEntityReplicated = function(inst) 
+                inst.replica.container:WidgetSetup("shieldofterror_inv") 
+            end
+
+            return
+        end
+
+        inst:AddComponent("container")
+        inst.components.container:WidgetSetup("shieldofterror_inv")
+        inst.components.container.canbeopened = false
+
+        if TUNING.AFS_PERISH ~= 1 then
+            inst:AddComponent("preserver")
+            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+        end
+
+        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+
+        inst:ListenForEvent("equipped", OnEquip)
+        inst:ListenForEvent("unequipped", OnUnequip)
+        inst:ListenForEvent("itemget", OnTick)
+        -- armordamaged added for improved visual feedback
+        inst:ListenForEvent("armordamaged", OnTick)
+    end)
+
+```
+
