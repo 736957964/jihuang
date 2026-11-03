@@ -396,3 +396,302 @@ end)
 
 ```
 
+
+
+### 变体演进：T键物品增加 (Mod 2763963752)
+- **变体场景与切面**：收录来自工坊 Mod 2763963752 (`T键物品增加`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2763963752)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function (inst)
+    inst:DoTaskInTime(0,function ()
+        if not controls or not controls.TMI then
+            return
+        end
+        --增加鸦年华，浣猫年
+        local tmp=require "TMIP/debug"
+        for k,v in ipairs(tmp)do
+            if v.tittle and v.tittle== STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXT then
+                table.insert(v.list,{
+                    beta = false,
+                    pos = 'all',
+                    name = _G.TOOMANYITEMS.UI_LANGUAGE == 'cn' and STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL or 'CARNIVAL',
+                    tip = STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL,
+                    fn = {
+                        'confirm',
+                        'ApplySpecialEvent("crow_carnival") TheWorld.topology.overrides.specialevent = "crow_carnival" c_save() c_announce("' ..
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_SERVER_RESETTIP ..
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT ..
+                        STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL ..
+                        '") TheWorld:DoTaskInTime(5, function() if TheWorld ~= nil and TheWorld.ismastersim then TheNet:SendWorldRollbackRequestToServer(0) end end)',
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL,
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXTCHANGESTIP
+                    }
+                })
+                table.insert(v.list,{
+                    beta = false,
+                    pos = 'all',
+                    name = _G.TOOMANYITEMS.UI_LANGUAGE == 'cn' and STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON or 'YOT_CATCOON',
+                    tip = STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON,
+                    fn = {
+                        'confirm',
+                        'ApplySpecialEvent("year_of_the_catcoon") TheWorld.topology.overrides.specialevent = "year_of_the_catcoon" c_save() c_announce("' ..
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_SERVER_RESETTIP ..
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT ..
+                        STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON ..
+                        '") TheWorld:DoTaskInTime(5, function() if TheWorld ~= nil and TheWorld.ismastersim then TheNet:SendWorldRollbackRequestToServer(0) end end)',
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON,
+                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXTCHANGESTIP
+                    }
+                })
+                break
+            end
+        end
+        package.loaded["TMIP/debug"] = tmp
+        if controls.TMI.debugshield then
+            controls.TMI.debugshield:Kill()
+        end
+        controls.TMI:DebugMenu()
+    end)
+end)
+
+```
+
+
+
+### 变体演进：HEADER_GENERAL (Mod 3485366151)
+- **变体场景与切面**：收录来自工坊 Mod 3485366151 (`HEADER_GENERAL`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3485366151)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:aoetargeting
+AddComponentPostInit("aoetargeting", function(self)
+    local old_CanRepeatCast = self.CanRepeatCast
+    local old_ShouldRepeatCast = self.ShouldRepeatCast
+
+    self.CanRepeatCast = function(self)
+        if IsContinuousSpellEnabled() and ThePlayer and ThePlayer.continuous_spell_active then
+            return true
+        end
+        return old_CanRepeatCast(self)
+    end
+
+    self.ShouldRepeatCast = function(self, doer)
+        if IsContinuousSpellEnabled() and ThePlayer and ThePlayer.continuous_spell_active then
+            return true
+        end
+        return old_ShouldRepeatCast(self, doer)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:spellbook
+AddComponentPostInit("spellbook", function(self)
+	local oldselectfn = self.SelectSpell
+	self.SelectSpell = function(self, id)
+		if not self.items then return false end
+		return oldselectfn(self, id)
+	end
+
+	local oldfn = self.OpenSpellBook
+	self.OpenSpellBook = function(self, user)
+		ThePlayer.HUD.controls.spellwheel:SetPosition(0,0)
+		return oldfn(self,user)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:spellbookcooldowns
+AddComponentPostInit("spellbookcooldowns", function(inst)
+    local oldregisterfn = inst.RegisterSpellbookCooldown
+    inst.RegisterSpellbookCooldown = function(self, cd)
+    	if self.inst and self.inst.components.huanyuecooldowntimer then
+    		self.inst.components.huanyuecooldowntimer:OnCast(cd:GetLength())
+    	end
+    	mod.last_cast_time = GetTime()
+        oldregisterfn(self,cd)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:focalpoint
+AddComponentPostInit("focalpoint", function(self)
+	local oldfn = self.StartFocusSource
+	self.StartFocusSource = function(self, source, id, target, minrange, maxrange, priority, updater, ...)
+		if source and source._remi_nofocus or target and target._remi_nofocus then return end
+		oldfn(self, source, id, target, minrange, maxrange, priority, updater, ...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wobysmall
+AddPrefabPostInit("wobysmall", WobyPostInit)
+AddPrefabPostInit("wobybig", WobyPostInit)
+
+AddPrefabPostInit("winona_remote", function(inst)
+	if inst.components and inst.components.spellbook then
+		inst.components.spellbook:SetBgData()
+	end
+end)
+
+```
+
+
+
+### 变体演进：skill_1 (Mod 3378500626)
+- **变体场景与切面**：收录来自工坊 Mod 3378500626 (`skill_1`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3378500626)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:spellbookcooldown
+AddPrefabPostInit("spellbookcooldown", function(inst)
+        if _G.ThePlayer:HasTag("ghostlyfriend") then
+            for k, v in ipairs(tiles) do
+                v:SetChargePercent(0)
+            end
+    
+            inst:ListenForEvent("pctdirty", function(inst)
+                local pct = 1 - inst:GetPercent()
+                for k, v in ipairs(tiles) do
+                    if v.inst:IsValid() then
+                        if math.abs(pct - v.rechargepct) > 0.05 then
+                            if inst:GetSpellName() == _G.hash("do_ghost_attackat") then
+                                if _G.ThePlayer.components.spellbookcooldowns:GetSpellCooldownPercent("ghostcommand") == nil then
+                                    v:SetChargeTime(inst:GetLength())
+                                    v:SetChargePercent(1 - inst:GetPercent())
+                                    v.recharge:GetAnimState():SetMultColour(.2, .2, 0, 0.64) -- '额外冷却' 黄色
+                                end
+                            else
+                                v:SetChargeTime(TUNING.WENDYSKILL_COMMAND_COOLDOWN)
+                                v:SetChargePercent(1 - inst:GetPercent())
+                                v.recharge:GetAnimState():SetMultColour(0, 0, 0.4, 0.64) -- '普通冷却' 蓝色
+                            end
+                        end
+                    else
+                        table.remove(tiles, k)
+                    end
+                end
+            end)
+        end
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world",function(inst) 
+    inst:DoPeriodicTask(0.2+0.01*math.random(),function(inst)
+        UpdatePlayerIndicators()
+    end)
+end)
+
+```
+
+
+
+### 变体演进：open_config_key (Mod 3372819329)
+- **变体场景与切面**：收录来自工坊 Mod 3372819329 (`open_config_key`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3372819329)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wortox_overloading_fx
+AddPrefabPostInit("wortox_overloading_fx", function(inst)
+    inst:DoTaskInTime(0, function()
+        local parent = inst.entity:GetParent()
+        if parent == nil or parent ~= ThePlayer or not GetConfig("overload_store") then
+            return
+        end
+
+        local overload_time = TUNING.SKILLS.WORTOX
+            and TUNING.SKILLS.WORTOX.NAUGHTY_OVERLOAD_STOP_TIME or 4
+
+        inst:DoTaskInTime(math.max(overload_time - 0.5, 0), function()
+            local stored = StoreExcessBeforeOverload(inst, 4)
+            if stored > 0 and ThePlayer.components.talker then
+                ThePlayer.components.talker:Say(
+                    string.format(GetWortoxStrings().FEATURES.OVERLOAD_STORE.SUCCESS, stored))
+            end
+        end)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox_soul_spawn
+AddPrefabPostInit("wortox_soul_spawn", function(inst)
+    inst:DoTaskInTime(0, function()
+        inst._detection_task = inst:DoPeriodicTask(FRAMES, function()
+            if inst:IsValid() and not inst._target_confirmed then
+                DetectWortoxTarget(inst)
+            end
+        end, 1)
+
+        inst:ListenForEvent("onremove", function()
+            if my_attracted_souls[inst] then
+                my_attracted_souls[inst] = nil
+            end
+
+            if inst._detection_task then
+                inst._detection_task:Cancel()
+                inst._detection_task = nil
+            end
+        end)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function(world)
+    LocationMemory.alldata = RW_util:LoadData(locationpatch) or {}
+    print("[Wortox] 加载位置数据:", json.encode(LocationMemory.alldata))
+
+    local a = true
+    world:ListenForEvent("playeractivated", function()
+        if a then
+            a = false
+            LocationMemory.worldid = TheWorld.net.components.shardstate and
+                TheWorld.net.components.shardstate:GetMasterSessionId()
+            if not LocationMemory.worldid then
+                print("[Wortox] 错误: 无法获取世界ID")
+                return
+            end
+
+            print("[Wortox] 当前世界ID:", LocationMemory.worldid)
+
+
+            if LocationMemory.alldata[LocationMemory.worldid] and LocationMemory.alldata[LocationMemory.worldid].locations then
+                saved_locations = LocationMemory.alldata[LocationMemory.worldid].locations
+                print("[Wortox] 已加载位置数量:", #saved_locations)
+            else
+                saved_locations = {}
+                print("[Wortox] 没有保存的位置，初始化为空")
+            end
+
+
+            LocationMemory.data_loaded = true
+            print("[Wortox] 数据加载完成，允许保存")
+        end
+    end)
+
+
+    world:WatchWorldState("cycles", function(inst)
+        LocationMemory:SaveData("cycles")
+    end)
+end)
+
+```
+

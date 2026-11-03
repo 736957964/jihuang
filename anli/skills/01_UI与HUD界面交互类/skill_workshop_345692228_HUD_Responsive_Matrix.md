@@ -127,3 +127,35 @@ end)
 
 ```
 
+
+
+### 变体演进：keep_hud_ui (Mod 2056032273)
+- **变体场景与切面**：收录来自工坊 Mod 2056032273 (`keep_hud_ui`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2056032273)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:colourcube
+AddComponentPostInit("colourcube", function(self, inst)
+    if GetModConfigData("autumn_cc_only") and not inst:HasTag("cave") then
+        inst:PushEvent("overridecolourcube", "images/colour_cubes/day05_cc.tex")
+    end
+
+    for _, fn in ipairs(TheWorld.event_listeners["playeractivated"][TheWorld]) do
+        local OnSanityDelta = UpvalueUtil.GetUpvalue(fn, "OnSanityDelta")
+        if OnSanityDelta then
+            UpvalueUtil.SetUpvalue(fn, "OnSanityDelta", function(player, data)
+                local easing = require("easing")
+                PostProcessor:SetColourCubeLerp(1, 0)
+                PostProcessor:SetDistortionFactor(1)
+                UpvalueUtil.SetUpvalue(OnSanityDelta, "_fxspeed", easing.outQuad(0, 0, .2, 1))
+            end)
+        end
+    end
+end)
+
+```
+

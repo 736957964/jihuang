@@ -76,3 +76,29 @@ end)
    - 绝不要在 `AddPrefabPostInitAny` 回调内执行 `TheSim:FindEntities`、字符串拼接、复杂正则表达式或大表遍历。实体生成每秒可能触发数十次，必须通过首行的 `if inst.components.xxx == nil then return end` 毫秒级退出。
 2. **`replica` 客户端显示对齐**：
    - 饥荒的 `stackable` 组件在主客机同步时，`replica.stackable:MaxSize()` 会自动拉取服务端的最新容量。无需在客户端手动再去 Hook `replica`，避免引发客户端本地与网络包的状态竞争（Race Condition）。
+
+
+## 五、进阶拓扑演进与变体分支
+
+### 变体演进：Personal Chesters (Mod 463740026)
+- **变体场景与切面**：收录来自工坊 Mod 463740026 (`Personal Chesters`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 463740026)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:personal_chester_eyebone
+AddPrefabPostInit("personal_chester_eyebone", function(inst)
+	inst.prefab = "chester_eyebone"
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:personal_chester
+AddPrefabPostInit("personal_chester", function(inst)
+	inst.prefab = "chester"
+end)
+
+```
+
