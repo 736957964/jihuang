@@ -34,7 +34,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：高阶 BOSS 状态机状态定义与免疫标签配置 (SGboss.lua)
 -- ==============================================================================
 
 local states = {
@@ -47,13 +46,11 @@ local states = {
             inst.AnimState:PlayAnimation("roar")
             inst.SoundEmitter:PlaySound("dontstarve/creatures/bearger/taunt")
             
-            -- 全屏摄像机震动反馈
             ShakeAllCameras(CAMERASHAKE.FULL, 0.7, 0.02, 0.5, inst, 40)
         end,
 
         timeline = {
             TimeEvent(10 * FRAMES, function(inst)
-                -- 核心技能点：地面冲击与范围震慑
                 if inst.DoGroundPound then
                     inst:DoGroundPound()
                 end
@@ -69,18 +66,14 @@ local states = {
 }
 
 -- ==============================================================================
--- 范式 2：BOSS 实体预制体定义与血量监听 (custom_boss.lua)
 -- ==============================================================================
 
 local function OnHealthDelta(inst, data)
     if not inst.components.health:IsDead() then
         local percent = data.newpercent
-        -- 50% 血量转阶段判定 (使用布尔锁防止反复触发)
         if percent < 0.5 and not inst.is_enraged then
             inst.is_enraged = true
-            -- 强制切入霸体咆哮
             inst.sg:GoToState("roar")
-            -- 狂暴属性加成
             inst.components.combat:SetDefaultDamage(150)
             inst.components.combat:SetAttackPeriod(2.0)
             inst.components.locomotor.runspeed = 10
@@ -89,7 +82,6 @@ local function OnHealthDelta(inst, data)
 end
 
 local function RetargetFn(inst)
-    -- 智能检索 15 码内非幽灵、非隐匿的玩家
     return FindEntity(
         inst,
         15,
@@ -102,10 +94,8 @@ local function RetargetFn(inst)
 end
 
 local function KeepTargetFn(inst, target)
-    -- 离开 30 码或目标死亡时安全释放仇恨
     return inst.components.combat:CanTarget(target) and inst:GetDistanceSqToInst(target) < 900
-end
-```
+end```
 
 ---
 

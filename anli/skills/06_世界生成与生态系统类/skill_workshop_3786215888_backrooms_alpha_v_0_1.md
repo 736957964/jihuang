@@ -17,10 +17,8 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3786215888)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 
 AddPrefabPostInit("world", function(world)
     if not world.ismastersim then return end
@@ -44,7 +42,6 @@ AddPrefabPostInit("world", function(world)
             z + math.random(-200, 200) / 100
         end
         
-        --ents
         TryPrefab("grass", 2.7, getcoords())
         TryPrefab("marsh_bush", 1.9, getcoords())
         TryPrefab("sapling", .15, getcoords())
@@ -93,7 +90,7 @@ AddPrefabPostInit("world", function(world)
 
             b_objects_spawned = true
         end
-    end)
+end)
 
     local OldOnSave = world.OnSave
     world.OnSave = function(src, data)
@@ -108,8 +105,7 @@ AddPrefabPostInit("world", function(world)
             b_objects_spawned = data.b_objects_spawned
         end
     end
-end)
-```
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

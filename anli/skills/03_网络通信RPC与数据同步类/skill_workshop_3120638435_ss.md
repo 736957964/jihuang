@@ -17,13 +17,10 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3120638435)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-
-AddPrefabPostInit("forest_network", function(inst) inst:AddComponent("globalpositions") end)
-```
+AddPrefabPostInit("forest_network", function(inst) inst:AddComponent("globalpositions") end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

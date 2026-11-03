@@ -25,20 +25,17 @@
 
 ```lua
 -- ============================================================================
--- 生产级无污染聊天指令拦截与玩家生命周期重置器
 -- ============================================================================
 local GLOBAL = GLOBAL
 local TheNet = GLOBAL.TheNet
 local TheWorld = GLOBAL.TheWorld
 
--- 1. 注册指令分发总线
 local COMMANDS = {}
 
 function RegisterChatCommand(cmd, handler)
     COMMANDS[string.lower(cmd)] = handler
 end
 
--- 2. Hook 底层网络聊天通道 (静默拦截)
 local Old_Networking_Say = GLOBAL.Networking_Say
 GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
     if message and (string.sub(message, 1, 1) == "#" or string.sub(message, 1, 1) == "/") then
@@ -54,7 +51,6 @@ GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, wh
             if player and player.inst then
                 table.remove(args, 1)
                 COMMANDS[cmd_name](player.inst, args)
-                -- 核心拦截点：直接返回，绝对不交给下游广播函数，实现静默执行
                 return
             end
         end
@@ -62,19 +58,15 @@ GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, wh
     return Old_Networking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
 end
 
--- 3. 生产级安全自杀重选处理
 RegisterChatCommand("restart", function(player, args)
     if not player:IsValid() then return end
     
-    -- 掉落随身物品，避免存档数据污染
     if player.components.inventory then
         player.components.inventory:DropEverything(true)
     end
     
-    -- 官方规范注销并弹出选人界面
     TheWorld:PushEvent("ms_playerdespawnanddelete", player)
-end)
-```
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

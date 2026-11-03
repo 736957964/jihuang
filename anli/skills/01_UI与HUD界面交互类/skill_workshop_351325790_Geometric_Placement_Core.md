@@ -28,7 +28,6 @@ $$z = u \cdot c_z + v \cdot r_z$$
 
 ```lua
 -- ==============================================================================
--- 范式：纯客户端空间吸附与网格对象池增量调度器 (GridSnapManager)
 -- ==============================================================================
 
 local GridSnapManager = Class(function(self, step)
@@ -37,7 +36,6 @@ local GridSnapManager = Class(function(self, step)
     self.active_grid = {} -- 当前激活的坐标键值对 key -> entity
 end)
 
--- 1. 离散网格吸附计算
 function GridSnapManager:SnapPosition(world_pt, offset)
     local ox = (offset and offset.x) or 0
     local oz = (offset and offset.z) or 0
@@ -46,7 +44,6 @@ function GridSnapManager:SnapPosition(world_pt, offset)
     return Vector3(sx, 0, sz)
 end
 
--- 2. 从对象池获取或创建临时提示点
 function GridSnapManager:GetGridPoint(x, z)
     local key = string.format("%.2f_%.2f", x, z)
     if self.active_grid[key] then
@@ -72,7 +69,6 @@ function GridSnapManager:GetGridPoint(x, z)
     return ent
 end
 
--- 3. 增量清理离开范围的点，回收到对象池
 function GridSnapManager:CullOutOfRange(center_pt, max_dist_sq)
     for key, ent in pairs(self.active_grid) do
         if ent:IsValid() then
@@ -88,7 +84,6 @@ function GridSnapManager:CullOutOfRange(center_pt, max_dist_sq)
     end
 end
 
--- 4. 销毁全部网格点
 function GridSnapManager:ClearAll()
     for _, ent in pairs(self.active_grid) do
         if ent:IsValid() then ent:Remove() end
@@ -98,8 +93,7 @@ function GridSnapManager:ClearAll()
         if ent:IsValid() then ent:Remove() end
     end
     self.pool = {}
-end
-```
+end```
 
 ---
 

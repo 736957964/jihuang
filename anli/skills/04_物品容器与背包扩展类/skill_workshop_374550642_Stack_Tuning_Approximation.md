@@ -20,26 +20,21 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：全局 TUNING 五级梯队宏覆盖 (modmain.lua)
 -- ==============================================================================
 
 local TUNING = GLOBAL.TUNING
 
--- 1. 覆写官方标准梯队 (侵入性最低，零运行时开销)
 TUNING.STACK_SIZE_LARGEITEM = 40  -- 原版 10 (如大肉、原木)
 TUNING.STACK_SIZE_MEDITEM   = 80  -- 原版 20 (如草、枝条、石头)
 TUNING.STACK_SIZE_SMALLITEM = 99  -- 原版 40 (如浆果、花瓣)
 TUNING.STACK_SIZE_TINYITEM  = 120 -- 原版 60 (如蜜蜂、蚊子)
 TUNING.STACK_SIZE_PELLET    = 250 -- 原版 120 (如种子、火药)
 
-
 -- ==============================================================================
--- 范式 2：针对硬编码第三方 Prefab 的智能区间逼近器 (scripts/tools/stack_approximator.lua)
 -- ==============================================================================
 
 local TARGET_TIERS = { 40, 80, 99, 120, 250 }
 
--- 离散区间逼近：将非标数值（如 50）智能平滑映射到最接近的高阶档位
 local function ApproximateTier(val)
     if not val or type(val) ~= "number" then return TARGET_TIERS[2] end
     for _, tier in ipairs(TARGET_TIERS) do
@@ -50,13 +45,10 @@ local function ApproximateTier(val)
     return TARGET_TIERS[#TARGET_TIERS]
 end
 
--- 全局实体切面拦截 (高性能短路设计)
 AddPrefabPostInitAny(function(inst)
-    -- 仅服务端执行，客机依赖网络同步
     if not GLOBAL.TheWorld.ismastersim then return end
 
     local stackable = inst.components.stackable
-    -- 核心性能守门员：90% 的实体没有 stackable，立即短路返回
     if stackable == nil then return end
 
     local current = stackable.maxsize
@@ -65,8 +57,7 @@ AddPrefabPostInitAny(function(inst)
     if target and target ~= current then
         stackable.maxsize = target
     end
-end)
-```
+end)```
 
 ---
 
@@ -85,7 +76,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 463740026)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -98,9 +88,7 @@ end)
 -- 切面钩子：AddPrefabPostInit:personal_chester
 AddPrefabPostInit("personal_chester", function(inst)
 	inst.prefab = "chester"
-end)
-
-```
+end)```
 
 
 
@@ -109,33 +97,28 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1598084686)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:inventory
 AddComponentPostInit("inventory", function(inventory)
-    -- AddPlayerPostInit triggers after Inventory.OnLoad
-    -- so we use AddComponentPostInit for this specific one
     if type(inventory.OnLoad) == "function" then
       inventory.OnLoad = fn.Inventory_OnLoad(inventory.OnLoad)
     end
-  end)
+end)
 
   AddClassPostConstruct("widgets/inventorybar", fn.InitInventorybar)
 
   AddClassPostConstruct("widgets/invslot", function(invslot)
     fn.OnNextCycle(function()
       fn.RenderSlotIcons(invslot.num)
-    end)
-  end)
+end)
+end)
 
   fn.InitPlayerHud()
   fn.InitClasses()
   fn.InitConfig()
-end
-
-```
+end```
 
 
 
@@ -144,7 +127,6 @@ end
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2736043172)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -179,7 +161,6 @@ AddPrefabPostInit("lantern", function(inst)
             end
         end
         
-        -- Start Container stuff ---------
         local containers = GLOBAL.require("containers")
         params = containers.params
 
@@ -202,7 +183,6 @@ AddPrefabPostInit("lantern", function(inst)
         function params.lantern_inv.itemtestfn(container, item, slot)
             return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
         end
-        -- End Container -------
         
 
         if not GLOBAL.TheWorld.ismastersim then
@@ -227,7 +207,7 @@ AddPrefabPostInit("lantern", function(inst)
         inst:ListenForEvent("equipped", OnEquip)
         inst:ListenForEvent("unequipped", OnUnequip)
         inst:ListenForEvent("itemget", OnTick)
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:minerhat
@@ -261,7 +241,6 @@ AddPrefabPostInit("minerhat", function(inst)
             end
         end
         
-        -- Start Container stuff ---------
         local containers = GLOBAL.require("containers")
         params = containers.params
 
@@ -284,7 +263,6 @@ AddPrefabPostInit("minerhat", function(inst)
         function params.minerhat_inv.itemtestfn(container, item, slot)
             return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
         end
-        -- End Container -------
         
 
         if not GLOBAL.TheWorld.ismastersim then
@@ -309,7 +287,7 @@ AddPrefabPostInit("minerhat", function(inst)
         inst:ListenForEvent("equipped", OnEquip)
         inst:ListenForEvent("unequipped", OnUnequip)
         inst:ListenForEvent("itemget", OnTick)
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:armorskeleton
@@ -343,7 +321,6 @@ AddPrefabPostInit("armorskeleton", function(inst)
             end
         end
         
-        -- Start Container stuff ---------
         local containers = GLOBAL.require("containers")
         params = containers.params
 
@@ -366,7 +343,6 @@ AddPrefabPostInit("armorskeleton", function(inst)
         function params.armorskel_inv.itemtestfn(container, item, slot)
             return item:HasTag("nightmarefuel") -- Tag added by this mod, not in vanilla.
         end
-        -- End Container -------
         
 
         if not GLOBAL.TheWorld.ismastersim then
@@ -386,7 +362,7 @@ AddPrefabPostInit("armorskeleton", function(inst)
         inst:ListenForEvent("equipped", OnEquip)
         inst:ListenForEvent("unequipped", OnUnequip)
         inst:ListenForEvent("itemget", OnTick)
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:molehat
@@ -420,7 +396,6 @@ AddPrefabPostInit("molehat", function(inst)
             end
         end
         
-        -- Start Container stuff ---------
         local containers = GLOBAL.require("containers")
         params = containers.params
 
@@ -443,7 +418,6 @@ AddPrefabPostInit("molehat", function(inst)
         function params.moggles_inv.itemtestfn(container, item, slot)
             return item:HasTag("wormfuel") -- Tag added by this mod, not in vanilla.
         end
-        -- End Container -------
         
 
         if not GLOBAL.TheWorld.ismastersim then
@@ -468,17 +442,15 @@ AddPrefabPostInit("molehat", function(inst)
         inst:ListenForEvent("equipped", OnEquip)
         inst:ListenForEvent("unequipped", OnUnequip)
         inst:ListenForEvent("itemget", OnTick)
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:shieldofterror
 AddPrefabPostInit("shieldofterror", function(inst)
-        -- different ontick function for the shield, since it doesn't use the same system for durability as the other items covered in this mod
         local function OnTick(inst) 
             if inst.components.container and inst.components.container:GetItemInSlot(1) then
                 local owner = inst.components.inventoryitem.owner
                 local food = inst.components.container:GetItemInSlot(1)
-                -- inst is shield
 
                 if not food.components.edible then
                     return -- return if we aren't edible somehow
@@ -508,7 +480,6 @@ AddPrefabPostInit("shieldofterror", function(inst)
             end
         end
         
-        -- Start Container stuff ---------
         local containers = GLOBAL.require("containers")
         params = containers.params
 
@@ -537,7 +508,6 @@ AddPrefabPostInit("shieldofterror", function(inst)
 
             return false
         end
-        -- End Container -------
         
 
         if not GLOBAL.TheWorld.ismastersim then
@@ -562,11 +532,8 @@ AddPrefabPostInit("shieldofterror", function(inst)
         inst:ListenForEvent("equipped", OnEquip)
         inst:ListenForEvent("unequipped", OnUnequip)
         inst:ListenForEvent("itemget", OnTick)
-        -- armordamaged added for improved visual feedback
         inst:ListenForEvent("armordamaged", OnTick)
-    end)
-
-```
+end)```
 
 
 
@@ -575,7 +542,6 @@ AddPrefabPostInit("shieldofterror", function(inst)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3710538435)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -588,8 +554,6 @@ local SEP = 7
 local INTERSEP = 15
 
 --------------------------------------------------
--- WX-78 backup body container layout compatibility
--- Make the backup body use a real 25 / 46 / 47-slot container widget.
 --------------------------------------------------
 
 local function BuildCenteredRowSlotPositions(slotpos, slots, y, spacing)
@@ -620,10 +584,7 @@ end)
 -- 切面钩子：AddPrefabPostInit:wx78_backupbody
 AddPrefabPostInit("wx78_backupbody", ConfigureWX78BackupBodyContainer)
 
-
 --------------------------------------------------
--- WX-78 stacksize circuit inventory container sync
--- Fixes duplicate disabled wx78_inventorycontainer items after backup body swaps.
 --------------------------------------------------
 
 local WX78_STACKSIZE_MODULE_PREFAB = "wx78module_stacksize"
@@ -735,9 +696,7 @@ AddComponentPostInit("upgrademoduleowner", function(self)
             return result
         end
     end
-end)
-
-```
+end)```
 
 
 
@@ -746,7 +705,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2519350133)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -767,7 +725,6 @@ AddPrefabPostInit("lifeinjector", AddTag)
 
 local cant_eat =
 {	
-	-- Mineral
 	"flint",
 	"goldnugget",
 	"rocks",
@@ -779,7 +736,6 @@ local cant_eat =
 	"thulecite",
 	"thulecite_pieces",
 	"dreadstone",
-	-- Gems crafting
 	"bluegem",
 	"redgem",
 	"purplegem",
@@ -793,7 +749,6 @@ local cant_eat =
 	"orangemooneye",
 	"purplemooneye",
 	"yellowmooneye",
-	-- Veggie
 	"red_cap",
 	"red_cap_cooked",
 	"blue_cap",
@@ -802,7 +757,6 @@ local cant_eat =
 	"green_cap_cooked",
 	"moon_cap",
 	"moon_cap_cooked",
-	-- Seed
 	"pinecone",
 	"acorn",
 	"acorn_cooked",
@@ -820,7 +774,6 @@ local cant_eat =
 	"onion_seeds",
 	"pepper_seeds",
 	"garlic_seeds",
-	--walter ammo
 	"slingshotammo_rock",
 	"slingshotammo_gold",
 	"slingshotammo_marble",
@@ -828,7 +781,6 @@ local cant_eat =
 	"slingshotammo_freeze",
 	"slingshotammo_slow",
 	"slingshotammo_thulecite",
-	--other
 	"pigskin",
 	"manrabbit_tail",
 	"papyrus",
@@ -843,7 +795,6 @@ local cant_eat =
 	"petals_evil",
 	"succulent_picked",
 }
--- CODE from Serpens 
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
         for k, v in pairs(GLOBAL.FOODTYPE) do
@@ -859,9 +810,6 @@ AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, acti
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
             end
         end
-		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
-			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
-		end]]--
     end
 
 -- ----------------------------------------------------------------------------
@@ -873,7 +821,6 @@ AddPrefabPostInit("lifeinjector", AddTag)
 
 local cant_eat =
 {	
-	-- Mineral
 	"flint",
 	"goldnugget",
 	"rocks",
@@ -885,7 +832,6 @@ local cant_eat =
 	"thulecite",
 	"thulecite_pieces",
 	"dreadstone",
-	-- Gems crafting
 	"bluegem",
 	"redgem",
 	"purplegem",
@@ -899,7 +845,6 @@ local cant_eat =
 	"orangemooneye",
 	"purplemooneye",
 	"yellowmooneye",
-	-- Veggie
 	"red_cap",
 	"red_cap_cooked",
 	"blue_cap",
@@ -908,7 +853,6 @@ local cant_eat =
 	"green_cap_cooked",
 	"moon_cap",
 	"moon_cap_cooked",
-	-- Seed
 	"pinecone",
 	"acorn",
 	"acorn_cooked",
@@ -926,7 +870,6 @@ local cant_eat =
 	"onion_seeds",
 	"pepper_seeds",
 	"garlic_seeds",
-	--walter ammo
 	"slingshotammo_rock",
 	"slingshotammo_gold",
 	"slingshotammo_marble",
@@ -934,7 +877,6 @@ local cant_eat =
 	"slingshotammo_freeze",
 	"slingshotammo_slow",
 	"slingshotammo_thulecite",
-	--other
 	"pigskin",
 	"manrabbit_tail",
 	"papyrus",
@@ -949,7 +891,6 @@ local cant_eat =
 	"petals_evil",
 	"succulent_picked",
 }
--- CODE from Serpens 
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
         for k, v in pairs(GLOBAL.FOODTYPE) do
@@ -965,9 +906,6 @@ AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, acti
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
             end
         end
-		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
-			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
-		end]]--
     end
 
 -- ----------------------------------------------------------------------------
@@ -978,7 +916,6 @@ AddPrefabPostInit("lifeinjector", AddTag)
 
 local cant_eat =
 {	
-	-- Mineral
 	"flint",
 	"goldnugget",
 	"rocks",
@@ -990,7 +927,6 @@ local cant_eat =
 	"thulecite",
 	"thulecite_pieces",
 	"dreadstone",
-	-- Gems crafting
 	"bluegem",
 	"redgem",
 	"purplegem",
@@ -1004,7 +940,6 @@ local cant_eat =
 	"orangemooneye",
 	"purplemooneye",
 	"yellowmooneye",
-	-- Veggie
 	"red_cap",
 	"red_cap_cooked",
 	"blue_cap",
@@ -1013,7 +948,6 @@ local cant_eat =
 	"green_cap_cooked",
 	"moon_cap",
 	"moon_cap_cooked",
-	-- Seed
 	"pinecone",
 	"acorn",
 	"acorn_cooked",
@@ -1031,7 +965,6 @@ local cant_eat =
 	"onion_seeds",
 	"pepper_seeds",
 	"garlic_seeds",
-	--walter ammo
 	"slingshotammo_rock",
 	"slingshotammo_gold",
 	"slingshotammo_marble",
@@ -1039,7 +972,6 @@ local cant_eat =
 	"slingshotammo_freeze",
 	"slingshotammo_slow",
 	"slingshotammo_thulecite",
-	--other
 	"pigskin",
 	"manrabbit_tail",
 	"papyrus",
@@ -1054,7 +986,6 @@ local cant_eat =
 	"petals_evil",
 	"succulent_picked",
 }
--- CODE from Serpens 
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
         for k, v in pairs(GLOBAL.FOODTYPE) do
@@ -1070,9 +1001,6 @@ AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, acti
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
             end
         end
-		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
-			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
-		end]]--
     end
 
 -- ----------------------------------------------------------------------------
@@ -1082,7 +1010,6 @@ AddPrefabPostInit("lifeinjector", AddTag)
 
 local cant_eat =
 {	
-	-- Mineral
 	"flint",
 	"goldnugget",
 	"rocks",
@@ -1094,7 +1021,6 @@ local cant_eat =
 	"thulecite",
 	"thulecite_pieces",
 	"dreadstone",
-	-- Gems crafting
 	"bluegem",
 	"redgem",
 	"purplegem",
@@ -1108,7 +1034,6 @@ local cant_eat =
 	"orangemooneye",
 	"purplemooneye",
 	"yellowmooneye",
-	-- Veggie
 	"red_cap",
 	"red_cap_cooked",
 	"blue_cap",
@@ -1117,7 +1042,6 @@ local cant_eat =
 	"green_cap_cooked",
 	"moon_cap",
 	"moon_cap_cooked",
-	-- Seed
 	"pinecone",
 	"acorn",
 	"acorn_cooked",
@@ -1135,7 +1059,6 @@ local cant_eat =
 	"onion_seeds",
 	"pepper_seeds",
 	"garlic_seeds",
-	--walter ammo
 	"slingshotammo_rock",
 	"slingshotammo_gold",
 	"slingshotammo_marble",
@@ -1143,7 +1066,6 @@ local cant_eat =
 	"slingshotammo_freeze",
 	"slingshotammo_slow",
 	"slingshotammo_thulecite",
-	--other
 	"pigskin",
 	"manrabbit_tail",
 	"papyrus",
@@ -1158,7 +1080,6 @@ local cant_eat =
 	"petals_evil",
 	"succulent_picked",
 }
--- CODE from Serpens 
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
         for k, v in pairs(GLOBAL.FOODTYPE) do
@@ -1174,10 +1095,9 @@ AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, acti
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
             end
         end
-		--[[if not right and inst.prefab == "flint" and target:HasTag("beefalo") then
-			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE)
-		end]]--
     end
-
-```
+end
+end
+end
+end```
 

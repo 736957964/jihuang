@@ -25,13 +25,11 @@
 
 ```lua
 -- ============================================================================
--- 生产级 Extra Equip Slots 拓扑扩展与预测注入
 -- ============================================================================
 local GLOBAL = GLOBAL
 local EQUIPSLOTS = GLOBAL.EQUIPSLOTS
 local EQUIPSLOT_IDS = GLOBAL.EQUIPSLOT_IDS
 
--- 1. 动态双向拓扑注册
 if not EQUIPSLOTS.BACK then
     EQUIPSLOTS.BACK = "back"
     EQUIPSLOT_IDS.back = 4
@@ -41,7 +39,6 @@ if not EQUIPSLOTS.NECK then
     EQUIPSLOT_IDS.neck = 5
 end
 
--- 2. inventory_classified 客户端预测穿透
 AddClassPostConstruct("components/inventory_classified", function(self)
     local _EquipAction = self.EquipAction
     self.EquipAction = function(self, action)
@@ -50,15 +47,13 @@ AddClassPostConstruct("components/inventory_classified", function(self)
             if item and item.replica and item.replica.equippable then
                 local slot = item.replica.equippable:EquipSlot()
                 if slot == EQUIPSLOTS.BACK or slot == EQUIPSLOTS.NECK then
-                    -- 触发客户端预先放置与动画步进，消除网络往返延迟
                     self.inst:PushEvent("equip_predicted", { slot = slot, item = item })
                 end
             end
         end
         return _EquipAction(self, action)
     end
-end)
-```
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

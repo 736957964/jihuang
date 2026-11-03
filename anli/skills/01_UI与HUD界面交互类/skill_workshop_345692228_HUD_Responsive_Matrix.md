@@ -21,7 +21,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式：自适应 HUD 挂载与输入隔离容器 (scripts/widgets/responsive_hud_container.lua)
 -- ==============================================================================
 
 local Widget = require "widgets/widget"
@@ -32,12 +31,10 @@ local ResponsiveContainer = Class(Widget, function(self, owner)
     self.camera_lock = false
 end)
 
--- 1. 矩阵逆缩放贴边算法 (支持九宫格锚定)
 function ResponsiveContainer:Reposition(controls, align_x, align_y, margin_x, margin_y)
     local hudscale = controls.top_root:GetScale()
     local screenw_full, screenh_full = GLOBAL.TheSim:GetScreenSize()
     
-    -- 反向求出真实逻辑视口坐标
     local screenw = screenw_full / hudscale.x
     local screenh = screenh_full / hudscale.y
 
@@ -59,7 +56,6 @@ function ResponsiveContainer:Reposition(controls, align_x, align_y, margin_x, ma
     self:SetPosition(target_x, target_y, 0)
 end
 
--- 2. 鼠标滚轮焦点与摄像机缩放阻断
 function ResponsiveContainer:OnGainFocus()
     ResponsiveContainer._base.OnGainFocus(self)
     if GLOBAL.TheCamera and GLOBAL.TheCamera:IsControllable() then
@@ -76,11 +72,9 @@ function ResponsiveContainer:OnLoseFocus()
     end
 end
 
--- 3. 消费滚轮与控制事件，防止穿透到底层世界
 function ResponsiveContainer:OnControl(control, down)
     if ResponsiveContainer._base.OnControl(self, control, down) then return true end
     if control == GLOBAL.CONTROL_MAP_ZOOM_IN or control == GLOBAL.CONTROL_MAP_ZOOM_OUT then
-        -- 内部消费滚轮缩放事件
         return true
     end
     return false
@@ -88,8 +82,7 @@ end
 
 return ResponsiveContainer
 end
-end
-```
+end```
 
 ---
 
@@ -108,7 +101,6 @@ end
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3649427234)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -125,9 +117,7 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)
-
-```
+end)```
 
 
 
@@ -136,7 +126,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2056032273)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -154,12 +143,10 @@ AddComponentPostInit("colourcube", function(self, inst)
                 PostProcessor:SetColourCubeLerp(1, 0)
                 PostProcessor:SetDistortionFactor(1)
                 UpvalueUtil.SetUpvalue(OnSanityDelta, "_fxspeed", easing.outQuad(0, 0, .2, 1))
-            end)
+end)
         end
     end
-end)
-
-```
+end)```
 
 
 
@@ -168,7 +155,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2226345952)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -185,9 +171,7 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)
-
-```
+end)```
 
 
 
@@ -196,7 +180,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3456159081)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -213,9 +196,7 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)
-
-```
+end)```
 
 
 
@@ -224,7 +205,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3548608555)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -241,9 +221,7 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)
-
-```
+end)```
 
 
 
@@ -252,7 +230,74 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2954087809)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player
+AddPrefabPostInit("player", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", BadgePostConstruct)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
+	end
+end)```
+
+
+
+### 变体演进：Redux UI (Mod 3454549303)
+- **变体场景与切面**：收录来自工坊 Mod 3454549303 (`Redux UI`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:sewing_mannequin
+AddPrefabPostInit("sewing_mannequin", function(inst)
+    inst._voidclothhattask = inst:DoPeriodicTask(GLOBAL.FRAMES, checkEntityTask, 0, inst)
+end)
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:voidclothhat_fx
+AddPrefabPostInit("voidclothhat_fx", function(inst)
+    local has_face_symbol = nil
+
+    inst:DoTaskInTime(0, function()
+        local parent = inst.entity:GetParent() or nil
+
+        if inst.fx ~= nil and parent then
+            for k, v in pairs(inst.fx) do
+                if v.AnimState and parent ~= nil then
+                    local voidclothbuild = parent.prefab .. "_voidclothhat"
+                    v.AnimState:SetBuild(voidclothbuild)
+                    local hasvoidbuild = v.AnimState:GetBuild() == parent.prefab .. "_voidclothhat"
+
+                    if hasvoidbuild then
+                        v.AnimState:SetBuild("hat_voidcloth_new")
+                        v.AnimState:OverrideSkinSymbol("fx_fabric", "hat_voidcloth", "fx_fabric")
+                    else
+                        v.AnimState:SetBuild("hat_voidcloth")
+                    end
+                end
+            end
+        end
+end)
+-- ----------------------------------------------------------------------------
+end)```
+
+
+
+### 变体演进：[Forge] The Battle Arena HUD (Mod 1824509831)
+- **变体场景与切面**：收录来自工坊 Mod 1824509831 (`[Forge] The Battle Arena HUD`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1824509831)
 -- ============================================================================
 local GLOBAL = GLOBAL
 

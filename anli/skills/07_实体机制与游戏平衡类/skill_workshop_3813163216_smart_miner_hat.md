@@ -17,13 +17,10 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3813163216)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-
 AddPrefabPostInit("minerhat", function(inst)
-    -- 只在服务端（主机 / 服务器）跑；客户端不插手
     if not GLOBAL.TheWorld.ismastersim then
         return
     end
@@ -37,8 +34,7 @@ AddPrefabPostInit("minerhat", function(inst)
     end
 
     ------------------------------------------------------------------
-end
-```
+end```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

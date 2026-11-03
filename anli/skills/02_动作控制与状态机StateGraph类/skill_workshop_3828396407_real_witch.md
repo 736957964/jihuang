@@ -17,10 +17,8 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3828396407)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 
 AddPrefabPostInit("witchbroom", function(inst)
 	if not GLOBAL.TheWorld.ismastersim then
@@ -36,8 +34,7 @@ AddPrefabPostInit("witchbroom", function(inst)
 	end
 end)
 
-local Drownable = require("components/drownable")
-```
+local Drownable = require("components/drownable")```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

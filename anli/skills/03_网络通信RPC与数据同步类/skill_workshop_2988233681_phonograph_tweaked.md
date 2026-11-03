@@ -17,10 +17,8 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2988233681)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 
 AddPrefabPostInit("phonograph", function(inst)
     inst.record_song = _G.net_string(inst.GUID, "phonograph.song", "phonographsongdirty")
@@ -244,7 +242,6 @@ AddPrefabPostInit("world", function(inst)
     end
     UpvalueHacker.SetUpvalue(_G.Prefabs.phonograph.fn, StopPlayingRecord, "StopPlayingRecord")
 
-
     local FARM_PLANT_TAGS = {"tendable_farmplant"}
     local function song_update(inst)
         local ix, iy, iz = inst.Transform:GetWorldPosition()
@@ -293,7 +290,6 @@ AddPrefabPostInit("world", function(inst)
     end
     UpvalueHacker.SetUpvalue(_G.Prefabs.phonograph.fn, TryToPlayRecord, "TryToPlayRecord")
 
-
     local function OnGetItemFromPlayer(inst, giver, item)
         inst:DropRecord()
         inst.components.inventory:GiveItem(item)
@@ -339,8 +335,7 @@ AddPrefabPostInit("world", function(inst)
     UpvalueHacker.SetUpvalue(_G.Prefabs.wood_table_round.fn, OnDecorTaken, "OnDecorTaken")
 end)
 end
-end
-```
+end```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

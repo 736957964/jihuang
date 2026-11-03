@@ -17,7 +17,6 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3670669065，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -25,17 +24,8 @@ GlassicAPI.SetOnequipSkinItem = function(name, data)
 	ENV.AddPrefabPostInit(name, set_onquip_skin_item(unpack(data)))
 end
 
--- The common init fn for skinned prefabs.
---[[usage:
-	CreatePrefabskin("skin_name", {
-		...,
-		init_fn = GlassicAPI.BasicInitFn,
-		...,
-	})
---]]
 GlassicAPI.BasicInitFn = function(inst)
-end
-```
+end```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

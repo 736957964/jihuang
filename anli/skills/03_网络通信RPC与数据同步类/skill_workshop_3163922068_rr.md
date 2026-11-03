@@ -17,27 +17,16 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3163922068)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-    --Do this in a world postinit to make sure it runs after Global Positions loads
     AddPrefabPostInit("world", function(inst)
-        --Add data for the target indicator's icon:
-        -- (if you don't add this, it won't make indicators)
-        -- You will have to make this image if it doesn't exist (standard procedure for images)
         GLOBAL._GLOBALPOSITIONS_TARGET_INDICATOR_ICONS.some_mod_prefab = {
-                -- atlas is left nil if the image is in inventoryimages
-                -- image is left nil if the image is just the key.tex (in this case, some_mod_prefab.tex)
                 atlas = "images/some_mod_prefab.xml",
                 image = nil,
             }
-        --Tell GlobalPositions what minimap icon to use:
-        -- (if you don't add this, it won't have a minimap icon, unless it already has one)
-        -- You will have to make this icon if it doesn't exist (see other minimap icon mods)
         GLOBAL._GLOBALPOSITIONS_MAP_ICONS.some_mod_prefab = "some_mod_prefab.tex"
-    end)
-```
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

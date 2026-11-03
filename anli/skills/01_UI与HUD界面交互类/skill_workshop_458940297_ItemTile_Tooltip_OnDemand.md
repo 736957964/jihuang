@@ -19,7 +19,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：客户端 ItemTile 悬停响应与防重监听守卫 (scripts/widgets/itemtile_decorator.lua)
 -- ==============================================================================
 
 local function DecorateItemTile(ItemTileClass)
@@ -31,16 +30,13 @@ local function DecorateItemTile(ItemTileClass)
         local item = self.item
         if not item or not item:IsValid() or not GLOBAL.ThePlayer then return end
 
-        -- 1. 单例守卫：确保每个 ItemTile 仅绑定一次回传监听，杜绝内存泄漏
         if not self._has_rpc_listener then
             self._has_rpc_listener = true
             self.inst:ListenForEvent("custom_item_info_ready", function(inst, data)
                 if self.focus and data and data.text then
-                    -- 拼接并更新提示
                     local base_str = self:GetDescriptionString()
                     self:SetTooltip(base_str .. "\n" .. data.text)
 
-                    -- 潮湿状态颜色自适应
                     if self.item and self.item:IsValid() and self.item:GetIsWet() then
                         self:SetTooltipColour(GLOBAL.unpack(GLOBAL.WET_TEXT_COLOUR))
                     else
@@ -50,23 +46,19 @@ local function DecorateItemTile(ItemTileClass)
             end, GLOBAL.ThePlayer)
         end
 
-        -- 2. 按需向服务端发起查询 (带实体句柄)
         SendModRPCToServer(GLOBAL.MOD_RPC["ItemInfoMod"]["QueryDetails"], item)
     end
 end
 
 -- ==============================================================================
--- 范式 2：服务端数据提取与单播回传 (modmain.lua)
 -- ==============================================================================
 
 if GLOBAL.TheNet:GetIsServer() then
     AddModRPCHandler("ItemInfoMod", "QueryDetails", function(player, item)
-        -- 核心防御：校验实体有效性与玩家距离
         if not player or not player:IsValid() or not item or not item:IsValid() then return end
 
         local detail_str = ""
 
-        -- 动态嗅探食物三维
         if item.components.edible then
             local e = item.components.edible
             detail_str = string.format("Hunger: %+d | Health: %+d | Sanity: %+d", 
@@ -76,21 +68,18 @@ if GLOBAL.TheNet:GetIsServer() then
             )
         end
 
-        -- 动态嗅探武器攻击力
         if item.components.weapon then
             local w = item.components.weapon
             detail_str = detail_str .. string.format("\nDamage: %d", math.floor(w.damage or 0))
         end
 
-        -- 单播回传给该玩家 (通过客户端专属 RPC 或客户端事件)
         SendModRPCToClient(GLOBAL.CLIENT_MOD_RPC["ItemInfoMod"]["ReceiveDetails"], player.userid, detail_str)
-    end)
+end)
 end
 
 return {
     DecorateItemTile = DecorateItemTile,
-}
-```
+}```
 
 ---
 

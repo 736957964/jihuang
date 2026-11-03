@@ -17,10 +17,8 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3813858106)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 
 AddComponentPostInit("playercontroller", function(self)
     ThePlayer = GLOBAL.ThePlayer
@@ -38,8 +36,7 @@ AddComponentPostInit("playercontroller", function(self)
         end
         self.LMBaction = act
 end
-end
-```
+end```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

@@ -19,7 +19,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式：工业级超大容器参数配置与安全注入器 (scripts/tools/container_injector.lua)
 -- ==============================================================================
 
 local ContainerInjector = {}
@@ -53,7 +52,6 @@ function ContainerInjector.RegisterCustomChest(prefab_name, rows, cols, is_fridg
     local containers = GLOBAL.require("containers")
     local slotpos = GenerateGridSlots(rows, cols, 75, 200)
 
-    -- 1. 突破客机网络数组最大槽位限制 (核心防御)
     containers.MAXITEMSLOTS = math.max(containers.MAXITEMSLOTS, #slotpos)
 
     local custom_param = {
@@ -67,7 +65,6 @@ function ContainerInjector.RegisterCustomChest(prefab_name, rows, cols, is_fridg
         type = "chest",
     }
 
-    -- 2. 代理 widgetsetup 模式 (保证跨 Mod 兼容)
     local old_widgetsetup = containers.widgetsetup
     containers.widgetsetup = function(container, prefab, data)
         local target_name = prefab or (container.inst and container.inst.prefab)
@@ -82,8 +79,7 @@ function ContainerInjector.RegisterCustomChest(prefab_name, rows, cols, is_fridg
     end
 end
 
-return ContainerInjector
-```
+return ContainerInjector```
 
 ---
 

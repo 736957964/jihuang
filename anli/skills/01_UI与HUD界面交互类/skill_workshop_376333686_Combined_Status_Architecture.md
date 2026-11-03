@@ -16,16 +16,14 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 376333686，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 if (CSW or HML) and SHOWSTATNUMBERS then
 	AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
-	end)
-end
-```
+end)
+end```
 
 ---
 

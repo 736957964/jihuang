@@ -17,7 +17,6 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3828908041，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -29,20 +28,19 @@ AddComponentPostInit("playerspawner", function(self, inst)
     inst:ListenForEvent("ms_clientauthenticationcomplete", function(world, data)
         authed[data.userid] = true
         NotifyArrived(data.userid)
-    end)
+end)
 
     inst:ListenForEvent("ms_clientdisconnected", function(world, data)
         authed[data.userid] = nil
         gated[data.userid] = nil
-    end)
+end)
 
     if _G.Shard_IsMaster() then
         inst:ListenForEvent("ms_playerjoined", function(world, player)
             Arrived(player.userid, MASTER, true)
-        end)
-    end
 end)
-```
+    end
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

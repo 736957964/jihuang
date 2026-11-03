@@ -17,15 +17,12 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3661375684)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-
 AddPrefabPostInit("world", function(inst)
     inst:WatchWorldState("season", CleanUp)
-end)
-```
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

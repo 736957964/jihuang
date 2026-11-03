@@ -19,7 +19,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：点分路径闭包深度检索与修改器 (scripts/tools/closure_path_accessor.lua)
 -- ==============================================================================
 
 local ClosurePath = {}
@@ -69,23 +68,19 @@ function ClosurePath.Set(start_fn, path, new_value)
 end
 
 -- ==============================================================================
--- 范式 2：引擎级字体原子化热重载序列 (scripts/tools/engine_font_swapper.lua)
 -- ==============================================================================
 
 local function HotReloadEngineFont(font_zip_path, font_name, font_fallback_table)
     local TheSim = GLOBAL.TheSim
     if not TheSim or GLOBAL.TheNet:IsDedicated() then return end
 
-    -- 1. 卸载旧字体句柄与预制体缓存
     TheSim:UnloadFont(font_name)
     TheSim:UnloadPrefabs({ "font_package_" .. font_name })
 
-    -- 2. 注册并装载包含新字体 ZIP 的虚拟 Prefab
     local assets = { GLOBAL.Asset("FONT", font_zip_path) }
     TheSim:RegisterPrefab("font_package_" .. font_name, assets, {})
     TheSim:LoadPrefabs({ "font_package_" .. font_name })
 
-    -- 3. 加载新字体并装载回退字符集
     TheSim:LoadFont(font_zip_path, font_name)
     if font_fallback_table then
         TheSim:SetupFontFallbacks(font_name, font_fallback_table)
@@ -93,14 +88,12 @@ local function HotReloadEngineFont(font_zip_path, font_name, font_fallback_table
 end
 
 -- ==============================================================================
--- 范式 3：Lua 模式匹配中文扩展补丁 (修复 %w 无法匹配中文)
 -- ==============================================================================
 
 local function PatchChinesePatternMatching()
     local old_match = string.match
     string.match = function(str, pattern, index)
         if pattern and string.find(pattern, "%%w") then
-            -- 将 %w 扩展为包含汉字 Unicode 范围 (一-鿕)
             pattern = string.gsub(pattern, "%%w", "[%%w一-鿕]")
         end
         return old_match(str, pattern, index)
@@ -112,8 +105,7 @@ return {
     HotReloadEngineFont = HotReloadEngineFont,
     PatchChinesePatternMatching = PatchChinesePatternMatching,
 }
-end
-```
+end```
 
 ---
 
@@ -132,7 +124,6 @@ end
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3506502333)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -155,9 +146,7 @@ AddComponentPostInit("playercontroller", function(self, inst)
                 return original_rot_right(self, ...)
             end
         end
-    end)
-
-```
+end)```
 
 
 
@@ -166,11 +155,8 @@ AddComponentPostInit("playercontroller", function(self, inst)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3152056502)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
--- 暂无高频切面钩子
 ```
 
 
@@ -180,7 +166,6 @@ local GLOBAL = GLOBAL
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3328408598)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -188,12 +173,9 @@ local GLOBAL = GLOBAL
 AddPrefabPostInit("farm_plant_pumpkin",repickfn)
 local PLANT_DEFS = require("prefabs/farm_plant_defs").PLANT_DEFS
 for k, v in pairs(PLANT_DEFS) do
-    --if not v.data_only then --allow mods to skip our prefab constructor.
         AddPrefabPostInit(v.prefab,repickfn)
-    --end
 end]]--
 local function reharvest(self)-- old farm
-	--local oldharvest = self.Harvest
 	self.Harvest= function(self,harvester)
 		if self.matured or self.inst:HasTag("withered") then
 			local product = nil
@@ -219,7 +201,6 @@ local function reharvest(self)-- old farm
 				if harvester ~= nil then
 					harvester.components.inventory:GiveItem(product, nil, self.inst:GetPosition())
 				else
-                -- just drop the thing (happens if you haunt the fully grown crop)
 					product.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
 				end
 				ProfileStatsAdd("grown_"..product.prefab)
@@ -245,7 +226,5 @@ local function reharvest(self)-- old farm
 			return true, product
 		end
 	end
-end
-
-```
+end```
 

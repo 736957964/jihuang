@@ -16,7 +16,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：轻量伴生网络信标预制体定义 (scripts/prefabs/my_beacon_classified.lua)
 -- ==============================================================================
 
 local function fn()
@@ -29,21 +28,18 @@ local function fn()
     inst:AddTag("CLASSIFIED")
     inst.entity:SetCanSleep(false) -- 核心：常驻全图不休眠
 
-    -- 网络变量 (NetVars) 定义
     inst.host_guid = net_entity(inst.GUID, "host_entity")
     inst.beacon_type = net_string(inst.GUID, "beacon_type")
     inst.is_active = net_bool(inst.GUID, "is_active", "activedirty")
 
     inst.entity:SetPristine()
 
-    -- 客户端逻辑
     if not TheWorld.ismastersim then
         inst:ListenForEvent("activedirty", function()
-            -- 触发客机雷达/小地图注册
             if ThePlayer and ThePlayer.HUD and inst.is_active:value() then
                 ThePlayer.HUD:PushEvent("register_custom_beacon", { beacon = inst })
             end
-        end)
+end)
         return inst
     end
 
@@ -53,9 +49,7 @@ end
 
 return Prefab("my_beacon_classified", fn)
 
-
 -- ==============================================================================
--- 范式 2：宿主实体服务端伴生与坐标同步组件 (scripts/components/network_beacon.lua)
 -- ==============================================================================
 
 local NetworkBeacon = Class(function(self, inst)
@@ -76,12 +70,11 @@ function NetworkBeacon:SpawnClassified()
     c.beacon_type:set(self.inst.prefab)
     c.is_active:set(true)
 
-    -- 坐标跟随绑定
     self.inst:DoPeriodicTask(0.1, function()
         if self.inst:IsValid() and c:IsValid() then
             c.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
         end
-    end)
+end)
 
     self.classified = c
 end
@@ -94,8 +87,7 @@ function NetworkBeacon:OnRemoveFromEntity()
     end
 end
 
-return NetworkBeacon
-```
+return NetworkBeacon```
 
 ---
 

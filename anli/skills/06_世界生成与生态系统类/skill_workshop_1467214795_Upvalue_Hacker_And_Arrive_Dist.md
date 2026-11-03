@@ -20,7 +20,6 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1467214795，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -34,8 +33,7 @@ IAENV.AddPrefabPostInitAny(function(inst)
             inst.components.bermudafx.nobounce = true
         end
     end
-end)
-```
+end)```
 
 ---
 
@@ -54,7 +52,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3494013763)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -65,53 +62,25 @@ mods - список модов (и их элементов или обобщен
 mods.lib - список переменных (и функций) для экспорта в любое пространство имен, где это нужно.
 mods.lib.version - версия библиотеки
 
---]]
 if _silence == nil then
 	print(_version,modinfo.name) --Show current version of lib
 end
 
-
---[[
---Так нельзя делать, потому что, возможно, мы переопределяем старую библиотеку более новой с полной заменой функций и всего-всего.
-if mods.lib then
-	return
-end
---]]
-
---[[
-Итак, у нас возможны две ситуации:
-	1) Это первая загрузка. Здесь всё просто - инициализируем.
-	2) Это N-ая загрузка. Тут нам надо учесть опыт прошлой загрузки и не сломать ничего, и не потерять.
-Поэтому мы определяем переменную old_lib. Из нее по возможности вытягиваем все определения. Если их нет, то создаём.
-Стараемся сохранить всё, что можно (и нужно) сохранить. Остальное тупо заменяем.
---]]
 local old_lib = mods.lib or {} --При обращении, отсутствующие элементы будут nil
 
---Далее делаем очень хитрый финт ушами. Сообщаем старому модулю, чтобы он отдыхал.
 if old_lib._libStopWorking then
 	old_lib._libStopWorking()
 end
 
---А теперь оставляем такую возможноть для модулей, которые захотят также отправить на покой нас.
 local IS_ACTIVE = true --Всегда тру, пока не станет фолс. Это случится при смене власти.
 local function _libStopWorking()
-	--Останавливает работу модуля. Все постиниты должны отказаться работать.
-	--Естественно, кроме тех, что работают автономно, а не сообща.
 	IS_ACTIVE = nil
-	--Все общие функции обязаны вручную проверять эту переменную, если хотять разделять общие данные.
-	--Ведь в конце должен остаться лишь один (обработчик).
 end
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:forest
---AddPrefabPostInit("forest",world_init)
---По большому счету это рудимент, т.к. история с forest закончилась.
 
-
---Пустая функция. Иногда нужно заткнуть кого-то или что-то, чтоб они думали, что продолжают делать что-то важное.
-local EmptyFunction = function() end
-
-```
+local EmptyFunction = function() end```
 
 
 
@@ -120,17 +89,12 @@ local EmptyFunction = function() end
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3034588489)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:world
 AddPrefabPostInit("world", function()
-	-- This needs to be done in this post-init because the recipe loading code is not idempotent
 	if REDUCECHESTSPACING then
-		-- other geometry mods ignore the special case for chests that increases the spacing for them
-		-- in Builder:CanBuildAtPoint; however, reducing the built-in spacing by just a little bit
-		-- gives similar behavior in terms of which lattice points you can build the chest
 		local treasurechestrecipe = DST
 			and GLOBAL.GetValidRecipe('treasurechest')
 			or GLOBAL.GetRecipe('treasurechest')
@@ -138,7 +102,6 @@ AddPrefabPostInit("world", function()
 	end
 
 	local Prefabs = GLOBAL.Prefabs
-	-- Veggie seeds for Wormwood, their test is just checking for natural turf
 	for veggie, data in pairs(GLOBAL.VEGGIES) do
 		local seed_placer = veggie .. "_seeds_placer"
 		if Prefabs[seed_placer] then
@@ -146,7 +109,6 @@ AddPrefabPostInit("world", function()
 			PLACER_SPACING_OVERRIDES[seed_placer] = TILL_SPACING
 		end
 	end
-	-- Pig shops in Hamlet, their test just hides some AnimState symbols; could be put in placer-only logic when it exists
 	for prefab, _ in pairs(Prefabs) do
 		if type(prefab) == "string" and prefab:match("^pig_shop") and prefab:match("_placer$") then
 			ALLOW_PLACE_TEST[prefab] = true
@@ -160,11 +122,8 @@ AddPrefabPostInit("gridplacer", ReplaceGridplacerAnim)
 if DST then
 	AddPrefabPostInit("tile_outline", ReplaceGridplacerAnim)
 	AddPrefabPostInit("gridplacer_farmablesoil", ReplaceGridplacerAnim)
-end
 
--- But these things do need to get built every time
 local function PlacerPostInit(self)
-	--there's gotta be a better place to put this; also may not be necessary, but it's safe and cheap
 	local TheWorld = DST and GLOBAL.TheWorld or GLOBAL.GetWorld()
 	TheCamera = GLOBAL.TheCamera
 	ORIGIN_OFFSETS.tile = Vector3(TheWorld.Map:GetTileCenterPoint(0, 0, 0)) * -1
@@ -173,22 +132,12 @@ local function PlacerPostInit(self)
 	end
 
 	if not CONTROLLEROFFSET then
-		--Then the ground action hints can get in the way; increase the offset
-		-- note that these action hints only get used by controllers
 		GetPlayer().HUD.controls.groundactionhint:SetOffset(Vector3(0, 200, 0))
 	end
 
-	--used in DST to track attachments to farm placers, telebase, etc;
-	-- set to empty list if not present for simpler logic
 	self.linked = self.linked or {}
-	--keeps track of the build grid objects, indexed by lattice coordinates
 	self.build_grid = nil
-	--keeps track of the build grid positions, indexed by lattice coordinates
 	self.build_grid_positions = nil
-	--keep a queue of locations to check the collision for
-	--Why did I do this as storing lattice coordinates instead of storing the buildgridplacer objects?
-	-- because this way I don't have to worry about buildgridplacer objects going in multiple times
-	-- if it pops one out and it's not in the grid, no big deal, that's way faster than testing the point
 	self.refresh_queue = nil
 	self.lastpt = nil
 	self.placertype = "buildgridplacer"
@@ -202,9 +151,8 @@ local function PlacerPostInit(self)
 		if self.tileinst then self.tileinst:Remove() end
 		if self.gridinst then self.gridinst:Remove() end
 		if self.controller_child then self.controller_child:Remove() end
-	end)
+end)
 
-	-- Delay to capture the prefab name
 	self.inst:DoTaskInTime(0, function()
 		local prefab = self.inst.prefab
 		if prefab == "sprinkler_placer" then
@@ -232,16 +180,14 @@ local function PlacerPostInit(self)
 				end
 			end
 		end
-	end)
+end)
 end
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:tile_outline
 AddPrefabPostInit("tile_outline", ReplaceGridplacerAnim)
 	AddPrefabPostInit("gridplacer_farmablesoil", ReplaceGridplacerAnim)
-end
 
--- But these things do need to get built every time
 local function PlacerPostInit(self)
 
 -- ----------------------------------------------------------------------------
@@ -249,16 +195,12 @@ local function PlacerPostInit(self)
 AddPrefabPostInit("gridplacer_farmablesoil", ReplaceGridplacerAnim)
 end
 
--- But these things do need to get built every time
 local function PlacerPostInit(self)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddComponentPostInit:placer
 AddComponentPostInit("placer", PlacerPostInit)
 
---[[ Builder Component ]]
-                          --
--- For DST
 local function BuilderReplicaPostConstruct(self)
 	local OldCanBuildAtPoint = self.CanBuildAtPoint
 	local function NewCanBuildAtPoint(self, pt, recipe, ...)
@@ -277,8 +219,8 @@ local function BuilderReplicaPostConstruct(self)
 	end
 	self.MakeRecipeAtPoint = NewMakeRecipeAtPoint
 end
-
-```
+end
+end```
 
 
 
@@ -287,7 +229,6 @@ end
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2941527805)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -296,8 +237,8 @@ AddPrefabPostInit("world", function(inst)
             inst:DoTaskInTime(5, function()
                 local str = "[" .. modinfo.name .. "] 模组基础运行库缺失！你未开启此模组依赖的基础运行库模组，你必须去订阅才能继续使用本模组\n请前往创意工坊订阅并在【服务器】开启【冰冰羊的模组运行库】模组"
                 c_announce(str)
-            end)
-        end)
+end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddComponentPostInit:focalpoint
@@ -311,7 +252,6 @@ AddComponentPostInit("focalpoint", function(self)
     end
     local Reset = self.Reset
     self.Reset = function(self, ...)
-        -- 航海焦点退出/切换仍执行原版清理，但不重置OB视角的距离、FOV和位置锁定
         if self.inst ~= TheFocalPoint or not IsBoatFocus(self) or (PrepareDroneView and PrepareDroneView()) then
             return Reset(self, ...)
         end
@@ -334,14 +274,12 @@ AddPrefabPostInit("bermudatriangle", function(inst)
     inst.MiniMapEntity:SetDrawOverFogOfWar(true)
     inst:DoTaskInTime(0.2, function() AddWormholeColor(inst, inst:GetPosition()) end)
 
-    -- 主机环境 获取虫洞入口
     if TheWorld.ismastersim then
         inst:ListenForEvent("starttravelsound", function(inst, doer)
             if doer == ThePlayer then
                 entrance = {inst = inst, pos = inst:GetPosition()}
             end
-        end)
-        -- 通过大饼船传送：暂不支持
+end)
     end
 end)
 
@@ -357,7 +295,6 @@ AddPrefabPostInit("player_classified", function(player_classified)
         local WormholePositionExists = Upvaluehelper.GetUpvalue(PrefabPostInitFns[1], "WormholePositionExists")
         local GetWormhole = Upvaluehelper.GetUpvalue(PrefabPostInitFns[1], "GetWormhole")
 
-        -- 删除原模组的监听事件
         local original_listener_1 = Upvaluehelper.GetEventHandle(player_classified, "wormholetraveldirty", "workshop%-2831613121/modmain")
         if original_listener_1 then
             player_classified:RemoveEventCallback("wormholetraveldirty", original_listener_1)
@@ -388,13 +325,11 @@ AddPrefabPostInit("player_classified", function(player_classified)
                         SaveWormholePair(entrance, exit)
                         entrance = nil
                     end
-                end)
-            end
-        end)
-    end
 end)
-
-```
+            end
+end)
+    end
+end)```
 
 
 
@@ -403,7 +338,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2763963752)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -413,7 +347,6 @@ AddPrefabPostInit("world", function (inst)
         if not controls or not controls.TMI then
             return
         end
-        --增加鸦年华，浣猫年
         local tmp=require "TMIP/debug"
         for k,v in ipairs(tmp)do
             if v.tittle and v.tittle== STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXT then
@@ -457,10 +390,8 @@ AddPrefabPostInit("world", function (inst)
             controls.TMI.debugshield:Kill()
         end
         controls.TMI:DebugMenu()
-    end)
 end)
-
-```
+end)```
 
 
 
@@ -469,7 +400,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3485366151)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -541,9 +471,7 @@ AddPrefabPostInit("winona_remote", function(inst)
 	if inst.components and inst.components.spellbook then
 		inst.components.spellbook:SetBgData()
 	end
-end)
-
-```
+end)```
 
 
 
@@ -552,7 +480,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3378500626)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -584,19 +511,17 @@ AddPrefabPostInit("spellbookcooldown", function(inst)
                         table.remove(tiles, k)
                     end
                 end
-            end)
+end)
         end
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:world
 AddPrefabPostInit("world",function(inst) 
     inst:DoPeriodicTask(0.2+0.01*math.random(),function(inst)
         UpdatePlayerIndicators()
-    end)
 end)
-
-```
+end)```
 
 
 
@@ -605,7 +530,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3372819329)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -626,8 +550,8 @@ AddPrefabPostInit("wortox_overloading_fx", function(inst)
                 ThePlayer.components.talker:Say(
                     string.format(GetWortoxStrings().FEATURES.OVERLOAD_STORE.SUCCESS, stored))
             end
-        end)
-    end)
+end)
+end)
 end)
 
 -- ----------------------------------------------------------------------------
@@ -649,8 +573,8 @@ AddPrefabPostInit("wortox_soul_spawn", function(inst)
                 inst._detection_task:Cancel()
                 inst._detection_task = nil
             end
-        end)
-    end)
+end)
+end)
 end)
 
 -- ----------------------------------------------------------------------------
@@ -672,7 +596,6 @@ AddPrefabPostInit("world", function(world)
 
             print("[Wortox] 当前世界ID:", LocationMemory.worldid)
 
-
             if LocationMemory.alldata[LocationMemory.worldid] and LocationMemory.alldata[LocationMemory.worldid].locations then
                 saved_locations = LocationMemory.alldata[LocationMemory.worldid].locations
                 print("[Wortox] 已加载位置数量:", #saved_locations)
@@ -681,19 +604,15 @@ AddPrefabPostInit("world", function(world)
                 print("[Wortox] 没有保存的位置，初始化为空")
             end
 
-
             LocationMemory.data_loaded = true
             print("[Wortox] 数据加载完成，允许保存")
         end
-    end)
-
+end)
 
     world:WatchWorldState("cycles", function(inst)
         LocationMemory:SaveData("cycles")
-    end)
 end)
-
-```
+end)```
 
 
 
@@ -702,7 +621,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3527018254)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -713,11 +631,9 @@ AddPrefabPostInit("world",function()
                 if math.random(1,10000) == 1 then
                     JumpscarePlayer()
                 end
-            end)
+end)
         end
-    end)
-
-```
+end)```
 
 
 
@@ -726,7 +642,6 @@ AddPrefabPostInit("world",function()
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2858947939)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -736,75 +651,24 @@ AddPrefabPostInit("player_classified", function(pc)
       if pc._parent == GLOBAL.ThePlayer then
          pc:ListenForEvent("isperformactionsuccessdirty", function(pc) pc:DoTaskInTime(GLOBAL.FRAMES*2, checkFed) end)
       end
-   end)
+end)
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddComponentPostInit:playercontroller
--- AddComponentPostInit("playercontroller", function(self, inst)
-   -- if inst ~= _G.ThePlayer then return end
-   -- ThePlayer = _G.ThePlayer
-   -- TheWorld = _G.TheWorld
-   -- EQUIPSLOTS = _G.EQUIPSLOTS
 
-   -- local OriginalOnLeftClick = self.OnLeftClick
-
-   -- self.OnLeftClick = function(self, down)
-      -- if down or _G.TheInput:GetHUDEntityUnderMouse() or self:IsAOETargeting() or self.placer_recipe then
-         -- return OriginalOnLeftClick(self, down)
-      -- end
       -- -- print("Heyyyyy Left Click! " .. tostring(self:GetLeftMouseAction()))
       
-      -- local act = self:GetLeftMouseAction()
       
-      -- if not act or act.action ~= _G.ACTIONS.BRUSH then
-         -- return OriginalOnLeftClick(self, down)
-      -- end
       
-      -- print("Brush Action: " .. tostring(act.action) .. " in " .. tostring(act.action.time_direct_walking or ThePlayer.player_classified.time_direct_walking))
       
       -- -- vv(act)
       -- -- vu(act)
-      -- if act.doer == ThePlayer and act.target and act.target.components.bucktimer then
          -- -- act.target:DoTaskInTime(GLOBAL.FRAMES, function(inst)
             -- -- inst.components.bucktimer:OnBrushed()
          -- -- end)
-      -- end
-      -- return OriginalOnLeftClick(self, down)
-   -- end
--- end)
 
--- AddPrefabPostInit("world", function(inst)
-   -- inst:ListenForEvent("playeractivated", function(self)
-      -- _G.ThePlayer.player_classified:ListenForEvent("isperformactionsuccessdirty", function(inst) print("isperformactionsuccessdirty") print(_G.ThePlayer:GetDebugString()) vv(inst) vu(inst) end)
       -- -- build_loop
-   -- end)
--- end)
-
--- local _SendRPCToServer
--- AddPrefabPostInit("world", function(inst)
-	-- if not inst.ismastersim then
-		-- AddPlayerPostInit(function(inst)
-			-- inst:DoTaskInTime(0, function(inst)
-				-- if inst == _G.ThePlayer and inst.player_classified ~= nil then
-					-- if _SendRPCToServer == nil then
-						-- _SendRPCToServer = _G.SendRPCToServer
-						-- _G.SendRPCToServer = function(...)
-							-- local arg = { ... }
-
-							-- if arg[2] == _G.ACTIONS.BRUSH.code then
-                        -- print("here")
-							-- end
-
-							-- return _SendRPCToServer(...)
-						-- end
-               -- end
-            -- end
-         -- end)
-      -- end)
-   -- end
--- end)
-
 
 AddPrefabPostInit("beefalo", function(inst)
    inst:AddComponent("bucktimer")
@@ -817,42 +681,12 @@ AddPrefabPostInit("beefalo", function(inst)
          print("Beefalo loaded: " .. bname .. ", " .. KnownBeefalo[bname])
          inst.components.bucktimer:LoadKnown(KnownBeefalo[bname])
       end
-   end)
+end)
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:world
--- AddPrefabPostInit("world", function(inst)
-   -- inst:ListenForEvent("playeractivated", function(self)
-      -- _G.ThePlayer.player_classified:ListenForEvent("isperformactionsuccessdirty", function(inst) print("isperformactionsuccessdirty") print(_G.ThePlayer:GetDebugString()) vv(inst) vu(inst) end)
       -- -- build_loop
-   -- end)
--- end)
-
--- local _SendRPCToServer
--- AddPrefabPostInit("world", function(inst)
-	-- if not inst.ismastersim then
-		-- AddPlayerPostInit(function(inst)
-			-- inst:DoTaskInTime(0, function(inst)
-				-- if inst == _G.ThePlayer and inst.player_classified ~= nil then
-					-- if _SendRPCToServer == nil then
-						-- _SendRPCToServer = _G.SendRPCToServer
-						-- _G.SendRPCToServer = function(...)
-							-- local arg = { ... }
-
-							-- if arg[2] == _G.ACTIONS.BRUSH.code then
-                        -- print("here")
-							-- end
-
-							-- return _SendRPCToServer(...)
-						-- end
-               -- end
-            -- end
-         -- end)
-      -- end)
-   -- end
--- end)
-
 
 AddPrefabPostInit("beefalo", function(inst)
    inst:AddComponent("bucktimer")
@@ -865,7 +699,7 @@ AddPrefabPostInit("beefalo", function(inst)
          print("Beefalo loaded: " .. bname .. ", " .. KnownBeefalo[bname])
          inst.components.bucktimer:LoadKnown(KnownBeefalo[bname])
       end
-   end)
+end)
 end)
 
 -- ----------------------------------------------------------------------------
@@ -881,10 +715,8 @@ AddPrefabPostInit("beefalo", function(inst)
          print("Beefalo loaded: " .. bname .. ", " .. KnownBeefalo[bname])
          inst.components.bucktimer:LoadKnown(KnownBeefalo[bname])
       end
-   end)
 end)
-
-```
+end)```
 
 
 
@@ -893,7 +725,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1231473531)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -904,7 +735,5 @@ AddPrefabPostInit("world", function(inst)
                 EatShit(v, function()  end, "OnSanityDelta")
             end
         end
-    end)
-
-```
+end)```
 

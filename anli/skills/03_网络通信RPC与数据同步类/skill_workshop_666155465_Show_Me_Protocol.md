@@ -16,12 +16,10 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：轻量单字符 ASCII 编码与解码协议器 (scripts/tools/compact_packer.lua)
 -- ==============================================================================
 
 local CompactPacker = {}
 
--- 协议字典：单字节字符映射业务类型
 local PROTOCOL_MAP = {
     A = "ARMOR",       -- 护甲
     D = "DAMAGE",      -- 攻击力
@@ -30,7 +28,6 @@ local PROTOCOL_MAP = {
     C = "COOLDOWN",    -- 冷却
 }
 
--- 编码：业务类型 + 若干数值参数 -> 紧凑字符串
 function CompactPacker.Encode(header_char, params)
     local payload = header_char
     if params and #params > 0 then
@@ -39,7 +36,6 @@ function CompactPacker.Encode(header_char, params)
     return payload
 end
 
--- 解码：紧凑字符串 -> 业务数据结构
 function CompactPacker.Decode(raw_str)
     if not raw_str or #raw_str == 0 then return nil end
 
@@ -60,7 +56,6 @@ function CompactPacker.Decode(raw_str)
 end
 
 -- ==============================================================================
--- 范式 2：客户端 Hoverer 悬浮提示文本非侵入式拦截注入
 -- ==============================================================================
 
 local function InstallHovererInterceptor()
@@ -70,23 +65,20 @@ local function InstallHovererInterceptor()
         local old_SetString = self.text.SetString
         self.text.SetString = function(widget, str, ...)
             if str and widget.inst and ThePlayer then
-                -- 获取当前鼠标悬停的目标实体
                 local target = TheInput:GetWorldEntityUnderMouse()
                 if target and target.injected_hover_info then
-                    -- 追加自定义高亮信息
                     str = str .. "\n" .. target.injected_hover_info
                 end
             end
             return old_SetString(widget, str, ...)
         end
-    end)
+end)
 end
 
 return {
     CompactPacker = CompactPacker,
     InstallHovererInterceptor = InstallHovererInterceptor,
-}
-```
+}```
 
 ---
 

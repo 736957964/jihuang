@@ -19,7 +19,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式：纯客户端通用动作队列调度执行器 (scripts/tools/client_action_scheduler.lua)
 -- ==============================================================================
 
 local ClientActionScheduler = Class(function(self, inst)
@@ -50,7 +49,6 @@ end
 function ClientActionScheduler:IsManualInterrupt()
     local controller = self.inst.components.playercontroller
     if controller and controller:IsEnabled() then
-        -- 检测玩家是否有移动意图 (WASD 或手柄摇杆)
         return controller:IsAnyOfControlsPressed(
             GLOBAL.CONTROL_MOVE_UP,
             GLOBAL.CONTROL_MOVE_DOWN,
@@ -68,27 +66,21 @@ function ClientActionScheduler:Start()
 
     self.running_thread = self.inst:StartThread(function()
         while #self.queue > 0 do
-            -- 1. 手控急停打断检测
             if self:IsManualInterrupt() then
                 self:Abort()
                 break
             end
 
-            -- 2. 取出队头动作
             local act = table.remove(self.queue, 1)
 
-            -- 3. 校验实体合法性
             if act and act.target and act.target:IsValid() and not act.target:IsInLimbo() then
-                -- 客户端向服务端下发动作意图
                 local playercontroller = self.inst.components.playercontroller
                 if playercontroller then
                     playercontroller:DoAction(act)
                 end
 
-                -- 4. 协程节流挂起：等待角色进入 Busy 动作帧或至少等待网络回包 (默认 0.15~0.25 秒)
                 GLOBAL.Sleep(0.2)
 
-                -- 5. 等待当前动作彻底完成 (Busy 状态解除)
                 while self.inst.sg and self.inst.sg:HasStateTag("busy") do
                     if self:IsManualInterrupt() then
                         self:Abort()
@@ -101,11 +93,10 @@ function ClientActionScheduler:Start()
 
         self.running_thread = nil
         self.is_active = false
-    end)
+end)
 end
 
-return ClientActionScheduler
-```
+return ClientActionScheduler```
 
 ---
 
@@ -124,7 +115,6 @@ return ClientActionScheduler
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1289779251)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -142,7 +132,7 @@ AddPrefabPostInit("cherry_birdhouse", function(inst)
 			
 			inst.birdhouse_items = birdhouse_items_sw
 		end
-	end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:ballphin
@@ -152,7 +142,7 @@ AddPrefabPostInit("ballphin", function(inst)
 		end
 		
 		inst.WirlyBefriend = WirlyBallphinFn
-	end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:wildbore
@@ -162,7 +152,7 @@ AddPrefabPostInit("wildbore", function(inst)
 		end
 		
 		inst.WirlyBefriend = WirlyWildboreFn
-	end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:palmtree
@@ -174,7 +164,7 @@ AddPrefabPostInit("palmtree", function(inst)
 		inst:AddComponent("cherrybookmutable")
 		inst.components.cherrybookmutable:SetOnMutateFn(MakeLeif)
 		inst.components.cherrybookmutable.points = 10
-	end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:leif_palm
@@ -186,9 +176,7 @@ AddPrefabPostInit("leif_palm", function(inst)
 		inst:AddComponent("cherrybookmutable")
 		inst.components.cherrybookmutable:SetOnMutateFn(MakeTree)
 		inst.components.cherrybookmutable.points = 5
-	end)
-
-```
+end)```
 
 
 
@@ -197,14 +185,13 @@ AddPrefabPostInit("leif_palm", function(inst)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1200745268)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:cave_banana_tree
-AddPrefabPostInit("cave_banana_tree", QuickChop)
-    AddPrefabPostInit("marsh_tree", QuickChop)
-    AddPrefabPostInit("livingtree", QuickChop)
+local trees = {"cave_banana_tree", "marsh_tree", "livingtree"}
+for _, t in ipairs(trees) do
+    AddPrefabPostInit(t, QuickChop)
 end
 
 if GetModConfigData("MineTimes") ~= 999 then
@@ -222,7 +209,6 @@ if GetModConfigData("MineTimes") ~= 999 then
 -- 切面钩子：AddPrefabPostInit:marsh_tree
 AddPrefabPostInit("marsh_tree", QuickChop)
     AddPrefabPostInit("livingtree", QuickChop)
-end
 
 if GetModConfigData("MineTimes") ~= 999 then
     GLOBAL.TUNING.ICE_MINE = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.ICE_MINE)
@@ -238,7 +224,6 @@ if GetModConfigData("MineTimes") ~= 999 then
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:livingtree
 AddPrefabPostInit("livingtree", QuickChop)
-end
 
 if GetModConfigData("MineTimes") ~= 999 then
     GLOBAL.TUNING.ICE_MINE = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.ICE_MINE)
@@ -280,9 +265,7 @@ AddPrefabPostInit("archive_props", QuickMine)
     GLOBAL.TUNING.SHELL_CLUSTER_MINE = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.SHELL_CLUSTER_MINE)
     GLOBAL.TUNING.MOONALTAR_ROCKS_MINE = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.MOONALTAR_ROCKS_MINE)
     GLOBAL.TUNING.SALTSTACK_WORK_REQUIRED = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.SALTSTACK_WORK_REQUIRED)
-end
-
-if GetModConfigData("Cooking") then
+if GetModConfigData(\"Cooking\") then
     ChangeAction(GLOBAL.ACTIONS.COOK, "doshortaction")
     ChangeAction(GLOBAL.ACTIONS.SALT, "doshortaction")
 end
@@ -297,6 +280,7 @@ if GetModConfigData("FishTime") ~= 999 then
             inst.components.fishingrod:SetWaitTimes(GetModConfigData("FishTime"), GetModConfigData("FishTime"))
         end
     end
+end
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:marblepillar
@@ -326,9 +310,7 @@ AddPrefabPostInit("marblepillar", QuickMine)
     GLOBAL.TUNING.SHELL_CLUSTER_MINE = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.SHELL_CLUSTER_MINE)
     GLOBAL.TUNING.MOONALTAR_ROCKS_MINE = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.MOONALTAR_ROCKS_MINE)
     GLOBAL.TUNING.SALTSTACK_WORK_REQUIRED = GetIntegerSettingTimes("MineTimes", GLOBAL.TUNING.SALTSTACK_WORK_REQUIRED)
-end
-
-if GetModConfigData("Cooking") then
+if GetModConfigData(\"Cooking\") then
     ChangeAction(GLOBAL.ACTIONS.COOK, "doshortaction")
     ChangeAction(GLOBAL.ACTIONS.SALT, "doshortaction")
 end
@@ -343,8 +325,10 @@ if GetModConfigData("FishTime") ~= 999 then
             inst.components.fishingrod:SetWaitTimes(GetModConfigData("FishTime"), GetModConfigData("FishTime"))
         end
     end
-
-```
+end
+end
+end
+end```
 
 
 
@@ -353,7 +337,6 @@ if GetModConfigData("FishTime") ~= 999 then
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3694914776)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -401,7 +384,7 @@ AddComponentPostInit("combat", function(self)
             self.dstlan_atkperiodmodifiers:RemoveModifier(source, key)
             self.min_attack_period = self.dstlan_orig_min_attack_period / self.dstlan_atkperiodmodifiers:Get()
         end
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddStategraphPostInit:wilson
@@ -429,7 +412,7 @@ AddStategraphPostInit("wilson", function(sg)
             return old_onexit(inst,...)
         end
 
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddStategraphPostInit:wilson_client
@@ -456,7 +439,7 @@ AddStategraphPostInit("wilson_client", function(sg)
             return old_onexit(inst,...)
         end
 
-    end)
+end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:cook_certificate
@@ -470,7 +453,6 @@ AddPrefabPostInit('cook_certificate',function (inst)
         inst.HarvestFoodFn = function(inst,foodname,harvester,cookpotname,...)
             local fuelnum = GetThisMODDishConsume(foodname)
             if foodname and fuelnum > 0 and not table.contains(inst.foodlist,foodname) then
-                --消耗耐久
                 if inst.components.finiteuses then
                     inst.components.finiteuses:Use(fuelnum)
                     inst.foodlist[#inst.foodlist+1]=foodname
@@ -482,9 +464,7 @@ AddPrefabPostInit('cook_certificate',function (inst)
             end
             return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
         end
-    end)
-
-```
+end)```
 
 
 
@@ -493,7 +473,6 @@ AddPrefabPostInit('cook_certificate',function (inst)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3417353600)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -515,7 +494,6 @@ AddPrefabPostInit("world", function(inst)
 
     inst:DoTaskInTime(0, function()
         local riftspawner = inst.components.riftspawner
-        -- print(string.format("[WYSTERY RIFTS] server DoTaskInTime: riftspawner=%s", tostring(riftspawner)))
         if not riftspawner then return end
 
         local function SyncRiftsActive()
@@ -523,8 +501,6 @@ AddPrefabPostInit("world", function(inst)
             if inst.net and inst.net._wystery_rifts_active then
                 inst.net._wystery_rifts_active:set(enabled)
             end
-            -- print(string.format("[WYSTERY RIFTS] SyncRiftsActive: server GetEnabled=%s -> netvar=%s",
-            --     tostring(enabled), tostring(inst.net and inst.net._wystery_rifts_active ~= nil)))
         end
 
         SyncRiftsActive()
@@ -532,28 +508,24 @@ AddPrefabPostInit("world", function(inst)
         local _EnableLunar = riftspawner.EnableLunarRifts
         riftspawner.EnableLunarRifts = function(self, src)
             _EnableLunar(self, src)
-            -- print("[WYSTERY RIFTS] hook: EnableLunarRifts called")
             SyncRiftsActive()
         end
         local _EnableShadow = riftspawner.EnableShadowRifts
         riftspawner.EnableShadowRifts = function(self, src)
             _EnableShadow(self, src)
-            -- print("[WYSTERY RIFTS] hook: EnableShadowRifts called")
             SyncRiftsActive()
         end
         local _SetEnabled = riftspawner.SetEnabledSetting
         riftspawner.SetEnabledSetting = function(self, src, val)
             _SetEnabled(self, src, val)
-            -- print(string.format("[WYSTERY RIFTS] hook: SetEnabledSetting val=%s", tostring(val)))
             SyncRiftsActive()
         end
         local _SetEnabledCave = riftspawner.SetEnabledSettingCave
         riftspawner.SetEnabledSettingCave = function(self, src, val)
             _SetEnabledCave(self, src, val)
-            -- print(string.format("[WYSTERY RIFTS] hook: SetEnabledSettingCave val=%s", tostring(val)))
             SyncRiftsActive()
         end
-    end)
+end)
 end)
 
 -- ----------------------------------------------------------------------------
@@ -565,7 +537,6 @@ AddPrefabPostInit("world", function(inst)
 
     inst:DoTaskInTime(0, function()
         local riftspawner = inst.components.riftspawner
-        -- print(string.format("[WYSTERY RIFTS] server DoTaskInTime: riftspawner=%s", tostring(riftspawner)))
         if not riftspawner then return end
 
         local function SyncRiftsActive()
@@ -573,8 +544,6 @@ AddPrefabPostInit("world", function(inst)
             if inst.net and inst.net._wystery_rifts_active then
                 inst.net._wystery_rifts_active:set(enabled)
             end
-            -- print(string.format("[WYSTERY RIFTS] SyncRiftsActive: server GetEnabled=%s -> netvar=%s",
-            --     tostring(enabled), tostring(inst.net and inst.net._wystery_rifts_active ~= nil)))
         end
 
         SyncRiftsActive()
@@ -582,28 +551,24 @@ AddPrefabPostInit("world", function(inst)
         local _EnableLunar = riftspawner.EnableLunarRifts
         riftspawner.EnableLunarRifts = function(self, src)
             _EnableLunar(self, src)
-            -- print("[WYSTERY RIFTS] hook: EnableLunarRifts called")
             SyncRiftsActive()
         end
         local _EnableShadow = riftspawner.EnableShadowRifts
         riftspawner.EnableShadowRifts = function(self, src)
             _EnableShadow(self, src)
-            -- print("[WYSTERY RIFTS] hook: EnableShadowRifts called")
             SyncRiftsActive()
         end
         local _SetEnabled = riftspawner.SetEnabledSetting
         riftspawner.SetEnabledSetting = function(self, src, val)
             _SetEnabled(self, src, val)
-            -- print(string.format("[WYSTERY RIFTS] hook: SetEnabledSetting val=%s", tostring(val)))
             SyncRiftsActive()
         end
         local _SetEnabledCave = riftspawner.SetEnabledSettingCave
         riftspawner.SetEnabledSettingCave = function(self, src, val)
             _SetEnabledCave(self, src, val)
-            -- print(string.format("[WYSTERY RIFTS] hook: SetEnabledSettingCave val=%s", tostring(val)))
             SyncRiftsActive()
         end
-    end)
+end)
 end)
 
 -- ----------------------------------------------------------------------------
@@ -688,21 +653,13 @@ AddComponentPostInit("inventory", function(self)
 		if ondeath and binding ~= nil
 			and binding.shard_id ~= nil
 			and binding.shard_id ~= TheShard:GetShardId() then
-			-- print("[WYSTERY-XSHARD] DropEverything override: SKIP drop on death for",
-			-- 	inst.userid, "cur_shard=", TheShard:GetShardId(),
-			-- 	"binding_shard=", binding.shard_id)
 			return
 		end
 		if ondeath then
-			-- print("[WYSTERY-XSHARD] DropEverything override: ALLOW drop on death for",
-			-- 	inst and inst.userid, "cur_shard=", TheShard:GetShardId(),
-			-- 	"binding=", binding, "(vanilla behavior)")
 		end
 		return _DropEverything(self, ondeath, ...)
 	end
-end)
-
-```
+end)```
 
 
 
@@ -711,14 +668,12 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3627500499)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddStategraphPostInit:wilson
 AddStategraphPostInit("wilson", stateidle)
 AddStategraphPostInit("wilson_client", stateidle)
---
 local function statefunnyidle(sg)
     local old_state_onenter = sg.states.funnyidle.onenter
     sg.states.funnyidle.onenter = function(inst, ...)
@@ -735,7 +690,6 @@ end
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddStategraphPostInit:wilson_client
 AddStategraphPostInit("wilson_client", stateidle)
---
 local function statefunnyidle(sg)
     local old_state_onenter = sg.states.funnyidle.onenter
     sg.states.funnyidle.onenter = function(inst, ...)
@@ -814,10 +768,6 @@ AddComponentPostInit("health", function(self)
     end
 end)
 
---以维什戴尔自身为中心 半径16码范围内的敌人在被【晕眩】时受到的物理伤害+10%
---红桃K的伤害为直接加算
---无人机的伤害来源为维什戴尔
---维什戴尔穿戴魂影碎壳时 以维什戴尔自身半径10码范围内存在对维什戴尔有仇恨 & 维什戴尔发起仇恨的生物 则维什戴尔自身获得一定量的百分比%物理伤害加成
 AddComponentPostInit(
     'combat',
     function(self, inst)
@@ -861,18 +811,12 @@ AddComponentPostInit(
                 end
             end
 
-            --attacker.sg and attacker.sg.statemem.moveattack
-            --[[if self.inst and attacker and type(attacker) == "table" and attacker.IsValid and attacker:IsValid() and (attacker.sg and attacker.sg.statemem.moveattack) then
-                if damage then
-                    damage = damage * .6
-                end
-            end]]
+            
 
             return oldGetAttacked_Internal(self, attacker, damage, weapon, stimuli, spdamage, from_doattack)
         end
     end
-
-```
+end```
 
 
 
@@ -881,7 +825,6 @@ AddComponentPostInit(
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3659173332)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -940,8 +883,6 @@ AddComponentPostInit('combat', function(self, inst)
         end
     end
 
-    -- Modern Combat:DoAttack calls GetAttacked_Internal directly. Hooking the
-    -- public GetAttacked wrapper no longer covers normal or area attacks.
     local oldGetAttackedInternal = self.GetAttacked_Internal
     function self:GetAttacked_Internal(attacker, damage, weapon, stimuli,
                                        spdamage, from_doattack)
@@ -968,8 +909,6 @@ AddComponentPostInit('combat', function(self, inst)
             local health = self.inst.components.health
             if shield ~= nil and health ~= nil and not health:IsDead() and
                 (damage or 0) > 0 then
-                -- Absorb physical damage before Maki's reduction/deferred loss.
-                -- Special damage continues through the normal combat pipeline.
                 local sanity = self.inst.components.sanity
                 if sanity ~= nil then sanity:DoDelta(-damage * .05, false) end
                 damage = 0
@@ -1023,7 +962,6 @@ end)
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddStategraphPostInit:wilson_client
 AddStategraphPostInit('wilson_client', NewAoeSg)
-end
 
 if TUNING.RIKKI_MAKI then
     local function CanDirectParry(self, position)
@@ -1096,9 +1034,8 @@ AddComponentPostInit("playeractionpicker", function(self)
                        old_get_right_click_actions(self, position, target,
                                                    spellbook, ...)
         end
-    end)
-
-```
+end)
+end```
 
 
 
@@ -1107,13 +1044,11 @@ AddComponentPostInit("playeractionpicker", function(self)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3740646188)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddStategraphPostInit:wilson
 AddStategraphPostInit("wilson", function(sg)
-
 
     local _attack_onenter = sg.states.attack.onenter
     sg.states.attack.onenter = function(inst, data)
@@ -1130,13 +1065,9 @@ AddStategraphPostInit("wilson", function(sg)
 
         _attack_onenter(inst, data)
 
-
-
     end
     
-end)
-
-```
+end)```
 
 
 
@@ -1145,7 +1076,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3467205041)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -1270,15 +1200,11 @@ AddPrefabPostInit(
             if inst.components.lootdropper == nil then
                 inst:AddComponent('lootdropper')
                 inst.components.lootdropper:SetLoot({'dusk_hammer_blueprint'})--岩崩锤蓝图
-				--inst.components.lootdropper:SetLoot({'dusk_pe'})--紫色心情
             else
                 inst.components.lootdropper:AddChanceLoot('dusk_hammer_blueprint', 1)--岩崩锤蓝图
-				--inst.components.lootdropper:AddChanceLoot('dusk_pe', 1)--紫色心情
             end
         end
-    end
-
-```
+    end```
 
 
 
@@ -1287,11 +1213,8 @@ AddPrefabPostInit(
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1951468597)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
--- 暂无高频切面钩子
 ```
 
 
@@ -1301,14 +1224,11 @@ local GLOBAL = GLOBAL
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3587643283)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddBrainPostInit:crittersbrain
 env.AddBrainPostInit("crittersbrain", function(brain)
 
-    end)
-
-```
+end)```
 

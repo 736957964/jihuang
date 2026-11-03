@@ -28,7 +28,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式：工业级波次怪物生成与内存回收组件 (scripts/components/dynamic_wave_spawner.lua)
 -- ==============================================================================
 
 local DynamicWaveSpawner = Class(function(self, inst)
@@ -49,7 +48,6 @@ function DynamicWaveSpawner:Start()
 end
 
 function DynamicWaveSpawner:OnSpawnTick()
-    -- 1. 倒序逆向清洗无效引用，杜绝内存泄漏
     for i = #self.monsters, 1, -1 do
         local m = self.monsters[i]
         if not (m and m:IsValid()) or (m.components.health and m.components.health:IsDead()) then
@@ -57,36 +55,31 @@ function DynamicWaveSpawner:OnSpawnTick()
         end
     end
 
-    -- 2. 闸门守卫：同屏存活已满，放弃本波生成
     if #self.monsters >= self.max_monsters then
         return
     end
 
-    -- 3. 极坐标安全点探测
     local cx, cy, cz = self.inst.Transform:GetWorldPosition()
     local angle = math.random() * 2 * PI
     local radius = math.random(self.spawn_radius_min, self.spawn_radius_max)
     local sx = cx + radius * math.cos(angle)
     local sz = cz + radius * math.sin(angle)
 
-    -- 地皮可行走断言
     if TheWorld.Map:IsPassableAtPoint(sx, 0, sz) then
         local chosen_prefab = self.prefab_pool[math.random(#self.prefab_pool)]
         local monster = SpawnPrefab(chosen_prefab)
         if monster then
             monster.Transform:SetPosition(sx, 0, sz)
             
-            -- 4. 挂载脱战自销毁守卫，防止玩家离开后怪物常驻
             monster:DoPeriodicTask(15, function(target)
                 if target:IsValid() and (not target.components.combat or target.components.combat.target == nil) then
-                    -- 检查 30 码内是否有活着的玩家
                     local nearest_player = FindEntity(target, 30, nil, { "player" }, { "playerghost" })
                     if nearest_player == nil then
                         SpawnPrefab("small_puff").Transform:SetPosition(target.Transform:GetWorldPosition())
                         target:Remove()
                     end
                 end
-            end)
+end)
 
             table.insert(self.monsters, monster)
         end
@@ -100,8 +93,7 @@ function DynamicWaveSpawner:OnRemoveFromEntity()
     end
 end
 
-return DynamicWaveSpawner
-```
+return DynamicWaveSpawner```
 
 ---
 

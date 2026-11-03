@@ -17,10 +17,8 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3052540872)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 
  AddPrefabPostInit("skyshow",function(inst)
     inst:AddComponent("weapon")
@@ -87,7 +85,6 @@ local GLOBAL = GLOBAL
 			if caster ~= nil and caster.components.sanity ~= nil then
 				caster.components.sanity:DoDelta(-5)
 			end
-			--local caster = staff.components.inventoryitem.owner
 			if caster then 
 				if SKYSHOW.LAN == 1 then
 					caster.components.talker:Say("Nice！This fruit knife works too well！")
@@ -542,7 +539,7 @@ local GLOBAL = GLOBAL
                         end
                         Sleep(math.random(.2, .25))
                     end
-                end)
+end)
             end
 			if TUNING.XGDUSE > 0 then staff.components.finiteuses:Use(10) end
 			if caster ~= nil and caster.components.sanity ~= nil then
@@ -586,7 +583,6 @@ local GLOBAL = GLOBAL
 				end
 
 				if inst.components.growable ~= nil then
-					-- If we're a tree and not a stump, or we've explicitly allowed magic growth, do the growth.
 					if ((inst:HasTag("tree") or inst:HasTag("winter_tree")) and not inst:HasTag("stump")) or
 							inst.components.growable.magicgrowable then
 						inst.components.growable:DoGrowth()
@@ -647,8 +643,7 @@ end
 end
 end
 end
-end
-```
+end```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

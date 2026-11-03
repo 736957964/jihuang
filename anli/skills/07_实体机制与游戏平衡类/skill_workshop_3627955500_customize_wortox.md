@@ -17,7 +17,6 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3627955500)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -26,7 +25,6 @@ local GLOBAL = GLOBAL
             if not G.TheWorld.ismastersim or inst.starting_inventory == nil then
                 return
             end
-            -- Prefab starting lists are shared, so never edit them in place.
             local items = {}
             for _, item in G.ipairs(inst.starting_inventory) do
                 if item ~= "wortox_soul" then
@@ -37,9 +35,8 @@ local GLOBAL = GLOBAL
                 items[#items + 1] = "wortox_soul"
             end
             inst.starting_inventory = items
-        end)
-end
-```
+end)
+end```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

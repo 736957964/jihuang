@@ -17,10 +17,8 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3586130971)
 -- ============================================================================
 local GLOBAL = GLOBAL
-
 
 AddPrefabPostInit("phonograph", function(inst)
     if not TheWorld.ismastersim then return inst end
@@ -47,8 +45,7 @@ AddPrefabPostInit("phonograph", function(inst)
 
         inst:ListenForEvent("onremove", onremove)
     end
-end)
-```
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

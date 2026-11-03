@@ -17,7 +17,6 @@
 
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3825012187，完整闭包自闭环)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -64,9 +63,8 @@ AddPrefabPostInit("world", function(inst)
             player.sh_hollow_spawn_delete = true
             player._sh_hollow_focus:set(nil)
         end
-    end)
 end)
-```
+end)```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

@@ -19,32 +19,27 @@
 
 ```lua
 -- ==============================================================================
--- 范式：纯客机物品元数据沙盒快照与安全缓存器 (scripts/tools/item_metadata_cache.lua)
 -- ==============================================================================
 
 local ItemMetadataCache = {}
 local CACHED_METADATA = {}
 local IS_PROBING = false
 
--- 1. 注入动作静默守卫：防止临时探针注册全局交互动作
 AddGlobalClassPostConstruct("entityscript", "EntityScript", function(self)
     local old_RegisterComponentActions = self.RegisterComponentActions
     self.RegisterComponentActions = function(inst, name)
         if not IS_PROBING then
             return old_RegisterComponentActions(inst, name)
         end
-        -- 探针生成期间彻底静默
     end
 end)
 
--- 2. 提取并缓存目标物品的静态原型属性
 function ItemMetadataCache.GetMetadata(prefab_name)
     if not prefab_name or type(prefab_name) ~= "string" then return nil end
     if CACHED_METADATA[prefab_name] then
         return CACHED_METADATA[prefab_name]
     end
 
-    -- 开启沙盒隔离探针
     IS_PROBING = true
     local probe = GLOBAL.SpawnPrefab(prefab_name)
     IS_PROBING = false
@@ -60,7 +55,6 @@ function ItemMetadataCache.GetMetadata(prefab_name)
         insulation_summer = 0,
     }
 
-    -- 提取武器物理与位面伤害
     if probe.components.weapon then
         meta.damage = probe.components.weapon.damage or 0
     end
@@ -68,12 +62,10 @@ function ItemMetadataCache.GetMetadata(prefab_name)
         meta.planar_damage = probe.components.planardamage:GetBaseDamage() or 0
     end
 
-    -- 提取护甲与位面防御
     if probe.components.armor then
         meta.absorb_percent = probe.components.armor.absorb_percent or 0
     end
 
-    -- 提取保温系数
     if probe.components.insulator then
         local val = probe.components.insulator.insulation or 0
         if probe.components.insulator.type == GLOBAL.SEASONS.WINTER then
@@ -83,16 +75,13 @@ function ItemMetadataCache.GetMetadata(prefab_name)
         end
     end
 
-    -- 核心：即时销毁探针，绝不残留场景实体句柄
     probe:Remove()
 
-    -- 写入全局缓存
     CACHED_METADATA[prefab_name] = meta
     return meta
 end
 
-return ItemMetadataCache
-```
+return ItemMetadataCache```
 
 ---
 

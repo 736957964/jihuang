@@ -19,7 +19,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：世界级唯一序列分发组件 (scripts/components/network_pairing_counter.lua)
 -- ==============================================================================
 
 local NetworkPairingCounter = Class(function(self, inst)
@@ -46,9 +45,7 @@ end
 
 return NetworkPairingCounter
 
-
 -- ==============================================================================
--- 范式 2：实体双向对偶原子标记切面 (scripts/components/dual_marker.lua)
 -- ==============================================================================
 
 local DualMarker = Class(function(self, inst)
@@ -61,7 +58,6 @@ function DualMarker:ApplyMarker(id, draw_over_fog)
     self.pair_id = id
     self.is_marked = true
 
-    -- 动态更新小地图图标
     if self.inst.MiniMapEntity == nil then
         self.inst.entity:AddMiniMapEntity()
     end
@@ -72,7 +68,6 @@ function DualMarker:ApplyMarker(id, draw_over_fog)
     end
 end
 
--- 原子触发器：在单侧激活时，联动对偶远端
 function DualMarker:TriggerDualMark(draw_over_fog)
     if self.is_marked then return end
 
@@ -80,10 +75,8 @@ function DualMarker:TriggerDualMark(draw_over_fog)
     if not counter then return end
 
     local next_id = counter:GetNextId()
-    -- 1. 标记自身
     self:ApplyMarker(next_id, draw_over_fog)
 
-    -- 2. 穿透标记对偶出口 (防止跨维度 nil 报错)
     if self.inst.components.teleporter then
         local remote = self.inst.components.teleporter.targetTeleporter
         if remote and remote:IsValid() and remote.components.dual_marker then
@@ -102,8 +95,7 @@ function DualMarker:OnLoad(data)
     end
 end
 
-return DualMarker
-```
+return DualMarker```
 
 ---
 

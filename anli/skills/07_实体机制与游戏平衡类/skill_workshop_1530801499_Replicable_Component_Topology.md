@@ -19,7 +19,6 @@
 
 ```lua
 -- ==============================================================================
--- 范式 1：服务端权威拓扑管理组件 (scripts/components/network_node.lua)
 -- ==============================================================================
 
 local ALL_NODES = {}
@@ -29,7 +28,6 @@ local NetworkNode = Class(function(self, inst)
     self.node_name = "Default Node"
     self.is_active = true
 
-    -- 1. 自动注册入全服拓扑网
     table.insert(ALL_NODES, self)
 end)
 
@@ -47,12 +45,10 @@ end
 function NetworkNode:CanTravelNow(player)
     if not player or not player:IsValid() then return false end
 
-    -- 检测是否着火
     if player.components.burnable and player.components.burnable:IsBurning() then
         return false, "BURNING"
     end
 
-    -- 检测附近仇恨敌人
     local danger = GLOBAL.FindEntity(player, 12, function(target)
         return target.components.combat and target.components.combat.target == player
     end, { "_combat" }, { "INLIMBO", "player" })
@@ -77,15 +73,11 @@ end
 
 return NetworkNode
 
-
 -- ==============================================================================
--- 范式 2：双端网络注册与 ModRPC 安全校验 (modmain.lua)
 -- ==============================================================================
 
--- 1. 注册主客端复制组件
 AddReplicableComponent("network_node")
 
--- 2. 实体切面挂载
 AddPrefabPostInit("homesign", function(inst)
     inst:AddTag("_network_node")
     if GLOBAL.TheWorld.ismastersim then
@@ -94,17 +86,14 @@ AddPrefabPostInit("homesign", function(inst)
     end
 end)
 
--- 3. 服务端安全校验 RPC 通道
 AddModRPCHandler("NetworkNodeMod", "TeleportTo", function(player, src_inst, target_inst)
     if not player or not player:IsValid() or not src_inst or not target_inst then return end
 
-    -- 安全校验 1：玩家是否在源节点交互范围内 (防全图隔空发包作弊)
     if player:GetDistanceSqToInst(src_inst) > 16 then return end
 
     local node = src_inst.components.network_node
     if not node then return end
 
-    -- 安全校验 2：战斗与危险防逃逸
     local can_travel, reason = node:CanTravelNow(player)
     if not can_travel then
         if player.components.talker then
@@ -113,14 +102,12 @@ AddModRPCHandler("NetworkNodeMod", "TeleportTo", function(player, src_inst, targ
         return
     end
 
-    -- 校验通过：执行权威位移并扣除开销
     if player.Physics then
         player.Physics:Teleport(target_inst.Transform:GetWorldPosition())
     else
         player.Transform:SetPosition(target_inst.Transform:GetWorldPosition())
     end
-end)
-```
+end)```
 
 ---
 
@@ -139,7 +126,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2914336761)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -174,9 +160,7 @@ AddComponentPostInit('playercontroller', function(PlayerController, inst)
         end
         return oldOnUpdate(self, ...)
     end
-end)
-
-```
+end)```
 
 
 
@@ -185,7 +169,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2784715091)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -194,7 +177,6 @@ AddComponentPostInit("playercontroller", function(self)
     local old_OnControl = self.OnControl
 
     function self:OnControl(control, down, ...)
-        -- 在宣告快捷键按下时阻断主/副操作
         if GLOBAL.NOMU_QA.DATA.BLOCK_ACTION
             and (control == GLOBAL.CONTROL_PRIMARY or control == GLOBAL.CONTROL_SECONDARY) then
             if IsDefaultScreen() and GLOBAL.QA_UTILS.IsAltPressed() and GLOBAL.QA_UTILS.IsShiftPressed() then
@@ -280,9 +262,7 @@ AddComponentPostInit('nightmareclock', function(clock)
             }
         end
     end
-end)
-
-```
+end)```
 
 
 
@@ -291,7 +271,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3402670530)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -311,9 +290,7 @@ AddComponentPostInit("skinner",function(self)
                 oldfn(s,skinname,...)
             end
         end
-    end)
-
-```
+end)```
 
 
 
@@ -322,7 +299,6 @@ AddComponentPostInit("skinner",function(self)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3596740317)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -331,9 +307,7 @@ AddPrefabPostInit("player_classified", function(inst)
     if not _G.TheNet:IsDedicated() then
         inst:DoStaticTaskInTime(0, RegisterNetListeners)
     end
-end)
-
-```
+end)```
 
 
 
@@ -342,7 +316,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1803285852)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -358,18 +331,6 @@ AddComponentPostInit("stackable", function(comp)
 	
 	local compInst = comp.inst
 	
-	-- Edge case fix. When holding CTRL and left-clicking on the ground with an item in your hands,
-	-- it subtracts 1 from the stack being held in the mouse, and spawns a new prefab to be that new
-	-- instance. It doesn't drop the instance, but spawns it directly to the ground.
-	-- This makes it NOT behave like a normal manual drop, and so it is automatically picked up or stacked.
-	-- I fix this by using the fact that Stackable:Get(num), which creates this new instance, calls
-	-- ondestack on it afterwards. So, I set a bool on the instance, and then use it in the next frame
-	-- (my DoTaskInTime) to identify whether this spawned item was just destacked, and if so, do not
-	-- do automatic pick up, and if manualDropAutoStackEnabled is false we also cancel automatic stacking.
-	-- Note: We don't do this on entities we want to ignore. There is a duplicate check in the DoTaskInTime
-	-- below. This is because .prefab isn't set until after the postinits, and we also cannot be sure that
-	-- all tags have been applied yet. We still do the check here, though, since we can then skip the whole
-	-- destacking-thing altogether.
 	if not ShouldIgnoreEntity(compInst) then
 		local oldOnDestack = comp.inst.components.stackable.ondestack
 		comp.inst.components.stackable.ondestack = function(inst)
@@ -382,28 +343,16 @@ AddComponentPostInit("stackable", function(comp)
 		end
 	end
 	
-	-- I changed this to 0.1 from 0, so the Quaker-script (and other scripts that spawn items),
-	-- is allowed to manipulate the item between the stackable-component being added,
-	-- and my script doing its ShouldIgnoreEntity() checks and especially the
-	-- .inventoryitem.canbepickedup bool-check, since the Quaker-script sets that to false after
-	-- spawning an item, and then to true again once it has landed and possibly been destroyed by the fall.
-	-- This should also let other mods that spawn items have at least a frame or two before I destroy the item.
-	-- My checks should be solid enough to cancel its functionality if the item has become invalid or destroyed.
 	compInst:DoTaskInTime(0.1, function(inst)
 		if inst == nil then
 			return
 		end
 	
-		-- If it is an entity we want to ignore, we return instantly.
-		-- The reason why we have the check here AND above, is that .prefab isn't set until after the postinits,
-		-- and we also cannot be sure that all tags have been applied yet, so we have to delay the check until here.
 		if ShouldIgnoreEntity(inst) then
-			-- print("Ignoring entity "..inst.prefab)
 			return
 		end
 		
 		if inst.wasjustcreatedfrombeingdestacked then
-			-- print(inst.prefab.." was spawned due to manual destacking. Skipping auto pick up"..(manualDropAutoStackEnabled and "." or " and also auto stacking, since manual drop auto stacking is disabled."))
 			shouldAutoPickup = false
 			if not manualDropAutoStackEnabled then
 				shouldStack = false
@@ -422,21 +371,7 @@ AddComponentPostInit("stackable", function(comp)
 			end
 		end
 		
-		-- if shouldStack and not autoStackPenguinEggs and inst.prefab == "bird_egg" then
-			-- local x,y,z = inst.Transform:GetWorldPosition()
-			-- local ents = _G.TheSim:FindEntities(x,y,z, 4, { "penguin" }, { "FX", "NOCLICK", "DECOR","INLIMBO" })
-			-- if #(ents) > 0 then
-				-- shouldStack = false
-			-- end
-		-- end
 		
-		-- if shouldStack and not autoStackPenguinEggs and inst.prefab == "rottenegg" then
-			-- local x,y,z = inst.Transform:GetWorldPosition()
-			-- local ents = _G.TheSim:FindEntities(x,y,z, 4, { "penguin", "lunar_aligned" }, { "FX", "NOCLICK", "DECOR","INLIMBO" })
-			-- if #(ents) > 0 then
-				-- shouldStack = false
-			-- end
-		-- end
 		
 		if shouldStack and inst:HasTag("no_autostack_w") then
 			shouldStack = false
@@ -446,32 +381,14 @@ AddComponentPostInit("stackable", function(comp)
 			shouldAutoPickup = false
 		end
 		
-		-- This makes it so that items dropping from the ceiling during an earthquake are not Auto-Pickup'ed
-		-- nor Auto-Stacked until their .canbepickedup is true (or it runs out of tries after 10 seconds).
-		-- This fixes a problem with some falling items disappearing during earhquakes, due to being Auto-Pickup'ed
-		-- before their falling sequence has completed.
-		-- NOTE: NOT SURE WHAT OTHER IMPLICATIONS THIS MAY HAVE!
-		-- if inst.components.inventoryitem and not inst.components.inventoryitem.canbepickedup then
-			-- shouldStack = false
-			-- shouldAutoPickup = false
-		-- end
 		
-		-- print(inst.prefab.." was spawned and"..((not shouldAutoPickup and not shouldStack) and " should neither auto pick up nor auto stack." or ((shouldAutoPickup and " should auto pick up" or " should NOT auto pick up")..(shouldStack and " and should auto stack." or " and should NOT auto stack."))))
 		
 		if (shouldAutoPickup or shouldStack) and not IsAutoPickupOrStackingBlockedByContext(inst) then
 			if inst.parent == nil or (not inst.parent:HasTag("player") and not inst.parent.components.container) then
 				if (inst.Physics and not inst.Physics:IsActive())
 				or (inst.components.inventoryitem and not inst.components.inventoryitem.canbepickedup)
-				-- The Quaker (earthquake) script uses the name "updatetask" for its fall-and-maybe-destroy-task in debris.
-				-- If we let it stay on, then the player somehow gets hit by all the debris, killing them. We wait until it is gone.
 				or inst.updatetask ~= nil
 				then
-					-- print("Physics were not active on "..inst.prefab.." OR inventoryitem.canbepickedup was false; it was "..inventoryitem.canbepickedup..". Starting task...")
-					-- if inst.parent ~= nil then
-						-- print(inst.prefab.." has a parent: "..inst.parent.prefab)
-					-- else
-						-- print(inst.prefab.." does NOT have a parent")
-					-- end
 					inst.AutoPickUpOrAutoStackTaskTries = 0
 					inst.AutoPickUpOrAutoStackTask = inst:DoPeriodicTask(0.5, function(inst)
 						inst.AutoPickUpOrAutoStackTaskTries = inst.AutoPickUpOrAutoStackTaskTries + 1
@@ -483,7 +400,6 @@ AddComponentPostInit("stackable", function(comp)
 						and inst.components.inventoryitem and inst.components.inventoryitem.canbepickedup
 						and inst.updatetask == nil
 						and not (x == 0 and y == 0 and z == 0) then
-							-- print("Physics are now active, canbepickedup is true, it is not earthquake debris currently falling, and the entity has a position that is not 0,0,0. Trying to auto pick up and auto stack "..inst.prefab)
 							if inst.AutoPickUpOrAutoStackTask ~= nil then
 								inst.AutoPickUpOrAutoStackTask:Cancel()
 								inst.AutoPickUpOrAutoStackTask = nil
@@ -491,7 +407,6 @@ AddComponentPostInit("stackable", function(comp)
 							DoAutoPickUpOrAutoStack(inst, shouldAutoPickup, shouldStack)
 						end
 						if inst.AutoPickUpOrAutoStackTask ~= nil and inst.AutoPickUpOrAutoStackTaskTries >= 20 then
-							-- print("Cancelling AutoPickUpOrAutoStackTask after trying for too long.")
 							inst.AutoPickUpOrAutoStackTask:Cancel()
 							inst.AutoPickUpOrAutoStackTask = nil
 						end
@@ -500,27 +415,18 @@ AddComponentPostInit("stackable", function(comp)
 					DoAutoPickUpOrAutoStack(inst, shouldAutoPickup, shouldStack)
 				end
 			else
-				-- print(inst.prefab.." has a parent, "..inst.parent.prefab..", which is a player or a container. Skipping auto pick up and stacking!")
 			end
 		end
 		
-		-- Add the manual drop stacking if it's enabled, and the inst has not already
-		-- been fully absorbed into stacks on the ground by the AutoStack() call above.
 		if manualDropAutoStackEnabled and inst:IsValid() and not inst:HasTag("no_autostack_m") and not denyManualStack[inst.prefab] then
-			-- print("stackable => adding ondropped listener")
 			inst:ListenForEvent("ondropped", function(inst)
-				-- Wait for all listeners of "ondropped" to do their thing (next frame; I had a crash otherwise)...
 				inst:DoTaskInTime(0, function(inst)
-					-- ...then auto stack whenever it is dropped.
-					-- print(inst.prefab.." was dropped")
 					AutoStack(inst, manualDropStackRange, manualStackMakeNewStackMainStack)
-				end)
-			end)
-		end
-	end)
 end)
-
-```
+end)
+		end
+end)
+end)```
 
 
 
@@ -529,14 +435,12 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2391246365)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:playercontroller
 AddComponentPostInit("playercontroller", GetHoverTextOverride)
 
--- Rearrange the non-overriden tooltip
 local function OnUpdate(self)
 	local OnUpdate_old = self.OnUpdate or function() end
 	self.OnUpdate = function(self)
@@ -588,7 +492,6 @@ end
 -- 切面钩子：AddPrefabPostInit:skeleton_player
 AddPrefabPostInit("skeleton_player", skeleton_player)
 
---2. player inspection
 local function player_common(inst)
 	if inst.components.inspectable ~= nil then
 		if inst.components.inspectable.getspecialdescription_old == nil then
@@ -604,9 +507,6 @@ end
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:player_common
 AddPrefabPostInit("player_common", player_common)
---3. carrat race winner
---disabled, the parameter is easely lost. Also not tested enough.
---[[AddPrefabPostInit("yotc_carrat_race_finish", function(inst)
 	if inst.components.inspectable ~= nil then
 		if inst.components.inspectable.getspecialdescription_old == nil then
 			inst.components.inspectable.getspecialdescription_old = inst.components.inspectable.getspecialdescription or function() end
@@ -620,7 +520,6 @@ AddPrefabPostInit("player_common", player_common)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:yotc_carrat_race_finish
---[[AddPrefabPostInit("yotc_carrat_race_finish", function(inst)
 	if inst.components.inspectable ~= nil then
 		if inst.components.inspectable.getspecialdescription_old == nil then
 			inst.components.inspectable.getspecialdescription_old = inst.components.inspectable.getspecialdescription or function() end
@@ -630,9 +529,7 @@ AddPrefabPostInit("player_common", player_common)
 			local winner = inst._winner ~= nil and inst._winner.name
 			return (winner ~= nil and pp.replacePP(str, winner)) or str
 		end
-	end
-
-```
+	end```
 
 
 
@@ -641,7 +538,6 @@ AddPrefabPostInit("player_common", player_common)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3615173314)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -661,9 +557,7 @@ AddComponentPostInit("skinner", function(self)
             oldfn(s, skinname, ...)
         end
     end
-end)
-
-```
+end)```
 
 
 
@@ -672,7 +566,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3495316998)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -693,9 +586,7 @@ AddComponentPostInit("playercontroller", function(self)
         end
         return oldOnLeftClick(inst, down, ...)
     end
-end)
-
-```
+end)```
 
 
 
@@ -704,7 +595,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 2033458869)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -713,9 +603,7 @@ ENV.AddComponentPostInit("playercontroller", function(self)
     if self.inst == ThePlayer then
         self.inst:ListenForEvent("aqp_threadstart", StopCooking) -- For AttackQueue Plus
     end
-end)
-
-```
+end)```
 
 
 
@@ -724,7 +612,6 @@ end)
 - **核心切面代码**：
 ```lua
 -- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 3468519821)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
@@ -736,8 +623,6 @@ AddPrefabPostInit("beefalo", function(inst)
         else
             inst.AnimState:SetBank("beefalo")
         end
-    end)
 end)
-
-```
+end)```
 
