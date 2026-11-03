@@ -97,3 +97,33 @@ return ResponsiveContainer
    - 如果用户在悬停该 UI 的瞬间按下了 ESC 键切出菜单，或者切回桌面，可能会跳过 `OnLoseFocus`。建议在控件的 `Kill` 和 `Hide` 方法中，同样加入对 `TheCamera:SetControllable(true)` 的安全恢复调用，防止玩家摄像机被永久锁死。
 2. **`controls.OnUpdate` 增量轻量比较**：
    - 监听窗口分辨率变化时，切忌每帧去调用复杂的布局计算。只在 `w ~= last_w or h ~= last_h` 时才触发一次 `Reposition`。
+
+
+## 五、进阶拓扑演进与变体分支
+
+### 变体演进：Minecraft HUD (Mod 3649427234)
+- **变体场景与切面**：收录来自工坊 Mod 3649427234 (`Minecraft HUD`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3649427234)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:player
+AddPrefabPostInit("player", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", BadgePostConstruct)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function()
+	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
+		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
+	end
+end)
+
+```
+
