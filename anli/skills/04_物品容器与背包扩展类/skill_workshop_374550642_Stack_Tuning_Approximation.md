@@ -1308,3 +1308,99 @@ end)
 
 ```
 
+
+
+### 变体演进：45 Inventory Slots with Equip Inventory (Mod 3789505149)
+- **变体场景与切面**：收录来自工坊 Mod 3789505149 (`45 Inventory Slots with Equip Inventory`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3789505149)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+AddPrefabPostInit("inventory_classified", addItemSlotNetvarsInInventory)
+
+-- Parche para evitar el crash con el ataque del Bishop / IsInsulated
+AddComponentPostInit("inventory", function(self)
+    local old_IsInsulated = self.IsInsulated
+    function self:IsInsulated(...)
+        if self.equipslots then
+            for k, v in pairs(self.equipslots) do
+                if v and v:HasTag("insulated") then
+                    return true
+                end
+            end
+            return false
+        end
+        if old_IsInsulated then
+            return old_IsInsulated(self, ...)
+        end
+        return false
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+AddComponentPostInit("inventory", function(self)
+    local old_IsInsulated = self.IsInsulated
+    function self:IsInsulated(...)
+        if self.equipslots then
+            for k, v in pairs(self.equipslots) do
+                if v and v:HasTag("insulated") then
+                    return true
+                end
+            end
+            return false
+        end
+        if old_IsInsulated then
+            return old_IsInsulated(self, ...)
+        end
+        return false
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:backpack
+AddPrefabPostInit("backpack",
+function(inst)
+    if ENABLEBACKPACK == true then
+        if inst.components.inventoryitem then
+            inst.components.inventoryitem.cangoincontainer = true
+        end
+    else
+        if inst.components.inventoryitem then
+            inst.components.inventoryitem.cangoincontainer = false
+        end
+    end
+end )
+
+```
+
+
+
+### 变体演进：饿不死群补丁 (Mod 3788479075)
+- **变体场景与切面**：收录来自工坊 Mod 3788479075 (`饿不死群补丁`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3788479075)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:container
+AddComponentPostInit("container", function(self)
+    local _GiveItem = self.GiveItem
+
+    function self:GiveItem(item, slot, src_pos, drop_on_fail)
+        if item == nil then
+            return false
+        end
+
+        return _GiveItem(self, item, slot, src_pos, drop_on_fail)
+    end
+end)
+
+```
+
