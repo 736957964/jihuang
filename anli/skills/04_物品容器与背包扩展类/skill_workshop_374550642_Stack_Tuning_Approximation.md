@@ -1183,3 +1183,128 @@ AddComponentPostInit("pollinator", function(inst)
 
 ```
 
+
+
+### 变体演进：Casino Mode (Craftable Slot Machines) (Mod 2656551380)
+- **变体场景与切面**：收录来自工坊 Mod 2656551380 (`Casino Mode (Craftable Slot Machines)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2656551380)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+w  state      AddPrefabPostInit("world").
+
+mods -   (    ).
+mods.lib -   ( )      ,   .
+mods.lib.version -  
+
+--]]
+if _silence == nil then
+	print(_version,modinfo.name) --Show current version of lib
+end
+
+
+--[[
+--  ,  , ,            -.
+if mods.lib then
+	return
+end
+--]]
+
+--[[
+,     :
+	1)   .    - .
+	2)  N- .           ,   .
+    old_lib.       .   ,  .
+  ,   ( ) .   .
+--]]
+local old_lib = mods.lib or {} -- ,    nil
+
+--     .   ,   .
+if old_lib._libStopWorking then
+	old_lib._libStopWorking()
+end
+
+--      ,       .
+local IS_ACTIVE = true -- ,    .     .
+local function _libStopWorking()
+	--  .     .
+	--,  ,   ,   .
+	IS_ACTIVE = nil
+	--       ,     .
+	--       ().
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+--AddPrefabPostInit("forest",world_init)
+--    , ..   forest .
+
+
+-- .    -  -,   ,    - .
+local EmptyFunction = function() end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:slotmachine
+AddPrefabPostInit("slotmachine", function(inst)
+	if not GLOBAL.TheWorld.ismastersim then
+		return
+	end
+	if inst.slotrolls == nil then 
+		inst.slotrolls = 0
+	end
+	
+	SlotInspect(inst) --Adding slot machine count inspection
+	--[[inst.OnSaveCasino = inst.OnSave		--Caused the weird issues I had before >:( Imported into slotmachine.lua
+	inst.OnSave = OnSave
+	inst.OnLoadCasino = inst.OnLoad
+	inst.OnLoad = OnLoad]]
+	inst:DoTaskInTime(0, function(inst)
+		if inst.permanententity then 
+			inst:RemoveComponent("workable")
+			inst:RemoveComponent("burnable")
+		end
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:deciduoustreeupdater
+AddComponentPostInit("deciduoustreeupdater", DeciduousPoison)
+
+--Werepigs--
+local WerepigDropper = function(inst)
+    local IsWerepig = inst.components.werebeast
+    if IsWerepig then 
+        local onsetwerefn = IsWerepig.onsetwerefn
+        local SetWerePig2 = function(inst)
+            if onsetwerefn then 
+				onsetwerefn(inst) 
+			end
+            if inst:HasTag("werepig") and not inst:HasTag("moonbeast") then 
+				inst.dubchance = MultMobs3
+				inst:AddTag("vanilla_entityDB")
+				--inst:DoTaskInTime(0, DubloonDropRate)	(Since the first function already runs this)
+				inst:DoTaskInTime(0, DubloonDrop)
+            end
+        end
+        IsWerepig:SetOnWereFn(SetWerePig2)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:pigman
+AddPrefabPostInit("pigman",WerepigDropper)
+
+--Bunnymen/rabbits (since their alt state erases the drop table, which means AddChanceLoot will not work)
+AddPrefabPostInit("bunnyman", function(inst)
+	inst:AddTag("vanilla_entityDB")
+	inst.dubchance = MultMobs2
+	inst:DoTaskInTime(0, DubloonDropRate)
+	inst:ListenForEvent("death", DubloonSpawn)
+end)
+
+```
+
