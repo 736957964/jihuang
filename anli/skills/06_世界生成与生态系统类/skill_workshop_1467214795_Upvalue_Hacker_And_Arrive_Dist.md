@@ -339,3 +339,50 @@ end)
 end)
 ```
 
+
+
+### 变体演进：Wolemorm, Mineral Edition (Mod 2313039145)
+- **变体场景与切面**：收录来自工坊 Mod 2313039145 (`Wolemorm, Mineral Edition`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2313039145)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:edible
+AddComponentPostInit("edible", function(self)
+	local oldGetStat = { health = self.GetHealth, hunger = self.GetHunger, sanity = self.GetSanity }
+	local oldOnEaten = self.OnEaten
+	
+	local function getstat(self, eater, statname)
+		local stat = oldGetStat[statname](self, eater)
+		if eater and eater.extrafoodstats then
+			stat = stat + (eater.extrafoodstats[self.inst.prefab] and eater.extrafoodstats[self.inst.prefab][statname] or 0)
+		end
+		return stat
+	end
+	
+	function self:GetHealth(eater)
+		return getstat(self, eater, "health")
+	end
+	
+	function self:GetHunger(eater)
+		return getstat(self, eater, "hunger")
+	end
+	
+	function self:GetSanity(eater)
+		return getstat(self, eater, "sanity")
+	end
+	
+	function self:OnEaten(eater)
+		oldOnEaten(self, eater)
+		
+		if eater and eater.extrafoodstats and eater.extrafoodstats[self.inst.prefab] and eater.extrafoodstats[self.inst.prefab].fn then
+			eater.extrafoodstats[self.inst.prefab].fn(self.inst, eater)
+		end
+	end
+end)
+
+```
+

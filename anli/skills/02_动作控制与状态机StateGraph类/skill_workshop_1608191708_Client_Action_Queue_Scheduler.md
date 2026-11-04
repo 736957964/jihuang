@@ -837,3 +837,140 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：刘辩 (Mod 3577718127)
+- **变体场景与切面**：收录来自工坊 Mod 3577718127 (`刘辩`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3577718127)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:combat
+AddComponentPostInit("combat",function(self)
+	local old_SetRetargetFunction = self.SetRetargetFunction
+	function self:SetRetargetFunction(...)
+		old_SetRetargetFunction(self,...)
+		if self.targetfn ~= nil then
+			local old_targetfn = self.targetfn
+			self.targetfn = function(...)
+				local newtarget, forcechange = old_targetfn(...)
+				if newtarget then
+					if isnottoadstool(self.inst) and isnotvalidtarget(newtarget) then
+						newtarget = nil
+					end
+				end
+				return newtarget, forcechange
+			end
+		end
+	end
+	local old_ShareTarget = self.ShareTarget
+	function self:ShareTarget(target,...)
+		if isnottoadstool(self.inst) and isnotvalidtarget(target) then
+			return
+		end
+		old_ShareTarget(self,target,...)
+	end
+
+	local old_SuggestTarget = self.SuggestTarget
+	function self:SuggestTarget(target,...)
+		if isnottoadstool(self.inst) and  isnotvalidtarget(target) then
+			return
+		end
+		old_SuggestTarget(self,target,...)
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:koalefantbrain
+AddBrainPostInit("koalefantbrain", function(self)
+	for k, v in ipairs(self.bt.root.children) do
+		if type(v) == "table" then
+			findhunter(v,{"liubian_amulet_equipped"})
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:babybeefalobrain
+AddBrainPostInit("babybeefalobrain", function(self)
+	for k, v in ipairs(self.bt.root.children) do
+		if type(v) == "table" then
+			findhunter(v,{"liubian_amulet_equipped"})
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:rabbitbrain
+AddBrainPostInit("rabbitbrain", function(self)
+	for k, v in ipairs(self.bt.root.children) do
+		if type(v) == "table" then
+			findhunter(v,{"liubian_amulet_equipped"})
+		end
+	end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddBrainPostInit:perdbrain
+AddBrainPostInit("perdbrain", function(self)
+	for k, v in ipairs(self.bt.root.children) do
+		if type(v) == "table" then
+			findhunter(v,{"liubian_amulet_equipped"})
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：无线存储终端 (Mod 3697123554)
+- **变体场景与切面**：收录来自工坊 Mod 3697123554 (`无线存储终端`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3697123554)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function(inst)
+    if inst ~= nil and inst.ismastersim and inst.DoTaskInTime ~= nil then
+        inst:DoTaskInTime(0, function()
+            local core = EnsureSharedStorageCore()
+            if core ~= nil then
+                if inst.ismastershard then
+                    DebugPrint("Shared storage core ready for shard", "Master")
+                else
+                    DebugPrint("Shared storage authority proxy ready for shard", GetCurrentShardId())
+                end
+            end
+        end)
+
+        local ls = StorageDefs.EnsureLiuStorageWorldState(inst)
+        if inst.DoPeriodicTask ~= nil and ls.pending_sweep_task == nil then
+            ls.pending_sweep_task = inst:DoPeriodicTask(
+                STORAGE_REQUEST_TIMEOUT_SWEEP_INTERVAL,
+                Shard.SweepExpiredSharedStorageRequests
+            )
+        end
+
+        inst:ListenForEvent("onremove", function()
+            local ls = StorageDefs.EnsureLiuStorageWorldState(inst)
+            local core = (ls ~= nil and ls.core) or FindSharedStorageCore()
+            if core ~= nil then
+                CancelSharedStorageFlushTask(core)
+            end
+            if ls ~= nil and ls.pending_sweep_task ~= nil then
+                ls.pending_sweep_task:Cancel()
+                ls.pending_sweep_task = nil
+            end
+        end)
+    end
+end)
+
+```
+

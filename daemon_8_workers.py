@@ -587,12 +587,18 @@ def run_daemon_24h():
             if not batch_mods:
                 log("队列待分析池见底，触发自动增量抓取 Steam 创意工坊新 Mod...")
                 try:
-                    import urllib.request
+                    import urllib.request, random
                     PROXY = "http://127.0.0.1:7890"
                     opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
                     auto_fresh = []
-                    for s_type in ["trend", "mostrecent", "totaluniquesubscribers"]:
-                        for p_idx in range(1, 30):
+                    cursor_file = os.path.join(WORK_DIR, "crawl_cursor.json")
+                    cursors = _read_json(cursor_file, {"trend": 1, "mostrecent": 1, "totaluniquesubscribers": 25, "toprated": 1})
+                    
+                    modes = ["totaluniquesubscribers", "toprated", "mostrecent", "trend"]
+                    random.shuffle(modes)
+                    for s_type in modes:
+                        start_page = cursors.get(s_type, 1)
+                        for p_idx in range(start_page, start_page + 35):
                             u = f"https://steamcommunity.com/workshop/browse/?appid=322330&browsesort={s_type}&section=readytouseitems&p={p_idx}"
                             r = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
                             try:
@@ -604,10 +610,13 @@ def run_daemon_24h():
                                         auto_fresh.append(mid)
                             except Exception:
                                 pass
-                            if len(auto_fresh) >= 200:
+                            cursors[s_type] = p_idx + 1
+                            if cursors[s_type] > 200: cursors[s_type] = 1
+                            if len(auto_fresh) >= 500:
                                 break
-                        if len(auto_fresh) >= 200:
+                        if len(auto_fresh) >= 500:
                             break
+                    _write_json(cursor_file, cursors)
                     if auto_fresh:
                         with _file_lock:
                             q_curr = _read_json(QUEUE_FILE, {"ids": [], "seen": []})

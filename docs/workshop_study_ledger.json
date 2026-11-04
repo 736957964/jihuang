@@ -14295,8 +14295,89 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-04 10:30:13",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2564938022",
+      "name": "showtitle",
+      "author": "WIGFRID",
+      "version": "2.0.6",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-04 10:35:58",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "422744946",
+      "name": "Walt the Botanist",
+      "author": "duke_Frans",
+      "version": "4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 10:35:58",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "436597607",
+      "name": "Shadow Dragons(Repaired)",
+      "author": "紫影龙",
+      "version": "2.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-04 10:39:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3820019802",
+      "name": "丰收粮仓 | Harvest Granary",
+      "author": "TODO",
+      "version": "0.1.3",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-04 12:02:07",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_3605108247_3605108247.md"
+    },
+    {
+      "id": "3819601237",
+      "name": "MangECHOES 한국어 번역",
+      "author": "Local Korean translation",
+      "version": "0.2.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-04 12:10:05",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2283416213",
+      "name": "CaveOnGround (Atualizado)",
+      "author": "Cathion",
+      "version": "2.1.6",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 00:27:07",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2313039145",
+      "name": "Wolemorm, Mineral Edition",
+      "author": "Sümi",
+      "version": "1.0.4",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 00:27:07",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3577718127",
+      "name": "刘辩",
+      "author": "彩",
+      "version": "1.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 00:27:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3697123554",
+      "name": "无线存储终端",
+      "author": "六神零号机",
+      "version": "1.9.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 00:27:07",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-04 10:30:13"
+  "lastUpdated": "2026-11-05 00:27:07"
 }
