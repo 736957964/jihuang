@@ -238,3 +238,178 @@ end)
 
 ```
 
+
+
+### 变体演进：妥善换装与自动续装（本地稳定修正版） / Proper Switching & Auto Re-Equip (Local Stable Fix) (Mod 3785718996)
+- **变体场景与切面**：收录来自工坊 Mod 3785718996 (`妥善换装与自动续装（本地稳定修正版） / Proper Switching & Auto Re-Equip (Local Stable Fix)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3785718996)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+AddComponentPostInit("playercontroller", function(self)
+    if self.inst ~= GLOBAL.ThePlayer then
+        return
+    end
+    local old_OnRemoveFromEntity = self.OnRemoveFromEntity
+    if not self.ismastersim then
+        self.inst:DoTaskInTime(0, initialize_client)
+        self.OnRemoveFromEntity = function(self, ...)
+            ClientRemoveEventCallbacks(self.inst)
+            return old_OnRemoveFromEntity(self, ...)
+        end
+
+    else
+        self.inst:DoTaskInTime(0, initialize_equips) -- may also use same client side logic with unequip update delayed, but below ComponentPostInit is better
+        self.inst:ListenForEvent("equip", OnEquip)
+        self.inst:ListenForEvent("unequip", OnUnequip)
+        self.OnRemoveFromEntity = function(self, ...)
+            self.inst:RemoveEventCallback("equip", OnEquip)
+            self.inst:RemoveEventCallback("unequip", OnUnequip)
+            return old_OnRemoveFromEntity(self, ...)
+        end
+
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:inventory
+AddComponentPostInit("inventory", function(self) --for hosting cave-less worlds without affecting other players, or Don't Starve Alone mod
+    local world = GLOBAL.TheWorld
+    if world == nil or not world.ismastersim then
+        return
+    end
+	local old_Equip = self.Equip
+	self.Equip = function(self, item, old_to_active, ...)
+        if item == nil or item.components == nil or item.components.equippable == nil or
+           item.components.inventoryitem == nil or not item:IsValid() or
+           item.components.equippable:IsRestricted(self.inst) or
+           (self.noheavylifting and item:HasTag("heavy")) then
+            return old_Equip(self, item, old_to_active, ...)
+        end
+
+        local player = GLOBAL.ThePlayer
+        local player_inventory = player and player.components and player.components.inventory
+        if player_inventory == nil then
+            return old_Equip(self, item, old_to_active, ...)
+        end
+
+        local owner = item.components.inventoryitem.owner
+        local container = owner and owner.components and owner.components.container
+        local overflow_container = player_inventory:GetOverflowContainer()
+
+        if owner ~= player and --Inventory:Equip patch modification fires only when the item to equip is already held by ThePlayer
+           container ~= overflow_container then
+            return old_Equip(self, item, old_to_active, ...)
+        end
+        local prevslot = self:GetItemSlot(item)
+        local prevcontainer = nil
+        if prevslot == nil and container ~= nil then
+            prevslot = container:GetItemSlot(item)
+            prevcontainer = container
+        end
+
+        local eslot = item.components.equippable.equipslot
+        local olditem = self:GetEquippedItem(eslot)
+        local leftovers_condition = item.components.stackable ~= nil and item.components.stackable:IsStack() and not item.components.equippable.equipstack
+        --checking mid-Equip if prevslot is occupied is better, but impossible via function patching
+
+        if olditem ~= nil and not leftovers_condition and not old_to_active then
+            local cant_hold_olditem = olditem.components.inventoryitem~=nil and not olditem.components.inventoryitem.cangoincontainer and not self.ignorescangoincontainer
+            if not cant_hold_olditem then
+                olditem.prevslot = prevslot
+                olditem.prevcontainer = prevcontainer
+            end
+        end
+
+		return old_Equip(self, item, old_to_active, ...)
+	end
+end)
+
+```
+
+
+
+### 变体演进：Better Equipment (Mod 3785105068)
+- **变体场景与切面**：收录来自工坊 Mod 3785105068 (`Better Equipment`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3785105068)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:lantern
+AddPrefabPostInit("lantern", function(inst)
+    IncreaseFuelCapacity(inst, 20)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:minerhat
+AddPrefabPostInit("minerhat", function(inst)
+    IncreaseFuelCapacity(inst, 10)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cane
+AddPrefabPostInit("cane", function(inst)
+    local function ApplyDamage()
+        if inst.components.weapon == nil then
+            inst:AddComponent("weapon")
+        end
+        inst.components.weapon:SetDamage(WALKING_CANE_DAMAGE)
+    end
+
+    ApplyDamage()
+    function inst:OnLoad(data, newents)
+        ApplyDamage()
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:icestaff
+AddPrefabPostInit("icestaff", function(inst)
+    local function ApplyStats()
+        -- 伤害
+        if inst.components.weapon ~= nil then
+            inst.components.weapon:SetDamage(ICE_STAFF_DAMAGE)
+        end
+
+        -- 无限耐久
+        if inst.components.finiteuses ~= nil then
+            inst.components.finiteuses:SetMaxUses(INFINITE_USES)
+            inst.components.finiteuses:SetUses(INFINITE_USES)
+        end
+    end
+
+    ApplyStats()
+    function inst:OnLoad(data, newents)
+        ApplyStats()
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:spear
+AddPrefabPostInit("spear", function(inst)
+    if inst.components.weapon == nil then
+        inst:AddComponent("weapon")
+    end
+
+    function inst:OnSave(data)
+        data.rarity_data = self.rarity_data
+        return nil
+    end
+
+    function inst:OnLoad(data, newents)
+        if data and data.rarity_data then
+            self.rarity_data = data.rarity_data
+            ApplyRandomStats(self)
+        end
+    end
+end)
+
+```
+
