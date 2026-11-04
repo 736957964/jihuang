@@ -4,10 +4,6 @@
 - **核心逻辑对应**：`scripts/components/rp_monster_point.lua`、`rp_autodelete.lua`
 - **领域分类**：服务端动态事件生成器、Passable 坐标安全探测、防卡顿自销毁回收（TTL/Despawn）
 
----
-
-## 一、核心实现原理与架构全貌
-
 在开放世界或塔防/刷怪类 MOD 中，未经节制的实体生成是服务器严重掉帧（TPS 跌至 5~10）乃至世界坏档的首要元凶。常见弊病包括：怪刷入不可行走的海洋/虚空、玩家跑路后怪物永久留在遥远未加载区域常驻内存、怪物死亡后引用表未释放导致泄露。十面埋伏工程给出了标准工业级闭环：
 
 ### 1. 严格的地皮合法性与防卡死断言（Passable Detection）
@@ -21,10 +17,6 @@
 
 ### 3. 脱战缓释与无痛回收机制（Autodelete / Despawn）
 - 给生成的怪兽动态挂载超时自毁任务（TTL）：若在 N 秒（如 120 秒）后仍无战斗目标（`not monster.components.combat.target`），并且与所有玩家距离大于设定视距，生成离场特效（`small_puff`）后直接平滑 `Remove()`。
-
----
-
-## 二、标准化生产级代码范式 (可直接复用)
 
 ```lua
 -- ==============================================================================
@@ -93,11 +85,8 @@ function DynamicWaveSpawner:OnRemoveFromEntity()
     end
 end
 
-return DynamicWaveSpawner```
-
----
-
-## 三、踩坑与避错实战指南
+return DynamicWaveSpawner
+```
 
 1. **`table.remove` 的正序循环陷阱**：
    - 永远不要用正序 `for i = 1, #list do if ... table.remove(list, i) end end` 移除数组元素！因为删除元素会导致后续索引前移，导致紧接着的下一个元素被直接跳过，漏清理的死亡怪兽会长期占用引用表槽位。

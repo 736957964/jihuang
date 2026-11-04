@@ -4,19 +4,11 @@
 - **领域分类**：全局 TUNING 宏变量重写、`AddPrefabPostInitAny` 全局实体切面优化、非标离散数值区间逼近算法
 - **研读基准**：Steam 创意工坊在线原版源码
 
----
-
-## 一、核心实现原理与架构全貌
-
 在饥荒模组开发中，很多全局性调整（如调整全服腐烂速度、全服堆叠上限、全服移动速度倍率）有两种流派：
 1. **轻量流派（推荐首选）**：改写官方 `GLOBAL.TUNING` 表中的宏常量；
 2. **强制穿透流派（防御第三方硬编码）**：借助 `AddPrefabPostInitAny` 拦截所有实例化实体并强行修正组件。
 
 `Increased Stack Size` 提供了这两种流派融合的最佳实践。
-
----
-
-## 二、标准化生产级代码范式 (可直接移植)
 
 ```lua
 -- ==============================================================================
@@ -57,11 +49,8 @@ AddPrefabPostInitAny(function(inst)
     if target and target ~= current then
         stackable.maxsize = target
     end
-end)```
-
----
-
-## 三、避坑与生产安全准则
+end)
+```
 
 1. **`AddPrefabPostInitAny` 性能陷阱**：
    - 绝不要在 `AddPrefabPostInitAny` 回调内执行 `TheSim:FindEntities`、字符串拼接、复杂正则表达式或大表遍历。实体生成每秒可能触发数十次，必须通过首行的 `if inst.components.xxx == nil then return end` 毫秒级退出。
@@ -87,7 +76,8 @@ end)
 -- 切面钩子：AddPrefabPostInit:personal_chester
 AddPrefabPostInit("personal_chester", function(inst)
 	inst.prefab = "chester"
-end)```
+end)
+```
 
 ### 变体演进：Save Equipment Slots (Mod 1598084686)
 - **变体场景与切面**：收录来自工坊 Mod 1598084686 (`Save Equipment Slots`) 的生产级切面。
@@ -115,7 +105,8 @@ end)
   fn.InitPlayerHud()
   fn.InitClasses()
   fn.InitConfig()
-end```
+end
+```
 
 ### 变体演进：Item Auto-Fuel Slots (Mod 2736043172)
 - **变体场景与切面**：收录来自工坊 Mod 2736043172 (`Item Auto-Fuel Slots`) 的生产级切面。
@@ -528,7 +519,8 @@ AddPrefabPostInit("shieldofterror", function(inst)
         inst:ListenForEvent("unequipped", OnUnequip)
         inst:ListenForEvent("itemget", OnTick)
         inst:ListenForEvent("armordamaged", OnTick)
-end)```
+end)
+```
 
 ### 变体演进：25 / 46 Inventory Slots (Mod 3710538435)
 - **变体场景与切面**：收录来自工坊 Mod 3710538435 (`25 / 46 Inventory Slots`) 的生产级切面。
@@ -689,7 +681,8 @@ AddComponentPostInit("upgrademoduleowner", function(self)
             return result
         end
     end
-end)```
+end)
+```
 
 ### 变体演进：Beefalo Storage (Mod 2519350133)
 - **变体场景与切面**：收录来自工坊 Mod 2519350133 (`Beefalo Storage`) 的生产级切面。
@@ -1090,5 +1083,6 @@ AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, acti
 end
 end
 end
-end```
+end
+```
 

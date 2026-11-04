@@ -1,10 +1,6 @@
 # 饥荒工业级最佳实践范式：Move!!Dragonfly
 > 对应工坊权威基准：Mod 3670669065 (`Move!!Dragonfly`)
 > 技术分类：02_动作控制与状态机StateGraph类 | 源码规模：64 文件 / 7408 行
-
----
-
-## 一、架构背景与设计哲学
 本范式旨在解决饥荒联机版中 Move!!Dragonfly 涉及的架构协同难题。
 在官方源码机制下，原版逻辑对相关切面具备较强的封闭性。通过精准挂载钩子、隔离脏标记通信及遵循生命周期规范，实现无侵入式工业级扩展。
 
@@ -25,7 +21,8 @@ GlassicAPI.SetOnequipSkinItem = function(name, data)
 end
 
 GlassicAPI.BasicInitFn = function(inst)
-end```
+end
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

@@ -585,7 +585,39 @@ def run_daemon_24h():
                     if len(batch_mods) >= 6: break
             
             if not batch_mods:
-                log("队列暂无待分析 Mod，等待 180 秒重新探测...")
+                log("队列待分析池见底，触发自动增量抓取 Steam 创意工坊新 Mod...")
+                try:
+                    import urllib.request
+                    PROXY = "http://127.0.0.1:7890"
+                    opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
+                    auto_fresh = []
+                    for s_type in ["trend", "mostrecent", "totaluniquesubscribers"]:
+                        for p_idx in range(1, 30):
+                            u = f"https://steamcommunity.com/workshop/browse/?appid=322330&browsesort={s_type}&section=readytouseitems&p={p_idx}"
+                            r = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+                            try:
+                                res = opener.open(r, timeout=12)
+                                h = res.read().decode("utf-8", errors="ignore")
+                                found = re.findall(r"filedetails/\?id=(\d+)", h)
+                                for mid in found:
+                                    if mid not in f_done and mid not in auto_fresh:
+                                        auto_fresh.append(mid)
+                            except Exception:
+                                pass
+                            if len(auto_fresh) >= 200:
+                                break
+                        if len(auto_fresh) >= 200:
+                            break
+                    if auto_fresh:
+                        with _file_lock:
+                            q_curr = _read_json(QUEUE_FILE, {"ids": [], "seen": []})
+                            q_curr["ids"] = auto_fresh + [x for x in q_curr.get("ids", []) if str(x) not in f_done]
+                            _write_json(QUEUE_FILE, q_curr)
+                        log("自动抓取完成！成功注入 %d 个全新工坊候选 Mod，立即开跑！" % len(auto_fresh))
+                        continue
+                except Exception as e_crawl:
+                    log("自动补水抓取异常: %s" % e_crawl)
+                log("工坊暂无更多新 Mod，等待 180 秒重新探测...")
                 time.sleep(180)
                 continue
             

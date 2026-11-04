@@ -4,20 +4,12 @@
 - **领域分类**：客户端 UI 工程、HUD 矩阵逆缩放坐标系对齐、窗口动态重排、摄像机与输入冲突隔离
 - **研读基准**：Steam 创意工坊在线原版源码
 
----
-
-## 一、核心实现原理与架构全貌
-
 在开发饥荒联机版的悬浮窗口、状态栏或雷达时，开发者常面临：
 1. 玩家调整了游戏系统设置中的 **HUD 缩放比例**，导致控件溢出屏幕边缘；
 2. 玩家**拖动窗口边框**或在全屏/无边框窗口间切换，UI 错位；
 3. 鼠标悬停在 UI 上滚动滚轮，误触发游戏视角拉近拉远。
 
 `Minimap HUD` 提炼了一套纯数学且极其轻量的防御框架。
-
----
-
-## 二、标准化生产级代码范式 (可直接移植)
 
 ```lua
 -- ==============================================================================
@@ -82,11 +74,8 @@ end
 
 return ResponsiveContainer
 end
-end```
-
----
-
-## 三、避坑与生产安全准则
+end
+```
 
 1. **`OnLoseFocus` 必须兜底防漏**：
    - 如果用户在悬停该 UI 的瞬间按下了 ESC 键切出菜单，或者切回桌面，可能会跳过 `OnLoseFocus`。建议在控件的 `Kill` 和 `Hide` 方法中，同样加入对 `TheCamera:SetControllable(true)` 的安全恢复调用，防止玩家摄像机被永久锁死。
@@ -116,7 +105,8 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)```
+end)
+```
 
 ### 变体演进：keep_hud_ui (Mod 2056032273)
 - **变体场景与切面**：收录来自工坊 Mod 2056032273 (`keep_hud_ui`) 的生产级切面。
@@ -143,7 +133,8 @@ AddComponentPostInit("colourcube", function(self, inst)
 end)
         end
     end
-end)```
+end)
+```
 
 ### 变体演进：[DST] Nautical HUD (Mod 2226345952)
 - **变体场景与切面**：收录来自工坊 Mod 2226345952 (`[DST] Nautical HUD`) 的生产级切面。
@@ -166,7 +157,8 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)```
+end)
+```
 
 ### 变体演进：[DST] Archive HUD (Mod 3456159081)
 - **变体场景与切面**：收录来自工坊 Mod 3456159081 (`[DST] Archive HUD`) 的生产级切面。
@@ -189,7 +181,8 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)```
+end)
+```
 
 ### 变体演进：[DST] Mystery HUD (Mod 3548608555)
 - **变体场景与切面**：收录来自工坊 Mod 3548608555 (`[DST] Mystery HUD`) 的生产级切面。
@@ -212,94 +205,6 @@ AddPrefabPostInit("world", function()
 	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
 		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
 	end
-end)```
-
-### 变体演进：Soul Infused HUD (Mod 2954087809)
-- **变体场景与切面**：收录来自工坊 Mod 2954087809 (`Soul Infused HUD`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddPrefabPostInit:player
-AddPrefabPostInit("player", function()
-	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
-		AddClassPostConstruct("widgets/minibadge", BadgePostConstruct)
-	end
 end)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:world
-AddPrefabPostInit("world", function()
-	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
-		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
-	end
-end)```
-
-### 变体演进：Redux UI (Mod 3454549303)
-- **变体场景与切面**：收录来自工坊 Mod 3454549303 (`Redux UI`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddPrefabPostInit:sewing_mannequin
-AddPrefabPostInit("sewing_mannequin", function(inst)
-    inst._voidclothhattask = inst:DoPeriodicTask(GLOBAL.FRAMES, checkEntityTask, 0, inst)
-end)
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:voidclothhat_fx
-AddPrefabPostInit("voidclothhat_fx", function(inst)
-    local has_face_symbol = nil
-
-    inst:DoTaskInTime(0, function()
-        local parent = inst.entity:GetParent() or nil
-
-        if inst.fx ~= nil and parent then
-            for k, v in pairs(inst.fx) do
-                if v.AnimState and parent ~= nil then
-                    local voidclothbuild = parent.prefab .. "_voidclothhat"
-                    v.AnimState:SetBuild(voidclothbuild)
-                    local hasvoidbuild = v.AnimState:GetBuild() == parent.prefab .. "_voidclothhat"
-
-                    if hasvoidbuild then
-                        v.AnimState:SetBuild("hat_voidcloth_new")
-                        v.AnimState:OverrideSkinSymbol("fx_fabric", "hat_voidcloth", "fx_fabric")
-                    else
-                        v.AnimState:SetBuild("hat_voidcloth")
-                    end
-                end
-            end
-        end
-end)
--- ----------------------------------------------------------------------------
-end)```
-
-### 变体演进：[Forge] The Battle Arena HUD (Mod 1824509831)
-- **变体场景与切面**：收录来自工坊 Mod 1824509831 (`[Forge] The Battle Arena HUD`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- 生产级架构复刻切面范式 (提取自 Mod 1824509831)
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddPrefabPostInit:player
-AddPrefabPostInit("player", function()
-	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
-		AddClassPostConstruct("widgets/minibadge", BadgePostConstruct)
-	end
-end)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:world
-AddPrefabPostInit("world", function()
-	if GLOBAL.softresolvefilepath("scripts/widgets/minibadge.lua") then
-		AddClassPostConstruct("widgets/minibadge", WetBadgePostConstruct)
-	end
-end)
-
 ```
 

@@ -1,10 +1,6 @@
 # 饥荒工业级最佳实践范式：Real Witch
 > 对应工坊权威基准：Mod 3828396407 (`Real Witch`)
 > 技术分类：02_动作控制与状态机StateGraph类 | 源码规模：2 文件 / 616 行
-
----
-
-## 一、架构背景与设计哲学
 本范式旨在解决饥荒联机版中 Real Witch 涉及的架构协同难题。
 在官方源码机制下，原版逻辑对相关切面具备较强的封闭性。通过精准挂载钩子、隔离脏标记通信及遵循生命周期规范，实现无侵入式工业级扩展。
 
@@ -34,7 +30,8 @@ AddPrefabPostInit("witchbroom", function(inst)
 	end
 end)
 
-local Drownable = require("components/drownable")```
+local Drownable = require("components/drownable")
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

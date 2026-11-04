@@ -4,18 +4,10 @@
 - **领域分类**：纯客机端预测（Client-Only）、静态元数据镜像快照（Metadata Snapshot Cache）、探针动作静默沙盒、位面攻防（Planar）解析
 - **研读基准**：Steam 创意工坊在线原版源码
 
----
-
-## 一、核心实现原理与架构全貌
-
 在联机版客机环境开发物品提示或背包增强工具时，无法直接读取服务端的 `components`。最稳健的工业级方案是：
 1. **动作注册静默切面**：拦截 `EntityScript.RegisterComponentActions`，防止临时生成的探针实体污染全局动作池；
 2. **静态沙盒探针**：生成瞬态实体，克隆其关键组件元数据（伤害、护甲、位面属性、保温系数等）存入只读缓存表；
 3. **即时销毁探针**：提取完毕后立即 `Remove()`，后续悬停查询直接走 $O(1)$ 内存缓存。
-
----
-
-## 二、标准化生产级代码范式 (可直接移植)
 
 ```lua
 -- ==============================================================================
@@ -81,11 +73,8 @@ function ItemMetadataCache.GetMetadata(prefab_name)
     return meta
 end
 
-return ItemMetadataCache```
-
----
-
-## 三、避坑与生产安全准则
+return ItemMetadataCache
+```
 
 1. **绝对禁止遗漏 `IS_PROBING` 守卫标志位**：
    - 如果在没有静默 `RegisterComponentActions` 的情况下在客机频繁生成探针实体，其它 Mod 挂载的动作钩子会尝试向探针注入行为，导致客户端出现瞬时微卡顿，甚至抛出网络协议不同步警告。

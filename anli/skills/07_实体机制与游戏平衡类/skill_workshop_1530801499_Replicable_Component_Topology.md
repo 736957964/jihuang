@@ -4,18 +4,10 @@
 - **领域分类**：网络复制组件规范（AddReplicableComponent）、全服拓扑自维护池（Global Topology Registry）、危险状态逃逸防御、距离-季节动态开销模型
 - **研读基准**：Steam 创意工坊在线原版源码
 
----
-
-## 一、核心实现原理与架构全貌
-
 在开发需要跨端同步状态（如自定义交互信标、传送门、载具停靠点）的复杂网络 MOD 时：
 1. **主客双端复制体系**：通过 `AddReplicableComponent("mycomponent")`，让客机自动装配 `mycomponent_replica`；
 2. **拓扑注册中心**：用模块全局表 `ALL_NODES` 维护实体拓扑，实体生成时入网，被拆除时退网；
 3. **服务端权威安全防护**：ModRPC 接收客户端请求时，必须由 MasterSim 重新执行近距离及战斗脱战断言。
-
----
-
-## 二、标准化生产级代码范式 (可直接移植)
 
 ```lua
 -- ==============================================================================
@@ -30,8 +22,6 @@ local NetworkNode = Class(function(self, inst)
 
     table.insert(ALL_NODES, self)
 end)
-
---- 销毁退网生命周期守卫 (防内存泄漏与幽灵节点)
 function NetworkNode:OnRemoveFromEntity()
     for i, v in ipairs(ALL_NODES) do
         if v == self then
@@ -40,8 +30,6 @@ function NetworkNode:OnRemoveFromEntity()
         end
     end
 end
-
---- 危险逃逸断言检测 (防战斗作弊)
 function NetworkNode:CanTravelNow(player)
     if not player or not player:IsValid() then return false end
 
@@ -60,7 +48,6 @@ function NetworkNode:CanTravelNow(player)
     return true
 end
 
---- 获取当前可达有效节点列表
 function NetworkNode:GetValidDestinations(player)
     local results = {}
     for _, node in ipairs(ALL_NODES) do
@@ -107,11 +94,8 @@ AddModRPCHandler("NetworkNodeMod", "TeleportTo", function(player, src_inst, targ
     else
         player.Transform:SetPosition(target_inst.Transform:GetWorldPosition())
     end
-end)```
-
----
-
-## 三、避坑与生产安全准则
+end)
+```
 
 1. **`OnRemoveFromEntity` 注销守卫不可或缺**：
    - 只要实体被玩家砸毁、被火烧毁、或被大脚踩烂，若没有在 `OnRemoveFromEntity` 中从全局表中将其引用清除，Lua 的 GC（垃圾回收器）就永远无法释放该实体，造成极其严重的堆内存泄漏。
@@ -159,7 +143,8 @@ AddComponentPostInit('playercontroller', function(PlayerController, inst)
         end
         return oldOnUpdate(self, ...)
     end
-end)```
+end)
+```
 
 ### 变体演进：快捷宣告(NoMu) (Mod 2784715091)
 - **变体场景与切面**：收录来自工坊 Mod 2784715091 (`快捷宣告(NoMu)`) 的生产级切面。
@@ -259,7 +244,8 @@ AddComponentPostInit('nightmareclock', function(clock)
             }
         end
     end
-end)```
+end)
+```
 
 ### 变体演进：兔尾艾冰 (Mod 3402670530)
 - **变体场景与切面**：收录来自工坊 Mod 3402670530 (`兔尾艾冰`) 的生产级切面。
@@ -285,7 +271,8 @@ AddComponentPostInit("skinner",function(self)
                 oldfn(s,skinname,...)
             end
         end
-end)```
+end)
+```
 
 ### 变体演进：Paranoia [BETA] (Mod 3596740317)
 - **变体场景与切面**：收录来自工坊 Mod 3596740317 (`Paranoia [BETA]`) 的生产级切面。
@@ -300,7 +287,8 @@ AddPrefabPostInit("player_classified", function(inst)
     if not _G.TheNet:IsDedicated() then
         inst:DoStaticTaskInTime(0, RegisterNetListeners)
     end
-end)```
+end)
+```
 
 ### 变体演进：Auto Stack and Pick Up (Mod 1803285852)
 - **变体场景与切面**：收录来自工坊 Mod 1803285852 (`Auto Stack and Pick Up`) 的生产级切面。
@@ -417,185 +405,6 @@ AddComponentPostInit("stackable", function(comp)
 			end)
 		end
 	end)
-end)```
-
-### 变体演进：굶지마 다함께 한글화 [클라이언트 버전] (Mod 2391246365)
-- **变体场景与切面**：收录来自工坊 Mod 2391246365 (`굶지마 다함께 한글화 [클라이언트 버전]`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddComponentPostInit:playercontroller
-AddComponentPostInit("playercontroller", GetHoverTextOverride)
-
-local function OnUpdate(self)
-	local OnUpdate_old = self.OnUpdate or function() end
-	self.OnUpdate = function(self)
-		OnUpdate_old(self)
-		if not self.shown then
-			return
-		end
-
-		local str = nil
-		if not self.isFE then
-			str = (self.owner.HUD ~= nil and self.owner.HUD.controls:GetTooltip()) or (self.owner.components ~= nil and self.owner.components.playercontroller:GetHoverTextOverride())
-		else
-			str = self.owner:GetTooltip()
-		end
-		
-		local lmb = nil
-		if str == nil and not self.isFE and self.owner:IsActionsVisible() then
-			lmb = self.owner.components.playercontroller:GetLeftMouseAction()
-			if lmb ~= nil then
-				local overriden
-				str, overriden = lmb:GetActionString()
-
-				if lmb.action.show_primary_input_left then
-                	return
-                end
-				
-				if not overriden and lmb.target ~= nil and lmb.invobject == nil and lmb.target ~= lmb.doer then
-					local name = lmb.target:GetDisplayName()
-					if name ~= nil then
-						local adjective = lmb.target:GetAdjective()
-						name = (adjective ~= nil and (adjective.." "..name)) or name
-						
-						if lmb.target.replica.stackable ~= nil and lmb.target.replica.stackable:IsStack() then
-							name = name.." "..tostring(lmb.target.replica.stackable:StackSize()).."개"
-						end
-						str = name.." "..str
-					end
-				end
-			end
-			if str then
-				self.text:SetString(str)
-				self.str = str
-			end
-		end
-	end
-end
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:skeleton_player
-AddPrefabPostInit("skeleton_player", skeleton_player)
-
-local function player_common(inst)
-	if inst.components.inspectable ~= nil then
-		if inst.components.inspectable.getspecialdescription_old == nil then
-			inst.components.inspectable.getspecialdescription_old = inst.components.inspectable.getspecialdescription
-		end
-
-		function inst.components.inspectable.getspecialdescription(inst, ...)
-			return pp.replacePP(inst.components.inspectable.getspecialdescription_old(inst, ...), inst:GetDisplayName())
-		end
-	end
-end
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:player_common
-AddPrefabPostInit("player_common", player_common)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:yotc_carrat_race_finish
-AddPrefabPostInit("yotc_carrat_race_finish", function(inst)
-	if inst.components.inspectable ~= nil then
-		if inst.components.inspectable.getspecialdescription_old == nil then
-			inst.components.inspectable.getspecialdescription_old = inst.components.inspectable.getspecialdescription or function() end
-		end
-		function inst.components.inspectable.getspecialdescription(inst, ...)
-			local str = inst.components.inspectable.getspecialdescription_old(inst, ...)
-			local winner = inst._winner ~= nil and inst._winner.name
-			return (winner ~= nil and pp.replacePP(str, winner)) or str
-		end
-	end
-end)```
-
-### 变体演进：芙兰朵露·斯卡蕾特 (Mod 3615173314)
-- **变体场景与切面**：收录来自工坊 Mod 3615173314 (`芙兰朵露·斯卡蕾特`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddComponentPostInit:skinner
-AddComponentPostInit("skinner", function(self)
-    local oldfn = self.SetSkinName
-    if oldfn then
-        function self.SetSkinName(s, skinname, ...)
-            local old = s.skin_name
-            local new = skinname
-            if characterskins[old] and characterskins[old].clear_fn then
-                characterskins[old].clear_fn(s.inst, old)
-            end
-            if characterskins[new] and characterskins[new].init_fn then
-                characterskins[new].init_fn(s.inst, new)
-            end
-            oldfn(s, skinname, ...)
-        end
-    end
-end)```
-
-### 变体演进：Don (Mod 3495316998)
-- **变体场景与切面**：收录来自工坊 Mod 3495316998 (`Don`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddComponentPostInit:playercontroller
-AddComponentPostInit("playercontroller", function(self)
-    local oldOnLeftClick = self.OnLeftClick
-    self.OnLeftClick = function(inst, down, ...)
-        local target = GLOBAL.TheInput:GetWorldEntityUnderMouse()
-        if down and GLOBAL.TheInput:IsKeyDown(GLOBAL.KEY_CTRL) and IsPetBeefalo(target) then
-            if not ALLOW_DOUBLE_CLICK_ATTACK then
-                return
-            end
-            local is_double_click = target.replica._petbeefalo_startdoubleclicktime ~= nil and (GLOBAL.GetTime() - target.replica._petbeefalo_startdoubleclicktime) < GLOBAL.DOUBLE_CLICK_TIMEOUT
-            target.replica._petbeefalo_startdoubleclicktime = GLOBAL.GetTime()
-            if not is_double_click then
-                return
-            end
-        end
-        return oldOnLeftClick(inst, down, ...)
-    end
-end)```
-
-### 变体演进：Auto Cooking (Mod 2033458869)
-- **变体场景与切面**：收录来自工坊 Mod 2033458869 (`Auto Cooking`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddComponentPostInit:playercontroller
-ENV.AddComponentPostInit("playercontroller", function(self)
-    if self.inst == ThePlayer then
-        self.inst:ListenForEvent("aqp_threadstart", StopCooking) -- For AttackQueue Plus
-    end
-end)```
-
-### 变体演进：Rock Beefalo (Mod 3468519821)
-- **变体场景与切面**：收录来自工坊 Mod 3468519821 (`Rock Beefalo`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddPrefabPostInit:beefalo
-AddPrefabPostInit("beefalo", function(inst)
-    inst:DoPeriodicTask(0.01, function()
-        if inst.AnimState:IsCurrentAnimation("alert_idle") then
-            inst.AnimState:SetBank("rockbeefalo")
-        else
-            inst.AnimState:SetBank("beefalo")
-        end
-    end)
-end)```
+end)
+```
 

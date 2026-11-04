@@ -4,18 +4,10 @@
 - **领域分类**：客户端纯净预测（Client-Only）、协程流水线（Thread Coroutine）、动作队列安全步进、手控打断应急响应（Walk Interruption）
 - **研读基准**：Steam 创意工坊在线原版源码
 
----
-
-## 一、核心实现原理与架构全貌
-
 在开发“自动砍树、批量收割、一键修墙、自动走位攻击”等增强类 MOD 时，最安全稳定的架构是**纯客户端协程调度器**：
 1. 客户端使用 `inst:StartThread` 维持可挂起循环，避免阻塞游戏主线程；
 2. 动作发出后，等待角色进入对应的 StateGraph 动作帧再步进下一个；
 3. 随时监听移动控制输入，按下移动键瞬间终止队列。
-
----
-
-## 二、标准化生产级代码范式 (可直接移植)
 
 ```lua
 -- ==============================================================================
@@ -27,15 +19,11 @@ local ClientActionScheduler = Class(function(self, inst)
     self.running_thread = nil
     self.is_active = false
 end)
-
---- 压入一个预处理动作 (BufferedAction)
 function ClientActionScheduler:Enqueue(act)
     if act and act:IsValid() then
         table.insert(self.queue, act)
     end
 end
-
---- 清空队列并强行杀死执行协程
 function ClientActionScheduler:Abort()
     self.queue = {}
     if self.running_thread then
@@ -44,8 +32,6 @@ function ClientActionScheduler:Abort()
     end
     self.is_active = false
 end
-
---- 检查玩家是否正在手动按键移动 (急停打断检测)
 function ClientActionScheduler:IsManualInterrupt()
     local controller = self.inst.components.playercontroller
     if controller and controller:IsEnabled() then
@@ -58,8 +44,6 @@ function ClientActionScheduler:IsManualInterrupt()
     end
     return false
 end
-
---- 启动协程执行动作管线
 function ClientActionScheduler:Start()
     if self.running_thread or #self.queue == 0 then return end
     self.is_active = true
@@ -96,11 +80,8 @@ function ClientActionScheduler:Start()
 end)
 end
 
-return ClientActionScheduler```
-
----
-
-## 三、避坑与生产安全准则
+return ClientActionScheduler
+```
 
 1. **绝对禁止在主线程使用无挂起的 `while` 循环调度**：
    - 必须通过 `ThePlayer:StartThread` 启动协程，并在动作之间使用 `GLOBAL.Sleep()` 挂起。如果在主循环中直接 `while` 派发几十个动作，会导致游戏界面直接卡死，且服务端会判定高频发包为恶意攻击而断开客机连接。
@@ -175,7 +156,8 @@ AddPrefabPostInit("leif_palm", function(inst)
 		inst:AddComponent("cherrybookmutable")
 		inst.components.cherrybookmutable:SetOnMutateFn(MakeTree)
 		inst.components.cherrybookmutable.points = 5
-end)```
+end)
+```
 
 ### 变体演进：Quick Work (Mod 1200745268)
 - **变体场景与切面**：收录来自工坊 Mod 1200745268 (`Quick Work`) 的生产级切面。
@@ -325,7 +307,8 @@ if GetModConfigData("FishTime") ~= 999 then
 end
 end
 end
-end```
+end
+```
 
 ### 变体演进：角色-以斯拉 (Mod 3694914776)
 - **变体场景与切面**：收录来自工坊 Mod 3694914776 (`角色-以斯拉`) 的生产级切面。
@@ -459,7 +442,8 @@ AddPrefabPostInit('cook_certificate',function (inst)
             end
             return old_HarvestFoodFn ~= nil and old_HarvestFoodFn(inst,foodname,harvester,cookpotname,...) or nil
         end
-end)```
+end)
+```
 
 ### 变体演进：Mystery, The Necromancer (Mod 3417353600)
 - **变体场景与切面**：收录来自工坊 Mod 3417353600 (`Mystery, The Necromancer`) 的生产级切面。
@@ -652,7 +636,8 @@ AddComponentPostInit("inventory", function(self)
 		end
 		return _DropEverything(self, ondeath, ...)
 	end
-end)```
+end)
+```
 
 ### 变体演进：[Arknights]明日方舟-维什戴尔Wiš (Mod 3627500499)
 - **变体场景与切面**：收录来自工坊 Mod 3627500499 (`[Arknights]明日方舟-维什戴尔Wiš`) 的生产级切面。
@@ -807,409 +792,48 @@ AddComponentPostInit(
             return oldGetAttacked_Internal(self, attacker, damage, weapon, stimuli, spdamage, from_doattack)
         end
     end
-end```
-
-### 变体演进：椎名立希 (Mod 3659173332)
-- **变体场景与切面**：收录来自工坊 Mod 3659173332 (`椎名立希`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddStategraphPostInit:wilson
-AddStategraphPostInit("wilson", function(sg)
-    local oldfn = sg.states.wakeup and sg.states.wakeup.onenter
-    if oldfn then
-        sg.states.wakeup.onenter = function(inst, ...)
-            spawnletter(inst)
-            return oldfn(inst, ...)
-        end
-    end
-end)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddComponentPostInit:health
-AddComponentPostInit("health", function(self)
-    local oldDoDelta = self.DoDelta
-    function self:DoDelta(amount, overtime, cause, ignore_invincible, afflicter,
-                          ignore_absorb, ...)
-
-        if self.inst:HasTag("player") and amount < 0 and
-            not self.disable_penalty and afflicter and type(afflicter) ==
-            "table" and afflicter.HasTag and
-            afflicter:HasTag("rikki_tree_monster") then -- 杏树妖怪的攻击会等量扣减生命值上限（在减伤前结算）
-            self:DeltaPenalty(-amount / self.maxhealth)
-        end
-
-        if cause and (cause == "fire" or cause == "electric") and
-            self.inst.components.timer and
-            self.inst.components.timer:TimerExists(
-                "rikki_preparedfood_fruit_immunne_timer") then -- 诗礼银杏免疫火焰与电击伤害
-            return
-        end
-
-        local result = oldDoDelta(self, amount, overtime, cause,
-                                  ignore_invincible, afflicter, ignore_absorb,
-                                  ...)
-        return result
-    end
-end)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddComponentPostInit:combat
-AddComponentPostInit('combat', function(self, inst)
-    local oldDoAttack = self.DoAttack
-    if oldDoAttack ~= nil and not self._rikki_parry_success_doattack_hooked then
-        self._rikki_parry_success_doattack_hooked = true
-        function self:DoAttack(targ, ...)
-            local target = targ or self.target
-            if target ~= nil and target:IsValid() and target:HasTag("rikki") and
-                target.sg ~= nil and target.sg:HasStateTag("parrying") then
-                TriggerParrySuccess(target)
-            end
-            return oldDoAttack(self, targ, ...)
-        end
-    end
-
-    local oldGetAttackedInternal = self.GetAttacked_Internal
-    function self:GetAttacked_Internal(attacker, damage, weapon, stimuli,
-                                       spdamage, from_doattack)
-        if self.inst then
-            if attacker and attacker.rikki_damagebonus and
-                attacker.rikki_damagebonus > 0 then
-
-                local bonus = attacker.rikki_damagebonus
-
-                if damage then damage = damage + bonus end
-            end
-
-            if self.inst.components.timer and
-                self.inst.components.timer:TimerExists(
-                    "rikki_preparedfood_fruit_immunne_timer") then
-                if stimuli and (stimuli == "fire" or stimuli == "electric") then
-                    return
-                end
-            end
-
-            local shield = self.inst:HasTag("rikki") and
-                               self.inst:GetDebuff("rikkibuff_thulecite_shield") or
-                               nil
-            local health = self.inst.components.health
-            if shield ~= nil and health ~= nil and not health:IsDead() and
-                (damage or 0) > 0 then
-                local sanity = self.inst.components.sanity
-                if sanity ~= nil then sanity:DoDelta(-damage * .05, false) end
-                damage = 0
-
-                local fx = shield.rikki_shield_fx
-                if fx ~= nil and fx:IsValid() then
-                    fx.AnimState:PlayAnimation("hit")
-                    fx.AnimState:PushAnimation("idle_loop", true)
-                end
-            end
-
-            damage, spdamage = ApplyParrySuccessDamageReduction(self.inst,
-                                                                 damage, spdamage)
-
-            local old_pending_damage = self.inst._rikki_pending_deferred_damage
-            if self.inst:HasTag("rikki_maki") then
-                local original_physical = math.max(damage or 0, 0)
-                local original_planar = spdamage ~= nil and
-                                            math.max(spdamage.planar or 0, 0) or
-                                            0
-                local original_total = original_physical + original_planar
-
-                damage = damage ~= nil and damage * .5 or nil
-                if spdamage ~= nil and spdamage.planar ~= nil then
-                    local scaled_spdamage = {}
-                    for damage_type, amount in pairs(spdamage) do
-                        scaled_spdamage[damage_type] =
-                            damage_type == "planar" and amount * .5 or amount
-                    end
-                    spdamage = scaled_spdamage
-                end
-
-                self.inst._rikki_pending_deferred_damage =
-                    original_total > 0 and {
-                        amount = original_total,
-                        attacker = attacker
-                    } or nil
-            end
-
-            local result = oldGetAttackedInternal(self, attacker, damage,
-                                                  weapon, stimuli, spdamage,
-                                                  from_doattack)
-            self.inst._rikki_pending_deferred_damage = old_pending_damage
-            return result
-        end
-        return oldGetAttackedInternal(self, attacker, damage, weapon, stimuli,
-                                      spdamage, from_doattack)
-    end
-end)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddStategraphPostInit:wilson_client
-AddStategraphPostInit('wilson_client', NewAoeSg)
-
-if TUNING.RIKKI_MAKI then
-    local function CanDirectParry(self, position)
-        local doer = self.inst
-        local inventory = doer.replica ~= nil and doer.replica.inventory or nil
-        local equipitem = inventory ~= nil and
-                              inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
-        local rider = doer.replica ~= nil and doer.replica.rider or nil
-
-        return position ~= nil and doer:HasTag("rikki_maki") and equipitem ~=
-                   nil and equipitem:IsValid() and
-                   equipitem:HasTag("rikki_drumstick") and
-                   equipitem:HasTag("rikki_parry_ready") and
-                   not (rider ~= nil and rider:IsRiding())
-    end
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddComponentPostInit:playeractionpicker
-AddComponentPostInit("playeractionpicker", function(self)
-        local old_get_right_click_actions = self.GetRightClickActions
-
-        function self:GetRightClickActions(position, target, spellbook, ...)
-            if self.disable_right_click then
-                return old_get_right_click_actions(self, position, target,
-                                                   spellbook, ...)
-            end
-
-            if self.rightclickoverride ~= nil then
-                local actions, usedefault =
-                    self.rightclickoverride(self.inst, target, position)
-                if not usedefault or (actions ~= nil and #actions > 0) then
-                    return actions or {}
-                end
-            end
-
-            if self:GetSteeringActions(self.inst, position, true) ~= nil or
-                self:GetCannonAimActions(self.inst, position, true) ~= nil or
-                self:GetGolfAimActions(position, true) then
-                return old_get_right_click_actions(self, position, target,
-                                                   spellbook, ...)
-            end
-
-            if target == self.inst or spellbook ~= nil or self.containers ~= nil and
-                target ~= nil and self.containers[target] ~= nil then
-                return old_get_right_click_actions(self, position, target,
-                                                   spellbook, ...)
-            end
-
-            local inventory = self.inst.replica ~= nil and
-                                  self.inst.replica.inventory or nil
-            if inventory == nil or inventory:GetActiveItem() ~= nil or
-                not CanDirectParry(self, position) then
-                return old_get_right_click_actions(self, position, target,
-                                                   spellbook, ...)
-            end
-
-            local equipitem = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-            local x, y, z = self.inst.Transform:GetWorldPosition()
-            local dx = position.x - x
-            local dz = position.z - z
-            local distancesq = dx * dx + dz * dz
-            local action_position = position
-            if distancesq > 6.5 * 6.5 then
-                local scale = 6.5 / math.sqrt(distancesq)
-                action_position = Vector3(x + dx * scale, y, z + dz * scale)
-            end
-            local parry_actions = self:SortActionList({ACTIONS.RIKKI_PARRY},
-                                                      action_position, equipitem)
-            return #parry_actions > 0 and parry_actions or
-                       old_get_right_click_actions(self, position, target,
-                                                   spellbook, ...)
-        end
-end)
-end```
-
-### 变体演进：Gamma (Mod 3740646188)
-- **变体场景与切面**：收录来自工坊 Mod 3740646188 (`Gamma`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddStategraphPostInit:wilson
-AddStategraphPostInit("wilson", function(sg)
-
-    local _attack_onenter = sg.states.attack.onenter
-    sg.states.attack.onenter = function(inst, data)
-        local cooldown = inst.components.combat.min_attack_period
-        local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-        if equip then
-            if equip:HasTag("gamma_sword") then
-
-                inst.SoundEmitter:PlaySound(GAMMA_FMOD_TABLE.sfx.katana.sheathe, nil, 0.4)
-
-            end
-        end
-        
-
-        _attack_onenter(inst, data)
-
-    end
-    
-end)```
-
-### 变体演进：dusk_lang (Mod 3467205041)
-- **变体场景与切面**：收录来自工坊 Mod 3467205041 (`dusk_lang`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddStategraphPostInit:wilson
-AddStategraphPostInit('wilson', NewAoeSg)
-AddStategraphPostInit('wilson_client', NewAoeSg)
-
-------------------------------------------------------------------------------------------------------------------------------
-local function endhellfire(fx, doer)
-    if doer.components.channelcaster then
-        doer.components.channelcaster:StopChanneling()
-    end
 end
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddStategraphPostInit:wilson_client
-AddStategraphPostInit('wilson_client', NewAoeSg)
-
-------------------------------------------------------------------------------------------------------------------------------
-local function endhellfire(fx, doer)
-    if doer.components.channelcaster then
-        doer.components.channelcaster:StopChanneling()
-    end
-end
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddComponentPostInit:playercontroller
-AddComponentPostInit('playercontroller', playercontroller)
-
-AddAction(
-        'DUSK_ITEMMAPTP',
-        TUNING.DUSK_LANG == 0 and '墨魂跃迁' or "Ink Hop",
-        function(act)
-            if act == nil or act.doer == nil or act.pos == nil then
-                return false
-            end
-            local inventory = act.doer.components.inventory or act.doer.replica.inventory
-            if
-                inventory and
-                    ((act.doer:HasTag('dusk') and act.doer:HasTag("dusk_canblink") and inventory:EquipHasTag("dusk_maptpitem"))) and
-                    ((act.doer.TPcd ~= nil and GetTime() - act.doer.TPcd > 0.5) or act.doer.TPcd == nil)
-             then
-                act.doer.TPcd = GetTime()
-                local inst = act.doer
-                local targetpos = act.pos:GetPosition()
-                local pt = inst:GetPosition()
-                local offset =
-                    FindWalkableOffset(
-                    pt,
-                    math.random() * 2 * PI,
-                    3 + math.random(),
-                    16,
-                    false,
-                    true,
-                    noentcheckfn,
-                    true,
-                    true
-                ) or
-                    FindWalkableOffset(
-                        pt,
-                        math.random() * 2 * PI,
-                        5 + math.random(),
-                        16,
-                        false,
-                        true,
-                        noentcheckfn,
-                        true,
-                        true
-                    ) or
-                    FindWalkableOffset(
-                        pt,
-                        math.random() * 2 * PI,
-                        7 + math.random(),
-                        16,
-                        false,
-                        true,
-                        noentcheckfn,
-                        true,
-                        true
-                    )
-                if offset ~= nil then
-                    pt = pt + offset
-                end
-                local portal = SpawnPrefab('pocketwatch_portal_entrance')
-                if portal then
-                    if portal and portal.components.teleporter then
-                        portal.components.teleporter.onActivate = function(_, doer)
-                            if doer.components.talker ~= nil then
-                                doer.components.talker:ShutUp()
-                            end
-
-                            if doer.components.sanity ~= nil then
-                                doer.components.sanity:DoDelta(-50)
-                            end
-                        end
-                    end
-                    portal.Transform:SetPosition(pt:Get())
-                    portal:SpawnExit(TheShard:GetShardId(), targetpos.x or pt.x, 0, targetpos.z or pt.z)
-                    inst.SoundEmitter:PlaySound('wanda1/wanda/portal_entrance_pre')
-                end
-                return true
-            end
-            return true
-        end
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:abigailforcefieldbuffed
-AddPrefabPostInit('abigailforcefieldbuffed', function(inst)
-	if not GLOBAL.TheWorld.ismastersim then
-		return inst
-	end
-    inst:AddTag("NOBLOCK")
-	inst:ListenForEvent("animover", inst.Remove)
-end)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddPrefabPostInit:warg
-AddPrefabPostInit(
-    'warg',
-    function(inst)
-        if TheWorld.ismastersim then
-            if inst.components.lootdropper == nil then
-                inst:AddComponent('lootdropper')
-                inst.components.lootdropper:SetLoot({'dusk_hammer_blueprint'})--岩崩锤蓝图
-            else
-                inst.components.lootdropper:AddChanceLoot('dusk_hammer_blueprint', 1)--岩崩锤蓝图
-            end
-        end
-    end```
-
-### 变体演进：Sweet House (Mod 1951468597)
-- **变体场景与切面**：收录来自工坊 Mod 1951468597 (`Sweet House`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
 ```
 
-### 变体演进：简易宠物增强 (Mod 3587643283)
-- **变体场景与切面**：收录来自工坊 Mod 3587643283 (`简易宠物增强`) 的生产级切面。
+
+
+### 变体演进：capacity (Mod 3831535302)
+- **变体场景与切面**：收录来自工坊 Mod 3831535302 (`capacity`) 的生产级切面。
 - **核心切面代码**：
 ```lua
 -- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3831535302)
 -- ============================================================================
 local GLOBAL = GLOBAL
 
--- 切面钩子：AddBrainPostInit:crittersbrain
-env.AddBrainPostInit("crittersbrain", function(brain)
+-- 暂无高频切面钩子
+```
 
-end)```
+
+
+### 变体演进：会飞的梅宝 (Mod 3824334327)
+- **变体场景与切面**：收录来自工坊 Mod 3824334327 (`会飞的梅宝`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3824334327)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：Lux (Mod 1494505371)
+- **变体场景与切面**：收录来自工坊 Mod 1494505371 (`Lux`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1494505371)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
 

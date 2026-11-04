@@ -4,31 +4,16 @@
 - **领域分类**：点分路径 Upvalue 访问器（Path-based Upvalue Accessor）、引擎字体原子热重载（TheSim Font Hot-Swap）、正则模板逆向解构、全角字符匹配补丁
 - **研读基准**：Steam 创意工坊在线原版源码
 
----
-
-## 一、核心实现原理与架构全貌
-
 在对饥荒底层核心模块（如地图生成、事件台词、原生字体渲染、配置树）进行深层切面改造时，普通的 Hook 手段往往鞭长莫及。`Chinese++` 树立了顶级的元编程标杆：
 1. **点分路径穿透器**：用形如 `"manager.cache.registry"` 的路径逐层下钻闭包；
 2. **原子化字体注册序列**：`Unload -> RegisterPrefab -> LoadPrefabs -> LoadFont -> SetupFontFallbacks`；
 3. **中文模式匹配 `%w` 扩展补丁**。
-
----
-
-## 二、标准化生产级代码范式 (可直接移植)
 
 ```lua
 -- ==============================================================================
 -- ==============================================================================
 
 local ClosurePath = {}
-
---- 沿点分路径深入查找嵌套函数中的闭包变量 (Upvalue)
---- @param start_fn function 起始函数
---- @param path string 目标路径 (例如 "tasksets.grouplist" 或 "cache.items")
---- @return any 变量值
---- @return number 变量在闭包中的索引
---- @return function 包含该变量的父级函数句柄
 function ClosurePath.Get(start_fn, path)
     if type(start_fn) ~= "function" or type(path) ~= "string" then return nil end
 
@@ -56,8 +41,6 @@ function ClosurePath.Get(start_fn, path)
 
     return current, target_idx, parent
 end
-
---- 沿点分路径热修改嵌套闭包变量
 function ClosurePath.Set(start_fn, path, new_value)
     local val, idx, parent = ClosurePath.Get(start_fn, path)
     if parent and idx then
@@ -105,11 +88,8 @@ return {
     HotReloadEngineFont = HotReloadEngineFont,
     PatchChinesePatternMatching = PatchChinesePatternMatching,
 }
-end```
-
----
-
-## 三、避坑与生产安全准则
+end
+```
 
 1. **`UnloadFont` 后的 Fallback Table 重新绑定**：
    - 每次调用 `TheSim:LoadFont` 后，必须紧跟 `TheSim:SetupFontFallbacks`。若遗漏回退表设置，当文本中出现特殊标点、希腊字母或冷僻字时，整个字符串会静默变成完全不渲染的空白，极其隐蔽！
@@ -117,109 +97,3 @@ end```
    - 官方游戏在小版本更新后可能会重命名局部变量。在生产代码中使用 `ClosurePath.Set` 之前，必须对返回值 `parent` 和 `idx` 做严格的 `if parent and idx then` 断言，严禁无检查调用 `debug.setupvalue` 导致游戏在启动阶段死锁。
 
 ## 五、进阶拓扑演进与变体分支
-
-### 变体演进：LANGUAGE (Mod 3506502333)
-- **变体场景与切面**：收录来自工坊 Mod 3506502333 (`LANGUAGE`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddComponentPostInit:playercontroller
-AddComponentPostInit("playercontroller", function(self, inst)
-        if not original_rot_left then
-            original_rot_left = self.RotLeft
-        end
-        if not original_rot_right then
-            original_rot_right = self.RotRight
-        end
-
-        function self:RotLeft(...)
-            if not mod_enabled then
-                return original_rot_left(self, ...)
-            end
-        end
-        function self:RotRight(...)
-            if not mod_enabled then
-                return original_rot_right(self, ...)
-            end
-        end
-end)```
-
-### 变体演进：Language (Mod 3152056502)
-- **变体场景与切面**：收录来自工坊 Mod 3152056502 (`Language`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-```
-
-### 变体演进：Language (Mod 3328408598)
-- **变体场景与切面**：收录来自工坊 Mod 3328408598 (`Language`) 的生产级切面。
-- **核心切面代码**：
-```lua
--- ============================================================================
--- ============================================================================
-local GLOBAL = GLOBAL
-
--- 切面钩子：AddPrefabPostInit:farm_plant_pumpkin
-AddPrefabPostInit("farm_plant_pumpkin",repickfn)
-local PLANT_DEFS = require("prefabs/farm_plant_defs").PLANT_DEFS
-for k, v in pairs(PLANT_DEFS) do
-        AddPrefabPostInit(v.prefab,repickfn)
-end]]--
-local function reharvest(self)-- old farm
-	self.Harvest= function(self,harvester)
-		if self.matured or self.inst:HasTag("withered") then
-			local product = nil
-			if self.grower ~= nil and
-				(self.grower.components.burnable ~= nil and self.grower.components.burnable:IsBurning()) or
-				(self.inst.components.burnable ~= nil and self.inst.components.burnable:IsBurning()) then
-				local temp = SpawnPrefab(self.product_prefab)
-				product = SpawnPrefab(temp.components.cookable ~= nil and temp.components.cookable.product or "seeds_cooked")
-				temp:Remove()
-			else
-				product = SpawnPrefab(self.product_prefab)
-			end
-
-			if self.onharvest ~= nil then
-				self.onharvest(self.inst, product, harvester)
-			end
-
-			if product ~= nil then
-				if product.components.inventoryitem ~= nil then
-					product.components.inventoryitem:InheritWorldWetnessAtTarget(self.inst)
-				end
-
-				if harvester ~= nil then
-					harvester.components.inventory:GiveItem(product, nil, self.inst:GetPosition())
-				else
-					product.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
-				end
-				ProfileStatsAdd("grown_"..product.prefab)
-			end
-			
-			if self.grower ~= nil 
-			and self.grower:IsValid() 
-			and self.grower.components.grower ~= nil 
-			then
-				local item = SpawnPrefab(self.product_prefab.."_seeds")
-				self.grower.components.grower:RemoveCrop(self.inst)
-				if item~= nil and harvester~= nil then
-					item.Transform:SetPosition(self.grower.Transform:GetWorldPosition())
-					self.grower.components.grower:PlantItem(item, harvester)
-				end
-				self.grower = nil
-			else
-				self.inst:Remove()
-			end
-			self.matured = false
-			self.growthpercent = 0
-			self.product_prefab = nil
-			return true, product
-		end
-	end
-end```
-

@@ -4,10 +4,6 @@
 - **核心逻辑对应**：`scripts/widgets/screen.lua`、`scripts/widgets/controls.lua` Hook、`modmain.lua` 双端 RPC
 - **领域分类**：现代 UI 控件系统、客机输入防穿透、ModRPC 网络协议与安全审计
 
----
-
-## 一、核心实现原理与架构全貌
-
 饥荒联机版的 UI 体系完全运行在客户端（Client），而游戏权威状态在服务端（Master Sim）。制作诸如拍卖行、快捷施法轮盘、纸牌小游戏等现代悬浮 UI 时，必须跨越三大技术鸿沟：
 
 ### 1. 客户端 UI 根节点的正确挂载点
@@ -27,15 +23,13 @@
 
 ### 3. 客机幽灵态输入穿透与焦点捕获
 - 玩家死亡变为幽灵（Ghost）后，屏幕并未销毁，如果不做事件隔离，玩家依然能够点击 UI 发送技能 RPC。因此在 UI 的 `SetOnClick` 中必须加入客户端本地前置断言：
-  ```lua
+  
+```lua
   if ThePlayer == nil or ThePlayer:HasTag("playerghost") then
       return
   end
-  ```
-
----
-
-## 二、标准化生产级代码范式 (可直接复用)
+  
+```
 
 ```lua
 -- ==============================================================================
@@ -96,11 +90,8 @@ local CustomHoverPanel = Class(Widget, function(self, owner)
 end)
 end)
 
-return CustomHoverPanel```
-
----
-
-## 三、踩坑与避错实战指南
+return CustomHoverPanel
+```
 
 1. **`top_root` 与 HUD 重建引发的内存泄漏**：
    - 当玩家更替角色（如 Despawn 重新选人）或洞穴/地表穿梭时，`widgets/controls` 会被销毁并重建。在自定义面板内部，如果监听了 `TheWorld` 或全局事件（`inst:ListenForEvent`），必须在控件的 `Kill` 函数中解绑，否则旧面板实体将永远常驻内存引发客户端闪退。

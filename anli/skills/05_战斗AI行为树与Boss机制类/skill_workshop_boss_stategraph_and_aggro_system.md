@@ -4,10 +4,6 @@
 - **核心逻辑对应**：`scripts/prefabs/blackbear.lua`、`scripts/brains/blackbearbrain.lua`、`SGblackbear.lua`
 - **领域分类**：高阶怪物/BOSS AI 设计、StateGraph 强制打断与无敌帧治理、群体仇恨锁定与防卡顿脱战
 
----
-
-## 一、核心实现原理与架构全貌
-
 饥荒中设计一个具备商业级体验的高阶 BOSS，最大的挑战不是堆砌数值，而是处理**多人联机围殴下的动作被打断（硬直死锁）**、**转阶段动画期间被冰冻/催眠异常打断**、以及**无限制追击玩家导致的虚空寻路崩服**。神话书说的黑风怪与辟寒大王体系提供了标准规范：
 
 ### 1. 阈值触发转阶段与状态机霸体无敌帧
@@ -27,10 +23,6 @@
 ### 3. 地震震慑与装备剥离的安全判定
 - 范围伤害函数中必须使用 `TheSim:FindEntities` 严格设置过滤标签 `{ "INLIMBO", "flight", "FX" }`。
 - 对被击中玩家触发震落装备（`DropEverything`）时，只震落手持武器（`eslot == EQUIPSLOTS.HANDS`），避免将玩家整个背包和护符震落导致客户端不同步。
-
----
-
-## 二、标准化生产级代码范式 (可直接复用)
 
 ```lua
 -- ==============================================================================
@@ -95,11 +87,8 @@ end
 
 local function KeepTargetFn(inst, target)
     return inst.components.combat:CanTarget(target) and inst:GetDistanceSqToInst(target) < 900
-end```
-
----
-
-## 三、踩坑与避错实战指南
+end
+```
 
 1. **`KeepTargetFn` 缺失导致的全图追杀崩服**：
    - 饥荒怪物如果只写 `SetRetargetFunction` 而不配置 `SetKeepTargetFunction`，一旦玩家通过传送杖或虫洞飞到地图另一端，BOSS 会保持目标并在服务器后台进行每帧数千次的超远距离寻路计算，直接拉爆 CPU。务必设置安全脱战平方距离（如 `900` 即 30 码）。

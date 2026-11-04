@@ -1,10 +1,6 @@
 # 饥荒工业级最佳实践范式：服务端聊天指令拦截与玩家生命周期注销重启
 > 对应工坊权威基准：Mod 462434129 (`Restart`) 及全指令衍生变体
 > 技术标签：Networking_Say Hook、ms_playerdespawnanddelete、静默指令截断、无污染注销重选、实体生命周期
-
----
-
-## 一、架构背景与设计哲学
 在联机版服务器中，玩家往往需要通过公屏聊天输入指令（如 `#restart`、`#resurrect`）实现自杀重选、原地复活或清理个人实体数据。
 官方没有公开标准的模组聊天指令注册总线，导致多数模组暴力篡改 `Networking_Say`，引发以下严重问题：
 1. **指令泄露公屏**：指令文本被广播至全服玩家聊天框，造成视觉污染；
@@ -16,9 +12,11 @@
    在全局 `Networking_Say` 入口点执行前缀捕获（`string.sub(message, 1, 1) == "#"`），命中自定义指令后立即静默返回 `nil`，彻底拦截下游广播。
 2. **官方安全注销管道（ms_playerdespawnanddelete）**：
    绝不调用裸 `Remove()`，必须将注销委托给世界状态管理器：
-   ```lua
+   
+```lua
    TheWorld:PushEvent("ms_playerdespawnanddelete", player)
-   ```
+   
+```
    触发官方完整的注销链：卸载容器 -> 触发掉落回执 -> 保存全局元数据 -> 优雅通知客机返回选人界面。
 
 ## 三、标准化生产级代码范式（可直接移植）
@@ -66,7 +64,8 @@ RegisterChatCommand("restart", function(player, args)
     end
     
     TheWorld:PushEvent("ms_playerdespawnanddelete", player)
-end)```
+end)
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

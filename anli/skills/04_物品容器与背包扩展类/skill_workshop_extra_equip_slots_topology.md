@@ -1,10 +1,6 @@
 # 饥荒工业级最佳实践范式：额外装备槽容器拓扑与网络预测同步
 > 对应工坊权威基准：Mod 375850593 (`Extra Equip Slots`) 及全衍生变体
 > 技术标签：装备槽位扩展、EQUIPSLOTS双向映射、inventory_classified穿透、HUD响应式矩阵、网络同步
-
----
-
-## 一、架构背景与设计哲学
 官方原版联机版中，玩家装备槽位被硬编码严格限制为三槽：`HANDS`（手持）、`HEAD`（头部）、`BODY`（身体）。
 当开发者需要实现“背包装备独立槽位（BACK）”或“项链护符独立槽位（NECK）”时，最大的痛点在于官方不仅在 UI 上进行了写死，还在底层 C 引擎的 RPC 通信、`inventory_classified` 客户端预测及 `Replica` 层设置了多重校验。
 若仅通过修改 UI，会导致客户端脱落、物品掉落幽灵实体或服务端拒收。必须从全局枚举、底层 RPC ID 映射、网络分类器穿透三位一体完成容器拓扑扩展。
@@ -12,12 +8,14 @@
 ## 二、核心底层算法与网络拓扑机制
 1. **全局双向 ID 映射重建**：
    官方底层 RPC 在网络传输装备槽位时，通过内部 `EQUIPSLOT_IDS` 数组转换数值枚举。扩展新槽位必须动态注入双向索引：
-   ```lua
+   
+```lua
    GLOBAL.EQUIPSLOTS.BACK = "back"
    GLOBAL.EQUIPSLOTS.NECK = "neck"
    GLOBAL.EQUIPSLOT_IDS.back = 4
    GLOBAL.EQUIPSLOT_IDS.neck = 5
-   ```
+   
+```
 2. **`inventory_classified` 客户端零延迟预测穿透**：
    重写客户端 `Has` 与 `GetEquippedItem`，通过遍历动态槽位表规避硬编码判定。
 
@@ -53,7 +51,8 @@ AddClassPostConstruct("components/inventory_classified", function(self)
         end
         return _EquipAction(self, action)
     end
-end)```
+end)
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 

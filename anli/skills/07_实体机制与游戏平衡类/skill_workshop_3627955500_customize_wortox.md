@@ -1,10 +1,6 @@
 # 饥荒工业级最佳实践范式：自定义沃拓克斯 / Customize Wortox
 > 对应工坊权威基准：Mod 3627955500 (`自定义沃拓克斯 / Customize Wortox`)
 > 技术分类：07_实体机制与游戏平衡类 | 源码规模：6 文件 / 3052 行
-
----
-
-## 一、架构背景与设计哲学
 本范式旨在解决饥荒联机版中 自定义沃拓克斯 / Customize Wortox 涉及的架构协同难题。
 在官方源码机制下，原版逻辑对相关切面具备较强的封闭性。通过精准挂载钩子、隔离脏标记通信及遵循生命周期规范，实现无侵入式工业级扩展。
 
@@ -36,7 +32,8 @@ local GLOBAL = GLOBAL
             end
             inst.starting_inventory = items
 end)
-end```
+end
+```
 
 ## 四、方案对比矩阵与权衡取舍（Trade-off Matrix）
 
