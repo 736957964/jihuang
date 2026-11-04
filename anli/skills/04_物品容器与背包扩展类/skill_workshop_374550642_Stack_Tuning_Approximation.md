@@ -1086,3 +1086,100 @@ end
 end
 ```
 
+
+
+### 变体演进：Concealed Crown (Mod 2585253003)
+- **变体场景与切面**：收录来自工坊 Mod 2585253003 (`Concealed Crown`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2585253003)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:inventory_classified
+AddPrefabPostInit("inventory_classified", function(inst)
+	local UseItemFromInvTile = inst.UseItemFromInvTile
+	if UseItemFromInvTile ~= nil then
+		inst.UseItemFromInvTile = function(inst, item)
+			if item.prefab == "alterguardianhat"
+				and (item.replica.equippable ~= nil and item.replica.equippable:IsEquipped())
+				and (item.replica.container ~= nil and item.replica.container.classified ~= nil)
+				and not inst:GetActiveItem() then
+
+				if item.replica.container:IsOpenedBy(inst._parent) then
+					item.replica.container:Close()
+				else
+					item.replica.container.ignoreclose = true
+					item.replica.container:Open(inst._parent)
+					item.replica.container.ignoreclose = nil
+				end
+				return
+			end
+			UseItemFromInvTile(inst, item)
+		end
+	end
+end)
+
+```
+
+
+
+### 变体演进：Fix Multiplayer (Mod 463718554)
+- **变体场景与切面**：收录来自工坊 Mod 463718554 (`Fix Multiplayer`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 463718554)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function(inst)
+		print("Starting inventory added")
+		print(startingItems)
+		print(startingItems == true)
+		print(startingItems == true or startingItems == 1 or startingSeasonItems == true or startingSeasonItems == 1 or startingNightItems or startingPVPItems)
+	
+		if startingItems == true or startingItems == 1 or startingSeasonItems == true or startingSeasonItems == 1 or startingNightItems or startingPVPItems then
+			print("Starting called")
+		
+			inst:ListenForEvent("ms_playerspawn", StartingInventory, inst)
+		end
+		if revealMap ~= 0 then
+			inst:ListenForEvent("playeractivated", RevealMap, inst)
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:forest
+AddPrefabPostInit("forest", function(inst) --Add the renewable respawner
+		if GLOBAL.TheWorld.ismastersim then
+			inst:AddComponent("renewablerespawner")
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:cave
+AddPrefabPostInit("cave", function(inst) --Add the renewable respawner
+		if GLOBAL.TheWorld.ismastersim then
+			inst:AddComponent("renewablerespawner")
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:reviver
+AddPrefabPostInit("reviver", function(inst) --Remove getting damaged effect
+		if GLOBAL.TheWorld.ismastersim then
+			inst.components.inventoryitem:SetOnPickupFn(inst.onpickup)
+		end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:pollinator
+AddComponentPostInit("pollinator", function(inst)
+		inst.collectcount = 6/beesSpeedMultiplier-1 --Bees return to hive if collected > collectcount (by default collectcount is 5)
+	end)
+
+```
+

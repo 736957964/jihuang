@@ -471,3 +471,108 @@ end
 
 ```
 
+
+
+### 变体演进：Trees Dont Grow In Loop (Mod 2610091252)
+- **变体场景与切面**：收录来自工坊 Mod 2610091252 (`Trees Dont Grow In Loop`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2610091252)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：农作物+ (Mod 2795218025)
+- **变体场景与切面**：收录来自工坊 Mod 2795218025 (`农作物+`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2795218025)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:petals
+AddPrefabPostInit("petals",function(inst)
+		local function Seed_GetDisplayName(inst)
+			local registry_key = inst.weed_def.product
+			local plantregistryinfo = inst.weed_def.plantregistryinfo
+			return (GLOBAL.ThePlantRegistry:KnowsSeed(registry_key, plantregistryinfo) and GLOBAL.ThePlantRegistry:KnowsPlantName(registry_key, plantregistryinfo)) and GLOBAL.STRINGS.NAMES["KNOWN_"..string.upper(inst.ming)]
+					or nil
+		end
+		local function can_plant_seed(inst, pt, mouseover, deployer)
+			local x, z = pt.x, pt.z
+			return GLOBAL.TheWorld.Map:CanTillSoilAtPoint(x, 0, z, true)
+		end
+		local suiji = math.random()
+		local yecaoming = suiji < 0.40 and "weed_forgetmelots" or suiji < 0.60 and "weed_tillweed" or suiji < 0.80 and "weed_firenettle" or suiji < 1 and "weed_ivy" or "weed_forgetmelots"		
+		inst.ming = yecaoming
+		inst.product = string.sub(inst.ming, 6)
+		if inst.product == "firenettle" then inst.product = inst.product .. "s"
+		elseif inst.product == "ivy" then inst.product = nil end
+		inst:AddTag("deployedplant")
+		inst:AddTag("deployedfarmplant")
+		inst.overridedeployplacername = "seeds_placer"
+		--inst.shuxu = inst.ming == "weed_forgetmelots" and 1 or inst.ming == "weed_tillweed" and 2 or inst.ming == "weed_firenettle" and 3 or inst.ming == "weed_ivy" and 4 or 1
+		inst.weed_def = WEED_DEFS[inst.ming]
+		--print("name:"..inst.ming.."        yecaoming:"..yecaoming.. "         product:"..inst.product)
+		inst._custom_candeploy_fn = can_plant_seed
+		inst.displaynamefn = Seed_GetDisplayName
+	end)
+end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:farm_plant_
+for _,v in pairs(farm_plant_ming) do AddPrefabPostInit("farm_plant_"..v,nzwshouhuo) end 
+end
+if zujian_juxinghua then AddComponentPostInit("growable",function(self) if not self.inst:HasTag("nzw_juxing") then self.inst.force_oversized = true end end) end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:pickable
+AddComponentPostInit("pickable",function(self) local self1 = self.inst.components.growable
+		if (self.inst:HasTag("farm_plant") or self.inst.plant_def) and self1 then
+		if zujian_wufulan then self.inst:DoTaskInTime(0.1, function() if self1.stage == 5 and not self.inst:HasTag("nzw_wufulan") then self1:StopGrowing() end end) end
+		if zujian_juxingshu and not self.inst:HasTag("nzw_juxingshu") or zujian_guocaishu and not self.inst:HasTag("nzw_guocaishu") or zujian_zhongzishu and not self.inst:HasTag("nzw_zhongzishu") then self.inst:DoTaskInTime(0.3, function() if self.inst.components.lootdropper and self.inst.plant_def then self.inst.components.lootdropper.lootsetupfn = nongzuowufn end end) end
+		if zujian_kuaizhai then self.inst:DoTaskInTime(0.1, function() if not self.inst:HasTag("nzw_kuaizhai") then self.quickpick = true end end) end end
+	end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:weed_forgetmelots
+AddPrefabPostInit("weed_forgetmelots",ycshouhuo) 
+end
+if biwangwo1 or yecao_kuaisu then AddComponentPostInit("pickable",function(self) self.inst:DoTaskInTime(1, function() if self.inst:HasTag("yc_bww") and self.inst.components.growable and self.inst.components.growable.stage + 1 == #self.inst.components.growable.stages then if biwangwo1 then self.inst.components.growable:StopGrowing() end if yecao_kuaisu then self.quickpick = true end end end) end)
+
+```
+
+
+
+### 变体演进：AdShovel Re (Mod 2336938952)
+- **变体场景与切面**：收录来自工坊 Mod 2336938952 (`AdShovel Re`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2336938952)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+
+
+
+### 变体演进：Tartaglia Childe (Mod 2639907005)
+- **变体场景与切面**：收录来自工坊 Mod 2639907005 (`Tartaglia Childe`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2639907005)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 暂无高频切面钩子
+```
+

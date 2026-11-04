@@ -386,3 +386,280 @@ end)
 
 ```
 
+
+
+### 变体演进：Large boats Fix (Mod 3127245589)
+- **变体场景与切面**：收录来自工坊 Mod 3127245589 (`Large boats Fix`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3127245589)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:boatphysics
+AddComponentPostInit("boatphysics",function(self,inst)
+    self.sizespeedmultiplier=1
+    local oaf=self.ApplyForce
+    function self:ApplyForce(dir_x, dir_z, force)
+        local force=(force and force or 0)*self.sizespeedmultiplier
+        oaf(self,dir_x, dir_z, force)
+    end
+    local oam=self.AddMast
+    function self:AddMast(mast)
+        mast.sail_force=mast.sail_force*self.sizespeedmultiplier
+        oam(self, mast)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world",function()
+    local WALKABLE_PLATFORM_TAGS={"walkableplatform"}
+    GLOBAL.Map.GetPlatformAtPoint=function(self,pos_x,pos_y, pos_z, extra_radius)
+        if pos_z == nil then
+            pos_z = pos_y
+            pos_y = 0
+        end
+        local entities = TheSim:FindEntities(pos_x, pos_y, pos_z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + (extra_radius or 0), WALKABLE_PLATFORM_TAGS)
+        for i, v in ipairs(entities) do
+            if v.components.walkableplatform~=nil and math.sqrt(v:GetDistanceSqToPoint(pos_x, 0, pos_z))<=v.components.walkableplatform.platform_radius then
+                return v 
+            end
+        end
+        return nil
+    end
+    GLOBAL.Map.IsPassableAtPointWithPlatformRadiusBias=function(self,x, y, z, allow_water, exclude_boats, platform_radius_bias, ignore_land_overhang)
+        local valid_tile = self:IsAboveGroundAtPoint(x, y, z, allow_water) or ((not ignore_land_overhang) and self:IsVisualGroundAtPoint(x,y,z) or false)
+        if not allow_water and not valid_tile then
+            if not exclude_boats then
+                local entities = TheSim:FindEntities(x, 0, z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + platform_radius_bias, WALKABLE_PLATFORM_TAGS)
+                for i, v in ipairs(entities) do
+                    local walkable_platform = v.components.walkableplatform 
+                    if walkable_platform~=nil and math.sqrt(v:GetDistanceSqToPoint(x, 0, z))<=(walkable_platform.platform_radius+platform_radius_bias) then
+                        local platform_x, platform_y, platform_z = v.Transform:GetWorldPosition()
+                        local distance_sq = GLOBAL.VecUtil_LengthSq(x - platform_x, z - platform_z)
+                        return distance_sq <= walkable_platform.platform_radius * walkable_platform.platform_radius
+                    end
+                end
+            end
+            return false
+        end
+        return valid_tile
+    end
+    GLOBAL.Map.CanDeployAtPointInWater=function(self,pt, inst, mouseover, data)
+        local tile = self:GetTileAtPoint(pt.x, pt.y, pt.z)
+        if tile == GROUND.IMPASSABLE or tile == GROUND.INVALID then
+            return false
+        end
+
+        -- check if there's a boat in the way
+        local min_distance_from_boat = (data and data.boat) or 0
+        local radius = (data and data.radius) or 0
+        local entities = TheSim:FindEntities(pt.x, 0, pt.z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + radius + min_distance_from_boat, WALKABLE_PLATFORM_TAGS)
+        for i, v in ipairs(entities) do
+            if v.components.walkableplatform~=nil and math.sqrt(v:GetDistanceSqToPoint(pt.x, 0, pt.z))<=(v.components.walkableplatform.platform_radius+radius+min_distance_from_boat) then
+                return false
+            end
+        end
+
+        local min_distance_from_land = (data and data.land) or 0
+
+        return (mouseover == nil or mouseover:HasTag("player"))
+            and self:IsDeployPointClear(pt, nil, min_distance_from_boat + radius)
+            and self:IsSurroundedByWater(pt.x, pt.y, pt.z, min_distance_from_land + radius)
+    end
+end)
+
+```
+
+
+
+### 变体演进：Parryable Shield of Terror (Mod 3135193800)
+- **变体场景与切面**：收录来自工坊 Mod 3135193800 (`Parryable Shield of Terror`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3135193800)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:shieldofterror
+AddPrefabPostInit("shieldofterror", function(inst)
+
+  inst:AddTag("battleshield")
+	inst:AddTag("shield")
+
+  inst:AddTag("parryweapon")
+
+  inst:AddTag("rechargeable")
+
+  inst:AddComponent("aoetargeting")
+    inst.components.aoetargeting:SetAlwaysValid(true)
+    inst.components.aoetargeting:SetAllowRiding(false)
+    inst.components.aoetargeting.reticule.reticuleprefab = "reticulearc"
+    inst.components.aoetargeting.reticule.pingprefab = "reticulearcping"
+    inst.components.aoetargeting.reticule.targetfn = ReticuleTargetFn
+    inst.components.aoetargeting.reticule.mousetargetfn = ReticuleMouseTargetFn
+    inst.components.aoetargeting.reticule.updatepositionfn = ReticuleUpdatePositionFn
+    inst.components.aoetargeting.reticule.validcolour = { 1, .75, 0, 1 }
+    inst.components.aoetargeting.reticule.invalidcolour = { .5, 0, 0, 1 }
+    inst.components.aoetargeting.reticule.ease = true
+    inst.components.aoetargeting.reticule.mouseenabled = true
+    --inst.components.aoetargeting.range = 100 --idk why ReticuleMouseTargetFn crashes 
+
+	if not GLOBAL.TheWorld.ismastersim then return inst end
+  --inst.components.equippable.restrictedtag = "wathgrithrshieldmaker"
+
+  inst:AddComponent("aoespell")
+  inst.components.aoespell:SetSpellFn(SpellFn)
+
+  inst:AddComponent("parryweapon")
+  inst.components.parryweapon:SetParryArc(TUNING.WATHGRITHR_SHIELD_PARRY_ARC)
+  --inst.components.parryweapon:SetOnPreParryFn(OnPreParry)
+  inst.components.parryweapon:SetOnParryFn(OnParry)
+
+  inst:AddComponent("rechargeable")
+  inst.components.rechargeable:SetOnDischargedFn(OnDischarged)
+  inst.components.rechargeable:SetOnChargedFn(OnCharged)
+
+  --my own component
+  inst:AddComponent("shieldbite")
+  inst.components.shieldbite:IsMultAffected(parryMult)
+  inst.components.shieldbite:SetDamage(parryDamage)
+  inst.components.shieldbite:SetRepair(parryRepair)
+  inst.components.shieldbite:SetSprites("swap_shield", "swap_shieldofterror_parry", "swap_shieldofterror_bite")
+
+
+  if inst.components.rechargeable:GetTimeToCharge() < TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP then
+    inst.components.rechargeable:Discharge(TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP)
+  end
+
+  inst.components.equippable:SetOnEquip(OnEquip)
+  inst.components.equippable:SetOnUnequip(OnUnequip)
+  --MakeHauntableLaunch(inst)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wortox
+AddPrefabPostInit("wortox", function(inst)
+	local _GetPointSpecialActions = UpvalueHacker.GetUpvalue(GLOBAL.Prefabs.wortox.fn, "common_postinit", "OnSetOwner", "GetPointSpecialActions")
+	local GetPointSpecialActions = function(inst, pos, useitem, ...)
+		local equipitem = inst.replica.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
+		local ret = _GetPointSpecialActions(inst, pos, useitem, ...)
+		if ret ~= nil and #ret > 0 and equipitem ~= nil and equipitem.prefab == "shieldofterror" then
+      if equipitem.components.aoetargeting:IsEnabled() == false then return ret end
+			ret = {}
+		end
+		return ret
+	end
+	UpvalueHacker.SetUpvalue(GLOBAL.Prefabs.wortox.fn, GetPointSpecialActions, "common_postinit", "OnSetOwner", "GetPointSpecialActions")
+end)
+
+```
+
+
+
+### 变体演进：Wolemorm, Recorrupted Edition (Mod 2293195234)
+- **变体场景与切面**：收录来自工坊 Mod 2293195234 (`Wolemorm, Recorrupted Edition`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2293195234)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:lightbulb
+AddPrefabPostInit("lightbulb", function(inst) -- I checked all of these and it works
+	inst:AddComponent("sanityaura")
+	inst.components.sanityaura.aurafn = PositiveSanity
+end)
+
+```
+
+
+
+### 变体演进：Mod 2483322788 (Mod 2483322788)
+- **变体场景与切面**：收录来自工坊 Mod 2483322788 (`Mod 2483322788`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2483322788)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:sisturn
+AddPrefabPostInit("sisturn", function(inst)
+    -- 延迟确保组件加载完成
+    inst:DoTaskInTime(0, function()
+        if inst.components.preserver then
+            -- 立即设置保鲜倍率
+            inst.components.preserver:SetPerishRateMultiplier(sisturn_freeze)
+            
+            -- 劫持原始方法，永久锁定保鲜参数
+            local old_SetPRM = inst.components.preserver.SetPerishRateMultiplier
+            inst.components.preserver.SetPerishRateMultiplier = function(self, ...)
+                old_SetPRM(self, sisturn_freeze) -- 强制参数
+            end
+        end
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:portablespicer
+AddPrefabPostInit("portablespicer", function(inst)
+    inst:AddComponent("preserver")
+    inst.components.preserver:SetPerishRateMultiplier(spicer_inside_freeze)
+
+    if spicer_outside_freeze then
+        if inst.components.stewer then
+            inst.components.stewer.onspoil = nil
+            inst.components.stewer.GetTimeToSpoil = function(self)
+                return self.done and (self.spoiltime or 99) or 0
+            end
+        end
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit("world", function()
+        local levels = CollectFood(GLOBAL.Prefabs.mushroom_farm.fn, "updatelevel", "levels")
+        local setlevel = CollectFood(GLOBAL.Prefabs.mushroom_farm.fn, "updatelevel", "setlevel")
+
+        local function updatelevel(inst, dotransition)
+            if not inst:HasTag("burnt") then
+                for k, v in pairs(levels) do
+                    if inst.components.harvestable.produce >= v.amount then
+                        setlevel(inst, v, dotransition)
+                        break
+                    end
+                end
+            end
+        end
+
+        EatFood(GLOBAL.Prefabs.mushroom_farm.fn, updatelevel, "updatelevel")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:ocean_trawler
+AddPrefabPostInit("ocean_trawler", function(inst)
+        inst:AddComponent("preserver")
+        inst.components.preserver:SetPerishRateMultiplier(0)
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:chester
+AddPrefabPostInit("chester", function(inst)
+    if inst.components.preserver == nil then
+        inst:AddComponent("preserver")
+    end
+    inst.components.preserver:SetPerishRateMultiplier(chester_freeze)
+
+    ChesterState = CollectFood(inst.OnLoadPostPass, "ChesterState")
+    ToggleBreath = CollectFood(GLOBAL.Prefabs.chester.fn, "OnClientChesterStateDirty", "ToggleBreath")
+    EatFood(inst.OnPreLoad, MorphSnowChester, "MorphSnowChester")
+end)
+
+```
+

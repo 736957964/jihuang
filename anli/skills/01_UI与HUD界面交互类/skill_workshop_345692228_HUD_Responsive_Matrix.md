@@ -208,3 +208,33 @@ AddPrefabPostInit("world", function()
 end)
 ```
 
+
+
+### 变体演进：DST Auto. Factories (Mod 2797957878)
+- **变体场景与切面**：收录来自工坊 Mod 2797957878 (`DST Auto. Factories`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2797957878)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:mushroom_farm
+AddPrefabPostInit("mushroom_farm", function(inst)
+     inst._workingtask = inst:DoPeriodicTask(10,MushroomFarm)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:beebox
+AddPrefabPostInit("beebox", function(inst)
+     inst._workingtask = inst:DoPeriodicTask(10,BeeBox)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:medal_beebox
+AddPrefabPostInit("medal_beebox", function(inst)
+     inst._workingtask = inst:DoPeriodicTask(10,BeeBox)
+end)
+
+```
+
