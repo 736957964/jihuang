@@ -85,6 +85,13 @@ def mark_filtered(mod_id):
         fids = filtered_ids()
         fids.add(str(mod_id))
         _write_json(FILTERED_FILE, sorted(list(fids)))
+    # 过滤不合格的 mod 也立即删除源目录，防止磁盘堆积
+    target = os.path.join(CONTENT_ROOT, str(mod_id))
+    if os.path.isdir(target):
+        try:
+            shutil.rmtree(target, ignore_errors=True)
+        except Exception:
+            pass
 
 def completed_ids():
     with _file_lock:
@@ -252,6 +259,12 @@ def is_hardcore_qualified(stats, mod_info):
     )
     if not has_substantive_hooks:
         return False, "无任何深度钩子，判定为资源或纯文本补丁"
+    
+    # ── 老爹铁令（2026/11/05）：无切面、无有效代码的没有任何价值的绝对不要放在 skill 里 ──
+    # 必须实际提取到了高频切面代码片段（stats["snippets"] 非空），严禁产生空壳“暂无高频切面钩子”变体！
+    if not stats.get("snippets") or len(stats["snippets"]) == 0:
+        return False, "未提取到任何有效切面代码片段（无实质切面钩子实现），直接过滤拦截"
+
     name = (mod_info.get("name") or "").lower()
     if re.search(r"\b(999|infinite durability|more stack|fast pick)\b", name) and len(stats["hooks"]) <= 1 and stats["netvars"] == 0:
         return False, "纯数值倍率/暴力堆叠覆写，未达架构级研读标准"
@@ -329,6 +342,49 @@ def sync_sidebar(new_entry_title, skill_rel_path, category):
         if inserted:
             with open(sidebar_path, "w", encoding="utf-8") as f:
                 f.write("\n".join(new_lines) + "\n")
+
+
+def sync_desktop_ledger_file():
+    """老爹铁令：研读过的 mod 自动同步更新到桌面《饥荒工坊研读总账本.md》，避免重复与遗漏"""
+    try:
+        ledger = load_ledger()
+        mods = ledger.get("completedMods", [])
+        md_lines = [
+            "# 饥荒创意工坊权威 MOD 研读总账本",
+            "",
+            f"> 最后更新：{time.strftime('%Y-%m-%d %H:%M:%S')}",
+            f"> 累计研读已录入 MOD：**{len(mods)}** 款",
+            "",
+            "| 序号 | Mod ID | 模组名称 | 作者 | 研读时间 | 技术分类 | 归约权威母本 / 研读报告 |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |"
+        ]
+        for idx, m in enumerate(mods, 1):
+            mid = m.get("id", "")
+            name = str(m.get("name", "")).replace("|", "\\|").strip()
+            author = str(m.get("author", "未知")).replace("|", "\\|").strip()
+            studied_at = m.get("studied_at", "")
+            category = m.get("category", "")
+            skill_path = m.get("skill_path") or m.get("rel_path") or ""
+            path_link = f"`{skill_path}`" if skill_path else "-"
+            md_lines.append(f"| {idx} | `{mid}` | {name} | {author} | {studied_at} | {category} | {path_link} |")
+        
+        tmp_file = DESKTOP_LEDGER + ".tmp"
+        with io.open(tmp_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(md_lines) + "\n")
+        os.replace(tmp_file, DESKTOP_LEDGER)
+        log("桌面账本自动对齐成功，当前共记录 %d 款研读 MOD" % len(mods))
+    except Exception as e:
+        log("同步桌面账本异常: %s" % e)
+
+def cleanup_mod_source_dir(mod_id):
+    """老爹铁令：所有 mod 用过后必须立即删除源，严禁堆积撑爆磁盘"""
+    target = os.path.join(CONTENT_ROOT, str(mod_id))
+    if os.path.isdir(target):
+        try:
+            shutil.rmtree(target, ignore_errors=True)
+            log("磁盘自洁机制：已彻底清理 Mod %s 原始解压/下载源码目录" % mod_id)
+        except Exception as e:
+            log("清理 Mod %s 源码目录异常: %s" % (mod_id, e))
 
 def reducer_summarize_and_evolve():
     staging_files = [os.path.join(STAGING_DIR, f) for f in os.listdir(STAGING_DIR) if f.startswith("staging_") and f.endswith(".json")]
@@ -478,7 +534,9 @@ local GLOBAL = GLOBAL
             
             reduced_results.append(record_entry)
             os.remove(s_path)
-            log("Reducer: 完成母本归约并清理草稿 -> %s" % rel_path)
+            cleanup_mod_source_dir(mod_id)
+            sync_desktop_ledger_file()
+            log("Reducer: 完成母本归约并清理草稿与源文件 -> %s" % rel_path)
         except Exception as e:
             log("Reducer 归约异常 %s: %s" % (s_path, e))
 
