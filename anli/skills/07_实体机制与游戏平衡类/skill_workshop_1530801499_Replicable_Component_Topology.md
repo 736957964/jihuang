@@ -536,3 +536,126 @@ if biwangwo1 or yecao_kuaisu then AddComponentPostInit("pickable",function(self)
 
 
 
+
+
+### 变体演进：Birdcage(Time Based) (Mod 375618000)
+- **变体场景与切面**：收录来自工坊 Mod 375618000 (`Birdcage(Time Based)`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 375618000)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:birdcage
+AddPrefabPostInit("birdcage", birdcagePrefabPostInit)
+
+function featherPrefabPostInit(inst)
+	if not inst:HasTag("feather") then
+		inst:AddTag("feather")
+	end
+end
+
+```
+
+
+
+### 变体演进：Throwable Weapons (Mod 896539374)
+- **变体场景与切面**：收录来自工坊 Mod 896539374 (`Throwable Weapons`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 896539374)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:aoespell
+--[[AddComponentPostInit("aoespell",function(self) --add support to the component for multiple spells
+	self.spells = {1=self.spellfn} --need to cover the case where there is no spellfn already
+	self.index=1
+	
+	function self:CycleSpell()
+		self.index+=1
+		if #self.spells<self.index then
+			self.index=1
+		end
+		self.SetSpellFn(self.spells[self.index])
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:aoetargeting
+--[[AddComponentPostInit("aoetargeting",function(self)
+	self.spells={1={
+	{
+		ease=self.reticule.ease,
+		smoothing=self.reticule.smoothing,
+		targetfn=self.reticule.targetfn,
+		reticuleprefab=self.reticule.prefab,
+		validcolour=self.reticule.validcolour,
+		invalidcolour=self.reticule.invalidcolour,
+		mouseenabled=self.reticule.mouseenabled,
+		twinstickmode=self.reticule.twinstickmode,
+		pingprefab=self.reticule.pingprefab,
+		targetprefab=self.targetprefab,
+		alwaysvalid=self.alwaysvalid,
+		allowwater=self.allowwater,
+		allowriding=self.allowriding,
+		deployradius=self.deployradius,
+		range=self.range,
+		shouldrepeatcastfn=self.shouldrepeatcastfn,
+	}
+	self.index=1
+	
+	function self:AddSpell(data)
+		self.reticule=
+		{
+			ease=data.ease or false,
+			smoothing=data.smoothing or 6.66,
+			reticuleprefab=data.reticuleprefab or "reticule",
+			validcolour=data.validcolour or { 204 / 255, 131 / 255, 57 / 255, 1 },
+			invalidcolour=,
+			mouseenabled=,
+			twinstickmode=,
+		}
+	end
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wathgrithr
+AddPrefabPostInit("wathgrithr", function(inst)
+	inst:AddTag("ThrownSpears")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:woodie
+AddPrefabPostInit("woodie", function(inst)
+	inst:AddTag("ThrownAxes")
+	inst:AddTag("AlwaysReturn")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:winona
+AddPrefabPostInit("winona", function(inst)
+	inst:AddTag("ThrownTools")
+end)
+
+```
+
+
+
+### 变体演进：Refresh Food - Ice Box (Mod 1914860022)
+- **变体场景与切面**：收录来自工坊 Mod 1914860022 (`Refresh Food - Ice Box`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 1914860022)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:krampus_sack
+AddPrefabPostInit("krampus_sack",function(inst)
+	    inst:AddTag("fridge")
+	    inst:AddTag("nocool")
+	end)
+
+```
+

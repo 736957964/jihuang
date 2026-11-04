@@ -932,3 +932,224 @@ end)
 
 ```
 
+
+
+### 变体演进：Battle Horn (Mod 906612255)
+- **变体场景与切面**：收录来自工坊 Mod 906612255 (`Battle Horn`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 906612255)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+AddStategraphPostInit("wilson", function(sg)
+	DoEmoteSound = Waffles.GetUpvalue(sg.states.emote.onenter, "DoEmoteSound")
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:buff_attack
+AddPrefabPostInit("buff_attack", function(inst)
+	Waffles.Parallel(inst.components.debuff, "onattachedfn", OnAttached, true)
+	Waffles.Parallel(inst.components.debuff, "onextendedfn", OnExtended, true)
+	Waffles.Parallel(inst.components.debuff, "ondetachedfn", OnDetached)
+	Waffles.Parallel(inst, "OnSave", OnSave)
+	Waffles.Parallel(inst, "OnLoad", OnLoad)
+end)
+
+```
+
+
+
+### 变体演进：Ai Ohto - 大户爱 (Mod 2516445504)
+- **变体场景与切面**：收录来自工坊 Mod 2516445504 (`Ai Ohto - 大户爱`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2516445504)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:sewing
+AddComponentPostInit("sewing", function(self)
+    	self.inst:AddComponent("oa_whip_fuel")
+    end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+AddPrefabPostInit("player_classified", function(inst)
+	inst.oa_petmaxhealth = net_float(inst.GUID, "oa_petmaxhealth", "oa_petmaxhealth")
+	inst.oa_petcurrenthealth = net_float(inst.GUID, "oa_petcurrenthealth", "oa_petcurrenthealth")
+
+	inst:ListenForEvent("oa_petmaxhealth", OnMaxHealth)
+	inst:ListenForEvent("oa_petcurrenthealth", OnCurrentHealth)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson
+AddStategraphPostInit("wilson", HookAttack)
+    AddStategraphPostInit("wilson_client", HookAttack)
+else
+    AddStategraphPostInit("wilson", HookAttack)
+    AddStategraphPostInit("wilsonboating", HookAttack)
+end
+
+local PRE_MULT = 1.2
+local ATK_MULT = 2
+local PST_MULT = 4
+
+AddStategraphState("wilson", State{
+    -- 修改自 "attack"
+    name = "oa_slowattack",
+    tags = { "attack", "notalking", "abouttoattack", "autopredict" },
+
+    onenter = function(inst)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson_client", HookAttack)
+else
+    AddStategraphPostInit("wilson", HookAttack)
+    AddStategraphPostInit("wilsonboating", HookAttack)
+end
+
+local PRE_MULT = 1.2
+local ATK_MULT = 2
+local PST_MULT = 4
+
+AddStategraphState("wilson", State{
+    -- 修改自 "attack"
+    name = "oa_slowattack",
+    tags = { "attack", "notalking", "abouttoattack", "autopredict" },
+
+    onenter = function(inst)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilsonboating
+AddStategraphPostInit("wilsonboating", HookAttack)
+end
+
+local PRE_MULT = 1.2
+local ATK_MULT = 2
+local PST_MULT = 4
+
+AddStategraphState("wilson", State{
+    -- 修改自 "attack"
+    name = "oa_slowattack",
+    tags = { "attack", "notalking", "abouttoattack", "autopredict" },
+
+    onenter = function(inst)
+
+```
+
+
+
+### 变体演进：莫罗 (Mod 2950088103)
+- **变体场景与切面**：收录来自工坊 Mod 2950088103 (`莫罗`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2950088103)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddStategraphPostInit:wilson
+AddStategraphPostInit("wilson", function(sg)
+    local oldStstate = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
+        local item = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if inst:HasTag("moluo") and item and item:HasTag("moluo_gun") 
+        and not (inst.components.rider and inst.components.rider:IsRiding()) then
+            return "moluo_gun_atk"
+        end
+        return oldStstate(inst, action)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddStategraphPostInit:wilson_client
+AddStategraphPostInit("wilson_client", function(sg)
+    local oldStstate = sg.actionhandlers[ACTIONS.ATTACK].deststate
+    sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
+        local item = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if inst:HasTag("moluo") and item and item:HasTag("moluo_gun") 
+        and not (inst.replica.rider and inst.replica.rider:IsRiding()) then    
+            return "moluo_gun_atk"
+        end
+        return oldStstate(inst, action)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:moluo
+AddPrefabPostInit("moluo", function(inst)
+    if inst.components.talker then
+    local OldSay = inst.components.talker.Say
+    inst.components.talker.Say = function(self, script, time, noanim, force, nobroadcast, colour, text_filter_context, original_author_netid, onfinishedlinesfn, sgparam)   
+        if script and CanSayFn(script) == false then --and script == "only_used_by_wx78"
+            script = "" 
+        end    
+                         
+        return OldSay(self, script, time, noanim, force, nobroadcast, colour, text_filter_context, original_author_netid, onfinishedlinesfn, sgparam) 
+    end
+    end
+
+    if not TheWorld.ismastersim then
+        return
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:combat
+AddComponentPostInit("combat", function(self)
+    local OldCanHitTarget = self.CanHitTarget
+    function self:CanHitTarget(target, weapon, ...)
+        if self.inst.components.inventory and self.inst.components.inventory:EquipHasTag("moluo_gun") then
+        if self.inst and self.inst:IsValid() and target and target:IsValid() and target:HasTag("player") then
+            return true
+        end    
+        end  
+     
+        return OldCanHitTarget(self, target, weapon, ...)
+    end    
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:world
+AddPrefabPostInit(
+    "world",
+    function(inst)
+        inst.YEDAODIPI_ML = {}
+        inst:DoTaskInTime(
+            0,
+            function()
+                for k, v in pairs(Ents) do
+                    if SpawnPrefab[v.prefab] then
+                        local x, y, z = v:GetPosition():Get()
+                        table.insert(inst.YEDAODIPI_ML, {x = x + 2, z = z})
+                        break
+                    end
+                end
+            end
+        )
+        inst:ListenForEvent(
+            "ms_newplayerspawned",
+            function(world, player)
+                if next(inst.YEDAODIPI_ML) ~= nil and player and player:IsValid() and player:HasTag("moluo") then
+                    player:DoTaskInTime(
+                        0,
+                        function()
+                            local suiji = inst.YEDAODIPI_ML[math.random(#inst.YEDAODIPI_ML)]
+                            local pos = Point(suiji.x, 0, suiji.z)
+                            player.Transform:SetPosition(pos:Get())
+                            player:SnapCamera()
+                        end
+                    )
+                end
+            end
+        )
+    end
+
+```
+
