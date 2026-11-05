@@ -18651,8 +18651,134 @@
       "category": "06_世界生成与生态系统类",
       "studied_at": "2026-11-05 17:02:27",
       "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3318675532",
+      "name": "欧布圣剑",
+      "author": "超能力拓芙铁拳(萌新小黄)",
+      "version": "1.18",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 17:06:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3333231394",
+      "name": "剧毒食物 poisonous_foods",
+      "author": "文阑鱼干",
+      "version": "1.1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 17:06:00",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3141295985",
+      "name": "lang",
+      "author": "冰冰羊",
+      "version": "1.0.3",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 17:09:06",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3295390352",
+      "name": "Haunt Telltale Heart",
+      "author": "Willow",
+      "version": "0.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 17:09:06",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3116772452",
+      "name": "Mobs that are called Steve",
+      "author": "Cliffford W.",
+      "version": "2.12.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 17:12:18",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2998796197",
+      "name": "doydoy",
+      "author": "Atlanthal，zzzzzzzs，凌子",
+      "version": "1.4.11",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 17:26:33",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2808962300",
+      "name": "风滚草刷新点显示",
+      "author": "DELETED",
+      "version": "1.22",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 17:34:24",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2536588780",
+      "name": "显示出来",
+      "author": "Star, +Serp",
+      "version": "0.50",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 17:44:02",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2583221769",
+      "name": "Customize Everything",
+      "author": "DiRten",
+      "version": "2.92",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 17:44:03",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2515464838",
+      "name": "MAMAMOO4x4EVER",
+      "author": "NeverLettingGo",
+      "version": "1.0.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 17:47:20",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2220506640",
+      "name": "Dev Tools",
+      "author": "Demonblink",
+      "version": "0.8.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 17:54:57",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "1902301713",
+      "name": "Abby follow mouse",
+      "author": "Filigrani, Sorry Late",
+      "version": "0.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 17:58:18",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3746873487",
+      "name": "Wilson Waves (Winston Waves)",
+      "author": "rapid_oxidation",
+      "version": "1.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 18:11:17",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3805536936",
+      "name": "MyDock",
+      "author": "Creeirdo",
+      "version": "1.0.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 18:11:17",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-05 17:02:27"
+  "lastUpdated": "2026-11-05 18:11:17"
 }
