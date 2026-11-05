@@ -17436,8 +17436,143 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-05 09:38:38",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1632806506",
+      "name": "\\83\\104\\111\\119\\32\\77\\101\\40\\79\\114\\105\\103\\105\\110\\41",
+      "author": "\\119\\97\\121\\116\\97",
+      "version": "\\49\\46\\50\\46\\50",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:41:56",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2479713376",
+      "name": "风滚草刷新点",
+      "author": "月,班花,五年",
+      "version": "1.0.4",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 09:44:48",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2826702344",
+      "name": "智能雪球发射器",
+      "author": "z欺我",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:44:48",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2979120554",
+      "name": "Loot Pump 自用优化",
+      "author": "soulkira",
+      "version": "1.14",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:44:49",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2823959147",
+      "name": "晾晒万物(Dry Everything)",
+      "author": "朋也",
+      "version": "1.0.7",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:51:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3127393509",
+      "name": "Loot Pump 自用优化",
+      "author": "青衣温浊酒",
+      "version": "0.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:51:36",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2192859297",
+      "name": "熔炉武器汉化版",
+      "author": "Aire_Ayquaza",
+      "version": "1.1.11",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:55:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "850125165",
+      "name": "Repair Mod",
+      "author": "w00tyd00d",
+      "version": "3.1.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:55:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2093237225",
+      "name": "Crabby Hermit",
+      "author": "DrunkFAiRY",
+      "version": "3.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 10:03:06",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2793714555",
+      "name": "更多食物",
+      "author": "烟花 & 燧",
+      "version": "2.0.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 10:08:51",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2578961661",
+      "name": "那年花嫁测试β版",
+      "author": "小穹永不败北",
+      "version": "1.001.2003.0913",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 10:14:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2677277428",
+      "name": "智能敌对",
+      "author": "丰艺猪猪(猪哥)  接盘侠：罗小黑很忧愁",
+      "version": "5.1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 10:17:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "1897243933",
+      "name": "\\72\\109\\83\\120",
+      "author": "\\75\\121\\110\\111\\111\\120\\95",
+      "version": "\\49\\46\\50\\46\\49",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 10:27:43",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2658229664",
+      "name": "Terraria Music",
+      "author": "Skyla W.",
+      "version": "1.4.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 10:36:33",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2730223236",
+      "name": "万物皆可修(repairEverything)",
+      "author": "菜菜菜",
+      "version": "1.3.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 10:50:37",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-05 09:38:38"
+  "lastUpdated": "2026-11-05 10:50:37"
 }
