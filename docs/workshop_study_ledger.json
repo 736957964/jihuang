@@ -17130,8 +17130,314 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-05 08:37:44",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3470859928",
+      "name": "死亡细胞武器（DCW）",
+      "author": "妖魔鬼怪快离开、别讨好小槟吖",
+      "version": "1.6.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 08:42:27",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3359637342",
+      "name": "null",
+      "author": "原作者天涯, 小花朵",
+      "version": "2.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:44:13",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3443705488",
+      "name": "每日惊喜",
+      "author": "凌(Va6gn)",
+      "version": "1.2.4",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 08:44:13",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3171629051",
+      "name": "Craft",
+      "author": "Kakarlos",
+      "version": "1.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:47:20",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2829037969",
+      "name": "Farming QoL & Tweaks",
+      "author": "Growth Mindset",
+      "version": "1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 08:50:18",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2681531754",
+      "name": "Lureplant Farm Helper",
+      "author": "ogait87",
+      "version": "0.2.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:52:18",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1807213288",
+      "name": "Find Your Blueprints󰀏",
+      "author": "EclipsE. Original: surg, dsyskov",
+      "version": "5.3.9d",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 08:55:49",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3724974360",
+      "name": "Lore Friendly Sanity Additions",
+      "author": "ET",
+      "version": "0.0.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:59:06",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3729546363",
+      "name": "Mod 3729546363",
+      "author": "Wendigail",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:59:06",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3298502679",
+      "name": "Mod 3298502679",
+      "author": "月, 亚丹,ziwbi",
+      "version": "1.1.10",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 09:03:45",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3383495016",
+      "name": "天鹰火炮 Eagle Artillery",
+      "author": "文阑鱼干",
+      "version": "1.1.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:03:45",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3447536396",
+      "name": "旺仔牛逼糖",
+      "author": "DaiSuKi",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:03:45",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3458507994",
+      "name": "【附魔-强化】兼容补丁",
+      "author": "游叶",
+      "version": "2.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:03:45",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2738791601",
+      "name": "True King Wurt",
+      "author": "莫赋断肠诗",
+      "version": "1.0.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:06:22",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3466159169",
+      "name": "Attack Animation Cancel(평타캔슬)AAC",
+      "author": "탄산수󰀈(KR)",
+      "version": "1.2.9",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 09:08:09",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3811750965",
+      "name": "[DST]星",
+      "author": "自闭的七节狐、核主角eins、Yyyytyi_Slime_Block",
+      "version": "0.02.c",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:08:09",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3475639905",
+      "name": "全民弹弓小子",
+      "author": "雨荧",
+      "version": "0.0.0.1",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-05 09:11:23",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3507803938",
+      "name": "Trader Rework",
+      "author": "Willow",
+      "version": "1.8",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 09:11:23",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3442966746",
+      "name": "Mod 3442966746",
+      "author": "繁花丶海棠 | 胜天一猫 | leo2468",
+      "version": "3.1.4.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:14:26",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3725744974",
+      "name": "더 귀엽고 좋은 W.O.B.O.T",
+      "author": "정들래",
+      "version": "2.0.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:14:27",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3437794024",
+      "name": "小恶魔强化",
+      "author": "ReKi彡",
+      "version": "1.42",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:16:18",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3535156505",
+      "name": "Seven Setpieces",
+      "author": "Willow",
+      "version": "0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:16:18",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3535964924",
+      "name": "EveryoneCanDeploy",
+      "author": "冰冰羊",
+      "version": "2.0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:16:18",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3402476526",
+      "name": "Unlock Cookbook & Nutrients",
+      "author": "Willow",
+      "version": "0.2",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 09:18:24",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3422793273",
+      "name": "Solo Raid",
+      "author": "Willow",
+      "version": "0.6",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 09:18:24",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3141226550",
+      "name": "More Foods Pack Hanization",
+      "author": "Cutlass,MLZ",
+      "version": "1.6",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:20:59",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3282279991",
+      "name": "isequippable",
+      "author": "Runar",
+      "version": "3.8.26",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:20:59",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2887118635",
+      "name": "海平面之下",
+      "author": "老王天天写bug",
+      "version": "beta-0.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 09:25:45",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2672571053",
+      "name": "Infinite Touch Stone - Legacy",
+      "author": "Araelynn",
+      "version": "2.0.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 09:27:48",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2752917517",
+      "name": "Ice Flingomatic Watering",
+      "author": "Bumber",
+      "version": "1.13",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-05 09:27:48",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_3605108247_3605108247.md"
+    },
+    {
+      "id": "1262092067",
+      "name": "Stacking Enabler",
+      "author": "CarlZalph",
+      "version": "0.1.5",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 09:33:47",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2870730873",
+      "name": "Revive Beefalo / 皮弗娄牛复活",
+      "author": "Tetrikitty",
+      "version": "0.31",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 09:36:45",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2536583497",
+      "name": "全图定位",
+      "author": "rezecib, Sarcen",
+      "version": "1.7.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 09:38:38",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "378037166",
+      "name": "Incinerate Everything",
+      "author": "ChaosMind42",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 09:38:38",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-05 08:37:44"
+  "lastUpdated": "2026-11-05 09:38:38"
 }
