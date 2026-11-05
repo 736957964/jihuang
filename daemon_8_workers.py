@@ -439,14 +439,18 @@ def reducer_summarize_and_evolve():
             cat_dir = os.path.join(SKILLS_DIR, cat)
             os.makedirs(cat_dir, exist_ok=True)
             
+            # 必须实际提取到了高频切面代码片段，无有效代码的空壳变体严禁入库
+            if not stats.get("snippets") or len(stats["snippets"]) == 0:
+                log(f"Reducer: Mod {mod_id} ({name}) 无实质切面钩子代码，舍弃空壳变体不合入母本")
+                if os.path.exists(s_path):
+                    os.remove(s_path)
+                continue
+
             # 老爹指示：不限制行数，只要合理，支持展示多个不同切面完整片段
             snippets_blocks = []
-            if stats["snippets"]:
-                for s_key, s_code in list(stats["snippets"].items())[:5]:
-                    snippets_blocks.append(f"-- 切面钩子：{s_key}\n{s_code}\n")
-                snippet_code = "\n-- ----------------------------------------------------------------------------\n".join(snippets_blocks)
-            else:
-                snippet_code = "-- 暂无高频切面钩子"
+            for s_key, s_code in list(stats["snippets"].items())[:5]:
+                snippets_blocks.append(f"-- 切面钩子：{s_key}\n{s_code}\n")
+            snippet_code = "\n-- ----------------------------------------------------------------------------\n".join(snippets_blocks)
 
             # 核心归约铁律（老爹 2026/11/01 指示）：
             # 严格控制母本数量（越少越好），绝不按 Mod 独立新建 Skill！
