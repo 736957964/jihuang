@@ -413,3 +413,100 @@ end)
 
 ```
 
+
+
+### 变体演进：Auto Unequip (Mod 2970317405)
+- **变体场景与切面**：收录来自工坊 Mod 2970317405 (`Auto Unequip`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2970317405)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:inventoryitem_classified
+AddPrefabPostInit("inventoryitem_classified", function(inst)
+     inst:DoTaskInTime(0, function()
+          if inst._parent and ShouldCheck(inst._parent) then
+               inst:ListenForEvent("percentuseddirty", function() AutoUnequip(inst) end)
+          end
+     end)
+end)
+
+```
+
+
+
+### 变体演进：Aligned Placement 对齐建造 (Mod 2012800429)
+- **变体场景与切面**：收录来自工坊 Mod 2012800429 (`Aligned Placement 对齐建造`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 2012800429)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:playercontroller
+-- AddComponentPostInit("playercontroller", controller.PostInit)
+
+AddComponentPostInit("placer", function(placer)
+    controller.SetupFollower(placer)
+    placer.OnUpdate = function(self, dt)
+        PlacerUpdate(self, dt, Snap, controller)
+    end
+
+    placer.inst:ListenForEvent("onremove", function()
+        RemoveHilightColors(placer)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:placer
+AddComponentPostInit("placer", function(placer)
+    controller.SetupFollower(placer)
+    placer.OnUpdate = function(self, dt)
+        PlacerUpdate(self, dt, Snap, controller)
+    end
+
+    placer.inst:ListenForEvent("onremove", function()
+        RemoveHilightColors(placer)
+    end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:builder
+AddComponentPostInit("builder", function(builder)
+    local CanBuildAtPoint, MakeRecipe = builder.CanBuildAtPoint, builder.MakeRecipe
+
+    function builder:CanBuildAtPoint(pt, recipe, ...)
+        local filter = FILTERS[recipe.name]
+        local aligned = SnapToEntities(pt, filter)
+        return CanBuildAtPoint(self, aligned, recipe, ...)
+    end
+
+    function builder:MakeRecipe(recipe, pt, ...)
+        local filter = FILTERS[recipe.name]
+        local aligned = SnapToEntities(pt, filter)
+        return MakeRecipe(self, recipe, aligned, ...)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddComponentPostInit:deployable
+AddComponentPostInit("deployable", function(deployable)
+    local CanDeploy, Deploy = deployable.CanDeploy, deployable.Deploy
+    function deployable:CanDeploy(pt, ...)
+        local filter = FILTERS[self.inst.prefab]
+        local aligned = SnapToEntities(pt, filter)
+        return CanDeploy(self, aligned, ...)
+    end
+
+    function deployable:Deploy(pt, deployer, ...)
+        local filter = FILTERS[self.inst.prefab]
+        local aligned = SnapToEntities(pt, filter)
+        return Deploy(self, aligned, deployer, ...)
+    end
+end)
+
+```
+

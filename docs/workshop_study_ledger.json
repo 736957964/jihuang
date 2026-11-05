@@ -16887,8 +16887,251 @@
       "category": "05_战斗AI行为树与Boss机制类",
       "studied_at": "2026-11-05 07:34:42",
       "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_3605108247_3605108247.md"
+    },
+    {
+      "id": "2941451553",
+      "name": "自用常用功能",
+      "author": "月",
+      "version": "1.1.9",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 07:37:44",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2970317405",
+      "name": "Auto Unequip",
+      "author": "K",
+      "version": "3.1.1",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-05 07:37:44",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "2842329929",
+      "name": "Lost Toys Found",
+      "author": "zzzzzzzs",
+      "version": "20220923",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 07:40:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2573375368",
+      "name": "Ocean Tree Range Indicator",
+      "author": "SirMilkToast",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 07:43:01",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3694336200",
+      "name": "Chest Link: Craft & Auto-Stack",
+      "author": "PoperinoPlays",
+      "version": "1.0.8",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 07:44:28",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3352396023",
+      "name": "Ocean Freezes Over",
+      "author": "Willow",
+      "version": "5.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 07:47:26",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3769019417",
+      "name": "Seele·Vollerei",
+      "author": "夜影",
+      "version": "0.1.72",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 07:50:39",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "837819197",
+      "name": "Where",
+      "author": "bormoshka",
+      "version": "2.0.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 07:50:39",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3496081977",
+      "name": "Extra Equip Slots w/ seed pack-it",
+      "author": "Original:xVars, Editor: Sr Do Café",
+      "version": "1.8.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 07:56:09",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2988692894",
+      "name": "Language",
+      "author": "SongYuki",
+      "version": "V2.0.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 07:59:36",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2012800429",
+      "name": "Aligned Placement 对齐建造",
+      "author": "xpolife",
+      "version": "2.3.9",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-05 08:01:49",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "2831285642",
+      "name": "Lazy Deserter Alone",
+      "author": "Willow",
+      "version": "2.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:05:16",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3683754144",
+      "name": "肉鸽生存模式",
+      "author": "liuan",
+      "version": "2.3.21",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 08:07:21",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3366795901",
+      "name": "火把增强",
+      "author": "css",
+      "version": "0.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:12:21",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3490648375",
+      "name": "旺达扩展",
+      "author": "琴君",
+      "version": "1.2.0.8",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 08:12:21",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3345578390",
+      "name": "[CESapi] Custom Entity Shaders API BETA",
+      "author": "LukaS",
+      "version": "0.6.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 08:15:33",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3114706349",
+      "name": "Enhanced Ocuvigils",
+      "author": "L1V Modding Dev Team",
+      "version": "1.0.5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 08:17:34",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2068753198",
+      "name": "Invincible Companions(Configurable)",
+      "author": "Sune",
+      "version": "0.2",
+      "category": "01_UI与HUD界面交互类",
+      "studied_at": "2026-11-05 08:21:32",
+      "skill_path": "anli/skills/01_UI与HUD界面交互类/skill_workshop_345692228_HUD_Responsive_Matrix.md"
+    },
+    {
+      "id": "964829893",
+      "name": "Infinite Lighter",
+      "author": "Syl",
+      "version": "1.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:24:01",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3811533597",
+      "name": "language",
+      "author": "MINIMA",
+      "version": "2026.11.02.2",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 08:26:39",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3368959990",
+      "name": "fishrod_onwater",
+      "author": "Rock_Wan",
+      "version": "1.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:28:49",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3565064104",
+      "name": "Playable Pets - Ancient Fuelweaver (Re)addon",
+      "author": "Gronal_Bar",
+      "version": "2.13.b",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:28:49",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3308234894",
+      "name": "lang",
+      "author": "冰冰羊",
+      "version": "1.5.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:31:34",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3780996359",
+      "name": "The Fun Gang (DELTARUNE) RUS",
+      "author": "Geraldiy",
+      "version": "1.113",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:34:41",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3626790471",
+      "name": "实用的眼面具 / Enhanced Eyemask",
+      "author": "装比过度",
+      "version": "1.05",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:37:43",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3664885766",
+      "name": "兴风作浪",
+      "author": "银纹镂空螺旋剑",
+      "version": "1.0.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 08:37:43",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3733971292",
+      "name": "WX-78 Flashlight Auto-Off",
+      "author": "Doodad Doctor",
+      "version": "1.0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 08:37:44",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-05 07:34:42"
+  "lastUpdated": "2026-11-05 08:37:44"
 }
