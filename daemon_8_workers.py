@@ -196,28 +196,60 @@ def analyze_mod_source(root):
                 hooks[key] = hooks.get(key, 0) + 1
                 if key not in snippets:
                     ln = text[:m.start()].count("\n")
-                    # 动态提取完整函数块：严格作用域闭环（过滤注释行干扰，严格跟踪 function/then/do 与 end 闭合）
-                    end_ln = min(len(lines), ln + 1)
-                    scope = 0
-                    found_start = False
-                    for idx in range(ln, min(len(lines), ln + 800)):
-                        line_str = lines[idx]
-                        clean_line = re.sub(r"--.*", "", line_str)
-                        fn_count = len(re.findall(r"\bfunction\b", clean_line))
-                        if fn_count > 0:
-                            scope += fn_count
-                            found_start = True
-                        scope += len(re.findall(r"\b(then|do|repeat)\b", clean_line))
-                        scope -= len(re.findall(r"\bend\b", clean_line))
-                        if found_start and scope <= 0:
+                    hook_line = lines[ln] if ln < len(lines) else ""
+                    clean_hook_line = re.sub(r"--.*", "", hook_line)
+                    
+                    has_inline_fn = "function" in clean_hook_line
+                    # 若该钩子行本身不含匿名函数（例如直接传入函数引用 AddPrefabPostInit("foo", OnFoo)）
+                    if not has_inline_fn:
+                        # 仅提取该调用的闭合语句（到配对的右括号）
+                        paren_depth = 0
+                        end_ln = ln + 1
+                        for idx in range(ln, min(len(lines), ln + 50)):
+                            cur_clean = re.sub(r"--.*", "", lines[idx])
+                            paren_depth += cur_clean.count("(") - cur_clean.count(")")
+                            if paren_depth <= 0:
+                                end_ln = idx + 1
+                                break
+                        extracted = lines[ln:end_ln]
+                        code_joined = "\n".join(extracted).strip()
+                        if paren_depth <= 0 and len(code_joined) > 0:
+                            snippets[key] = code_joined
+                    else:
+                        # 包含匿名函数：跟踪控制流与全量括号/花括号闭合
+                        end_ln = min(len(lines), ln + 1)
+                        scope = 0
+                        curly_depth = 0
+                        paren_depth = 0
+                        found_start = False
+                        for idx in range(ln, min(len(lines), ln + 800)):
+                            line_str = lines[idx]
+                            clean_line = re.sub(r"--.*", "", line_str)
+                            fn_count = len(re.findall(r"\bfunction\b", clean_line))
+                            if fn_count > 0:
+                                scope += fn_count
+                                found_start = True
+                            scope += len(re.findall(r"\b(then|do|repeat)\b", clean_line))
+                            scope -= len(re.findall(r"\bend\b", clean_line))
+                            curly_depth += clean_line.count("{") - clean_line.count("}")
+                            paren_depth += clean_line.count("(") - clean_line.count(")")
+                            if found_start and scope <= 0 and curly_depth <= 0 and paren_depth <= 0:
+                                end_ln = idx + 1
+                                break
                             end_ln = idx + 1
-                            break
-                        end_ln = idx + 1
-                    extracted = lines[max(0, ln):end_ln]
-                    # 强校验：严禁残缺碎代码入库
-                    code_joined = "\n".join(extracted).strip()
-                    if found_start and scope <= 0 and len(code_joined.splitlines()) >= 3:
-                        snippets[key] = code_joined
+                        extracted = lines[max(0, ln):end_ln]
+                        code_joined = "\n".join(extracted).strip()
+                        # 强防御校验：严禁残缺、语法不闭合的代码入库
+                        clean_extracted = [re.sub(r"--.*", "", l).strip() for l in extracted if re.sub(r"--.*", "", l).strip()]
+                        last_line = clean_extracted[-1] if clean_extracted else ""
+                        is_broken = (
+                            not found_start or scope > 0 or curly_depth != 0 or paren_depth != 0 or
+                            re.search(r"\bfunction\s*\([^)]*\)\s*$", last_line) or
+                            re.search(r"\b(then|do|repeat|else|elseif)\s*$", last_line) or
+                            last_line.endswith("{") or last_line.endswith("(") or last_line.endswith("=")
+                        )
+                        if not is_broken and len(code_joined.splitlines()) >= 2:
+                            snippets[key] = code_joined
     return {
         "lua_files": sorted(lua_files),
         "total_lines": total_lines,

@@ -985,62 +985,6 @@ AddPrefabPostInit("player_classified", function(inst)
 	inst:ListenForEvent("oa_petmaxhealth", OnMaxHealth)
 	inst:ListenForEvent("oa_petcurrenthealth", OnCurrentHealth)
 end)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddStategraphPostInit:wilson
-AddStategraphPostInit("wilson", HookAttack)
-    AddStategraphPostInit("wilson_client", HookAttack)
-else
-    AddStategraphPostInit("wilson", HookAttack)
-    AddStategraphPostInit("wilsonboating", HookAttack)
-end
-
-local PRE_MULT = 1.2
-local ATK_MULT = 2
-local PST_MULT = 4
-
-AddStategraphState("wilson", State{
-    -- 修改自 "attack"
-    name = "oa_slowattack",
-    tags = { "attack", "notalking", "abouttoattack", "autopredict" },
-
-    onenter = function(inst)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddStategraphPostInit:wilson_client
-AddStategraphPostInit("wilson_client", HookAttack)
-else
-    AddStategraphPostInit("wilson", HookAttack)
-    AddStategraphPostInit("wilsonboating", HookAttack)
-end
-
-local PRE_MULT = 1.2
-local ATK_MULT = 2
-local PST_MULT = 4
-
-AddStategraphState("wilson", State{
-    -- 修改自 "attack"
-    name = "oa_slowattack",
-    tags = { "attack", "notalking", "abouttoattack", "autopredict" },
-
-    onenter = function(inst)
-
--- ----------------------------------------------------------------------------
--- 切面钩子：AddStategraphPostInit:wilsonboating
-AddStategraphPostInit("wilsonboating", HookAttack)
-end
-
-local PRE_MULT = 1.2
-local ATK_MULT = 2
-local PST_MULT = 4
-
-AddStategraphState("wilson", State{
-    -- 修改自 "attack"
-    name = "oa_slowattack",
-    tags = { "attack", "notalking", "abouttoattack", "autopredict" },
-
-    onenter = function(inst)
-
 ```
 
 
@@ -1152,4 +1096,3 @@ AddPrefabPostInit(
     end
 
 ```
-
