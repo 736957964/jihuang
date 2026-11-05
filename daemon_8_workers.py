@@ -579,38 +579,43 @@ local GLOBAL = GLOBAL
     return reduced_results
 
 def notify_owner_batch(new_skills):
-    """每批研读并归约完成后，自动向老爹私聊汇报成果并附带长文本母本截图验证"""
+    """每批研读并归约完成后，自动向老爹私聊推送合并转发（文字简报+各母本排版长图节点打包一口气发送）"""
     if not new_skills:
         return
     try:
-        conn = http.client.HTTPConnection("127.0.0.1", 3000, timeout=20)
+        token = "3Az8ZteKSuvWFXX5BGa-r1j_aX4JL3RKX1ZbKSUja7U"
         headers = {
             "Content-Type": "application/json",
-            "Authorization": "Bearer 3Az8ZteKSuvWFXX5BGa-r1j_aX4JL3RKX1ZbKSUja7U"
+            "Authorization": "Bearer " + token
         }
-        skill_lines = "\n".join(["- [%s] %s" % (s["category"].split("_")[1] if "_" in s["category"] else s["category"], s["name"]) for s in new_skills[:5]])
+        skill_lines = "\n".join(["- [%s] %s" % (s["category"].split("_")[1] if "_" in s["category"] else s["category"], s["name"]) for s in new_skills[:10]])
         total_count = len(completed_ids())
-        msg = (
-            "【饥荒工坊研读流水线·批次母本自检汇报】\n"
+        summary_text = (
+            "🌲【饥荒工坊研读流水线·批次母本自检简报】\n"
             "🌟 本批通过硬核准入并完成母本实战功能归约：%d 篇\n"
             "%s\n"
             "📚 当前总账本累计：%d 个硬核模组\n"
-            "💾 母本已严格按照一二三四五六规范核验，已渲染长图自检排版并推送供老爹二次确认！"
+            "💾 母本已严格按照一二三四五六规范核验落地，下方附带各母本排版长图自检节点，请老爹二次确认！"
             % (len(new_skills), skill_lines, total_count)
         )
-        body = json.dumps({"user_id": 736957964, "message": msg}, ensure_ascii=False).encode("utf-8")
-        conn.request("POST", "/send_private_msg", body, headers)
-        res = conn.getresponse()
-        res.read()
-        conn.close()
-        log("已向老爹私聊推送批次文字简报 (HTTP %s)" % res.status)
+        
+        nodes = [
+            {
+                "type": "node",
+                "data": {
+                    "name": "小鲸鱼·流水线管家",
+                    "uin": "2238534896",
+                    "content": summary_text
+                }
+            }
+        ]
 
-        # ── 老爹铁令：母本落地后，必须生成长文本截图验证排版，多个母本就给多个截图，全部推送给老爹进行二次确认 ──
+        # ── 老爹铁令：母本落地后，必须生成长文本截图验证排版，多个母本全量生成长截图，打包成合并转发节点推送 ──
         try:
             from render_markdown_card import render_markdown_to_long_screenshot
             img_dir = os.path.join(WORK_DIR, "state", "screenshots")
             os.makedirs(img_dir, exist_ok=True)
-            for s in new_skills:  # 老爹指示：多个母本全量生成长截图，一个不漏
+            for s in new_skills:
                 rel_path = s.get("skill_path") or s.get("rel_path")
                 if not rel_path:
                     continue
@@ -619,18 +624,26 @@ def notify_owner_batch(new_skills):
                     continue
                 out_png = os.path.join(img_dir, "verify_%s.png" % os.path.splitext(os.path.basename(rel_path))[0])
                 if render_markdown_to_long_screenshot(md_full_path, out_png):
-                    # 通过 OneBot 协议向老爹发送图片消息
-                    img_conn = http.client.HTTPConnection("127.0.0.1", 3000, timeout=30)
-                    cq_img = "[CQ:image,file=file:///%s]" % out_png.replace("\\", "/")
-                    img_body = json.dumps({"user_id": 736957964, "message": cq_img}, ensure_ascii=False).encode("utf-8")
-                    img_conn.request("POST", "/send_private_msg", img_body, headers)
-                    img_res = img_conn.getresponse()
-                    img_res.read()
-                    img_conn.close()
-                    log("已向老爹私聊推送母本长图自检截图: %s (HTTP %s)" % (out_png, img_res.status))
-                    time.sleep(2)
+                    mod_name = s.get("name") or os.path.basename(rel_path)
+                    nodes.append({
+                        "type": "node",
+                        "data": {
+                            "name": "小鲸鱼·母本自检图",
+                            "uin": "2238534896",
+                            "content": "📄 母本长图自检: %s\n[CQ:image,file=file:///%s]" % (mod_name, out_png.replace("\\", "/"))
+                        }
+                    })
         except Exception as e_img:
-            log("母本长图渲染及截图推送异常: %s" % e_img)
+            log("母本长图渲染及节点生成异常: %s" % e_img)
+
+        # 统一使用 send_private_forward_msg 合并转发打包推送给老爹
+        fwd_conn = http.client.HTTPConnection("127.0.0.1", 3000, timeout=30)
+        fwd_body = json.dumps({"user_id": 736957964, "messages": nodes}, ensure_ascii=False).encode("utf-8")
+        fwd_conn.request("POST", "/send_private_forward_msg", fwd_body, headers)
+        fwd_res = fwd_conn.getresponse()
+        fwd_res.read()
+        fwd_conn.close()
+        log("已向老爹私聊推送批次合并转发消息 (含%d个节点, HTTP %s)" % (len(nodes), fwd_res.status))
     except Exception as e:
         log("推送老爹私聊播报异常: %s" % e)
 
