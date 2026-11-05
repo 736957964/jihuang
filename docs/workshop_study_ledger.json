@@ -21000,8 +21000,107 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-06 04:58:22",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "972126897",
+      "name": "Beefalo Horns Without Harm",
+      "author": "Syl",
+      "version": "1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 05:07:27",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2445812896",
+      "name": "mikazuki",
+      "author": "柊镜镜",
+      "version": "未声明",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 05:10:19",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2498904861",
+      "name": "Stamina System [Leaf Mods]",
+      "author": "amoryleaf",
+      "version": "1.2.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 05:13:28",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2785974255",
+      "name": "Magic Antchest",
+      "author": "清晨草露",
+      "version": "1.2.7",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-06 05:16:36",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "2869754891",
+      "name": "我命由我不由天",
+      "author": "W",
+      "version": "1.3.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 05:23:02",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2564911985",
+      "name": "MonsterBackpack",
+      "author": "幕夜之下",
+      "version": "0.04.20",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 05:26:00",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2780780278",
+      "name": "改造手册",
+      "author": "Gliam",
+      "version": "1.42",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 05:28:58",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2435006802",
+      "name": "烈阳长枪SunSting",
+      "author": "红夷大炮",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 05:31:56",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1551218181",
+      "name": "Hamlet Resources",
+      "author": "AlexAT",
+      "version": "0.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 05:44:00",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2434539049",
+      "name": "Improved Miner Hat",
+      "author": "NeverEver",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 05:56:55",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3432724991",
+      "name": "I like roads",
+      "author": "Willow",
+      "version": "0.2",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 06:02:02",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-06 04:58:22"
+  "lastUpdated": "2026-11-06 06:02:02"
 }
