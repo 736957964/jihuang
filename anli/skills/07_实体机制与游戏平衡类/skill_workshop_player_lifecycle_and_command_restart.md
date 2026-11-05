@@ -15,7 +15,6 @@
    
 ```lua
    TheWorld:PushEvent("ms_playerdespawnanddelete", player)
-   
 ```
    触发官方完整的注销链：卸载容器 -> 触发掉落回执 -> 保存全局元数据 -> 优雅通知客机返回选人界面。
 

@@ -383,7 +383,6 @@ AddComponentPostInit("edible", function(self)
 		end
 	end
 end)
-
 ```
 
 
@@ -470,7 +469,6 @@ AddPrefabPostInit("world",function()
             and self:IsSurroundedByWater(pt.x, pt.y, pt.z, min_distance_from_land + radius)
     end
 end)
-
 ```
 
 
@@ -555,7 +553,6 @@ AddPrefabPostInit("wortox", function(inst)
 	end
 	UpvalueHacker.SetUpvalue(GLOBAL.Prefabs.wortox.fn, GetPointSpecialActions, "common_postinit", "OnSetOwner", "GetPointSpecialActions")
 end)
-
 ```
 
 
@@ -574,7 +571,6 @@ AddPrefabPostInit("lightbulb", function(inst) -- I checked all of these and it w
 	inst:AddComponent("sanityaura")
 	inst.components.sanityaura.aurafn = PositiveSanity
 end)
-
 ```
 
 
@@ -660,6 +656,5 @@ AddPrefabPostInit("chester", function(inst)
     ToggleBreath = CollectFood(GLOBAL.Prefabs.chester.fn, "OnClientChesterStateDirty", "ToggleBreath")
     EatFood(inst.OnPreLoad, MorphSnowChester, "MorphSnowChester")
 end)
-
 ```
 

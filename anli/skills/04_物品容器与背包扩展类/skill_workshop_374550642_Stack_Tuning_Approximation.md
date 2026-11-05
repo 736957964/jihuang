@@ -1120,7 +1120,6 @@ AddPrefabPostInit("inventory_classified", function(inst)
 		end
 	end
 end)
-
 ```
 
 
@@ -1179,8 +1178,7 @@ AddPrefabPostInit("reviver", function(inst) --Remove getting damaged effect
 -- 切面钩子：AddComponentPostInit:pollinator
 AddComponentPostInit("pollinator", function(inst)
 		inst.collectcount = 6/beesSpeedMultiplier-1 --Bees return to hive if collected > collectcount (by default collectcount is 5)
-	end)
-
+end)
 ```
 
 
@@ -1305,7 +1303,6 @@ AddPrefabPostInit("bunnyman", function(inst)
 	inst:DoTaskInTime(0, DubloonDropRate)
 	inst:ListenForEvent("death", DubloonSpawn)
 end)
-
 ```
 
 
@@ -1375,7 +1372,6 @@ function(inst)
         end
     end
 end )
-
 ```
 
 
@@ -1401,6 +1397,5 @@ AddComponentPostInit("container", function(self)
         return _GiveItem(self, item, slot, src_pos, drop_on_fail)
     end
 end)
-
 ```
 

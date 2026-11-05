@@ -468,7 +468,6 @@ AddPrefabPostInit("fossil_stalker", function(inst)
     end)
 end
 end
-
 ```
 
 
@@ -531,7 +530,6 @@ AddComponentPostInit("pickable",function(self) local self1 = self.inst.component
 AddPrefabPostInit("weed_forgetmelots",ycshouhuo) 
 end
 if biwangwo1 or yecao_kuaisu then AddComponentPostInit("pickable",function(self) self.inst:DoTaskInTime(1, function() if self.inst:HasTag("yc_bww") and self.inst.components.growable and self.inst.components.growable.stage + 1 == #self.inst.components.growable.stages then if biwangwo1 then self.inst.components.growable:StopGrowing() end if yecao_kuaisu then self.quickpick = true end end end) end)
-
 ```
 
 
@@ -555,7 +553,6 @@ function featherPrefabPostInit(inst)
 		inst:AddTag("feather")
 	end
 end
-
 ```
 
 
@@ -586,7 +583,6 @@ end)
 AddPrefabPostInit("winona", function(inst)
 	inst:AddTag("ThrownTools")
 end)
-
 ```
 
 
@@ -604,7 +600,6 @@ local GLOBAL = GLOBAL
 AddPrefabPostInit("krampus_sack",function(inst)
 	    inst:AddTag("fridge")
 	    inst:AddTag("nocool")
-	end)
-
+end)
 ```
 

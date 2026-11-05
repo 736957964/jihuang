@@ -880,7 +880,6 @@ AddBrainPostInit("perdbrain", function(self)
 		end
 	end
 end)
-
 ```
 
 
@@ -929,7 +928,6 @@ AddPrefabPostInit("world", function(inst)
         end)
     end
 end)
-
 ```
 
 
@@ -957,7 +955,6 @@ AddPrefabPostInit("buff_attack", function(inst)
 	Waffles.Parallel(inst, "OnSave", OnSave)
 	Waffles.Parallel(inst, "OnLoad", OnLoad)
 end)
-
 ```
 
 
@@ -1093,6 +1090,5 @@ AddPrefabPostInit(
                 end
             end
         )
-    end
-
+end
 ```

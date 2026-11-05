@@ -158,7 +158,6 @@ AddPrefabPostInit('player_classified', function (inst)
 		end)
 	end
 end)
-
 ```
 
 
@@ -186,7 +185,6 @@ AddPrefabPostInit("yotb_stage",function(self)
         self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
     end
 end)
-
 ```
 
 
@@ -205,7 +203,6 @@ AddPrefabPostInit("container_classified", addItemSlotNetvarsInContainer)
 
 --Change size of Backpacks, Chests, Bundles, and Chester
   local widgetsetup_Base = containers.widgetsetup or function() return true end
-
 ```
 
 
@@ -427,7 +424,6 @@ AddPrefabPostInit("abigail", function(inst)
         end
     end
 end)
-
 ```
 
 
@@ -455,7 +451,6 @@ AddPrefabPostInit("yotb_stage",function(self)
         self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
     end
 end)
-
 ```
 
 
@@ -483,7 +478,6 @@ AddPrefabPostInit("yotb_stage",function(self)
         self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
     end
 end)
-
 ```
 
 
@@ -509,7 +503,6 @@ AddPrefabPostInit("monkeyqueen", function(inst)
         end
     end
 end)
-
 ```
 
 
@@ -537,7 +530,6 @@ AddPrefabPostInit("yotb_stage",function(self)
         self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
     end
 end)
-
 ```
 
 
@@ -565,6 +557,5 @@ AddPrefabPostInit("yotb_stage",function(self)
         self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
     end
 end)
-
 ```
 

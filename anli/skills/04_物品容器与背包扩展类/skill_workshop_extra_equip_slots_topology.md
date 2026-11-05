@@ -14,7 +14,6 @@
    GLOBAL.EQUIPSLOTS.NECK = "neck"
    GLOBAL.EQUIPSLOT_IDS.back = 4
    GLOBAL.EQUIPSLOT_IDS.neck = 5
-   
 ```
 2. **`inventory_classified` 客户端零延迟预测穿透**：
    重写客户端 `Has` 与 `GetEquippedItem`，通过遍历动态槽位表规避硬编码判定。

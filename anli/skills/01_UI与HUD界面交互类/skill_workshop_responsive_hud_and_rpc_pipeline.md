@@ -28,7 +28,6 @@
   if ThePlayer == nil or ThePlayer:HasTag("playerghost") then
       return
   end
-  
 ```
 
 ```lua

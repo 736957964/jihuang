@@ -235,7 +235,6 @@ end)
 AddPrefabPostInit("medal_beebox", function(inst)
      inst._workingtask = inst:DoPeriodicTask(10,BeeBox)
 end)
-
 ```
 
 
@@ -328,7 +327,6 @@ AddComponentPostInit("inventory", function(self) --for hosting cave-less worlds 
 		return old_Equip(self, item, old_to_active, ...)
 	end
 end)
-
 ```
 
 
@@ -410,7 +408,6 @@ AddPrefabPostInit("spear", function(inst)
         end
     end
 end)
-
 ```
 
 
@@ -432,7 +429,6 @@ AddPrefabPostInit("inventoryitem_classified", function(inst)
           end
      end)
 end)
-
 ```
 
 
@@ -507,6 +503,5 @@ AddComponentPostInit("deployable", function(deployable)
         return Deploy(self, aligned, deployer, ...)
     end
 end)
-
 ```
 

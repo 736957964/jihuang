@@ -238,6 +238,17 @@ def analyze_mod_source(root):
                                 break
                             end_ln = idx + 1
                         extracted = lines[max(0, ln):end_ln]
+                        # ── 老爹铁令：闭合行（如 end / end)）严禁残留前导空格，必须严格与首行顶格对齐 ──
+                        if extracted:
+                            # 过滤尾部纯空行
+                            while extracted and not extracted[-1].strip():
+                                extracted.pop()
+                            if extracted:
+                                first_clean = extracted[0].lstrip()
+                                base_indent = len(extracted[0]) - len(first_clean)
+                                last_clean = extracted[-1].strip()
+                                if last_clean.startswith("end"):
+                                    extracted[-1] = (" " * base_indent) + last_clean
                         code_joined = "\n".join(extracted).strip()
                         # 强防御校验：严禁残缺、语法不闭合的代码入库
                         clean_extracted = [re.sub(r"--.*", "", l).strip() for l in extracted if re.sub(r"--.*", "", l).strip()]
