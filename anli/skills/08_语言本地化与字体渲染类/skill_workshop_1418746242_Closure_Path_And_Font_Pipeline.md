@@ -442,3 +442,59 @@ end)
 
 ```
 
+
+
+### 变体演进：字体:补丁锦黑/Font:Patched JinHei (Mod 3243937568)
+- **变体场景与切面**：收录来自工坊 Mod 3243937568 (`字体:补丁锦黑/Font:Patched JinHei`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3243937568)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wormwood
+AddPrefabPostInit("wormwood",function(self)
+    if self.components and self.components.talker then
+        self.components.talker.colour = Vector3(135/255, 169/255, 107/255) -- #87A96B Asparagus
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:yotb_stage
+AddPrefabPostInit("yotb_stage",function(self)
+    if self.components and self.components.talker then
+        self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
+    end
+end)
+
+```
+
+
+
+### 变体演进：字体:补丁宋体/Font:Patched Mincho (Mod 3213841243)
+- **变体场景与切面**：收录来自工坊 Mod 3213841243 (`字体:补丁宋体/Font:Patched Mincho`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3213841243)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wormwood
+AddPrefabPostInit("wormwood",function(self)
+    if self.components and self.components.talker then
+        self.components.talker.colour = Vector3(135/255, 169/255, 107/255) -- #87A96B Asparagus
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:yotb_stage
+AddPrefabPostInit("yotb_stage",function(self)
+    if self.components and self.components.talker then
+        self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
+    end
+end)
+
+```
+
