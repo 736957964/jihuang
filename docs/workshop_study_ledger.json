@@ -18489,8 +18489,170 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-05 16:00:08",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3555678455",
+      "name": "Mod 3555678455",
+      "author": "去码头整点薯条、久月星游",
+      "version": "2026.08,03",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 16:09:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3707932109",
+      "name": "All-in-One Ice Flingomatic",
+      "author": "FakerXKAI_--",
+      "version": "1.3.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:09:47",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3531148398",
+      "name": "Deluxe Canes",
+      "author": "Eldvarg & CrashBone",
+      "version": "2.1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:13:08",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3352911785",
+      "name": "WXP-DST",
+      "author": "WXP",
+      "version": "3.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 16:19:17",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3362879172",
+      "name": "Tungsten Mod",
+      "author": "Mr.Gentleman",
+      "version": "2.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:19:17",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3046942882",
+      "name": "mind_cost",
+      "author": "绯世行",
+      "version": "1.2.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 16:22:15",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3142550624",
+      "name": "language",
+      "author": "朋也",
+      "version": "1.0.1",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-05 16:22:15",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "2904698287",
+      "name": "Seasonal Colour Cubes -Client",
+      "author": "Kynoox_, modified by Niko",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:25:03",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3640010127",
+      "name": "YPJW 麦斯威尔暗影之王/Maxwell KING！！",
+      "author": "白令 YPJW",
+      "version": "5",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 16:28:32",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3745395562",
+      "name": "Automation Farm",
+      "author": "Penz7",
+      "version": "1.4.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 16:33:25",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3754289815",
+      "name": "ORANGE",
+      "author": "MNK（原mod作者）",
+      "version": "1.4.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 16:35:31",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3679892226",
+      "name": "6格装备栏（适配The Lamb）",
+      "author": "PiG",
+      "version": "4.6.11.Lamb",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 16:38:55",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3736145490",
+      "name": "【旺达加强】Wanda Enhancements",
+      "author": "万物拟态",
+      "version": "4.06.01",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:38:55",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3645146043",
+      "name": "Feast and Famine Ru",
+      "author": "Big mom",
+      "version": "1.16.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:43:36",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3612137133",
+      "name": "人物皮肤套用",
+      "author": "喜乐",
+      "version": "5.5.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:49:01",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3541731858",
+      "name": "女武神战矛触发连击",
+      "author": "fo216",
+      "version": "0.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 16:53:24",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3552493820",
+      "name": "Bigger Canopies",
+      "author": "Swept",
+      "version": "1.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 16:53:24",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3340638276",
+      "name": "登仙初始物品",
+      "author": "无念",
+      "version": "1.02",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 17:02:27",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-05 16:00:09"
+  "lastUpdated": "2026-11-05 17:02:27"
 }

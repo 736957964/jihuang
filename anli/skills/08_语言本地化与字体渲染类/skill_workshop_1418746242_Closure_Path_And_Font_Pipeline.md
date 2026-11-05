@@ -498,3 +498,29 @@ end)
 
 ```
 
+
+
+### 变体演进：language (Mod 3142550624)
+- **变体场景与切面**：收录来自工坊 Mod 3142550624 (`language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3142550624)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:monkeyqueen
+AddPrefabPostInit("monkeyqueen", function(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+    if SGMonkeyqueen and SGMonkeyqueen.states then
+        local old_BLUEPRINT_LOOTS = upvaluehelper.Get(SGMonkeyqueen.states["getitem"].events["animover"].fn, "BLUEPRINT_LOOTS")
+        if old_BLUEPRINT_LOOTS ~= nil then
+            table.insert(old_BLUEPRINT_LOOTS, "do_dock_kit")
+        end
+    end
+end)
+
+```
+
