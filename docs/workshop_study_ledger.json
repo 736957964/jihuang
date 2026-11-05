@@ -19038,8 +19038,152 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-05 19:11:38",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3525761083",
+      "name": "不吃掉落物",
+      "author": "懂个蛋代码",
+      "version": "1.2.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 19:16:23",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3527870643",
+      "name": "Nighmare Night Light",
+      "author": "Willow",
+      "version": "0.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 19:16:23",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3474358815",
+      "name": "传送帽子",
+      "author": "小夜子",
+      "version": "2.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 19:23:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3493401504",
+      "name": "SEASONAL_EFFECTS_HEADER",
+      "author": "Mni Shark",
+      "version": "1.2",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 19:23:00",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3427050216",
+      "name": "On Board!",
+      "author": "Willow",
+      "version": "2.9",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 19:28:26",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3437639361",
+      "name": "额外的装备栏【自用】",
+      "author": "Breathe",
+      "version": "1.6.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 19:28:26",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3407196583",
+      "name": "阐释者",
+      "author": "夜廻",
+      "version": "2.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 19:35:19",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3335444980",
+      "name": "Buff Timer (Server) (UPDATED)",
+      "author": "jimmybaxter, Update by kryz",
+      "version": "3.5",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 19:39:48",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3298968428",
+      "name": "Ice Bridges",
+      "author": "Willow",
+      "version": "0.2",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 19:43:14",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3163400818",
+      "name": "BEARGER",
+      "author": "川小胖",
+      "version": "1.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 19:46:43",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3022060547",
+      "name": "角色额外技能/Character Additional Ability",
+      "author": "LittleBadEgg",
+      "version": "0.2.9",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 19:49:16",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2963917981",
+      "name": "Mod 2963917981",
+      "author": "little_xuuu",
+      "version": "1.4.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 19:58:56",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2974743958",
+      "name": "save_yamche_egg_hunted",
+      "author": "little_xuuu",
+      "version": "1.0.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 19:58:57",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2718754384",
+      "name": "Wildfireprotecting matters",
+      "author": "Cutlass",
+      "version": "3.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 20:10:02",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2773308689",
+      "name": "Bonfire of souls",
+      "author": "Captain Noir",
+      "version": "0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 20:10:02",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2630933090",
+      "name": "Hallowed Bites",
+      "author": "theGreatJash",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 20:13:16",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-05 19:11:38"
+  "lastUpdated": "2026-11-05 20:13:16"
 }
