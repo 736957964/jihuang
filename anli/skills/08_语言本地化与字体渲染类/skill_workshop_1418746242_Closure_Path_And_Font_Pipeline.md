@@ -110,3 +110,94 @@ local GLOBAL = GLOBAL
 -- 暂无高频切面钩子
 ```
 
+
+
+### 变体演进：Language (Mod 3671575756)
+- **变体场景与切面**：收录来自工坊 Mod 3671575756 (`Language`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3671575756)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wendy
+AddPrefabPostInit("wendy", function(inst)
+    inst:DoTaskInTime(0, function(inst)	
+		--inst.AnimState:SetBuild("wendy_l")
+		if GLOBAL.ThePlayer then --inst.myabby then
+            SetSkin(GLOBAL.ThePlayer)
+        end	
+	end)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:walter
+AddPrefabPostInit("walter", function(inst)
+    inst:DoTaskInTime(0, function(inst)	
+		inst:DoPeriodicTask(0.02, function(inst)
+			--inst.AnimState:SetBuild("wendy_l")
+			if inst then --inst.myabby then
+				if not inst:HasTag("playerghost")
+				then
+					inst.AnimState:SetBuild("silencehunter_h")
+				end
+			end			
+		end)	
+		inst.soundsname = "wendy"
+	end)
+end)]]--
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail
+AddPrefabPostInit("abigail", function(inst) -- Run fuction PostInit for my sweet abby.
+     PostInit(inst)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:lavaarena_abigail_l
+AddPrefabPostInit("lavaarena_abigail_l", function(inst) -- Run fuction PostInit for fake abby form shitly forge.
+     PostInit(inst)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:player_classified
+AddPrefabPostInit('player_classified', function (inst)
+	if not G.TheNet:IsDedicated() then
+		inst:DoTaskInTime(0, function ()
+			local player = G.ThePlayer
+			hatPostInit(player)
+		end)
+	end
+end)
+
+```
+
+
+
+### 变体演进：字体:补丁圆体/Font:Patched Rounded (Mod 3233442083)
+- **变体场景与切面**：收录来自工坊 Mod 3233442083 (`字体:补丁圆体/Font:Patched Rounded`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3233442083)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:wormwood
+AddPrefabPostInit("wormwood",function(self)
+    if self.components and self.components.talker then
+        self.components.talker.colour = Vector3(135/255, 169/255, 107/255) -- #87A96B Asparagus
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:yotb_stage
+AddPrefabPostInit("yotb_stage",function(self)
+    if self.components and self.components.talker then
+        self.components.talker.colour = Vector3(124/255, 185/255, 232/255) -- #7CB9E8 Aero
+    end
+end)
+
+```
+
