@@ -18120,8 +18120,152 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-05 13:55:58",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3807418715",
+      "name": "水中木可任意种植",
+      "author": "Scam",
+      "version": "0.3.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 13:58:41",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2209704745",
+      "name": "Possession 2",
+      "author": "♡ Kitty Cat ♡",
+      "version": "1.143",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 14:02:01",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3470242523",
+      "name": "languages",
+      "author": "飞酱★小霸王 Gyde(码) 大黄(画)",
+      "version": "1.0.0.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 14:07:44",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3351648907",
+      "name": "Throwable Spears",
+      "author": "updated by GuiPutifero/ Creator:(rezecib)",
+      "version": "1.9.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 14:15:00",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3140884712",
+      "name": "Mod 3140884712",
+      "author": "OpenSource",
+      "version": "1.1.0",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 14:18:19",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3225767519",
+      "name": "更好的蜂箱",
+      "author": "缘梦",
+      "version": "1.2.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 14:18:19",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3020930104",
+      "name": "增加储存空间（汉化）",
+      "author": "Luis95R",
+      "version": "1.2",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-05 14:20:00",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "2946929988",
+      "name": "Mouse Through",
+      "author": "zzzzzzzs",
+      "version": "20230716",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 14:22:21",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2824587107",
+      "name": "Old WX-78",
+      "author": "Willow",
+      "version": "0.7",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 14:24:49",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2858435969",
+      "name": "Wicker Book Reader",
+      "author": "zzzzzzzs",
+      "version": "20221203.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 14:24:49",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3530229571",
+      "name": "Naughtier",
+      "author": "Willow",
+      "version": "0.9",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 14:45:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3407395231",
+      "name": "Islandia",
+      "author": "Willow",
+      "version": "0.27",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-05 14:47:29",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3373963337",
+      "name": "Gramophone Redux",
+      "author": "Cave Studio",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-05 14:50:40",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2998347052",
+      "name": "lang",
+      "author": "冰冰羊",
+      "version": "4.6.01",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-05 14:52:21",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3212870243",
+      "name": "温蒂质量更新/Wendy Rework！",
+      "author": "白令",
+      "version": "1.1114514",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-05 14:52:21",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3358815211",
+      "name": "ANNOUNCE_LANGUAGE",
+      "author": "anonymous",
+      "version": "3.3",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-05 14:58:04",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-05 13:55:58"
+  "lastUpdated": "2026-11-05 14:58:04"
 }

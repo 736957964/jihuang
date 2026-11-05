@@ -201,3 +201,244 @@ end)
 
 ```
 
+
+
+### 变体演进：增加储存空间（汉化） (Mod 3020930104)
+- **变体场景与切面**：收录来自工坊 Mod 3020930104 (`增加储存空间（汉化）`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3020930104)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddPrefabPostInit:container_classified
+AddPrefabPostInit("container_classified", addItemSlotNetvarsInContainer)
+
+--Change size of Backpacks, Chests, Bundles, and Chester
+  local widgetsetup_Base = containers.widgetsetup or function() return true end
+
+```
+
+
+
+### 变体演进：ANNOUNCE_LANGUAGE (Mod 3358815211)
+- **变体场景与切面**：收录来自工坊 Mod 3358815211 (`ANNOUNCE_LANGUAGE`) 的生产级切面。
+- **核心切面代码**：
+```lua
+-- ============================================================================
+-- 生产级架构复刻切面范式 (提取自 Mod 3358815211)
+-- ============================================================================
+local GLOBAL = GLOBAL
+
+-- 切面钩子：AddComponentPostInit:ghostlybond
+AddComponentPostInit("ghostlybond", function(self)
+    if not IsUpgradeMode() then
+        return
+    end
+
+    self.maxbondlevel = 10
+
+    if self._abigail_power_setbondlevel_patched then
+        return
+    end
+    self._abigail_power_setbondlevel_patched = true
+
+    local old_SetBondLevel = self.SetBondLevel
+    function self:SetBondLevel(level, time, isloading)
+        self.maxbondlevel = 10
+        return old_SetBondLevel(self, level, time, isloading)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:wendy
+AddPrefabPostInit("wendy", function(inst)
+    local function OnBondLevelDirty()
+        if inst.HUD == nil then
+            return
+        end
+
+        local bond_level = inst._bondlevel ~= nil and inst._bondlevel:value() or 1
+        for i = 0, 10 do
+            if i ~= 1 then
+                inst:SetClientSideInventoryImageOverrideFlag("bondlevel" .. tostring(i), i == bond_level)
+            end
+        end
+
+        if not inst:HasTag("playerghost") and bond_level > 1 and inst.HUD.wendyflowerover ~= nil then
+            inst.HUD.wendyflowerover:Play(math.min(bond_level, 3))
+        end
+    end
+
+    inst:ListenForEvent("_bondleveldirty", OnBondLevelDirty)
+    inst:ListenForEvent("playeractivated", OnBondLevelDirty)
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail_flower
+AddPrefabPostInit("abigail_flower", function(inst)
+	-- 阿比盖尔花 4~10 级用3级的图层
+    for i = 4, 10 do
+        inst:SetClientSideInventoryImageOverride("bondlevel" .. tostring(i), "abigail_flower.tex", "abigail_flower_level3.tex")
+    end
+
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+
+    if inst.components.inspectable ~= nil then
+        inst.components.inspectable.getstatus = function(flower, viewer)
+            local level = flower._bond_level
+            if flower.components.inventoryitem ~= nil and flower.components.inventoryitem.owner ~= nil then
+                level = viewer ~= nil and viewer.components.ghostlybond ~= nil and viewer.components.ghostlybond.bondlevel or 0
+            end
+            return GetLevelStatus(level)
+        end
+    end
+
+    inst.drawimageoverride = function(flower)
+        local level = flower._bond_level or 0
+        local skin_name = flower.GetSkinName ~= nil and (flower:GetSkinName() or "abigail_flower") or "abigail_flower"
+        return skin_name .. ((level <= 1) and "" or ("_level" .. tostring(math.min(level, 3))))
+    end
+
+    local function RestartGroundTask(flower, random_delay)
+        if flower._ongroundupdatetask ~= nil then
+            flower._ongroundupdatetask:Cancel()
+        end
+        flower._bond_level = -1
+        UpdateAbigailFlowerAnim(flower)
+        flower._ongroundupdatetask = flower:DoPeriodicTask(0.5, UpdateAbigailFlowerAnim, random_delay or math.random() * 0.5)
+    end
+
+    local old_OnEntityWake = inst.OnEntityWake
+    inst.OnEntityWake = function(flower)
+        if old_OnEntityWake ~= nil then
+            old_OnEntityWake(flower)
+        end
+        if not flower.inlimbo then
+            RestartGroundTask(flower, math.random() * 0.5)
+        end
+    end
+
+    local old_OnEntitySleep = inst.OnEntitySleep
+    inst.OnEntitySleep = function(flower)
+        if old_OnEntitySleep ~= nil then
+            old_OnEntitySleep(flower)
+        end
+        if flower._ongroundupdatetask ~= nil then
+            flower._ongroundupdatetask:Cancel()
+            flower._ongroundupdatetask = nil
+        end
+    end
+
+    inst:ListenForEvent("ondropped", function(flower)
+        if not flower.inlimbo then
+            RestartGroundTask(flower)
+        end
+    end)
+
+    inst:ListenForEvent("onputininventory", function(flower)
+        if flower._ongroundupdatetask ~= nil then
+            flower._ongroundupdatetask:Cancel()
+            flower._ongroundupdatetask = nil
+        end
+    end)
+
+    if not inst.inlimbo then
+        RestartGroundTask(inst)
+    end
+end)
+
+-- ----------------------------------------------------------------------------
+-- 切面钩子：AddPrefabPostInit:abigail
+AddPrefabPostInit("abigail", function(inst)
+    if not _G.TheWorld.ismastersim then
+        return
+    end
+
+    local old_LinkToPlayer = inst.LinkToPlayer
+    inst.LinkToPlayer = function(ghost, player)
+        local result = old_LinkToPlayer(ghost, player)
+
+        if ghost._abigail_power_player ~= nil then
+            ghost:RemoveEventCallback("ghostlybond_level_change", ghost._abigail_power_on_level_change, ghost._abigail_power_player)
+        end
+
+        ghost._abigail_power_player = player
+        ghost._abigail_power_on_level_change = ghost._abigail_power_on_level_change or function(_, data)
+            local level = data ~= nil and data.level or GetBondLevel(ghost)
+            if IsUpgradeMode() then
+                ApplyAbigailLevelStats(ghost, level)
+            end
+            UpdateAbigailDamage(ghost)
+        end
+
+        ghost:ListenForEvent("ghostlybond_level_change", ghost._abigail_power_on_level_change, player)
+
+        local current_level = player ~= nil and player.components.ghostlybond ~= nil and player.components.ghostlybond.bondlevel or 1
+        if IsUpgradeMode() then
+            ApplyAbigailLevelStats(ghost, current_level)
+        end
+        UpdateAbigailDamage(ghost)
+
+        return result
+    end
+
+    inst.UpdateDamage = UpdateAbigailDamage
+    inst:WatchWorldState("phase", UpdateAbigailDamage)
+    UpdateAbigailDamage(inst)
+
+    if inst.components.inspectable ~= nil then
+        inst.components.inspectable.getstatus = function(ghost)
+            return GetLevelStatus(GetBondLevel(ghost))
+        end
+    end
+
+	-- 阿比盖尔每秒回复
+    if inst.components.health ~= nil then
+        inst.components.health:StartRegen(GetModConfigData("ABIGAIL_REGENAMOUNT"), 1)
+    end
+
+	-- 阿比盖尔攻击影怪
+    if GetModConfigData("ABIGAIL_CRAZY") and not inst:HasTag("crazy") then
+        inst:AddTag("crazy")
+        inst._abigail_power_on_entity_death = inst._abigail_power_on_entity_death or function(_, data)
+            OnAbigailShadowKill(inst, data)
+        end
+        inst:ListenForEvent("entity_death", inst._abigail_power_on_entity_death, _G.TheWorld)
+        inst:ListenForEvent("onremove", function(ghost)
+            if ghost._abigail_power_on_entity_death ~= nil then
+                ghost:RemoveEventCallback("entity_death", ghost._abigail_power_on_entity_death, _G.TheWorld)
+            end
+        end)
+    end
+
+	-- 阿比盖尔冬暖夏凉
+    if GetModConfigData("ABIGAIL_WINTER_HEATER") or GetModConfigData("ABIGAIL_SUMMER_HEATER") then
+        UpdateAbigailHeater(inst)
+        inst:WatchWorldState("season", function() UpdateAbigailHeater(inst) end)
+    end
+
+	-- 阿比盖尔增加容器
+    if GetModConfigData("ABIGAIL_CONTAINER") and inst.components.container == nil then
+        inst:AddComponent("container")
+        inst.components.container:WidgetSetup("abigail")
+    end
+
+	-- 阿比盖尔回san光环
+    if GetModConfigData("ABIGAIL_SANITYAURA") and inst.components.sanityaura == nil then
+        inst:RemoveTag("ghost")
+        inst:AddComponent("sanityaura")
+        inst.components.sanityaura.aurafn = function(_, observer)
+            if observer.prefab == "wendy" then
+                return _G.TUNING.SANITYAURA_SMALL
+            end
+            return 0
+        end
+    end
+end)
+
+```
+
