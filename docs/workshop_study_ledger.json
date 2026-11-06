@@ -21504,8 +21504,197 @@
       "category": "07_实体机制与游戏平衡类",
       "studied_at": "2026-11-06 08:07:36",
       "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3468398355",
+      "name": "行走特效与攻击特效_生存用",
+      "author": "小何",
+      "version": "1.89",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:09:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3500103976",
+      "name": "灵魂辅助器",
+      "author": "萌萌的新",
+      "version": "2.2.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:09:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3512793543",
+      "name": "Deeper Oceans",
+      "author": "Willow",
+      "version": "0.7",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:09:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3420714738",
+      "name": "No Rollbacks",
+      "author": "Willow",
+      "version": "0.1",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 08:11:05",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3359567672",
+      "name": "Crazy",
+      "author": "Mr.CrazyPants",
+      "version": "3.3.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 08:12:33",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2747907483",
+      "name": "无敌木牌",
+      "author": "Wulmaw",
+      "version": "2.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:18:36",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2571387714",
+      "name": "Sailing Rebalance",
+      "author": "Atobá Azul",
+      "version": "1.13.1.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 08:20:06",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3537845825",
+      "name": "The Anti-QOL Mod",
+      "author": "Willow",
+      "version": "0.6",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 08:26:35",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3706964324",
+      "name": "3 Inventory Slots",
+      "author": "Lily (fixed by ed, polished locally)",
+      "version": "2.0.0",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-06 08:26:35",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3394886622",
+      "name": "最大移动速度限制",
+      "author": "花菜",
+      "version": "0.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:30:48",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3708400575",
+      "name": "45 Inventory Slots Rebuild(45格背包重制版)",
+      "author": "Rick Taylor",
+      "version": "1.0.1",
+      "category": "04_物品容器与背包扩展类",
+      "studied_at": "2026-11-06 08:35:30",
+      "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3816756986",
+      "name": "language",
+      "author": "Leonardo",
+      "version": "0.3.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 08:35:30",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2637833139",
+      "name": "Tungsten Mod - rebalanced",
+      "author": "Mr.Gentleman",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:40:33",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2846736986",
+      "name": "实用的剑",
+      "author": "ezio_iron",
+      "version": "3.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:40:33",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2544940460",
+      "name": "冰之花环",
+      "author": "瓜瓜",
+      "version": "0.461",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 08:45:54",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2428118112",
+      "name": "刺穿死棘之枪",
+      "author": "红夷大炮",
+      "version": "1.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:51:47",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3169319734",
+      "name": "滤镜server",
+      "author": "作者：pxl_42 原贴：https://steamcommunity.com/sharedfiles/filedetails/?id=2485714729&searchtext=Color+Adjustments",
+      "version": "1.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 08:53:16",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "2602814715",
+      "name": "Renameable Watches",
+      "author": "RLolpop",
+      "version": "0.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:56:24",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "1870600242",
+      "name": "Wendy The Shadow",
+      "author": "SKai",
+      "version": "22.05.05.18",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 09:02:18",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2555627961",
+      "name": "血刃",
+      "author": "zzz",
+      "version": "0.01",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 09:17:48",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2995765651",
+      "name": "Mod 2995765651",
+      "author": "hosain0489",
+      "version": "1.8.0.01",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 09:17:48",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-06 08:07:36"
+  "lastUpdated": "2026-11-06 09:17:48"
 }
