@@ -21693,8 +21693,98 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-06 09:17:48",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2436991950",
+      "name": "CheemsBird (Client Version)",
+      "author": "henryfake69",
+      "version": "0.9.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 09:20:47",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3068264140",
+      "name": "NekoSolly Lite",
+      "author": "lan",
+      "version": "1.3.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 09:20:47",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3058660155",
+      "name": "specify stack_limit",
+      "author": "摘星",
+      "version": "0.5",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 09:23:49",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2869309034",
+      "name": "沃拓克斯伤害/Wortox Damege",
+      "author": "ttt",
+      "version": "1.06",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 09:27:08",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3370170538",
+      "name": "温蒂增强",
+      "author": "蔡鸟bird",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 09:39:26",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2795065330",
+      "name": "WX78 DIY chargers 6 to 24(自定义插槽)",
+      "author": "QiYuan",
+      "version": "1.0.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 10:01:38",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "655377781",
+      "name": "[Hk]Config++",
+      "author": "Hekkaryk",
+      "version": "8.6.10",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 10:01:38",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "1391962790",
+      "name": "TF2 MVM Reanimator",
+      "author": "Reginald",
+      "version": "1.2.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 10:10:14",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2403832756",
+      "name": "Catapult Controller",
+      "author": "Gleenus and Catherine",
+      "version": "1.03",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 10:13:49",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "2530802324",
+      "name": "Skully",
+      "author": "Lord Skully",
+      "version": "0.0.5",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 10:25:07",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-06 09:17:48"
+  "lastUpdated": "2026-11-06 10:25:07"
 }
