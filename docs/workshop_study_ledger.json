@@ -21351,8 +21351,161 @@
       "category": "04_物品容器与背包扩展类",
       "studied_at": "2026-11-06 07:06:06",
       "skill_path": "anli/skills/04_物品容器与背包扩展类/skill_workshop_374550642_Stack_Tuning_Approximation.md"
+    },
+    {
+      "id": "3291941347",
+      "name": "Boss Announcement fork: no hound and worm announcements",
+      "author": "辣椒小皇纸, Adgy",
+      "version": "1.3.2.1",
+      "category": "05_战斗AI行为树与Boss机制类",
+      "studied_at": "2026-11-06 07:08:00",
+      "skill_path": "anli/skills/05_战斗AI行为树与Boss机制类/skill_workshop_3605108247_3605108247.md"
+    },
+    {
+      "id": "3271964215",
+      "name": "Mod 3271964215",
+      "author": "川小胖",
+      "version": "2.77",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 07:09:33",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3213835671",
+      "name": "字体:补丁像素/Font:Patched Pixel",
+      "author": "dreamofcoffee",
+      "version": "1.36",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-06 07:11:35",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "3144967723",
+      "name": "Infinite Traps",
+      "author": "Flash",
+      "version": "1.4",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 07:13:06",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3134194859",
+      "name": "Extra Equip Slots Fix",
+      "author": "iMixerios , xVars",
+      "version": "1.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 07:16:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3117731202",
+      "name": "[Forge]Vote to Join Midmatch",
+      "author": "Aile72&聆听潇湘雨",
+      "version": "1.1.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 07:18:14",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3033725408",
+      "name": "Mod 3033725408",
+      "author": "未知",
+      "version": "1.03",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 07:22:31",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2968494491",
+      "name": "Brightshade Item QoL",
+      "author": "Godless",
+      "version": "1.18",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 07:26:48",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2857260757",
+      "name": "Wanda Health Badge",
+      "author": "zzzzzzzs",
+      "version": "20240923",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 07:29:34",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2747176500",
+      "name": "language",
+      "author": "WIGFRID - Custom by Sin",
+      "version": "1.1.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 07:33:42",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2679629566",
+      "name": "WolfGAINS",
+      "author": "Scrimbles",
+      "version": "1.3",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 07:35:29",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2498909335",
+      "name": "Seasonal Colour Cubes -Server",
+      "author": "Kynoox_, modified by Niko",
+      "version": "1.2",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 07:40:25",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "2186821907",
+      "name": "Buffs for worthless things and more",
+      "author": "Kakarlos",
+      "version": "3.6",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 07:43:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "2187072580",
+      "name": "超越证明",
+      "author": "ReKi彡",
+      "version": "14.1",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 07:43:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3683084729",
+      "name": "CFG_LANGUAGE",
+      "author": "TUTU",
+      "version": "1.0.0",
+      "category": "08_语言本地化与字体渲染类",
+      "studied_at": "2026-11-06 08:04:07",
+      "skill_path": "anli/skills/08_语言本地化与字体渲染类/skill_workshop_1418746242_Closure_Path_And_Font_Pipeline.md"
+    },
+    {
+      "id": "3571554205",
+      "name": "麦斯威尔质量更新（自用）",
+      "author": "浅浅摸个鱼吧",
+      "version": "5.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 08:07:36",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3599993931",
+      "name": "Enhanced Controller",
+      "author": "feichao",
+      "version": "2.9.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 08:07:36",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-06 07:06:06"
+  "lastUpdated": "2026-11-06 08:07:36"
 }
