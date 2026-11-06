@@ -14,9 +14,11 @@
 ### 1. 深度复用 C++ 引擎的 MiniMap 渲染句柄
 - **痛点**：Lua 虚拟机本身没有任何 3D/2D 地图渲染能力，若通过在 UI 上频繁贴实体图标来手绘地图，几十个图标就会彻底卡爆游戏。
 - **神级突破**：MOD 直接抓取了 C++ 引擎向 Lua 暴露的底质原生组件：
-  ```lua
-  self.minimap = TheWorld.minimap.MiniMap
-  ```
+
+```lua
+self.minimap = TheWorld.minimap.MiniMap
+```
+
   通过为 UI 控件挂载 `BLENDMODE.Additive` 混色模式的 ImageWidget，调用底层 C++ 提供的纹理绘制函数，以极低的 GPU 开销直接将引擎已经烘焙好的全图迷雾与地皮贴图投影到 UI 平面上！
 
 ---
@@ -26,23 +28,27 @@
 ### 1. 矩阵逆缩放对齐与九宫格锚点算法（HUD Matrix Unscaling）
 当玩家在设置中更改“HUD 大小”（如缩放到 80% 或 120%）时，挂载在 `controls.top_root` 下的普通控件会随之缩放并产生位置偏移。
 - **数学对齐公式**：
-  ```lua
-  local hudscale = controls.top_root:GetScale()
-  local screenw_full, screenh_full = unpack(screensize)
-  local screenw = screenw_full / hudscale.x
-  local screenh = screenh_full / hudscale.y
-  ```
+
+```lua
+local hudscale = controls.top_root:GetScale()
+local screenw_full, screenh_full = unpack(screensize)
+local screenw = screenw_full / hudscale.x
+local screenh = screenh_full / hudscale.y
+```
+
   将屏幕全屏分辨率反向除以当前 HUD 缩放系数，求出 `top_root` 相对坐标空间下的绝对可用宽高，再结合九宫格方向因子（`anchor_horiz`, `dir_horiz`, `margin_dir_horiz`），实现了在任意分辨率与任何 HUD 缩放下，小地图贴边距离分毫不差！
 
 ### 2. 窗口 Resize 响应式重排（Responsive Resize Hook）
 饥荒原生没有公开的“屏幕分辨率变化事件”。MOD 巧妙 Hook 了 `controls.OnUpdate`：
+
 ```lua
 local curscreensize = {GLOBAL.TheSim:GetScreenSize()}
 if curscreensize[1] ~= screensize[1] or curscreensize[2] ~= screensize[2] then
-    PositionMiniMap(controls, curscreensize)
-    screensize = curscreensize
+  PositionMiniMap(controls, curscreensize)
+  screensize = curscreensize
 end
 ```
+
 每帧只做两次整数不等于比较，代价微乎其微，却完美实现了玩家拖拽游戏窗口时小地图毫秒级自适应归位。
 
 ### 3. 全屏地图切入冲突治理（ToggleMap 状态保护）
@@ -56,14 +62,18 @@ end
 小地图支持直接在挂件内滚动滚轮缩放视野。但原版滚轮事件会被主视口摄像机捕获（导致玩家放大缩小主游戏视野）。
 - **焦点隔离解法**：
   在 `OnGainFocus` 中临时封锁主摄像机：
-  ```lua
-  self.camera_controllable_reset = TheCamera:IsControllable()
-  TheCamera:SetControllable(false)
-  ```
+
+```lua
+self.camera_controllable_reset = TheCamera:IsControllable()
+TheCamera:SetControllable(false)
+```
+
   在 `OnLoseFocus` 移出鼠标时立即精准恢复：
-  ```lua
-  TheCamera:SetControllable(self.camera_controllable_reset)
-  ```
+
+```lua
+TheCamera:SetControllable(self.camera_controllable_reset)
+```
+
   彻底规避了滚轮缩放地图时主画面抽搐的严重 bug。
 
 ---

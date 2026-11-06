@@ -24,55 +24,67 @@
 ### 1. 对偶实体事件穿透与配对原子操作（Dual Entity Atomicity）
 - **痛点**：若只在玩家跳出时标记出口，如果玩家在半途掉线或在洞穴/地表穿梭，可能导致入口被标记而出口未被标记，数字序列永久错位。
 - **解法**：在入口处捕获 `starttravelsound` 音效事件（即玩家跃入虫洞的瞬间）：
-  ```lua
-  local function Mark(inst)
-      -- 1. 标记当前入口
-      if not inst.components.wormhole_marks:CheckMark() then
-          inst.components.wormhole_marks:MarkEntrance()
-      end
-      -- 2. 穿透 teleporter 抓取对偶出口实体
-      local other = inst.components.teleporter.targetTeleporter	
-      if other and not other.components.wormhole_marks:CheckMark() then
-          other.components.wormhole_marks:MarkExit()
-      end
-  end
-  ```
+
+```lua
+local function Mark(inst)
+    -- 1. 标记当前入口
+    if not inst.components.wormhole_marks:CheckMark() then
+        inst.components.wormhole_marks:MarkEntrance()
+    end
+    -- 2. 穿透 teleporter 抓取对偶出口实体
+    local other = inst.components.teleporter.targetTeleporter	
+    if other and not other.components.wormhole_marks:CheckMark() then
+        other.components.wormhole_marks:MarkExit()
+    end
+end
+```
+
   在 `MarkExit` 内部才调用 `TheWorld.components.wormhole_counter:Set()` 自增计数器，保证了一对虫洞严格共享同一个序列号，原子性坚不可摧！
 
 ### 2. 动态 MiniMap 图标实时切换与迷雾穿透（DrawOverFogOfWar）
 - 饥荒的 `MiniMapEntity` 允许在运行时动态改写贴图：
-  ```lua
-  self.inst.MiniMapEntity:SetIcon("mark_" .. self.wormhole_number .. ".tex")
-  ```
+
+```lua
+self.inst.MiniMapEntity:SetIcon("mark_" .. self.wormhole_number .. ".tex")
+```
+
 - **配置项穿透迷雾**：
   原版小地图未探索区域会被黑色迷雾覆盖。MOD 通过调用引擎底层：
-  ```lua
-  self.inst.MiniMapEntity:SetDrawOverFogOfWar(true)
-  ```
+
+```lua
+self.inst.MiniMapEntity:SetDrawOverFogOfWar(true)
+```
+
   允许远端出口即使位于尚未探索的黑雾区域，依然能够在地图上清晰展示其对应标号，彻底提升探图导航体验。
 
 ### 3. 主从世界严格校验与森林过滤（Tag & MasterSim Guard）
 - 虫洞计数器只能存在于森林地表世界，洞穴没有虫洞（有触手洞）。
   - 在 `WorldPrefabPostInit` 中：
-    ```lua
-    if inst:HasTag("forest") then
-        inst:AddComponent("wormhole_counter")
-    end
-    ```
+
+```lua
+  if inst:HasTag("forest") then
+      inst:AddComponent("wormhole_counter")
+  end
+```
+
   - 在组件构造器中强制断言：
-    ```lua
-    assert(TheWorld.ismastersim, "Wormhole_Counter should not exist on client")
-    ```
+
+```lua
+  assert(TheWorld.ismastersim, "Wormhole_Counter should not exist on client")
+```
+
     杜绝在客机或未完全初始化的洞穴世界中误挂载引发崩溃。
 
 ### 4. 读档恢复与 MiniMapEntity 懒加载初始化
 - 在 `OnLoad` 阶段，实体刚从磁盘反序列化出来时，其 `MiniMapEntity` 可能尚未完全装配：
-  ```lua
-  if self.marked and self.wormhole_number then
-      self.inst.entity:AddMiniMapEntity() -- 确保存在
-      self.inst.MiniMapEntity:SetIcon("mark_" .. self.wormhole_number .. ".tex")
-  end
-  ```
+
+```lua
+if self.marked and self.wormhole_number then
+    self.inst.entity:AddMiniMapEntity() -- 确保存在
+    self.inst.MiniMapEntity:SetIcon("mark_" .. self.wormhole_number .. ".tex")
+end
+```
+
   通过显式声明 `AddMiniMapEntity` 避免了存档热重载时找不到组件的空指针隐患。
 
 ---

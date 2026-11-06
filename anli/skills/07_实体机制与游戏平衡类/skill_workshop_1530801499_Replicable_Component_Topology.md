@@ -16,46 +16,46 @@
 local ALL_NODES = {}
 
 local NetworkNode = Class(function(self, inst)
-    self.inst = inst
-    self.node_name = "Default Node"
-    self.is_active = true
+  self.inst = inst
+  self.node_name = "Default Node"
+  self.is_active = true
 
-    table.insert(ALL_NODES, self)
+  table.insert(ALL_NODES, self)
 end)
 function NetworkNode:OnRemoveFromEntity()
-    for i, v in ipairs(ALL_NODES) do
-        if v == self then
-            table.remove(ALL_NODES, i)
-            break
-        end
-    end
+  for i, v in ipairs(ALL_NODES) do
+      if v == self then
+          table.remove(ALL_NODES, i)
+          break
+      end
+  end
 end
 function NetworkNode:CanTravelNow(player)
-    if not player or not player:IsValid() then return false end
+  if not player or not player:IsValid() then return false end
 
-    if player.components.burnable and player.components.burnable:IsBurning() then
-        return false, "BURNING"
-    end
+  if player.components.burnable and player.components.burnable:IsBurning() then
+      return false, "BURNING"
+  end
 
-    local danger = GLOBAL.FindEntity(player, 12, function(target)
-        return target.components.combat and target.components.combat.target == player
-    end, { "_combat" }, { "INLIMBO", "player" })
+  local danger = GLOBAL.FindEntity(player, 12, function(target)
+      return target.components.combat and target.components.combat.target == player
+  end, { "_combat" }, { "INLIMBO", "player" })
 
-    if danger ~= nil then
-        return false, "IN_COMBAT"
-    end
+  if danger ~= nil then
+      return false, "IN_COMBAT"
+  end
 
-    return true
+  return true
 end
 
 function NetworkNode:GetValidDestinations(player)
-    local results = {}
-    for _, node in ipairs(ALL_NODES) do
-        if node ~= self and node.is_active and node.inst:IsValid() then
-            table.insert(results, node.inst)
-        end
-    end
-    return results
+  local results = {}
+  for _, node in ipairs(ALL_NODES) do
+      if node ~= self and node.is_active and node.inst:IsValid() then
+          table.insert(results, node.inst)
+      end
+  end
+  return results
 end
 
 return NetworkNode
@@ -66,34 +66,34 @@ return NetworkNode
 AddReplicableComponent("network_node")
 
 AddPrefabPostInit("homesign", function(inst)
-    inst:AddTag("_network_node")
-    if GLOBAL.TheWorld.ismastersim then
-        inst:RemoveTag("_network_node")
-        inst:AddComponent("network_node")
-    end
+  inst:AddTag("_network_node")
+  if GLOBAL.TheWorld.ismastersim then
+      inst:RemoveTag("_network_node")
+      inst:AddComponent("network_node")
+  end
 end)
 
 AddModRPCHandler("NetworkNodeMod", "TeleportTo", function(player, src_inst, target_inst)
-    if not player or not player:IsValid() or not src_inst or not target_inst then return end
+  if not player or not player:IsValid() or not src_inst or not target_inst then return end
 
-    if player:GetDistanceSqToInst(src_inst) > 16 then return end
+  if player:GetDistanceSqToInst(src_inst) > 16 then return end
 
-    local node = src_inst.components.network_node
-    if not node then return end
+  local node = src_inst.components.network_node
+  if not node then return end
 
-    local can_travel, reason = node:CanTravelNow(player)
-    if not can_travel then
-        if player.components.talker then
-            player.components.talker:Say("I can't teleport right now! (" .. reason .. ")")
-        end
-        return
-    end
+  local can_travel, reason = node:CanTravelNow(player)
+  if not can_travel then
+      if player.components.talker then
+          player.components.talker:Say("I can't teleport right now! (" .. reason .. ")")
+      end
+      return
+  end
 
-    if player.Physics then
-        player.Physics:Teleport(target_inst.Transform:GetWorldPosition())
-    else
-        player.Transform:SetPosition(target_inst.Transform:GetWorldPosition())
-    end
+  if player.Physics then
+      player.Physics:Teleport(target_inst.Transform:GetWorldPosition())
+  else
+      player.Transform:SetPosition(target_inst.Transform:GetWorldPosition())
+  end
 end)
 ```
 
@@ -107,6 +107,7 @@ end)
 ### 变体演进：Circular Placement (圆形摆放辅助) (Mod 2914336761)
 - **变体场景与切面**：收录来自工坊 Mod 2914336761 (`Circular Placement (圆形摆放辅助)`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -114,41 +115,42 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:playercontroller
 AddComponentPostInit('playercontroller', function(PlayerController, inst)
-    if inst ~= ThePlayer then
-        return
-    end
+  if inst ~= ThePlayer then
+      return
+  end
 
-    local oldOnControl = PlayerController.OnControl
-    PlayerController.OnControl = function(self, control, down)
-        if CPMA.DATA.LESS_PREVIEW and not (controls and controls.CPMAPanel and controls.CPMAPanel.IsShow) then
-        else
-            if IsDefaultScreen() and down and oldIsKeyDown(TheInput, GLOBAL['KEY_' .. CPMA.DATA.CP_AUTO_BUTTON]) and GLOBAL.CIRCLE_HELPER and GLOBAL.CIRCLE_HELPER:IsValid() then
-                if control == CONTROL_PRIMARY or control == CONTROL_SECONDARY and (not CPMA.DATA.LESS_PREVIEW or (controls.CPMAPanel and controls.CPMAPanel.IsShow)) then
-                    return
-                end
-            end
-        end
-        local mouse_control = mouse_controls[control]
-        if down and auto_thread and IsDefaultScreen() and (interrupt_controls[control] or mouse_control ~= nil and not TheInput:GetHUDEntityUnderMouse()) then
-            kill_auto_thread()
-        end
-        return oldOnControl(self, control, down)
-    end
+  local oldOnControl = PlayerController.OnControl
+  PlayerController.OnControl = function(self, control, down)
+      if CPMA.DATA.LESS_PREVIEW and not (controls and controls.CPMAPanel and controls.CPMAPanel.IsShow) then
+      else
+          if IsDefaultScreen() and down and oldIsKeyDown(TheInput, GLOBAL['KEY_' .. CPMA.DATA.CP_AUTO_BUTTON]) and GLOBAL.CIRCLE_HELPER and GLOBAL.CIRCLE_HELPER:IsValid() then
+              if control == CONTROL_PRIMARY or control == CONTROL_SECONDARY and (not CPMA.DATA.LESS_PREVIEW or (controls.CPMAPanel and controls.CPMAPanel.IsShow)) then
+                  return
+              end
+          end
+      end
+      local mouse_control = mouse_controls[control]
+      if down and auto_thread and IsDefaultScreen() and (interrupt_controls[control] or mouse_control ~= nil and not TheInput:GetHUDEntityUnderMouse()) then
+          kill_auto_thread()
+      end
+      return oldOnControl(self, control, down)
+  end
 
-    local oldOnUpdate = PlayerController.OnUpdate
-    PlayerController.OnUpdate = function(self, ...)
-        if IsDefaultScreen() then
-            OnUpdateAnchorPos()
-            OnCenterUpdate()
-        end
-        return oldOnUpdate(self, ...)
-    end
+  local oldOnUpdate = PlayerController.OnUpdate
+  PlayerController.OnUpdate = function(self, ...)
+      if IsDefaultScreen() then
+          OnUpdateAnchorPos()
+          OnCenterUpdate()
+      end
+      return oldOnUpdate(self, ...)
+  end
 end)
 ```
 
 ### 变体演进：快捷宣告(NoMu) (Mod 2784715091)
 - **变体场景与切面**：收录来自工坊 Mod 2784715091 (`快捷宣告(NoMu)`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -156,100 +158,101 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:playercontroller
 AddComponentPostInit("playercontroller", function(self)
-    local old_OnControl = self.OnControl
+  local old_OnControl = self.OnControl
 
-    function self:OnControl(control, down, ...)
-        if GLOBAL.NOMU_QA.DATA.BLOCK_ACTION
-            and (control == GLOBAL.CONTROL_PRIMARY or control == GLOBAL.CONTROL_SECONDARY) then
-            if IsDefaultScreen() and GLOBAL.QA_UTILS.IsAltPressed() and GLOBAL.QA_UTILS.IsShiftPressed() then
-                return true
-            end
-        end
+  function self:OnControl(control, down, ...)
+      if GLOBAL.NOMU_QA.DATA.BLOCK_ACTION
+          and (control == GLOBAL.CONTROL_PRIMARY or control == GLOBAL.CONTROL_SECONDARY) then
+          if IsDefaultScreen() and GLOBAL.QA_UTILS.IsAltPressed() and GLOBAL.QA_UTILS.IsShiftPressed() then
+              return true
+          end
+      end
 
-        if old_OnControl then
-            return old_OnControl(self, control, down, ...)
-        end
-    end
+      if old_OnControl then
+          return old_OnControl(self, control, down, ...)
+      end
+  end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddComponentPostInit:clock
 AddComponentPostInit('clock', function(clock)
-    local SW = TheWorld:HasTag("island") or TheWorld:HasTag("volcano")
-    local HAM = TheWorld:HasTag("porkland")
-    local oldGetDebugString = SW and clock.GetDebugString_tropical or HAM and clock.GetDebugString_plateau or clock.GetDebugString
-    local oldDump = SW and clock.Dump_tropical or HAM and clock.Dump_plateau or clock.Dump
+  local SW = TheWorld:HasTag("island") or TheWorld:HasTag("volcano")
+  local HAM = TheWorld:HasTag("porkland")
+  local oldGetDebugString = SW and clock.GetDebugString_tropical or HAM and clock.GetDebugString_plateau or clock.GetDebugString
+  local oldDump = SW and clock.Dump_tropical or HAM and clock.Dump_plateau or clock.Dump
 
-    local value
-    value = Upvaluehelper.GetUpvalue(oldGetDebugString, '_phase')
-    local _phase
-    clock._phase = value
-    _phase = value
+  local value
+  value = Upvaluehelper.GetUpvalue(oldGetDebugString, '_phase')
+  local _phase
+  clock._phase = value
+  _phase = value
 
-    local _remainingtimeinphase
-    value = Upvaluehelper.GetUpvalue(oldGetDebugString, '_remainingtimeinphase')
-    clock._remainingtimeinphase = value
-    _remainingtimeinphase = value
+  local _remainingtimeinphase
+  value = Upvaluehelper.GetUpvalue(oldGetDebugString, '_remainingtimeinphase')
+  clock._remainingtimeinphase = value
+  _remainingtimeinphase = value
 
-    local _segs = Upvaluehelper.GetUpvalue(oldDump, '_segs')
-    local _totaltimeinphase = Upvaluehelper.GetUpvalue(oldDump,'_totaltimeinphase')
+  local _segs = Upvaluehelper.GetUpvalue(oldDump, '_segs')
+  local _totaltimeinphase = Upvaluehelper.GetUpvalue(oldDump,'_totaltimeinphase')
 
-    if _totaltimeinphase and _remainingtimeinphase and _segs and _phase then
-        clock.CalcRemainTimeOfDay = function()
-            local time_of_day = _totaltimeinphase:value() - _remainingtimeinphase:value()
-            for i = 1, _phase:value() - 1 do
-                time_of_day = time_of_day + _segs[i]:value() * TUNING.SEG_TIME
-            end
-            return TUNING.TOTAL_DAY_TIME - time_of_day
-        end
-    end
+  if _totaltimeinphase and _remainingtimeinphase and _segs and _phase then
+      clock.CalcRemainTimeOfDay = function()
+          local time_of_day = _totaltimeinphase:value() - _remainingtimeinphase:value()
+          for i = 1, _phase:value() - 1 do
+              time_of_day = time_of_day + _segs[i]:value() * TUNING.SEG_TIME
+          end
+          return TUNING.TOTAL_DAY_TIME - time_of_day
+      end
+  end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddComponentPostInit:nightmareclock
 AddComponentPostInit('nightmareclock', function(clock)
-    local oldOnUpdate = clock.OnUpdate
-    local name, value
+  local oldOnUpdate = clock.OnUpdate
+  local name, value
 
-    local _remainingtimeinphase
-    name, value = debug.getupvalue(oldOnUpdate, 1)
-    if name == '_remainingtimeinphase' then
-        _remainingtimeinphase = value
-    end
+  local _remainingtimeinphase
+  name, value = debug.getupvalue(oldOnUpdate, 1)
+  if name == '_remainingtimeinphase' then
+      _remainingtimeinphase = value
+  end
 
-    local _phase
-    name, value = debug.getupvalue(oldOnUpdate, 4)
-    if name == '_phase' then
-        _phase = value
-    end
+  local _phase
+  name, value = debug.getupvalue(oldOnUpdate, 4)
+  if name == '_phase' then
+      _phase = value
+  end
 
-    local PHASE_NAMES
-    name, value = debug.getupvalue(oldOnUpdate, 5)
-    if name == 'PHASE_NAMES' then
-        PHASE_NAMES = value
-    end
+  local PHASE_NAMES
+  name, value = debug.getupvalue(oldOnUpdate, 5)
+  if name == 'PHASE_NAMES' then
+      PHASE_NAMES = value
+  end
 
-    local _totaltimeinphase
-    name, value = debug.getupvalue(oldOnUpdate, 7)
-    if name == '_totaltimeinphase' then
-        _totaltimeinphase = value
-    end
+  local _totaltimeinphase
+  name, value = debug.getupvalue(oldOnUpdate, 7)
+  if name == '_totaltimeinphase' then
+      _totaltimeinphase = value
+  end
 
-    if _remainingtimeinphase and _phase and _totaltimeinphase and PHASE_NAMES then
-        function TheWorld:GetNightmareData()
-            return {
-                phase = PHASE_NAMES[_phase:value()],
-                remain = _remainingtimeinphase:value(),
-                total = _totaltimeinphase:value()
-            }
-        end
-    end
+  if _remainingtimeinphase and _phase and _totaltimeinphase and PHASE_NAMES then
+      function TheWorld:GetNightmareData()
+          return {
+              phase = PHASE_NAMES[_phase:value()],
+              remain = _remainingtimeinphase:value(),
+              total = _totaltimeinphase:value()
+          }
+      end
+  end
 end)
 ```
 
 ### 变体演进：兔尾艾冰 (Mod 3402670530)
 - **变体场景与切面**：收录来自工坊 Mod 3402670530 (`兔尾艾冰`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -257,26 +260,27 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:skinner
 AddComponentPostInit("skinner",function(self)
-        local oldfn = self.SetSkinName
-        if oldfn then
-            function self.SetSkinName(s,skinname,...)
-                local old = s.skin_name
-                local new = skinname
-                if characterskins[old] and characterskins[old].clear_fn then
-                    characterskins[old].clear_fn(s.inst,old)
-                end
-                if characterskins[new] and characterskins[new].init_fn then
-                    characterskins[new].init_fn(s.inst,new)
-                end
-                oldfn(s,skinname,...)
-            end
-        end
+      local oldfn = self.SetSkinName
+      if oldfn then
+          function self.SetSkinName(s,skinname,...)
+              local old = s.skin_name
+              local new = skinname
+              if characterskins[old] and characterskins[old].clear_fn then
+                  characterskins[old].clear_fn(s.inst,old)
+              end
+              if characterskins[new] and characterskins[new].init_fn then
+                  characterskins[new].init_fn(s.inst,new)
+              end
+              oldfn(s,skinname,...)
+          end
+      end
 end)
 ```
 
 ### 变体演进：Paranoia [BETA] (Mod 3596740317)
 - **变体场景与切面**：收录来自工坊 Mod 3596740317 (`Paranoia [BETA]`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -284,15 +288,16 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:player_classified
 AddPrefabPostInit("player_classified", function(inst)
-    if not _G.TheNet:IsDedicated() then
-        inst:DoStaticTaskInTime(0, RegisterNetListeners)
-    end
+  if not _G.TheNet:IsDedicated() then
+      inst:DoStaticTaskInTime(0, RegisterNetListeners)
+  end
 end)
 ```
 
 ### 变体演进：Auto Stack and Pick Up (Mod 1803285852)
 - **变体场景与切面**：收录来自工坊 Mod 1803285852 (`Auto Stack and Pick Up`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -408,11 +413,10 @@ AddComponentPostInit("stackable", function(comp)
 end)
 ```
 
-
-
 ### 变体演进：CaveOnGround (Atualizado) (Mod 2283416213)
 - **变体场景与切面**：收录来自工坊 Mod 2283416213 (`CaveOnGround (Atualizado)`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2283416213)
@@ -430,51 +434,50 @@ local function AddArchiveManager()
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:fossil_stalker
 AddPrefabPostInit("fossil_stalker", function(inst)
-        local function ItemTradeTest(inst, item, giver)
-            if item == nil or item.prefab ~= "shadowheart" or giver == nil or giver.components.areaaware == nil then
-                return false
-            elseif inst.form ~= 1 then
-                return false, "WRONGSHADOWFORM"
-            elseif giver.components.areaaware:CurrentlyInTag("Atrium") and (G.FindEntity(inst, ATRIUM_RANGE, ActiveStargate, {"stargate"}) == nil or G.GetClosestInstWithTag("stalker", inst, 40) ~= nil) then
-                return false, "CANTSHADOWREVIVE"
-            end
-            return true
-        end
-        
-        local function OnAccept(inst, giver, item)
-            if item.prefab == "shadowheart" then
-                local stalker
-                local stargate = G.FindEntity(inst, ATRIUM_RANGE, ActiveStargate, {"stargate"})
-                if stargate ~= nil then
-                    stalker = G.SpawnPrefab("stalker_atrium")
-                    stalker.components.entitytracker:TrackEntity("stargate", stargate)
-                    stargate:TrackStalker(stalker)
-                else
-                    stalker = G.SpawnPrefab("stalker")
-                end
-                local x, y, z = inst.Transform:GetWorldPosition()
-                local rot = inst.Transform:GetRotation()
-                inst:Remove()
-                
-                stalker.Transform:SetPosition(x, y, z)
-                stalker.Transform:SetRotation(rot)
-                stalker.sg:GoToState("resurrect")
-                
-                giver.components.sanity:DoDelta(TUNING.REVIVE_SHADOW_SANITY_PENALTY)
-            end
-        end
-        inst.components.trader.onaccept = OnAccept
-        inst.components.trader:SetAbleToAcceptTest(ItemTradeTest)
-    end)
+      local function ItemTradeTest(inst, item, giver)
+          if item == nil or item.prefab ~= "shadowheart" or giver == nil or giver.components.areaaware == nil then
+              return false
+          elseif inst.form ~= 1 then
+              return false, "WRONGSHADOWFORM"
+          elseif giver.components.areaaware:CurrentlyInTag("Atrium") and (G.FindEntity(inst, ATRIUM_RANGE, ActiveStargate, {"stargate"}) == nil or G.GetClosestInstWithTag("stalker", inst, 40) ~= nil) then
+              return false, "CANTSHADOWREVIVE"
+          end
+          return true
+      end
+      
+      local function OnAccept(inst, giver, item)
+          if item.prefab == "shadowheart" then
+              local stalker
+              local stargate = G.FindEntity(inst, ATRIUM_RANGE, ActiveStargate, {"stargate"})
+              if stargate ~= nil then
+                  stalker = G.SpawnPrefab("stalker_atrium")
+                  stalker.components.entitytracker:TrackEntity("stargate", stargate)
+                  stargate:TrackStalker(stalker)
+              else
+                  stalker = G.SpawnPrefab("stalker")
+              end
+              local x, y, z = inst.Transform:GetWorldPosition()
+              local rot = inst.Transform:GetRotation()
+              inst:Remove()
+              
+              stalker.Transform:SetPosition(x, y, z)
+              stalker.Transform:SetRotation(rot)
+              stalker.sg:GoToState("resurrect")
+              
+              giver.components.sanity:DoDelta(TUNING.REVIVE_SHADOW_SANITY_PENALTY)
+          end
+      end
+      inst.components.trader.onaccept = OnAccept
+      inst.components.trader:SetAbleToAcceptTest(ItemTradeTest)
+  end)
 end
 end
 ```
 
-
-
 ### 变体演进：农作物+ (Mod 2795218025)
 - **变体场景与切面**：收录来自工坊 Mod 2795218025 (`农作物+`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2795218025)
@@ -532,13 +535,10 @@ end
 if biwangwo1 or yecao_kuaisu then AddComponentPostInit("pickable",function(self) self.inst:DoTaskInTime(1, function() if self.inst:HasTag("yc_bww") and self.inst.components.growable and self.inst.components.growable.stage + 1 == #self.inst.components.growable.stages then if biwangwo1 then self.inst.components.growable:StopGrowing() end if yecao_kuaisu then self.quickpick = true end end end) end)
 ```
 
-
-
-
-
 ### 变体演进：Birdcage(Time Based) (Mod 375618000)
 - **变体场景与切面**：收录来自工坊 Mod 375618000 (`Birdcage(Time Based)`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 375618000)
@@ -555,11 +555,10 @@ function featherPrefabPostInit(inst)
 end
 ```
 
-
-
 ### 变体演进：Throwable Weapons (Mod 896539374)
 - **变体场景与切面**：收录来自工坊 Mod 896539374 (`Throwable Weapons`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 896539374)
@@ -585,11 +584,10 @@ AddPrefabPostInit("winona", function(inst)
 end)
 ```
 
-
-
 ### 变体演进：Refresh Food - Ice Box (Mod 1914860022)
 - **变体场景与切面**：收录来自工坊 Mod 1914860022 (`Refresh Food - Ice Box`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 1914860022)
@@ -602,4 +600,5 @@ AddPrefabPostInit("krampus_sack",function(inst)
 	    inst:AddTag("nocool")
 end)
 ```
+
 

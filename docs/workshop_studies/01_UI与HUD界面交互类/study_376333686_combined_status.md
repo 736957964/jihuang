@@ -14,12 +14,14 @@
 
 ### 1. 深度跨平台同构环境嗅探
 - **单机与联机版环境隔离**：
-  ```lua
-  local DST = GLOBAL.TheSim.GetGameID ~= nil and GLOBAL.TheSim:GetGameID() == "DST"
-  local ROG = DST or CheckDlcEnabled("REIGN_OF_GIANTS")
-  local CSW = CheckDlcEnabled("CAPY_DLC")
-  local HML = CheckDlcEnabled("PORKLAND_DLC")
-  ```
+
+```lua
+local DST = GLOBAL.TheSim.GetGameID ~= nil and GLOBAL.TheSim:GetGameID() == "DST"
+local ROG = DST or CheckDlcEnabled("REIGN_OF_GIANTS")
+local CSW = CheckDlcEnabled("CAPY_DLC")
+local HML = CheckDlcEnabled("PORKLAND_DLC")
+```
+
   通过动态嗅探游戏引擎运行时，一份源码同时完美支撑联机版与单机巨人国、海难、猪镇。
 
 ---
@@ -36,33 +38,39 @@
 - **MOD 解构**：
   在 `BadgePostConstruct` 中，动态注入 `self.num = self:AddChild(Text(NUMBERFONT, 28))` 与自定义背景底图 `status_bgs.tex`；
   通过劫持原版 `self.SetPercent`：
-  ```lua
-  local oldSetPercent = self.SetPercent
-  self.SetPercent = function(self, val, max, penaltypercent)
-      oldSetPercent(self, val, max, penaltypercent)
-      -- 动态计算并更新数值字符串
-      self:UpdateStatusText(val, max)
-  end
-  ```
+
+```lua
+local oldSetPercent = self.SetPercent
+self.SetPercent = function(self, val, max, penaltypercent)
+    oldSetPercent(self, val, max, penaltypercent)
+    -- 动态计算并更新数值字符串
+    self:UpdateStatusText(val, max)
+end
+```
+
   在完全不影响原版环形遮罩动画的前提下，平滑地叠加了数字渲染层。
 
 ### 3. 客机温度与网络化淘气值（Networked Naughtiness / Temperature）
 在联机版非主机客户端上，原版 `player.components.temperature` 在客机是为 nil 的。
 - **客机状态嗅探规范**：
-  ```lua
-  local val = DST and self.owner:GetTemperature() or self.owner.components.temperature.current
-  ```
+
+```lua
+local val = DST and self.owner:GetTemperature() or self.owner.components.temperature.current
+```
+
   优先调用联机版官方暴露在 Player 实体上的原生 getter（`GetTemperature()` 会自动从网络实体 `player_classified` 解码），防止在客机上因读取 components 发生 nil 崩溃。
 - **跨 MOD 数据契约（Insight 兼容）**：
   对于联机版没有向客机同步的“淘气值（Kramped）”，MOD 与社区知名监测 MOD `Insight` 达成协议，通过监听 `self.inst:ListenForEvent("naughtydelta", ...)`，让服务端有 Insight 的情况下客机也能同步获得小偷即将出现的警报！
 
 ### 4. 浮动数字漂移与控制台自适应（Controller / Detailed Mode）
 - 手柄模式下，玩家烘干后，湿度计可能残留一个孤立的 "1"。MOD 在 `ShowStatusNumbers` 中进行了严密的状态同步保护：
-  ```lua
-  if self.moisturemeter and not self.moisturemeter.active then
-      self.moisturemeter.num:Hide()
-  end
-  ```
+
+```lua
+if self.moisturemeter and not self.moisturemeter.active then
+    self.moisturemeter.num:Hide()
+end
+```
+
 - 支持详细模式（Detailed Mode），在数值下方附带最大值与扣减惩罚指示，字号由 28 自动切为 20 并重算中心点偏移。
 
 ---

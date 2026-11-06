@@ -23,19 +23,19 @@
 ```lua
 -- SG 状态机中的水陆转移分支
 State{
-    name = "transition_to_water",
-    tags = { "busy", "transition" },
-    onenter = function(inst)
-        inst.AnimState:PlayAnimation("dive_down")
-        inst.Physics:SetCollisionMask(COLLISION.OCEAN_ONLY)
-    end,
-    events = {
-        EventHandler("animover", function(inst)
-            inst:AddTag("swimming")
-            inst.AnimState:PlayAnimation("swim_loop", true)
-            inst.sg:GoToState("idle")
-        end),
-    },
+  name = "transition_to_water",
+  tags = { "busy", "transition" },
+  onenter = function(inst)
+      inst.AnimState:PlayAnimation("dive_down")
+      inst.Physics:SetCollisionMask(COLLISION.OCEAN_ONLY)
+  end,
+  events = {
+      EventHandler("animover", function(inst)
+          inst:AddTag("swimming")
+          inst.AnimState:PlayAnimation("swim_loop", true)
+          inst.sg:GoToState("idle")
+      end),
+  },
 }
 ```
 
@@ -43,15 +43,15 @@ State{
 
 ```lua
 local function SpawnTentacleRing(boss, center_pos, radius, count)
-    boss._tentacles = boss._tentacles or {}
-    for i = 1, count do
-        local angle = (i / count) * 2 * PI
-        local offset = Vector3(radius * math.cos(angle), 0, radius * math.sin(angle))
-        local tentacle = SpawnPrefab("quacken_tentacle")
-        tentacle.Transform:SetPosition((center_pos + offset):Get())
-        tentacle._boss = boss
-        table.insert(boss._tentacles, tentacle)
-    end
+  boss._tentacles = boss._tentacles or {}
+  for i = 1, count do
+      local angle = (i / count) * 2 * PI
+      local offset = Vector3(radius * math.cos(angle), 0, radius * math.sin(angle))
+      local tentacle = SpawnPrefab("quacken_tentacle")
+      tentacle.Transform:SetPosition((center_pos + offset):Get())
+      tentacle._boss = boss
+      table.insert(boss._tentacles, tentacle)
+  end
 end
 ```
 
@@ -71,14 +71,14 @@ end
 ```lua
 -- scripts/stategraphs/SGamphibious_boss.lua
 local events = {
-    EventHandler("locomote", function(inst)
-        local is_on_water = TheWorld.Map:IsOceanTileAtPoint(inst.Transform:GetWorldPosition())
-        if is_on_water and not inst:HasTag("swimming") then
-            inst.sg:GoToState("transition_to_water")
-        elseif not is_on_water and inst:HasTag("swimming") then
-            inst.sg:GoToState("transition_to_land")
-        end
-    end)
+  EventHandler("locomote", function(inst)
+      local is_on_water = TheWorld.Map:IsOceanTileAtPoint(inst.Transform:GetWorldPosition())
+      if is_on_water and not inst:HasTag("swimming") then
+          inst.sg:GoToState("transition_to_water")
+      elseif not is_on_water and inst:HasTag("swimming") then
+          inst.sg:GoToState("transition_to_land")
+      end
+  end)
 }
 ```
 

@@ -24,10 +24,11 @@
 ### 3. 客机幽灵态输入穿透与焦点捕获
 - 玩家死亡变为幽灵（Ghost）后，屏幕并未销毁，如果不做事件隔离，玩家依然能够点击 UI 发送技能 RPC。因此在 UI 的 `SetOnClick` 中必须加入客户端本地前置断言：
   
+
 ```lua
-  if ThePlayer == nil or ThePlayer:HasTag("playerghost") then
-      return
-  end
+if ThePlayer == nil or ThePlayer:HasTag("playerghost") then
+    return
+end
 ```
 
 ```lua
@@ -37,25 +38,25 @@
 GLOBAL.setmetatable(env, { __index = function(t, k) return GLOBAL.rawget(GLOBAL, k) end })
 
 AddModRPCHandler("WHALE_UI", "ACTIVATE_FEATURE", function(player, feature_id, param)
-    if not (player and player:IsValid()) then return end
-    
-    if player:HasTag("playerghost") then return end
-    
-    if player.components.sanity and player.components.sanity.current >= 15 then
-        player.components.sanity:DoDelta(-15)
-        
-        if feature_id == 1 then
-            if player.components.talker then
-                player.components.talker:Say("法术已激活！")
-            end
-        end
-    end
+  if not (player and player:IsValid()) then return end
+  
+  if player:HasTag("playerghost") then return end
+  
+  if player.components.sanity and player.components.sanity.current >= 15 then
+      player.components.sanity:DoDelta(-15)
+      
+      if feature_id == 1 then
+          if player.components.talker then
+              player.components.talker:Say("法术已激活！")
+          end
+      end
+  end
 end)
 
 AddClassPostConstruct("widgets/controls", function(self)
-    local CustomHoverPanel = require("widgets/custom_hover_panel")
-    self.whale_hover_panel = self.top_root:AddChild(CustomHoverPanel(self.owner))
-    self.whale_hover_panel:SetPosition(-120, 80, 0)
+  local CustomHoverPanel = require("widgets/custom_hover_panel")
+  self.whale_hover_panel = self.top_root:AddChild(CustomHoverPanel(self.owner))
+  self.whale_hover_panel:SetPosition(-120, 80, 0)
 end)
 
 -- ==============================================================================
@@ -67,25 +68,25 @@ local ImageButton = require "widgets/imagebutton"
 local Text = require "widgets/text"
 
 local CustomHoverPanel = Class(Widget, function(self, owner)
-    Widget._ctor(self, "CustomHoverPanel")
-    self.owner = owner
+  Widget._ctor(self, "CustomHoverPanel")
+  self.owner = owner
 
-    self.bg = self:AddChild(Image("images/global.xml", "square.tex"))
-    self.bg:SetSize(180, 90)
-    self.bg:SetTint(0.1, 0.1, 0.1, 0.8)
+  self.bg = self:AddChild(Image("images/global.xml", "square.tex"))
+  self.bg:SetSize(180, 90)
+  self.bg:SetTint(0.1, 0.1, 0.1, 0.8)
 
-    self.label = self:AddChild(Text(BODYTEXTFONT, 18, "快捷功能面板", { 1, 1, 1, 1 }))
-    self.label:SetPosition(0, 25, 0)
+  self.label = self:AddChild(Text(BODYTEXTFONT, 18, "快捷功能面板", { 1, 1, 1, 1 }))
+  self.label:SetPosition(0, 25, 0)
 
-    self.action_btn = self:AddChild(ImageButton())
-    self.action_btn:SetPosition(0, -15, 0)
-    self.action_btn:SetText("施法 (消耗15San)")
-    self.action_btn:SetOnClick(function()
-        if self.owner == nil or self.owner:HasTag("playerghost") then
-            return
-        end
-        
-        SendModRPCToServer(MOD_RPC["WHALE_UI"]["ACTIVATE_FEATURE"], 1, "custom_data")
+  self.action_btn = self:AddChild(ImageButton())
+  self.action_btn:SetPosition(0, -15, 0)
+  self.action_btn:SetText("施法 (消耗15San)")
+  self.action_btn:SetOnClick(function()
+      if self.owner == nil or self.owner:HasTag("playerghost") then
+          return
+      end
+      
+      SendModRPCToServer(MOD_RPC["WHALE_UI"]["ACTIVATE_FEATURE"], 1, "custom_data")
 end)
 end)
 

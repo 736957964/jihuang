@@ -24,27 +24,31 @@
 ### 1. `Networking_Say` 拦截器与指令静默路由（Command Router）
 - 原版玩家按 Y/U 发送的聊天消息，最终由 `GLOBAL.Networking_Say` 分发。
 - **MOD 切面设计**：
-  ```lua
-  local old_Networking_Say = GLOBAL.Networking_Say
-  GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-      local msg = string.lower(message)
-      if MSG_CHOOSE[msg] then
-          -- 1. 命中自定义指令，执行换人或复活逻辑
-          ExecuteCommand(userid, MSG_CHOOSE[msg])
-          -- 2. 核心拦截：不调用 old_Networking_Say，防止向全服广播 #restart 杂乱字符串！
-          return
-      end
-      return old_Networking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-  end
-  ```
+
+```lua
+local old_Networking_Say = GLOBAL.Networking_Say
+GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+    local msg = string.lower(message)
+    if MSG_CHOOSE[msg] then
+        -- 1. 命中自定义指令，执行换人或复活逻辑
+        ExecuteCommand(userid, MSG_CHOOSE[msg])
+        -- 2. 核心拦截：不调用 old_Networking_Say，防止向全服广播 #restart 杂乱字符串！
+        return
+    end
+    return old_Networking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+end
+```
+
   在服务端入口层实现文本拦截，玩家输入指令时聊天框不会泛滥刷屏，兼顾了指令交互与社交私密性。
 
 ### 2. 原生玩家注销与删除事件（`ms_playerdespawnanddelete`）
 - **痛点**：若直接调用 `player:Remove()`，玩家的客户端网络通道会被强行掐断，导致客机直接崩溃退服。
 - **官方级解法**：
-  ```lua
-  TheWorld:PushEvent("ms_playerdespawnanddelete", player)
-  ```
+
+```lua
+TheWorld:PushEvent("ms_playerdespawnanddelete", player)
+```
+
   该事件通知底层世界管理器执行官方标准注销序列：
   - 自动清理该玩家的物理碰撞体与网络信标；
   - 向客机下发退出世界并返回大厅（Lobby）的选人通知；
@@ -53,16 +57,20 @@
 ### 3. 跨角色地图迷雾二进制继承（MapExplorer Serializer）
 - 换人后原本已探索的世界迷雾默认被重置。MOD 提供了保存迷雾配置：
   1. **销毁前快照**：
-     ```lua
-     if map_save == 1 and player.player_classified and player.player_classified.MapExplorer then
-         restartlist[player.userid].map = player.player_classified.MapExplorer:RecordMap()
-     end
-     ```
+
+```lua
+   if map_save == 1 and player.player_classified and player.player_classified.MapExplorer then
+       restartlist[player.userid].map = player.player_classified.MapExplorer:RecordMap()
+   end
+```
+
   2. **新生后灌注**：
      新角色生成触发 `ms_playerjoined` 时：
-     ```lua
-     player.player_classified.MapExplorer:LearnRecordedMap(saved_map)
-     ```
+
+```lua
+   player.player_classified.MapExplorer:LearnRecordedMap(saved_map)
+```
+
      一键还原前世记忆，兼顾了换角色的灵活性与探图成果。
 
 ### 4. 冷却惩罚与幽灵死亡状态机补偿（Cooldown Lifecycle）

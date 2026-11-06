@@ -17,7 +17,7 @@
 local GLOBAL = GLOBAL
 
 AddPrefabPostInit("world", function(inst)
-    inst:WatchWorldState("season", CleanUp)
+  inst:WatchWorldState("season", CleanUp)
 end)
 ```
 

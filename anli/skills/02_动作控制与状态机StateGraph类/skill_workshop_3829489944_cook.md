@@ -17,16 +17,16 @@
 local GLOBAL = GLOBAL
 
 if GetModConfigData("Fish") then
-    AddPrefabPostInit("fishingrod", function(inst)
-        local fr = inst.components.fishingrod
-        if fr then
-            if fr.waittime then
-                fr.waittime = math.max(0.1, fr.waittime * 0.8)
-            end
-            if fr.reeltime then
-                fr.reeltime = math.max(0.1, fr.reeltime * 0.8)
-            end
-        end
+  AddPrefabPostInit("fishingrod", function(inst)
+      local fr = inst.components.fishingrod
+      if fr then
+          if fr.waittime then
+              fr.waittime = math.max(0.1, fr.waittime * 0.8)
+          end
+          if fr.reeltime then
+              fr.reeltime = math.max(0.1, fr.reeltime * 0.8)
+          end
+      end
 end)
 end
 ```

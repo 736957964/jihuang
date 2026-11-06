@@ -13,63 +13,63 @@
 local CompactPacker = {}
 
 local PROTOCOL_MAP = {
-    A = "ARMOR",       -- 护甲
-    D = "DAMAGE",      -- 攻击力
-    H = "HEALTH",      -- 生命值
-    F = "FRESHNESS",   -- 新鲜度
-    C = "COOLDOWN",    -- 冷却
+  A = "ARMOR",       -- 护甲
+  D = "DAMAGE",      -- 攻击力
+  H = "HEALTH",      -- 生命值
+  F = "FRESHNESS",   -- 新鲜度
+  C = "COOLDOWN",    -- 冷却
 }
 
 function CompactPacker.Encode(header_char, params)
-    local payload = header_char
-    if params and #params > 0 then
-        payload = payload .. table.concat(params, ";")
-    end
-    return payload
+  local payload = header_char
+  if params and #params > 0 then
+      payload = payload .. table.concat(params, ";")
+  end
+  return payload
 end
 
 function CompactPacker.Decode(raw_str)
-    if not raw_str or #raw_str == 0 then return nil end
+  if not raw_str or #raw_str == 0 then return nil end
 
-    local header = string.sub(raw_str, 1, 1)
-    local type_name = PROTOCOL_MAP[header]
-    if not type_name then return nil end
+  local header = string.sub(raw_str, 1, 1)
+  local type_name = PROTOCOL_MAP[header]
+  if not type_name then return nil end
 
-    local params = {}
-    local data_part = string.sub(raw_str, 2)
-    for p in string.gmatch(data_part, "([^;]+)") do
-        table.insert(params, p)
-    end
+  local params = {}
+  local data_part = string.sub(raw_str, 2)
+  for p in string.gmatch(data_part, "([^;]+)") do
+      table.insert(params, p)
+  end
 
-    return {
-        type = type_name,
-        params = params,
-    }
+  return {
+      type = type_name,
+      params = params,
+  }
 end
 
 -- ==============================================================================
 -- ==============================================================================
 
 local function InstallHovererInterceptor()
-    AddClassPostConstruct("widgets/hoverer", function(self)
-        if not self.text then return end
+  AddClassPostConstruct("widgets/hoverer", function(self)
+      if not self.text then return end
 
-        local old_SetString = self.text.SetString
-        self.text.SetString = function(widget, str, ...)
-            if str and widget.inst and ThePlayer then
-                local target = TheInput:GetWorldEntityUnderMouse()
-                if target and target.injected_hover_info then
-                    str = str .. "\n" .. target.injected_hover_info
-                end
-            end
-            return old_SetString(widget, str, ...)
-        end
+      local old_SetString = self.text.SetString
+      self.text.SetString = function(widget, str, ...)
+          if str and widget.inst and ThePlayer then
+              local target = TheInput:GetWorldEntityUnderMouse()
+              if target and target.injected_hover_info then
+                  str = str .. "\n" .. target.injected_hover_info
+              end
+          end
+          return old_SetString(widget, str, ...)
+      end
 end)
 end
 
 return {
-    CompactPacker = CompactPacker,
-    InstallHovererInterceptor = InstallHovererInterceptor,
+  CompactPacker = CompactPacker,
+  InstallHovererInterceptor = InstallHovererInterceptor,
 }
 ```
 

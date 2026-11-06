@@ -14,63 +14,63 @@
 -- ==============================================================================
 
 local function DecorateItemTile(ItemTileClass)
-    local old_UpdateTooltip = ItemTileClass.UpdateTooltip
+  local old_UpdateTooltip = ItemTileClass.UpdateTooltip
 
-    ItemTileClass.UpdateTooltip = function(self)
-        if old_UpdateTooltip then old_UpdateTooltip(self) end
+  ItemTileClass.UpdateTooltip = function(self)
+      if old_UpdateTooltip then old_UpdateTooltip(self) end
 
-        local item = self.item
-        if not item or not item:IsValid() or not GLOBAL.ThePlayer then return end
+      local item = self.item
+      if not item or not item:IsValid() or not GLOBAL.ThePlayer then return end
 
-        if not self._has_rpc_listener then
-            self._has_rpc_listener = true
-            self.inst:ListenForEvent("custom_item_info_ready", function(inst, data)
-                if self.focus and data and data.text then
-                    local base_str = self:GetDescriptionString()
-                    self:SetTooltip(base_str .. "\n" .. data.text)
+      if not self._has_rpc_listener then
+          self._has_rpc_listener = true
+          self.inst:ListenForEvent("custom_item_info_ready", function(inst, data)
+              if self.focus and data and data.text then
+                  local base_str = self:GetDescriptionString()
+                  self:SetTooltip(base_str .. "\n" .. data.text)
 
-                    if self.item and self.item:IsValid() and self.item:GetIsWet() then
-                        self:SetTooltipColour(GLOBAL.unpack(GLOBAL.WET_TEXT_COLOUR))
-                    else
-                        self:SetTooltipColour(GLOBAL.unpack(GLOBAL.NORMAL_TEXT_COLOUR))
-                    end
-                end
-            end, GLOBAL.ThePlayer)
-        end
+                  if self.item and self.item:IsValid() and self.item:GetIsWet() then
+                      self:SetTooltipColour(GLOBAL.unpack(GLOBAL.WET_TEXT_COLOUR))
+                  else
+                      self:SetTooltipColour(GLOBAL.unpack(GLOBAL.NORMAL_TEXT_COLOUR))
+                  end
+              end
+          end, GLOBAL.ThePlayer)
+      end
 
-        SendModRPCToServer(GLOBAL.MOD_RPC["ItemInfoMod"]["QueryDetails"], item)
-    end
+      SendModRPCToServer(GLOBAL.MOD_RPC["ItemInfoMod"]["QueryDetails"], item)
+  end
 end
 
 -- ==============================================================================
 -- ==============================================================================
 
 if GLOBAL.TheNet:GetIsServer() then
-    AddModRPCHandler("ItemInfoMod", "QueryDetails", function(player, item)
-        if not player or not player:IsValid() or not item or not item:IsValid() then return end
+  AddModRPCHandler("ItemInfoMod", "QueryDetails", function(player, item)
+      if not player or not player:IsValid() or not item or not item:IsValid() then return end
 
-        local detail_str = ""
+      local detail_str = ""
 
-        if item.components.edible then
-            local e = item.components.edible
-            detail_str = string.format("Hunger: %+d | Health: %+d | Sanity: %+d", 
-                math.floor(e.hungervalue or 0), 
-                math.floor(e.healthvalue or 0), 
-                math.floor(e.sanityvalue or 0)
-            )
-        end
+      if item.components.edible then
+          local e = item.components.edible
+          detail_str = string.format("Hunger: %+d | Health: %+d | Sanity: %+d", 
+              math.floor(e.hungervalue or 0), 
+              math.floor(e.healthvalue or 0), 
+              math.floor(e.sanityvalue or 0)
+          )
+      end
 
-        if item.components.weapon then
-            local w = item.components.weapon
-            detail_str = detail_str .. string.format("\nDamage: %d", math.floor(w.damage or 0))
-        end
+      if item.components.weapon then
+          local w = item.components.weapon
+          detail_str = detail_str .. string.format("\nDamage: %d", math.floor(w.damage or 0))
+      end
 
-        SendModRPCToClient(GLOBAL.CLIENT_MOD_RPC["ItemInfoMod"]["ReceiveDetails"], player.userid, detail_str)
+      SendModRPCToClient(GLOBAL.CLIENT_MOD_RPC["ItemInfoMod"]["ReceiveDetails"], player.userid, detail_str)
 end)
 end
 
 return {
-    DecorateItemTile = DecorateItemTile,
+  DecorateItemTile = DecorateItemTile,
 }
 ```
 

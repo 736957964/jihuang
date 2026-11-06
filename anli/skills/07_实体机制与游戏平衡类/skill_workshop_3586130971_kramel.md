@@ -17,30 +17,30 @@
 local GLOBAL = GLOBAL
 
 AddPrefabPostInit("phonograph", function(inst)
-    if not TheWorld.ismastersim then return inst end
+  if not TheWorld.ismastersim then return inst end
 
-    inst.TurnOffMachine = function() end --为什么科雷设计成播放64秒就停止了？
+  inst.TurnOffMachine = function() end --为什么科雷设计成播放64秒就停止了？
 
-    if PHONOGRAPH_CARRY_PLAY then
-        local Oldonputininventoryfn = inst.components.inventoryitem.onputininventoryfn
-        inst.components.inventoryitem.onputininventoryfn = function(inst, owner, ...)
-            local song = inst:GetRecordSong()
-            if song
-                and inst.components.machine and inst.components.machine:IsOn()
-                and owner and owner.SoundEmitter
-            then
-                ClearPlayerTag(owner)
+  if PHONOGRAPH_CARRY_PLAY then
+      local Oldonputininventoryfn = inst.components.inventoryitem.onputininventoryfn
+      inst.components.inventoryitem.onputininventoryfn = function(inst, owner, ...)
+          local song = inst:GetRecordSong()
+          if song
+              and inst.components.machine and inst.components.machine:IsOn()
+              and owner and owner.SoundEmitter
+          then
+              ClearPlayerTag(owner)
 
-                owner._neon_phonograph = inst
-                owner.SoundEmitter:PlaySound(song, "neon_ragtime")
-                owner:ListenForEvent("itemlose", OnLosePhonograph)
-            end
+              owner._neon_phonograph = inst
+              owner.SoundEmitter:PlaySound(song, "neon_ragtime")
+              owner:ListenForEvent("itemlose", OnLosePhonograph)
+          end
 
-            return Oldonputininventoryfn and Oldonputininventoryfn(inst, owner, ...)
-        end
+          return Oldonputininventoryfn and Oldonputininventoryfn(inst, owner, ...)
+      end
 
-        inst:ListenForEvent("onremove", onremove)
-    end
+      inst:ListenForEvent("onremove", onremove)
+  end
 end)
 ```
 

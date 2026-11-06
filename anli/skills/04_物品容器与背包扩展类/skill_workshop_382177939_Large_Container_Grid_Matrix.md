@@ -15,48 +15,48 @@
 
 local ContainerInjector = {}
 local function GenerateGridSlots(rows, cols, spacing, origin_y)
-    local slotpos = {}
-    local start_x = -((cols - 1) * spacing) / 2
-    local start_y = origin_y + ((rows - 1) * spacing) / 2
+  local slotpos = {}
+  local start_x = -((cols - 1) * spacing) / 2
+  local start_y = origin_y + ((rows - 1) * spacing) / 2
 
-    for r = 0, rows - 1 do
-        for c = 0, cols - 1 do
-            local x = start_x + (c * spacing)
-            local y = start_y - (r * spacing)
-            table.insert(slotpos, GLOBAL.Vector3(x, y, 0))
-        end
-    end
-    return slotpos
+  for r = 0, rows - 1 do
+      for c = 0, cols - 1 do
+          local x = start_x + (c * spacing)
+          local y = start_y - (r * spacing)
+          table.insert(slotpos, GLOBAL.Vector3(x, y, 0))
+      end
+  end
+  return slotpos
 end
 function ContainerInjector.RegisterCustomChest(prefab_name, rows, cols, is_fridge)
-    local containers = GLOBAL.require("containers")
-    local slotpos = GenerateGridSlots(rows, cols, 75, 200)
+  local containers = GLOBAL.require("containers")
+  local slotpos = GenerateGridSlots(rows, cols, 75, 200)
 
-    containers.MAXITEMSLOTS = math.max(containers.MAXITEMSLOTS, #slotpos)
+  containers.MAXITEMSLOTS = math.max(containers.MAXITEMSLOTS, #slotpos)
 
-    local custom_param = {
-        widget = {
-            slotpos = slotpos,
-            animbank = "ui_chest_3x3",
-            animbuild = "ui_chest_3x3",
-            pos = GLOBAL.Vector3(0, 200, 0),
-            side_align_tip = 160,
-        },
-        type = "chest",
-    }
+  local custom_param = {
+      widget = {
+          slotpos = slotpos,
+          animbank = "ui_chest_3x3",
+          animbuild = "ui_chest_3x3",
+          pos = GLOBAL.Vector3(0, 200, 0),
+          side_align_tip = 160,
+      },
+      type = "chest",
+  }
 
-    local old_widgetsetup = containers.widgetsetup
-    containers.widgetsetup = function(container, prefab, data)
-        local target_name = prefab or (container.inst and container.inst.prefab)
-        if target_name == prefab_name then
-            for k, v in pairs(custom_param) do
-                container[k] = v
-            end
-            container:SetNumSlots(#slotpos)
-        else
-            return old_widgetsetup(container, prefab, data)
-        end
-    end
+  local old_widgetsetup = containers.widgetsetup
+  containers.widgetsetup = function(container, prefab, data)
+      local target_name = prefab or (container.inst and container.inst.prefab)
+      if target_name == prefab_name then
+          for k, v in pairs(custom_param) do
+              container[k] = v
+          end
+          container:SetNumSlots(#slotpos)
+      else
+          return old_widgetsetup(container, prefab, data)
+      end
+  end
 end
 
 return ContainerInjector

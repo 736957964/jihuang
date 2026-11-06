@@ -11,32 +11,32 @@
 -- ==============================================================================
 
 local function fn()
-    local inst = CreateEntity()
+  local inst = CreateEntity()
 
-    inst.entity:AddTransform()
-    inst.entity:AddNetwork()
-    inst.entity:Hide() -- 视觉隐藏，仅作网络数据桥梁
+  inst.entity:AddTransform()
+  inst.entity:AddNetwork()
+  inst.entity:Hide() -- 视觉隐藏，仅作网络数据桥梁
 
-    inst:AddTag("CLASSIFIED")
-    inst.entity:SetCanSleep(false) -- 核心：常驻全图不休眠
+  inst:AddTag("CLASSIFIED")
+  inst.entity:SetCanSleep(false) -- 核心：常驻全图不休眠
 
-    inst.host_guid = net_entity(inst.GUID, "host_entity")
-    inst.beacon_type = net_string(inst.GUID, "beacon_type")
-    inst.is_active = net_bool(inst.GUID, "is_active", "activedirty")
+  inst.host_guid = net_entity(inst.GUID, "host_entity")
+  inst.beacon_type = net_string(inst.GUID, "beacon_type")
+  inst.is_active = net_bool(inst.GUID, "is_active", "activedirty")
 
-    inst.entity:SetPristine()
+  inst.entity:SetPristine()
 
-    if not TheWorld.ismastersim then
-        inst:ListenForEvent("activedirty", function()
-            if ThePlayer and ThePlayer.HUD and inst.is_active:value() then
-                ThePlayer.HUD:PushEvent("register_custom_beacon", { beacon = inst })
-            end
+  if not TheWorld.ismastersim then
+      inst:ListenForEvent("activedirty", function()
+          if ThePlayer and ThePlayer.HUD and inst.is_active:value() then
+              ThePlayer.HUD:PushEvent("register_custom_beacon", { beacon = inst })
+          end
 end)
-        return inst
-    end
+      return inst
+  end
 
-    inst.persists = false -- 不持久化到硬盘，由宿主动态派生
-    return inst
+  inst.persists = false -- 不持久化到硬盘，由宿主动态派生
+  return inst
 end
 
 return Prefab("my_beacon_classified", fn)
@@ -45,38 +45,38 @@ return Prefab("my_beacon_classified", fn)
 -- ==============================================================================
 
 local NetworkBeacon = Class(function(self, inst)
-    self.inst = inst
-    self.classified = nil
+  self.inst = inst
+  self.classified = nil
 
-    if TheWorld.ismastersim then
-        self.inst:DoTaskInTime(0, function() self:SpawnClassified() end)
-    end
+  if TheWorld.ismastersim then
+      self.inst:DoTaskInTime(0, function() self:SpawnClassified() end)
+  end
 end)
 
 function NetworkBeacon:SpawnClassified()
-    if self.classified ~= nil then return end
+  if self.classified ~= nil then return end
 
-    local c = SpawnPrefab("my_beacon_classified")
-    c.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
-    c.host_guid:set(self.inst)
-    c.beacon_type:set(self.inst.prefab)
-    c.is_active:set(true)
+  local c = SpawnPrefab("my_beacon_classified")
+  c.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
+  c.host_guid:set(self.inst)
+  c.beacon_type:set(self.inst.prefab)
+  c.is_active:set(true)
 
-    self.inst:DoPeriodicTask(0.1, function()
-        if self.inst:IsValid() and c:IsValid() then
-            c.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
-        end
+  self.inst:DoPeriodicTask(0.1, function()
+      if self.inst:IsValid() and c:IsValid() then
+          c.Transform:SetPosition(self.inst.Transform:GetWorldPosition())
+      end
 end)
 
-    self.classified = c
+  self.classified = c
 end
 
 function NetworkBeacon:OnRemoveFromEntity()
-    if self.classified and self.classified:IsValid() then
-        self.classified.is_active:set(false)
-        self.classified:Remove()
-        self.classified = nil
-    end
+  if self.classified and self.classified:IsValid() then
+      self.classified.is_active:set(false)
+      self.classified:Remove()
+      self.classified = nil
+  end
 end
 
 return NetworkBeacon

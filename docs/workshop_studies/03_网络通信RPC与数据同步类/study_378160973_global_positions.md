@@ -21,14 +21,16 @@
 ### 1. 轻量化伴生信标架构（`globalposition_classified`）
 - **痛点**：如果强行把玩家实体设为全图不休眠（`SetCanSleep(false)`），远端上千个实体动作帧与物理碰撞会把客户端直接卡死。
 - **解法**：为每个玩家与篝火派生一个隐形的微型网络信标实体：
-  ```lua
-  local inst = CreateEntity()
-  inst.entity:AddTransform()
-  inst.entity:AddNetwork()
-  inst.entity:Hide()
-  inst:AddTag("CLASSIFIED")
-  inst.entity:SetCanSleep(false) -- 信标常驻不休眠
-  ```
+
+```lua
+local inst = CreateEntity()
+inst.entity:AddTransform()
+inst.entity:AddNetwork()
+inst.entity:Hide()
+inst:AddTag("CLASSIFIED")
+inst.entity:SetCanSleep(false) -- 信标常驻不休眠
+```
+
   该信标不挂载任何模型、物理和大型组件，仅包含 5 个 NetVar 属性：
   - `parentprefab`: 宿主 Prefab 名（用于图标索引）
   - `parententity`: 宿主句柄（`net_entity`）
@@ -39,9 +41,11 @@
 ### 2. 团队迷雾互通与序列化传承（Shared Map Exploration）
 - **痛点**：专用服务器（Dedicated Server）本身是没有真实屏幕和玩家视口的，其底层默认不维护全图迷雾缓存。
 - **神级突破**：MOD 在 Dedicated 专服上强行实例化了一个虚拟地图探索者 `worldmapexplorer`：
-  ```lua
-  TheWorld.worldmapexplorer.MapExplorer:LearnRecordedMap(data.worldmap)
-  ```
+
+```lua
+TheWorld.worldmapexplorer.MapExplorer:LearnRecordedMap(data.worldmap)
+```
+
   1. **渐进式聚合**：专服作为团队地图的集中存储中心，收集所有玩家上传的已探索迷雾二进制块（`MapExplorer:RecordMap()`）；
   2. **新玩家下发**：当新玩家或掉线重连的队友加入世界时，专服自动将当前合并后的全队地图打包下发，调用客户端 `LearnRecordedMap` 一键点亮全队已探索迷雾！
   3. **异步重试容错（TryLoadingWorldMap）**：巧妙处理了世界加载初期的网络时序问题，若专服网络未就绪则在 `inst:DoTaskInTime(0, TryLoadingWorldMap)` 逐帧重试直至成功。

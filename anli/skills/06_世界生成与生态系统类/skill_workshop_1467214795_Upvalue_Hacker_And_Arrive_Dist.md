@@ -16,15 +16,15 @@
 local GLOBAL = GLOBAL
 
 IAENV.AddPrefabPostInitAny(function(inst)
-    if inst and TheWorld.ismastersim then
-        if IsFloodImmune(inst) then inst:AddTag("flood_immune") end
-        if inst.components.walkableplatform and IsIslandsWorld() then
-            inst:AddComponent("mapwrapper")
-            inst:AddComponent("bermudafx")
-            inst.components.bermudafx:SetGetEntitiesFn(GetAllPlatformBermudaFollowers)
-            inst.components.bermudafx.nobounce = true
-        end
-    end
+  if inst and TheWorld.ismastersim then
+      if IsFloodImmune(inst) then inst:AddTag("flood_immune") end
+      if inst.components.walkableplatform and IsIslandsWorld() then
+          inst:AddComponent("mapwrapper")
+          inst:AddComponent("bermudafx")
+          inst.components.bermudafx:SetGetEntitiesFn(GetAllPlatformBermudaFollowers)
+          inst.components.bermudafx.nobounce = true
+      end
+  end
 end)
 ```
 
@@ -38,6 +38,7 @@ end)
 ### 变体演进：Slightly Cuter Wendy (Mod 3494013763)
 - **变体场景与切面**：收录来自工坊 Mod 3494013763 (`Slightly Cuter Wendy`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -73,6 +74,7 @@ local EmptyFunction = function() end
 ### 变体演进：几何布局-汉化版 (Mod 3034588489)
 - **变体场景与切面**：收录来自工坊 Mod 3034588489 (`几何布局-汉化版`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -212,6 +214,7 @@ end
 ### 变体演进：T键物品增加 (Mod 2763963752)
 - **变体场景与切面**：收录来自工坊 Mod 2763963752 (`T键物品增加`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -219,53 +222,53 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:world
 AddPrefabPostInit("world", function (inst)
-    inst:DoTaskInTime(0,function ()
-        if not controls or not controls.TMI then
-            return
-        end
-        local tmp=require "TMIP/debug"
-        for k,v in ipairs(tmp)do
-            if v.tittle and v.tittle== STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXT then
-                table.insert(v.list,{
-                    beta = false,
-                    pos = 'all',
-                    name = _G.TOOMANYITEMS.UI_LANGUAGE == 'cn' and STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL or 'CARNIVAL',
-                    tip = STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL,
-                    fn = {
-                        'confirm',
-                        'ApplySpecialEvent("crow_carnival") TheWorld.topology.overrides.specialevent = "crow_carnival" c_save() c_announce("' ..
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_SERVER_RESETTIP ..
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT ..
-                        STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL ..
-                        '") TheWorld:DoTaskInTime(5, function() if TheWorld ~= nil and TheWorld.ismastersim then TheNet:SendWorldRollbackRequestToServer(0) end end)',
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL,
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXTCHANGESTIP
-                    }
-                })
-                table.insert(v.list,{
-                    beta = false,
-                    pos = 'all',
-                    name = _G.TOOMANYITEMS.UI_LANGUAGE == 'cn' and STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON or 'YOT_CATCOON',
-                    tip = STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON,
-                    fn = {
-                        'confirm',
-                        'ApplySpecialEvent("year_of_the_catcoon") TheWorld.topology.overrides.specialevent = "year_of_the_catcoon" c_save() c_announce("' ..
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_SERVER_RESETTIP ..
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT ..
-                        STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON ..
-                        '") TheWorld:DoTaskInTime(5, function() if TheWorld ~= nil and TheWorld.ismastersim then TheNet:SendWorldRollbackRequestToServer(0) end end)',
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON,
-                        STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXTCHANGESTIP
-                    }
-                })
-                break
-            end
-        end
-        package.loaded["TMIP/debug"] = tmp
-        if controls.TMI.debugshield then
-            controls.TMI.debugshield:Kill()
-        end
-        controls.TMI:DebugMenu()
+  inst:DoTaskInTime(0,function ()
+      if not controls or not controls.TMI then
+          return
+      end
+      local tmp=require "TMIP/debug"
+      for k,v in ipairs(tmp)do
+          if v.tittle and v.tittle== STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXT then
+              table.insert(v.list,{
+                  beta = false,
+                  pos = 'all',
+                  name = _G.TOOMANYITEMS.UI_LANGUAGE == 'cn' and STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL or 'CARNIVAL',
+                  tip = STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL,
+                  fn = {
+                      'confirm',
+                      'ApplySpecialEvent("crow_carnival") TheWorld.topology.overrides.specialevent = "crow_carnival" c_save() c_announce("' ..
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_SERVER_RESETTIP ..
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT ..
+                      STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL ..
+                      '") TheWorld:DoTaskInTime(5, function() if TheWorld ~= nil and TheWorld.ismastersim then TheNet:SendWorldRollbackRequestToServer(0) end end)',
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.CARNIVAL,
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXTCHANGESTIP
+                  }
+              })
+              table.insert(v.list,{
+                  beta = false,
+                  pos = 'all',
+                  name = _G.TOOMANYITEMS.UI_LANGUAGE == 'cn' and STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON or 'YOT_CATCOON',
+                  tip = STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON,
+                  fn = {
+                      'confirm',
+                      'ApplySpecialEvent("year_of_the_catcoon") TheWorld.topology.overrides.specialevent = "year_of_the_catcoon" c_save() c_announce("' ..
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_SERVER_RESETTIP ..
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT ..
+                      STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON ..
+                      '") TheWorld:DoTaskInTime(5, function() if TheWorld ~= nil and TheWorld.ismastersim then TheNet:SendWorldRollbackRequestToServer(0) end end)',
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TIPTEXT .. STRINGS.UI.SANDBOXMENU.SPECIAL_EVENTS.YOT_CATCOON,
+                      STRINGS.TOO_MANY_ITEMS_UI.DEBUG_EVENT_TEXTCHANGESTIP
+                  }
+              })
+              break
+          end
+      end
+      package.loaded["TMIP/debug"] = tmp
+      if controls.TMI.debugshield then
+          controls.TMI.debugshield:Kill()
+      end
+      controls.TMI:DebugMenu()
 end)
 end)
 ```
@@ -273,6 +276,7 @@ end)
 ### 变体演进：skill_1 (Mod 3378500626)
 - **变体场景与切面**：收录来自工坊 Mod 3378500626 (`skill_1`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -280,41 +284,41 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:spellbookcooldown
 AddPrefabPostInit("spellbookcooldown", function(inst)
-        if _G.ThePlayer:HasTag("ghostlyfriend") then
-            for k, v in ipairs(tiles) do
-                v:SetChargePercent(0)
-            end
-    
-            inst:ListenForEvent("pctdirty", function(inst)
-                local pct = 1 - inst:GetPercent()
-                for k, v in ipairs(tiles) do
-                    if v.inst:IsValid() then
-                        if math.abs(pct - v.rechargepct) > 0.05 then
-                            if inst:GetSpellName() == _G.hash("do_ghost_attackat") then
-                                if _G.ThePlayer.components.spellbookcooldowns:GetSpellCooldownPercent("ghostcommand") == nil then
-                                    v:SetChargeTime(inst:GetLength())
-                                    v:SetChargePercent(1 - inst:GetPercent())
-                                    v.recharge:GetAnimState():SetMultColour(.2, .2, 0, 0.64) -- '额外冷却' 黄色
-                                end
-                            else
-                                v:SetChargeTime(TUNING.WENDYSKILL_COMMAND_COOLDOWN)
-                                v:SetChargePercent(1 - inst:GetPercent())
-                                v.recharge:GetAnimState():SetMultColour(0, 0, 0.4, 0.64) -- '普通冷却' 蓝色
-                            end
-                        end
-                    else
-                        table.remove(tiles, k)
-                    end
-                end
+      if _G.ThePlayer:HasTag("ghostlyfriend") then
+          for k, v in ipairs(tiles) do
+              v:SetChargePercent(0)
+          end
+  
+          inst:ListenForEvent("pctdirty", function(inst)
+              local pct = 1 - inst:GetPercent()
+              for k, v in ipairs(tiles) do
+                  if v.inst:IsValid() then
+                      if math.abs(pct - v.rechargepct) > 0.05 then
+                          if inst:GetSpellName() == _G.hash("do_ghost_attackat") then
+                              if _G.ThePlayer.components.spellbookcooldowns:GetSpellCooldownPercent("ghostcommand") == nil then
+                                  v:SetChargeTime(inst:GetLength())
+                                  v:SetChargePercent(1 - inst:GetPercent())
+                                  v.recharge:GetAnimState():SetMultColour(.2, .2, 0, 0.64) -- '额外冷却' 黄色
+                              end
+                          else
+                              v:SetChargeTime(TUNING.WENDYSKILL_COMMAND_COOLDOWN)
+                              v:SetChargePercent(1 - inst:GetPercent())
+                              v.recharge:GetAnimState():SetMultColour(0, 0, 0.4, 0.64) -- '普通冷却' 蓝色
+                          end
+                      end
+                  else
+                      table.remove(tiles, k)
+                  end
+              end
 end)
-        end
+      end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:world
 AddPrefabPostInit("world",function(inst) 
-    inst:DoPeriodicTask(0.2+0.01*math.random(),function(inst)
-        UpdatePlayerIndicators()
+  inst:DoPeriodicTask(0.2+0.01*math.random(),function(inst)
+      UpdatePlayerIndicators()
 end)
 end)
 ```
@@ -322,6 +326,7 @@ end)
 ### 变体演进：1/10000 Chance for Withered Foxy Jumpscare Every Second [Server] (Mod 3527018254)
 - **变体场景与切面**：收录来自工坊 Mod 3527018254 (`1/10000 Chance for Withered Foxy Jumpscare Every Second [Server]`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -329,21 +334,20 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:world
 AddPrefabPostInit("world",function()
-        if not GLOBAL.TheWorld.ismastersim then
-            GLOBAL.TheFrontEnd.screenroot.inst:DoPeriodicTask(1,function()
-                if math.random(1,10000) == 1 then
-                    JumpscarePlayer()
-                end
+      if not GLOBAL.TheWorld.ismastersim then
+          GLOBAL.TheFrontEnd.screenroot.inst:DoPeriodicTask(1,function()
+              if math.random(1,10000) == 1 then
+                  JumpscarePlayer()
+              end
 end)
-        end
+      end
 end)
 ```
-
-
 
 ### 变体演进：Wolemorm, Mineral Edition (Mod 2313039145)
 - **变体场景与切面**：收录来自工坊 Mod 2313039145 (`Wolemorm, Mineral Edition`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2313039145)
@@ -385,11 +389,10 @@ AddComponentPostInit("edible", function(self)
 end)
 ```
 
-
-
 ### 变体演进：Large boats Fix (Mod 3127245589)
 - **变体场景与切面**：收录来自工坊 Mod 3127245589 (`Large boats Fix`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3127245589)
@@ -398,84 +401,83 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:boatphysics
 AddComponentPostInit("boatphysics",function(self,inst)
-    self.sizespeedmultiplier=1
-    local oaf=self.ApplyForce
-    function self:ApplyForce(dir_x, dir_z, force)
-        local force=(force and force or 0)*self.sizespeedmultiplier
-        oaf(self,dir_x, dir_z, force)
-    end
-    local oam=self.AddMast
-    function self:AddMast(mast)
-        mast.sail_force=mast.sail_force*self.sizespeedmultiplier
-        oam(self, mast)
-    end
+  self.sizespeedmultiplier=1
+  local oaf=self.ApplyForce
+  function self:ApplyForce(dir_x, dir_z, force)
+      local force=(force and force or 0)*self.sizespeedmultiplier
+      oaf(self,dir_x, dir_z, force)
+  end
+  local oam=self.AddMast
+  function self:AddMast(mast)
+      mast.sail_force=mast.sail_force*self.sizespeedmultiplier
+      oam(self, mast)
+  end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:world
 AddPrefabPostInit("world",function()
-    local WALKABLE_PLATFORM_TAGS={"walkableplatform"}
-    GLOBAL.Map.GetPlatformAtPoint=function(self,pos_x,pos_y, pos_z, extra_radius)
-        if pos_z == nil then
-            pos_z = pos_y
-            pos_y = 0
-        end
-        local entities = TheSim:FindEntities(pos_x, pos_y, pos_z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + (extra_radius or 0), WALKABLE_PLATFORM_TAGS)
-        for i, v in ipairs(entities) do
-            if v.components.walkableplatform~=nil and math.sqrt(v:GetDistanceSqToPoint(pos_x, 0, pos_z))<=v.components.walkableplatform.platform_radius then
-                return v 
-            end
-        end
-        return nil
-    end
-    GLOBAL.Map.IsPassableAtPointWithPlatformRadiusBias=function(self,x, y, z, allow_water, exclude_boats, platform_radius_bias, ignore_land_overhang)
-        local valid_tile = self:IsAboveGroundAtPoint(x, y, z, allow_water) or ((not ignore_land_overhang) and self:IsVisualGroundAtPoint(x,y,z) or false)
-        if not allow_water and not valid_tile then
-            if not exclude_boats then
-                local entities = TheSim:FindEntities(x, 0, z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + platform_radius_bias, WALKABLE_PLATFORM_TAGS)
-                for i, v in ipairs(entities) do
-                    local walkable_platform = v.components.walkableplatform 
-                    if walkable_platform~=nil and math.sqrt(v:GetDistanceSqToPoint(x, 0, z))<=(walkable_platform.platform_radius+platform_radius_bias) then
-                        local platform_x, platform_y, platform_z = v.Transform:GetWorldPosition()
-                        local distance_sq = GLOBAL.VecUtil_LengthSq(x - platform_x, z - platform_z)
-                        return distance_sq <= walkable_platform.platform_radius * walkable_platform.platform_radius
-                    end
-                end
-            end
-            return false
-        end
-        return valid_tile
-    end
-    GLOBAL.Map.CanDeployAtPointInWater=function(self,pt, inst, mouseover, data)
-        local tile = self:GetTileAtPoint(pt.x, pt.y, pt.z)
-        if tile == GROUND.IMPASSABLE or tile == GROUND.INVALID then
-            return false
-        end
+  local WALKABLE_PLATFORM_TAGS={"walkableplatform"}
+  GLOBAL.Map.GetPlatformAtPoint=function(self,pos_x,pos_y, pos_z, extra_radius)
+      if pos_z == nil then
+          pos_z = pos_y
+          pos_y = 0
+      end
+      local entities = TheSim:FindEntities(pos_x, pos_y, pos_z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + (extra_radius or 0), WALKABLE_PLATFORM_TAGS)
+      for i, v in ipairs(entities) do
+          if v.components.walkableplatform~=nil and math.sqrt(v:GetDistanceSqToPoint(pos_x, 0, pos_z))<=v.components.walkableplatform.platform_radius then
+              return v 
+          end
+      end
+      return nil
+  end
+  GLOBAL.Map.IsPassableAtPointWithPlatformRadiusBias=function(self,x, y, z, allow_water, exclude_boats, platform_radius_bias, ignore_land_overhang)
+      local valid_tile = self:IsAboveGroundAtPoint(x, y, z, allow_water) or ((not ignore_land_overhang) and self:IsVisualGroundAtPoint(x,y,z) or false)
+      if not allow_water and not valid_tile then
+          if not exclude_boats then
+              local entities = TheSim:FindEntities(x, 0, z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + platform_radius_bias, WALKABLE_PLATFORM_TAGS)
+              for i, v in ipairs(entities) do
+                  local walkable_platform = v.components.walkableplatform 
+                  if walkable_platform~=nil and math.sqrt(v:GetDistanceSqToPoint(x, 0, z))<=(walkable_platform.platform_radius+platform_radius_bias) then
+                      local platform_x, platform_y, platform_z = v.Transform:GetWorldPosition()
+                      local distance_sq = GLOBAL.VecUtil_LengthSq(x - platform_x, z - platform_z)
+                      return distance_sq <= walkable_platform.platform_radius * walkable_platform.platform_radius
+                  end
+              end
+          end
+          return false
+      end
+      return valid_tile
+  end
+  GLOBAL.Map.CanDeployAtPointInWater=function(self,pt, inst, mouseover, data)
+      local tile = self:GetTileAtPoint(pt.x, pt.y, pt.z)
+      if tile == GROUND.IMPASSABLE or tile == GROUND.INVALID then
+          return false
+      end
 
-        -- check if there's a boat in the way
-        local min_distance_from_boat = (data and data.boat) or 0
-        local radius = (data and data.radius) or 0
-        local entities = TheSim:FindEntities(pt.x, 0, pt.z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + radius + min_distance_from_boat, WALKABLE_PLATFORM_TAGS)
-        for i, v in ipairs(entities) do
-            if v.components.walkableplatform~=nil and math.sqrt(v:GetDistanceSqToPoint(pt.x, 0, pt.z))<=(v.components.walkableplatform.platform_radius+radius+min_distance_from_boat) then
-                return false
-            end
-        end
+      -- check if there's a boat in the way
+      local min_distance_from_boat = (data and data.boat) or 0
+      local radius = (data and data.radius) or 0
+      local entities = TheSim:FindEntities(pt.x, 0, pt.z, TUNING.MAX_WALKABLE_PLATFORM_RADIUS*5 + radius + min_distance_from_boat, WALKABLE_PLATFORM_TAGS)
+      for i, v in ipairs(entities) do
+          if v.components.walkableplatform~=nil and math.sqrt(v:GetDistanceSqToPoint(pt.x, 0, pt.z))<=(v.components.walkableplatform.platform_radius+radius+min_distance_from_boat) then
+              return false
+          end
+      end
 
-        local min_distance_from_land = (data and data.land) or 0
+      local min_distance_from_land = (data and data.land) or 0
 
-        return (mouseover == nil or mouseover:HasTag("player"))
-            and self:IsDeployPointClear(pt, nil, min_distance_from_boat + radius)
-            and self:IsSurroundedByWater(pt.x, pt.y, pt.z, min_distance_from_land + radius)
-    end
+      return (mouseover == nil or mouseover:HasTag("player"))
+          and self:IsDeployPointClear(pt, nil, min_distance_from_boat + radius)
+          and self:IsSurroundedByWater(pt.x, pt.y, pt.z, min_distance_from_land + radius)
+  end
 end)
 ```
-
-
 
 ### 变体演进：Parryable Shield of Terror (Mod 3135193800)
 - **变体场景与切面**：收录来自工坊 Mod 3135193800 (`Parryable Shield of Terror`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3135193800)
@@ -485,57 +487,56 @@ local GLOBAL = GLOBAL
 -- 切面钩子：AddPrefabPostInit:shieldofterror
 AddPrefabPostInit("shieldofterror", function(inst)
 
-  inst:AddTag("battleshield")
+inst:AddTag("battleshield")
 	inst:AddTag("shield")
 
-  inst:AddTag("parryweapon")
+inst:AddTag("parryweapon")
 
-  inst:AddTag("rechargeable")
+inst:AddTag("rechargeable")
 
-  inst:AddComponent("aoetargeting")
-    inst.components.aoetargeting:SetAlwaysValid(true)
-    inst.components.aoetargeting:SetAllowRiding(false)
-    inst.components.aoetargeting.reticule.reticuleprefab = "reticulearc"
-    inst.components.aoetargeting.reticule.pingprefab = "reticulearcping"
-    inst.components.aoetargeting.reticule.targetfn = ReticuleTargetFn
-    inst.components.aoetargeting.reticule.mousetargetfn = ReticuleMouseTargetFn
-    inst.components.aoetargeting.reticule.updatepositionfn = ReticuleUpdatePositionFn
-    inst.components.aoetargeting.reticule.validcolour = { 1, .75, 0, 1 }
-    inst.components.aoetargeting.reticule.invalidcolour = { .5, 0, 0, 1 }
-    inst.components.aoetargeting.reticule.ease = true
-    inst.components.aoetargeting.reticule.mouseenabled = true
-    --inst.components.aoetargeting.range = 100 --idk why ReticuleMouseTargetFn crashes 
+inst:AddComponent("aoetargeting")
+  inst.components.aoetargeting:SetAlwaysValid(true)
+  inst.components.aoetargeting:SetAllowRiding(false)
+  inst.components.aoetargeting.reticule.reticuleprefab = "reticulearc"
+  inst.components.aoetargeting.reticule.pingprefab = "reticulearcping"
+  inst.components.aoetargeting.reticule.targetfn = ReticuleTargetFn
+  inst.components.aoetargeting.reticule.mousetargetfn = ReticuleMouseTargetFn
+  inst.components.aoetargeting.reticule.updatepositionfn = ReticuleUpdatePositionFn
+  inst.components.aoetargeting.reticule.validcolour = { 1, .75, 0, 1 }
+  inst.components.aoetargeting.reticule.invalidcolour = { .5, 0, 0, 1 }
+  inst.components.aoetargeting.reticule.ease = true
+  inst.components.aoetargeting.reticule.mouseenabled = true
+  --inst.components.aoetargeting.range = 100 --idk why ReticuleMouseTargetFn crashes 
 
 	if not GLOBAL.TheWorld.ismastersim then return inst end
-  --inst.components.equippable.restrictedtag = "wathgrithrshieldmaker"
+--inst.components.equippable.restrictedtag = "wathgrithrshieldmaker"
 
-  inst:AddComponent("aoespell")
-  inst.components.aoespell:SetSpellFn(SpellFn)
+inst:AddComponent("aoespell")
+inst.components.aoespell:SetSpellFn(SpellFn)
 
-  inst:AddComponent("parryweapon")
-  inst.components.parryweapon:SetParryArc(TUNING.WATHGRITHR_SHIELD_PARRY_ARC)
-  --inst.components.parryweapon:SetOnPreParryFn(OnPreParry)
-  inst.components.parryweapon:SetOnParryFn(OnParry)
+inst:AddComponent("parryweapon")
+inst.components.parryweapon:SetParryArc(TUNING.WATHGRITHR_SHIELD_PARRY_ARC)
+--inst.components.parryweapon:SetOnPreParryFn(OnPreParry)
+inst.components.parryweapon:SetOnParryFn(OnParry)
 
-  inst:AddComponent("rechargeable")
-  inst.components.rechargeable:SetOnDischargedFn(OnDischarged)
-  inst.components.rechargeable:SetOnChargedFn(OnCharged)
+inst:AddComponent("rechargeable")
+inst.components.rechargeable:SetOnDischargedFn(OnDischarged)
+inst.components.rechargeable:SetOnChargedFn(OnCharged)
 
-  --my own component
-  inst:AddComponent("shieldbite")
-  inst.components.shieldbite:IsMultAffected(parryMult)
-  inst.components.shieldbite:SetDamage(parryDamage)
-  inst.components.shieldbite:SetRepair(parryRepair)
-  inst.components.shieldbite:SetSprites("swap_shield", "swap_shieldofterror_parry", "swap_shieldofterror_bite")
+--my own component
+inst:AddComponent("shieldbite")
+inst.components.shieldbite:IsMultAffected(parryMult)
+inst.components.shieldbite:SetDamage(parryDamage)
+inst.components.shieldbite:SetRepair(parryRepair)
+inst.components.shieldbite:SetSprites("swap_shield", "swap_shieldofterror_parry", "swap_shieldofterror_bite")
 
+if inst.components.rechargeable:GetTimeToCharge() < TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP then
+  inst.components.rechargeable:Discharge(TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP)
+end
 
-  if inst.components.rechargeable:GetTimeToCharge() < TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP then
-    inst.components.rechargeable:Discharge(TUNING.WATHGRITHR_SHIELD_COOLDOWN_ONEQUIP)
-  end
-
-  inst.components.equippable:SetOnEquip(OnEquip)
-  inst.components.equippable:SetOnUnequip(OnUnequip)
-  --MakeHauntableLaunch(inst)
+inst.components.equippable:SetOnEquip(OnEquip)
+inst.components.equippable:SetOnUnequip(OnUnequip)
+--MakeHauntableLaunch(inst)
 end)
 
 -- ----------------------------------------------------------------------------
@@ -546,7 +547,7 @@ AddPrefabPostInit("wortox", function(inst)
 		local equipitem = inst.replica.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
 		local ret = _GetPointSpecialActions(inst, pos, useitem, ...)
 		if ret ~= nil and #ret > 0 and equipitem ~= nil and equipitem.prefab == "shieldofterror" then
-      if equipitem.components.aoetargeting:IsEnabled() == false then return ret end
+    if equipitem.components.aoetargeting:IsEnabled() == false then return ret end
 			ret = {}
 		end
 		return ret
@@ -555,11 +556,10 @@ AddPrefabPostInit("wortox", function(inst)
 end)
 ```
 
-
-
 ### 变体演进：Wolemorm, Recorrupted Edition (Mod 2293195234)
 - **变体场景与切面**：收录来自工坊 Mod 2293195234 (`Wolemorm, Recorrupted Edition`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2293195234)
@@ -573,11 +573,10 @@ AddPrefabPostInit("lightbulb", function(inst) -- I checked all of these and it w
 end)
 ```
 
-
-
 ### 变体演进：Mod 2483322788 (Mod 2483322788)
 - **变体场景与切面**：收录来自工坊 Mod 2483322788 (`Mod 2483322788`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2483322788)
@@ -586,75 +585,76 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:sisturn
 AddPrefabPostInit("sisturn", function(inst)
-    -- 延迟确保组件加载完成
-    inst:DoTaskInTime(0, function()
-        if inst.components.preserver then
-            -- 立即设置保鲜倍率
-            inst.components.preserver:SetPerishRateMultiplier(sisturn_freeze)
-            
-            -- 劫持原始方法，永久锁定保鲜参数
-            local old_SetPRM = inst.components.preserver.SetPerishRateMultiplier
-            inst.components.preserver.SetPerishRateMultiplier = function(self, ...)
-                old_SetPRM(self, sisturn_freeze) -- 强制参数
-            end
-        end
-    end)
+  -- 延迟确保组件加载完成
+  inst:DoTaskInTime(0, function()
+      if inst.components.preserver then
+          -- 立即设置保鲜倍率
+          inst.components.preserver:SetPerishRateMultiplier(sisturn_freeze)
+          
+          -- 劫持原始方法，永久锁定保鲜参数
+          local old_SetPRM = inst.components.preserver.SetPerishRateMultiplier
+          inst.components.preserver.SetPerishRateMultiplier = function(self, ...)
+              old_SetPRM(self, sisturn_freeze) -- 强制参数
+          end
+      end
+  end)
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:portablespicer
 AddPrefabPostInit("portablespicer", function(inst)
-    inst:AddComponent("preserver")
-    inst.components.preserver:SetPerishRateMultiplier(spicer_inside_freeze)
+  inst:AddComponent("preserver")
+  inst.components.preserver:SetPerishRateMultiplier(spicer_inside_freeze)
 
-    if spicer_outside_freeze then
-        if inst.components.stewer then
-            inst.components.stewer.onspoil = nil
-            inst.components.stewer.GetTimeToSpoil = function(self)
-                return self.done and (self.spoiltime or 99) or 0
-            end
-        end
-    end
+  if spicer_outside_freeze then
+      if inst.components.stewer then
+          inst.components.stewer.onspoil = nil
+          inst.components.stewer.GetTimeToSpoil = function(self)
+              return self.done and (self.spoiltime or 99) or 0
+          end
+      end
+  end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:world
 AddPrefabPostInit("world", function()
-        local levels = CollectFood(GLOBAL.Prefabs.mushroom_farm.fn, "updatelevel", "levels")
-        local setlevel = CollectFood(GLOBAL.Prefabs.mushroom_farm.fn, "updatelevel", "setlevel")
+      local levels = CollectFood(GLOBAL.Prefabs.mushroom_farm.fn, "updatelevel", "levels")
+      local setlevel = CollectFood(GLOBAL.Prefabs.mushroom_farm.fn, "updatelevel", "setlevel")
 
-        local function updatelevel(inst, dotransition)
-            if not inst:HasTag("burnt") then
-                for k, v in pairs(levels) do
-                    if inst.components.harvestable.produce >= v.amount then
-                        setlevel(inst, v, dotransition)
-                        break
-                    end
-                end
-            end
-        end
+      local function updatelevel(inst, dotransition)
+          if not inst:HasTag("burnt") then
+              for k, v in pairs(levels) do
+                  if inst.components.harvestable.produce >= v.amount then
+                      setlevel(inst, v, dotransition)
+                      break
+                  end
+              end
+          end
+      end
 
-        EatFood(GLOBAL.Prefabs.mushroom_farm.fn, updatelevel, "updatelevel")
-    end)
+      EatFood(GLOBAL.Prefabs.mushroom_farm.fn, updatelevel, "updatelevel")
+  end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:ocean_trawler
 AddPrefabPostInit("ocean_trawler", function(inst)
-        inst:AddComponent("preserver")
-        inst.components.preserver:SetPerishRateMultiplier(0)
-    end)
+      inst:AddComponent("preserver")
+      inst.components.preserver:SetPerishRateMultiplier(0)
+  end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:chester
 AddPrefabPostInit("chester", function(inst)
-    if inst.components.preserver == nil then
-        inst:AddComponent("preserver")
-    end
-    inst.components.preserver:SetPerishRateMultiplier(chester_freeze)
+  if inst.components.preserver == nil then
+      inst:AddComponent("preserver")
+  end
+  inst.components.preserver:SetPerishRateMultiplier(chester_freeze)
 
-    ChesterState = CollectFood(inst.OnLoadPostPass, "ChesterState")
-    ToggleBreath = CollectFood(GLOBAL.Prefabs.chester.fn, "OnClientChesterStateDirty", "ToggleBreath")
-    EatFood(inst.OnPreLoad, MorphSnowChester, "MorphSnowChester")
+  ChesterState = CollectFood(inst.OnLoadPostPass, "ChesterState")
+  ToggleBreath = CollectFood(GLOBAL.Prefabs.chester.fn, "OnClientChesterStateDirty", "ToggleBreath")
+  EatFood(inst.OnPreLoad, MorphSnowChester, "MorphSnowChester")
 end)
 ```
+
 

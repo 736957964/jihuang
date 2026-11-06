@@ -9,12 +9,14 @@
 1. **全局双向 ID 映射重建**：
    官方底层 RPC 在网络传输装备槽位时，通过内部 `EQUIPSLOT_IDS` 数组转换数值枚举。扩展新槽位必须动态注入双向索引：
    
+
 ```lua
-   GLOBAL.EQUIPSLOTS.BACK = "back"
-   GLOBAL.EQUIPSLOTS.NECK = "neck"
-   GLOBAL.EQUIPSLOT_IDS.back = 4
-   GLOBAL.EQUIPSLOT_IDS.neck = 5
+ GLOBAL.EQUIPSLOTS.BACK = "back"
+ GLOBAL.EQUIPSLOTS.NECK = "neck"
+ GLOBAL.EQUIPSLOT_IDS.back = 4
+ GLOBAL.EQUIPSLOT_IDS.neck = 5
 ```
+
 2. **`inventory_classified` 客户端零延迟预测穿透**：
    重写客户端 `Has` 与 `GetEquippedItem`，通过遍历动态槽位表规避硬编码判定。
 
@@ -28,28 +30,28 @@ local EQUIPSLOTS = GLOBAL.EQUIPSLOTS
 local EQUIPSLOT_IDS = GLOBAL.EQUIPSLOT_IDS
 
 if not EQUIPSLOTS.BACK then
-    EQUIPSLOTS.BACK = "back"
-    EQUIPSLOT_IDS.back = 4
+  EQUIPSLOTS.BACK = "back"
+  EQUIPSLOT_IDS.back = 4
 end
 if not EQUIPSLOTS.NECK then
-    EQUIPSLOTS.NECK = "neck"
-    EQUIPSLOT_IDS.neck = 5
+  EQUIPSLOTS.NECK = "neck"
+  EQUIPSLOT_IDS.neck = 5
 end
 
 AddClassPostConstruct("components/inventory_classified", function(self)
-    local _EquipAction = self.EquipAction
-    self.EquipAction = function(self, action)
-        if action and action.action == GLOBAL.ACTIONS.EQUIP then
-            local item = action.invobject
-            if item and item.replica and item.replica.equippable then
-                local slot = item.replica.equippable:EquipSlot()
-                if slot == EQUIPSLOTS.BACK or slot == EQUIPSLOTS.NECK then
-                    self.inst:PushEvent("equip_predicted", { slot = slot, item = item })
-                end
-            end
-        end
-        return _EquipAction(self, action)
-    end
+  local _EquipAction = self.EquipAction
+  self.EquipAction = function(self, action)
+      if action and action.action == GLOBAL.ACTIONS.EQUIP then
+          local item = action.invobject
+          if item and item.replica and item.replica.equippable then
+              local slot = item.replica.equippable:EquipSlot()
+              if slot == EQUIPSLOTS.BACK or slot == EQUIPSLOTS.NECK then
+                  self.inst:PushEvent("equip_predicted", { slot = slot, item = item })
+              end
+          end
+      end
+      return _EquipAction(self, action)
+  end
 end)
 ```
 

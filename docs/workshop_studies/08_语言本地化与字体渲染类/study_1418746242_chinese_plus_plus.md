@@ -24,36 +24,40 @@
 ### 1. 引擎级字体管线原子重载（TheSim Font Hot-Swap）
 - **痛点**：直接覆盖全局字体变量会导致已实例化的 Text 控件继续持有旧纹理指针，引发紫块与内存泄露。
 - **解法**：在 `Start` 与 `ModManager.RegisterPrefabs` 阶段触发全套原子重构：
-  ```lua
-  TheSim:UnloadFont("cnfont")
-  TheSim:UnloadFont("cnfont_outline")
-  TheSim:UnloadPrefabs({"cnfonts_"..modname})
-  TheSim:RegisterPrefab("cnfonts_"..modname, Assets, {})
-  TheSim:LoadPrefabs({"cnfonts_"..modname})
-  TheSim:LoadFont(font_path, "cnfont")
-  TheSim:SetupFontFallbacks("cnfont", GLOBAL.DEFAULT_FALLBACK_TABLE)
-  ```
+
+```lua
+TheSim:UnloadFont("cnfont")
+TheSim:UnloadFont("cnfont_outline")
+TheSim:UnloadPrefabs({"cnfonts_"..modname})
+TheSim:RegisterPrefab("cnfonts_"..modname, Assets, {})
+TheSim:LoadPrefabs({"cnfonts_"..modname})
+TheSim:LoadFont(font_path, "cnfont")
+TheSim:SetupFontFallbacks("cnfont", GLOBAL.DEFAULT_FALLBACK_TABLE)
+```
+
   完成加载后，批量将 `DEFAULTFONT`、`NUMBERFONT`、`TALKINGFONT` 等 17 种 UI 字体句柄平滑指向新字型，字体清晰度与抗锯齿提升数倍且永不漏字。
 
 ### 2. 点分路径多级闭包穿透器（Path-based Upvalue Accessor）
 相较于普通 UpvalueHacker 只能找单层变量，`Chinese++` 实现了基于点分路径（Dot-Separated Path）的高级解析器：
+
 ```lua
 function getval(fn, path)
-    local val = fn
-    for entry in path:gmatch("[^%.]+") do
-        local i = 1
-        while true do
-            local name, value = debug.getupvalue(val, i)
-            if name == entry then
-                val = value
-                break
-            elseif name == nil then return nil end
-            i = i + 1
-        end
-    end
-    return val, i
+  local val = fn
+  for entry in path:gmatch("[^%.]+") do
+      local i = 1
+      while true do
+          local name, value = debug.getupvalue(val, i)
+          if name == entry then
+              val = value
+              break
+          elseif name == nil then return nil end
+          i = i + 1
+      end
+  end
+  return val, i
 end
 ```
+
 借助该原语，MOD 可以在 `FrontEnd` 初始化阶段，仅用两行代码 `getval(tasksets.GetGenTaskLists, "taskgrouplist")`，直接抓取到藏在闭包深处的官方世界生成任务组并完成汉化补丁！
 
 ### 3. 多 Mod 配置热融合与元数据合并（`mergeinfo` Engine）
@@ -65,14 +69,16 @@ end
 ### 4. 正则模板反向推导器（Mask Reverse Formatter）
 - 面对复杂台词（如暴食山羊妈妈的需求提示 `"I crave ... in ..."`）：
   通过 `create_mask` 将原始模板字串逆向构造为捕获组正则：
-  ```lua
-  local function create_mask(str)
-      str = string.gsub(str, "%.", "%%.")
-      str = string.gsub(str, "%b{}", "%(%.%+%)")
-      str = string.gsub(str, "%%s", "%(%.%+%)")
-      return "^" .. str .. "$"
-  end
-  ```
+
+```lua
+local function create_mask(str)
+    str = string.gsub(str, "%.", "%%.")
+    str = string.gsub(str, "%b{}", "%(%.%+%)")
+    str = string.gsub(str, "%%s", "%(%.%+%)")
+    return "^" .. str .. "$"
+end
+```
+
   实时从 NPC 发言中解构出关键食材与时间参数，再代入目标语言的 `STRINGS` 模板重新格式化，完美攻克非结构化文本的国际化难题！
 
 ---
@@ -83,10 +89,12 @@ end
    - 字体加载与文字渲染完全是客户端功能。MOD 严格在头部判定 `if GLOBAL.TheNet:IsDedicated() then return end`，避免在无显卡的 Linux 专服上调用 `TheSim:LoadFont` 触发引擎 SIGSEGV 崩溃。
 2. **Lua 字符串模式匹配中文支持补丁**：
    - 原版 Lua 5.1 的 `%w` 仅支持 ASCII 字母数字。为了防止正则匹配漏掉中文字符，MOD 注入了底层切面：
-     ```lua
-     local oldmatch = string.match
-     function string.match(str, pattern, index)
-         return oldmatch(str, pattern:gsub("%%w", "[%%w一-鿕]"), index)
-     end
-     ```
+
+```lua
+   local oldmatch = string.match
+   function string.match(str, pattern, index)
+       return oldmatch(str, pattern:gsub("%%w", "[%%w一-鿕]"), index)
+   end
+```
+
      彻底解决了在中文环境下用 `%w` 无法匹配汉字导致搜索和文本过滤失效的深坑。

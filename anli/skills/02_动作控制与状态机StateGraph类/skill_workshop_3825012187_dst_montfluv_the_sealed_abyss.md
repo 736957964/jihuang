@@ -17,48 +17,48 @@
 local GLOBAL = GLOBAL
 
 AddPrefabPostInit("world", function(inst)
-    local map = getmetatable(inst.Map).__index
-    if map == nil then
-        return
-    end
+  local map = getmetatable(inst.Map).__index
+  if map == nil then
+      return
+  end
 
-    local function realm_passable(x, y, z)
-        return IsInShHollow(x, y, z)
-    end
+  local function realm_passable(x, y, z)
+      return IsInShHollow(x, y, z)
+  end
 
-    local OldIsAboveGroundAtPoint = map.IsAboveGroundAtPoint
-    map.IsAboveGroundAtPoint = function(self, x, y, z, ...)
-        if realm_passable(x, y, z) then
-            return true
-        end
-        return OldIsAboveGroundAtPoint(self, x, y, z, ...)
-    end
+  local OldIsAboveGroundAtPoint = map.IsAboveGroundAtPoint
+  map.IsAboveGroundAtPoint = function(self, x, y, z, ...)
+      if realm_passable(x, y, z) then
+          return true
+      end
+      return OldIsAboveGroundAtPoint(self, x, y, z, ...)
+  end
 
-    local OldIsPassableAtPoint = map.IsPassableAtPoint
-    map.IsPassableAtPoint = function(self, x, y, z, ...)
-        if realm_passable(x, y, z) then
-            return true
-        end
-        return OldIsPassableAtPoint(self, x, y, z, ...)
-    end
+  local OldIsPassableAtPoint = map.IsPassableAtPoint
+  map.IsPassableAtPoint = function(self, x, y, z, ...)
+      if realm_passable(x, y, z) then
+          return true
+      end
+      return OldIsPassableAtPoint(self, x, y, z, ...)
+  end
 
-    local OldIsVisualGroundAtPoint = map.IsVisualGroundAtPoint
-    map.IsVisualGroundAtPoint = function(self, x, y, z, ...)
-        if realm_passable(x, y, z) then
-            return true
-        end
-        return OldIsVisualGroundAtPoint(self, x, y, z, ...)
-    end
+  local OldIsVisualGroundAtPoint = map.IsVisualGroundAtPoint
+  map.IsVisualGroundAtPoint = function(self, x, y, z, ...)
+      if realm_passable(x, y, z) then
+          return true
+      end
+      return OldIsVisualGroundAtPoint(self, x, y, z, ...)
+  end
 
-    if not TheWorld.ismastersim then
-        return
-    end
+  if not TheWorld.ismastersim then
+      return
+  end
 
-    inst:ListenForEvent("ms_playerdespawnanddelete", function(world, player)
-        if player ~= nil and player._sh_hollow_focus ~= nil then
-            player.sh_hollow_spawn_delete = true
-            player._sh_hollow_focus:set(nil)
-        end
+  inst:ListenForEvent("ms_playerdespawnanddelete", function(world, player)
+      if player ~= nil and player._sh_hollow_focus ~= nil then
+          player.sh_hollow_spawn_delete = true
+          player._sh_hollow_focus:set(nil)
+      end
 end)
 end)
 ```

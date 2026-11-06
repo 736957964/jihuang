@@ -24,12 +24,12 @@
 ```lua
 -- IA 群岛拓扑生成拦截
 local function GenerateArchipelago(task)
-    for _, node in ipairs(task.nodes) do
-        -- 移除所有自动生成的连接路桥
-        node.neighbours = {}
-        -- 强制限定岛屿的最大半径，留出海洋缓冲带 (Ocean Buffer)
-        node.max_radius = 25
-    end
+  for _, node in ipairs(task.nodes) do
+      -- 移除所有自动生成的连接路桥
+      node.neighbours = {}
+      -- 强制限定岛屿的最大半径，留出海洋缓冲带 (Ocean Buffer)
+      node.max_radius = 25
+  end
 end
 ```
 
@@ -49,15 +49,15 @@ end
 ```lua
 -- scripts/worldgen_mods/custom_archipelago.lua
 AddTask("Archipelago_Task", {
-    locks = {},
-    keys_given = {},
-    room_choices = {
-        ["Jungle_Island"] = 3,
-        ["Beach_Island"] = 2,
-    },
-    room_bg = GROUND.OCEAN_SHALLOW,
-    background_room = "Ocean_Deep",
-    colour = { r = 0, g = 0.5, b = 0.8, a = 1 },
+  locks = {},
+  keys_given = {},
+  room_choices = {
+      ["Jungle_Island"] = 3,
+      ["Beach_Island"] = 2,
+  },
+  room_bg = GROUND.OCEAN_SHALLOW,
+  background_room = "Ocean_Deep",
+  colour = { r = 0, g = 0.5, b = 0.8, a = 1 },
 })
 ```
 

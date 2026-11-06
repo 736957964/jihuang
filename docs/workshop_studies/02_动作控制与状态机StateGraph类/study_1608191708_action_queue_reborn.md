@@ -32,19 +32,21 @@
 ### 2. 双协程管道隔离（Selection vs Action Thread）
 - **选择线程（`selection_thread_id`）**：在鼠标按住拖拽期间运行，每隔 0.1 秒刷新框选范围并动态追加/移除非法目标；
 - **执行线程（`action_thread_id`）**：在鼠标释放（`OnUp`）后启动，遍历 `selected_ents` 队列：
-  ```lua
-  self.action_thread = self.inst:StartThread(function()
-      while next(self.action_queue) and not self:IsWalkButtonDown() do
-          local act = table.remove(self.action_queue, 1)
-          if self:CanPerformAction(act) then
-              self:SendAction(act)
-              -- 等待动作开始与完成状态
-              self:WaitActionComplete(act)
-          end
-      end
-      self:ClearActionThread()
-  end)
-  ```
+
+```lua
+self.action_thread = self.inst:StartThread(function()
+    while next(self.action_queue) and not self:IsWalkButtonDown() do
+        local act = table.remove(self.action_queue, 1)
+        if self:CanPerformAction(act) then
+            self:SendAction(act)
+            -- 等待动作开始与完成状态
+            self:WaitActionComplete(act)
+        end
+    end
+    self:ClearActionThread()
+end)
+```
+
   通过状态机事件（如 `actionfailed`、`performaction`）作为挂起与恢复的信号，杜绝死循环与主线程卡死。
 
 ### 3. 手动干预即时打断补偿（Walk Interruption Guard）

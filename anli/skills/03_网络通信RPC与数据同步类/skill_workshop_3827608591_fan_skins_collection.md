@@ -17,7 +17,7 @@
 local GLOBAL = GLOBAL
 
 for character, _ in pairs(TUNING.FSC_GHOST_BACK_LAYERED_PIGTAIL_CHARACTERS) do
-    AddPrefabPostInit(character, PlayerGhostPigtailsPostInit)
+  AddPrefabPostInit(character, PlayerGhostPigtailsPostInit)
 end
 
 ------------ Mime skins. ------------

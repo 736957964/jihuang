@@ -28,27 +28,27 @@ TUNING.STACK_SIZE_PELLET    = 250 -- 原版 120 (如种子、火药)
 local TARGET_TIERS = { 40, 80, 99, 120, 250 }
 
 local function ApproximateTier(val)
-    if not val or type(val) ~= "number" then return TARGET_TIERS[2] end
-    for _, tier in ipairs(TARGET_TIERS) do
-        if val <= tier then
-            return tier
-        end
-    end
-    return TARGET_TIERS[#TARGET_TIERS]
+  if not val or type(val) ~= "number" then return TARGET_TIERS[2] end
+  for _, tier in ipairs(TARGET_TIERS) do
+      if val <= tier then
+          return tier
+      end
+  end
+  return TARGET_TIERS[#TARGET_TIERS]
 end
 
 AddPrefabPostInitAny(function(inst)
-    if not GLOBAL.TheWorld.ismastersim then return end
+  if not GLOBAL.TheWorld.ismastersim then return end
 
-    local stackable = inst.components.stackable
-    if stackable == nil then return end
+  local stackable = inst.components.stackable
+  if stackable == nil then return end
 
-    local current = stackable.maxsize
-    local target = ApproximateTier(current)
+  local current = stackable.maxsize
+  local target = ApproximateTier(current)
 
-    if target and target ~= current then
-        stackable.maxsize = target
-    end
+  if target and target ~= current then
+      stackable.maxsize = target
+  end
 end)
 ```
 
@@ -62,6 +62,7 @@ end)
 ### 变体演进：Personal Chesters (Mod 463740026)
 - **变体场景与切面**：收录来自工坊 Mod 463740026 (`Personal Chesters`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -82,6 +83,7 @@ end)
 ### 变体演进：Save Equipment Slots (Mod 1598084686)
 - **变体场景与切面**：收录来自工坊 Mod 1598084686 (`Save Equipment Slots`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -89,28 +91,29 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:inventory
 AddComponentPostInit("inventory", function(inventory)
-    if type(inventory.OnLoad) == "function" then
-      inventory.OnLoad = fn.Inventory_OnLoad(inventory.OnLoad)
-    end
+  if type(inventory.OnLoad) == "function" then
+    inventory.OnLoad = fn.Inventory_OnLoad(inventory.OnLoad)
+  end
 end)
 
-  AddClassPostConstruct("widgets/inventorybar", fn.InitInventorybar)
+AddClassPostConstruct("widgets/inventorybar", fn.InitInventorybar)
 
-  AddClassPostConstruct("widgets/invslot", function(invslot)
-    fn.OnNextCycle(function()
-      fn.RenderSlotIcons(invslot.num)
+AddClassPostConstruct("widgets/invslot", function(invslot)
+  fn.OnNextCycle(function()
+    fn.RenderSlotIcons(invslot.num)
 end)
 end)
 
-  fn.InitPlayerHud()
-  fn.InitClasses()
-  fn.InitConfig()
+fn.InitPlayerHud()
+fn.InitClasses()
+fn.InitConfig()
 end
 ```
 
 ### 变体演进：Item Auto-Fuel Slots (Mod 2736043172)
 - **变体场景与切面**：收录来自工坊 Mod 2736043172 (`Item Auto-Fuel Slots`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -118,413 +121,414 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddPrefabPostInit:lantern
 AddPrefabPostInit("lantern", function(inst)
-        local function OnTick(inst)
-            if inst.components.container and inst.components.container:GetItemInSlot(1) then
-                local owner = inst.components.inventoryitem.owner
+      local function OnTick(inst)
+          if inst.components.container and inst.components.container:GetItemInSlot(1) then
+              local owner = inst.components.inventoryitem.owner
 
-                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
-                local currentfuel = inst.components.fueled.currentfuel
-                local maxfuel = inst.components.fueled.maxfuel
+              local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+              local currentfuel = inst.components.fueled.currentfuel
+              local maxfuel = inst.components.fueled.maxfuel
 
-                if (maxfuel - currentfuel) > fueltogive then
-                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
-                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
-                end
-            end
-        end
+              if (maxfuel - currentfuel) > fueltogive then
+                  local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                  inst.components.fueled:TakeFuelItem(fuelitem, owner)
+              end
+          end
+      end
 
-        local function OnEquip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Open(owner)
-            end
-        end
+      local function OnEquip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Open(owner)
+          end
+      end
 
-        local function OnUnequip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Close(owner)
-            end
-        end
-        
-        local containers = GLOBAL.require("containers")
-        params = containers.params
+      local function OnUnequip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Close(owner)
+          end
+      end
+      
+      local containers = GLOBAL.require("containers")
+      params = containers.params
 
-        params.lantern_inv =
-        {
-            widget =
-            {
-                slotpos =
-                {
-                    GLOBAL.Vector3(0,   32 + 4,  0),
-                },
-                animbank = "ui_cookpot_1x2",
-                animbuild = "ui_cookpot_1x2",
-                pos = GLOBAL.Vector3(0, 15, 0),
-            },
-            usespecificslotsforitems = true,
-            type = "hand_inv",
-        }
-        
-        function params.lantern_inv.itemtestfn(container, item, slot)
-            return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
-        end
-        
+      params.lantern_inv =
+      {
+          widget =
+          {
+              slotpos =
+              {
+                  GLOBAL.Vector3(0,   32 + 4,  0),
+              },
+              animbank = "ui_cookpot_1x2",
+              animbuild = "ui_cookpot_1x2",
+              pos = GLOBAL.Vector3(0, 15, 0),
+          },
+          usespecificslotsforitems = true,
+          type = "hand_inv",
+      }
+      
+      function params.lantern_inv.itemtestfn(container, item, slot)
+          return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
+      end
+      
 
-        if not GLOBAL.TheWorld.ismastersim then
-            inst.OnEntityReplicated = function(inst) 
-                inst.replica.container:WidgetSetup("lantern_inv") 
-            end
+      if not GLOBAL.TheWorld.ismastersim then
+          inst.OnEntityReplicated = function(inst) 
+              inst.replica.container:WidgetSetup("lantern_inv") 
+          end
 
-            return
-        end
+          return
+      end
 
-        inst:AddComponent("container")
-        inst.components.container:WidgetSetup("lantern_inv")
-        inst.components.container.canbeopened = false
+      inst:AddComponent("container")
+      inst.components.container:WidgetSetup("lantern_inv")
+      inst.components.container.canbeopened = false
 
-        if TUNING.AFS_PERISH ~= 1 then
-            inst:AddComponent("preserver")
-            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
-        end
+      if TUNING.AFS_PERISH ~= 1 then
+          inst:AddComponent("preserver")
+          inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+      end
 
-        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+      inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
 
-        inst:ListenForEvent("equipped", OnEquip)
-        inst:ListenForEvent("unequipped", OnUnequip)
-        inst:ListenForEvent("itemget", OnTick)
+      inst:ListenForEvent("equipped", OnEquip)
+      inst:ListenForEvent("unequipped", OnUnequip)
+      inst:ListenForEvent("itemget", OnTick)
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:minerhat
 AddPrefabPostInit("minerhat", function(inst)
-        local function OnTick(inst)
-            if inst.components.container and inst.components.container:GetItemInSlot(1) then
-                local owner = inst.components.inventoryitem.owner
+      local function OnTick(inst)
+          if inst.components.container and inst.components.container:GetItemInSlot(1) then
+              local owner = inst.components.inventoryitem.owner
 
-                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
-                local currentfuel = inst.components.fueled.currentfuel
-                local maxfuel = inst.components.fueled.maxfuel
+              local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+              local currentfuel = inst.components.fueled.currentfuel
+              local maxfuel = inst.components.fueled.maxfuel
 
-                if (maxfuel - currentfuel) > fueltogive then
-                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
-                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
-                end
-            end
-        end
+              if (maxfuel - currentfuel) > fueltogive then
+                  local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                  inst.components.fueled:TakeFuelItem(fuelitem, owner)
+              end
+          end
+      end
 
-        local function OnEquip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Open(owner)
-            end
-        end
+      local function OnEquip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Open(owner)
+          end
+      end
 
-        local function OnUnequip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Close(owner)
-            end
-        end
-        
-        local containers = GLOBAL.require("containers")
-        params = containers.params
+      local function OnUnequip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Close(owner)
+          end
+      end
+      
+      local containers = GLOBAL.require("containers")
+      params = containers.params
 
-        params.minerhat_inv =
-        {
-            widget =
-            {
-                slotpos =
-                {
-                    GLOBAL.Vector3(0,   32 + 4,  0),
-                },
-                animbank = "ui_cookpot_1x2",
-                animbuild = "ui_cookpot_1x2",
-                pos = GLOBAL.Vector3(0, 15, 0),
-            },
-            usespecificslotsforitems = true,
-            type = "head_inv",
-        }
-        
-        function params.minerhat_inv.itemtestfn(container, item, slot)
-            return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
-        end
-        
+      params.minerhat_inv =
+      {
+          widget =
+          {
+              slotpos =
+              {
+                  GLOBAL.Vector3(0,   32 + 4,  0),
+              },
+              animbank = "ui_cookpot_1x2",
+              animbuild = "ui_cookpot_1x2",
+              pos = GLOBAL.Vector3(0, 15, 0),
+          },
+          usespecificslotsforitems = true,
+          type = "head_inv",
+      }
+      
+      function params.minerhat_inv.itemtestfn(container, item, slot)
+          return item:HasTag("cavefuel") -- Tag added by this mod, not in vanilla.
+      end
+      
 
-        if not GLOBAL.TheWorld.ismastersim then
-            inst.OnEntityReplicated = function(inst) 
-                inst.replica.container:WidgetSetup("minerhat_inv") 
-            end
+      if not GLOBAL.TheWorld.ismastersim then
+          inst.OnEntityReplicated = function(inst) 
+              inst.replica.container:WidgetSetup("minerhat_inv") 
+          end
 
-            return
-        end
+          return
+      end
 
-        inst:AddComponent("container")
-        inst.components.container:WidgetSetup("minerhat_inv")
-        inst.components.container.canbeopened = false
+      inst:AddComponent("container")
+      inst.components.container:WidgetSetup("minerhat_inv")
+      inst.components.container.canbeopened = false
 
-        if TUNING.AFS_PERISH ~= 1 then
-            inst:AddComponent("preserver")
-            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
-        end
+      if TUNING.AFS_PERISH ~= 1 then
+          inst:AddComponent("preserver")
+          inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+      end
 
-        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+      inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
 
-        inst:ListenForEvent("equipped", OnEquip)
-        inst:ListenForEvent("unequipped", OnUnequip)
-        inst:ListenForEvent("itemget", OnTick)
+      inst:ListenForEvent("equipped", OnEquip)
+      inst:ListenForEvent("unequipped", OnUnequip)
+      inst:ListenForEvent("itemget", OnTick)
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:armorskeleton
 AddPrefabPostInit("armorskeleton", function(inst)
-        local function OnTick(inst)
-            if inst.components.container and inst.components.container:GetItemInSlot(1) then
-                local owner = inst.components.inventoryitem.owner
+      local function OnTick(inst)
+          if inst.components.container and inst.components.container:GetItemInSlot(1) then
+              local owner = inst.components.inventoryitem.owner
 
-                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
-                local currentfuel = inst.components.fueled.currentfuel
-                local maxfuel = inst.components.fueled.maxfuel
+              local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+              local currentfuel = inst.components.fueled.currentfuel
+              local maxfuel = inst.components.fueled.maxfuel
 
-                if (maxfuel - currentfuel) > fueltogive then
-                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
-                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
-                end
-            end
-        end
+              if (maxfuel - currentfuel) > fueltogive then
+                  local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                  inst.components.fueled:TakeFuelItem(fuelitem, owner)
+              end
+          end
+      end
 
-        local function OnEquip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Open(owner)
-            end
-        end
+      local function OnEquip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Open(owner)
+          end
+      end
 
-        local function OnUnequip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Close(owner)
-            end
-        end
-        
-        local containers = GLOBAL.require("containers")
-        params = containers.params
+      local function OnUnequip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Close(owner)
+          end
+      end
+      
+      local containers = GLOBAL.require("containers")
+      params = containers.params
 
-        params.armorskel_inv =
-        {
-            widget =
-            {
-                slotpos =
-                {
-                    GLOBAL.Vector3(0,   32 + 4,  0),
-                },
-                animbank = "ui_cookpot_1x2",
-                animbuild = "ui_cookpot_1x2",
-                pos = GLOBAL.Vector3(0, 15, 0),
-            },
-            usespecificslotsforitems = true,
-            type = "body_inv",
-        }
-        
-        function params.armorskel_inv.itemtestfn(container, item, slot)
-            return item:HasTag("nightmarefuel") -- Tag added by this mod, not in vanilla.
-        end
-        
+      params.armorskel_inv =
+      {
+          widget =
+          {
+              slotpos =
+              {
+                  GLOBAL.Vector3(0,   32 + 4,  0),
+              },
+              animbank = "ui_cookpot_1x2",
+              animbuild = "ui_cookpot_1x2",
+              pos = GLOBAL.Vector3(0, 15, 0),
+          },
+          usespecificslotsforitems = true,
+          type = "body_inv",
+      }
+      
+      function params.armorskel_inv.itemtestfn(container, item, slot)
+          return item:HasTag("nightmarefuel") -- Tag added by this mod, not in vanilla.
+      end
+      
 
-        if not GLOBAL.TheWorld.ismastersim then
-            inst.OnEntityReplicated = function(inst) 
-                inst.replica.container:WidgetSetup("armorskel_inv") 
-            end
+      if not GLOBAL.TheWorld.ismastersim then
+          inst.OnEntityReplicated = function(inst) 
+              inst.replica.container:WidgetSetup("armorskel_inv") 
+          end
 
-            return
-        end
+          return
+      end
 
-        inst:AddComponent("container")
-        inst.components.container:WidgetSetup("armorskel_inv")
-        inst.components.container.canbeopened = false
+      inst:AddComponent("container")
+      inst.components.container:WidgetSetup("armorskel_inv")
+      inst.components.container.canbeopened = false
 
-        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+      inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
 
-        inst:ListenForEvent("equipped", OnEquip)
-        inst:ListenForEvent("unequipped", OnUnequip)
-        inst:ListenForEvent("itemget", OnTick)
+      inst:ListenForEvent("equipped", OnEquip)
+      inst:ListenForEvent("unequipped", OnUnequip)
+      inst:ListenForEvent("itemget", OnTick)
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:molehat
 AddPrefabPostInit("molehat", function(inst)
-        local function OnTick(inst)
-            if inst.components.container and inst.components.container:GetItemInSlot(1) then
-                local owner = inst.components.inventoryitem.owner
+      local function OnTick(inst)
+          if inst.components.container and inst.components.container:GetItemInSlot(1) then
+              local owner = inst.components.inventoryitem.owner
 
-                local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
-                local currentfuel = inst.components.fueled.currentfuel
-                local maxfuel = inst.components.fueled.maxfuel
+              local fueltogive = inst.components.container:GetItemInSlot(1).components.fuel.fuelvalue
+              local currentfuel = inst.components.fueled.currentfuel
+              local maxfuel = inst.components.fueled.maxfuel
 
-                if (maxfuel - currentfuel) > fueltogive then
-                    local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
-                    inst.components.fueled:TakeFuelItem(fuelitem, owner)
-                end
-            end
-        end
+              if (maxfuel - currentfuel) > fueltogive then
+                  local fuelitem = inst.components.container:GetItemInSlot(1).components.stackable:Get(1)
+                  inst.components.fueled:TakeFuelItem(fuelitem, owner)
+              end
+          end
+      end
 
-        local function OnEquip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Open(owner)
-            end
-        end
+      local function OnEquip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Open(owner)
+          end
+      end
 
-        local function OnUnequip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Close(owner)
-            end
-        end
-        
-        local containers = GLOBAL.require("containers")
-        params = containers.params
+      local function OnUnequip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Close(owner)
+          end
+      end
+      
+      local containers = GLOBAL.require("containers")
+      params = containers.params
 
-        params.moggles_inv =
-        {
-            widget =
-            {
-                slotpos =
-                {
-                    GLOBAL.Vector3(0,   32 + 4,  0),
-                },
-                animbank = "ui_cookpot_1x2",
-                animbuild = "ui_cookpot_1x2",
-                pos = GLOBAL.Vector3(0, 15, 0),
-            },
-            usespecificslotsforitems = true,
-            type = "head_inv",
-        }
-        
-        function params.moggles_inv.itemtestfn(container, item, slot)
-            return item:HasTag("wormfuel") -- Tag added by this mod, not in vanilla.
-        end
-        
+      params.moggles_inv =
+      {
+          widget =
+          {
+              slotpos =
+              {
+                  GLOBAL.Vector3(0,   32 + 4,  0),
+              },
+              animbank = "ui_cookpot_1x2",
+              animbuild = "ui_cookpot_1x2",
+              pos = GLOBAL.Vector3(0, 15, 0),
+          },
+          usespecificslotsforitems = true,
+          type = "head_inv",
+      }
+      
+      function params.moggles_inv.itemtestfn(container, item, slot)
+          return item:HasTag("wormfuel") -- Tag added by this mod, not in vanilla.
+      end
+      
 
-        if not GLOBAL.TheWorld.ismastersim then
-            inst.OnEntityReplicated = function(inst) 
-                inst.replica.container:WidgetSetup("moggles_inv") 
-            end
+      if not GLOBAL.TheWorld.ismastersim then
+          inst.OnEntityReplicated = function(inst) 
+              inst.replica.container:WidgetSetup("moggles_inv") 
+          end
 
-            return
-        end
+          return
+      end
 
-        inst:AddComponent("container")
-        inst.components.container:WidgetSetup("moggles_inv")
-        inst.components.container.canbeopened = false
+      inst:AddComponent("container")
+      inst.components.container:WidgetSetup("moggles_inv")
+      inst.components.container.canbeopened = false
 
-        if TUNING.AFS_PERISH ~= 1 then
-            inst:AddComponent("preserver")
-            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
-         end
+      if TUNING.AFS_PERISH ~= 1 then
+          inst:AddComponent("preserver")
+          inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+       end
 
-        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+      inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
 
-        inst:ListenForEvent("equipped", OnEquip)
-        inst:ListenForEvent("unequipped", OnUnequip)
-        inst:ListenForEvent("itemget", OnTick)
+      inst:ListenForEvent("equipped", OnEquip)
+      inst:ListenForEvent("unequipped", OnUnequip)
+      inst:ListenForEvent("itemget", OnTick)
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:shieldofterror
 AddPrefabPostInit("shieldofterror", function(inst)
-        local function OnTick(inst) 
-            if inst.components.container and inst.components.container:GetItemInSlot(1) then
-                local owner = inst.components.inventoryitem.owner
-                local food = inst.components.container:GetItemInSlot(1)
+      local function OnTick(inst) 
+          if inst.components.container and inst.components.container:GetItemInSlot(1) then
+              local owner = inst.components.inventoryitem.owner
+              local food = inst.components.container:GetItemInSlot(1)
 
-                if not food.components.edible then
-                    return -- return if we aren't edible somehow
-                end
+              if not food.components.edible then
+                  return -- return if we aren't edible somehow
+              end
 
-                local armortogive = math.abs((food.components.edible.healthvalue * 4)) + math.abs((food.components.edible.hungervalue * 1.75))
-                local currentarmor = inst.components.armor.condition
-                local maxarmor = inst.components.armor.maxcondition
+              local armortogive = math.abs((food.components.edible.healthvalue * 4)) + math.abs((food.components.edible.hungervalue * 1.75))
+              local currentarmor = inst.components.armor.condition
+              local maxarmor = inst.components.armor.maxcondition
 
-                if (maxarmor - currentarmor) > armortogive then
-                    inst.components.eater:Eat(food, owner)
-                end
-            end
-        end
+              if (maxarmor - currentarmor) > armortogive then
+                  inst.components.eater:Eat(food, owner)
+              end
+          end
+      end
 
-        local function OnEquip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Open(owner)
-            end
-        end
+      local function OnEquip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Open(owner)
+          end
+      end
 
-        local function OnUnequip(inst, data)
-            local owner = data.owner
-            if inst.components.container ~= nil then
-                inst.components.container:Close(owner)
-            end
-        end
-        
-        local containers = GLOBAL.require("containers")
-        params = containers.params
+      local function OnUnequip(inst, data)
+          local owner = data.owner
+          if inst.components.container ~= nil then
+              inst.components.container:Close(owner)
+          end
+      end
+      
+      local containers = GLOBAL.require("containers")
+      params = containers.params
 
-        params.shieldofterror_inv =
-        {
-            widget =
-            {
-                slotpos =
-                {
-                    GLOBAL.Vector3(0,   32 + 4,  0),
-                },
-                animbank = "ui_cookpot_1x2",
-                animbuild = "ui_cookpot_1x2",
-                pos = GLOBAL.Vector3(0, 15, 0),
-            },
-            usespecificslotsforitems = true,
-            type = "hand_inv",
-        }
-        
-        function params.shieldofterror_inv.itemtestfn(container, item, slot)
-            for k, v in pairs(GLOBAL.FOODTYPE) do
-                if item:HasTag("edible_"..v) then
-                    return true
-                end
-            end
+      params.shieldofterror_inv =
+      {
+          widget =
+          {
+              slotpos =
+              {
+                  GLOBAL.Vector3(0,   32 + 4,  0),
+              },
+              animbank = "ui_cookpot_1x2",
+              animbuild = "ui_cookpot_1x2",
+              pos = GLOBAL.Vector3(0, 15, 0),
+          },
+          usespecificslotsforitems = true,
+          type = "hand_inv",
+      }
+      
+      function params.shieldofterror_inv.itemtestfn(container, item, slot)
+          for k, v in pairs(GLOBAL.FOODTYPE) do
+              if item:HasTag("edible_"..v) then
+                  return true
+              end
+          end
 
-            return false
-        end
-        
+          return false
+      end
+      
 
-        if not GLOBAL.TheWorld.ismastersim then
-            inst.OnEntityReplicated = function(inst) 
-                inst.replica.container:WidgetSetup("shieldofterror_inv") 
-            end
+      if not GLOBAL.TheWorld.ismastersim then
+          inst.OnEntityReplicated = function(inst) 
+              inst.replica.container:WidgetSetup("shieldofterror_inv") 
+          end
 
-            return
-        end
+          return
+      end
 
-        inst:AddComponent("container")
-        inst.components.container:WidgetSetup("shieldofterror_inv")
-        inst.components.container.canbeopened = false
+      inst:AddComponent("container")
+      inst.components.container:WidgetSetup("shieldofterror_inv")
+      inst.components.container.canbeopened = false
 
-        if TUNING.AFS_PERISH ~= 1 then
-            inst:AddComponent("preserver")
-            inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
-        end
+      if TUNING.AFS_PERISH ~= 1 then
+          inst:AddComponent("preserver")
+          inst.components.preserver:SetPerishRateMultiplier(TUNING.AFS_PERISH)
+      end
 
-        inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
+      inst.tick = inst:DoPeriodicTask(1/TUNING.AFS_RATE, OnTick)
 
-        inst:ListenForEvent("equipped", OnEquip)
-        inst:ListenForEvent("unequipped", OnUnequip)
-        inst:ListenForEvent("itemget", OnTick)
-        inst:ListenForEvent("armordamaged", OnTick)
+      inst:ListenForEvent("equipped", OnEquip)
+      inst:ListenForEvent("unequipped", OnUnequip)
+      inst:ListenForEvent("itemget", OnTick)
+      inst:ListenForEvent("armordamaged", OnTick)
 end)
 ```
 
 ### 变体演进：25 / 46 Inventory Slots (Mod 3710538435)
 - **变体场景与切面**：收录来自工坊 Mod 3710538435 (`25 / 46 Inventory Slots`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -542,27 +546,27 @@ local INTERSEP = 15
 --------------------------------------------------
 
 local function BuildCenteredRowSlotPositions(slotpos, slots, y, spacing)
-    if slotpos == nil or slots == nil then
-        return
-    end
+  if slotpos == nil or slots == nil then
+      return
+  end
 
-    local count = #slots
-    if count <= 0 then
-        return
-    end
+  local count = #slots
+  if count <= 0 then
+      return
+  end
 
-    local start_x = -((count - 1) * spacing) * 0.5
-    for index, slot in ipairs(slots) do
-        slotpos[slot] = Vector3(start_x + (index - 1) * spacing, y, 0)
-    end
+  local start_x = -((count - 1) * spacing) * 0.5
+  for index, slot in ipairs(slots) do
+      slotpos[slot] = Vector3(start_x + (index - 1) * spacing, y, 0)
+  end
 end
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:beefalo
 AddPrefabPostInit("beefalo", function(inst)
-    if _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
-        _G.rawget(_G, "TIDY2546_BEEF_BELL_GUARD"):InstallBeefaloPrefabPatch(inst)
-    end
+  if _G.TheWorld ~= nil and _G.TheWorld.ismastersim then
+      _G.rawget(_G, "TIDY2546_BEEF_BELL_GUARD"):InstallBeefaloPrefabPatch(inst)
+  end
 end)
 
 -- ----------------------------------------------------------------------------
@@ -576,7 +580,7 @@ local WX78_STACKSIZE_MODULE_PREFAB = "wx78module_stacksize"
 local WX78_STACKSIZE_CONTAINER_PREFAB = "wx78_inventorycontainer"
 
 local function IsWX78StacksizeContainer(item)
-    return item ~= nil and item.prefab == WX78_STACKSIZE_CONTAINER_PREFAB
+  return item ~= nil and item.prefab == WX78_STACKSIZE_CONTAINER_PREFAB
 end
 
 -- ----------------------------------------------------------------------------
@@ -584,109 +588,110 @@ end
 AddPrefabPostInit("wx78_possessedbody", InstallWX78StacksizeContainerSync)
 
 AddComponentPostInit("upgrademoduleowner", function(self)
-    local PushModule_base = self.PushModule
-    if PushModule_base ~= nil and self._tidy_wx78_pushmodule_wrapped ~= true then
-        self._tidy_wx78_pushmodule_wrapped = true
-        self.PushModule = function(owner_self, ...)
-            local result = PushModule_base(owner_self, ...)
-            if owner_self.inst ~= nil
-                and owner_self.is_swapping ~= true
-                and owner_self.inst._backupbody_transferring ~= true then
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
-            end
-            return result
-        end
-    end
+  local PushModule_base = self.PushModule
+  if PushModule_base ~= nil and self._tidy_wx78_pushmodule_wrapped ~= true then
+      self._tidy_wx78_pushmodule_wrapped = true
+      self.PushModule = function(owner_self, ...)
+          local result = PushModule_base(owner_self, ...)
+          if owner_self.inst ~= nil
+              and owner_self.is_swapping ~= true
+              and owner_self.inst._backupbody_transferring ~= true then
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+          end
+          return result
+      end
+  end
 
-    local PopModule_base = self.PopModule
-    if PopModule_base ~= nil and self._tidy_wx78_popmodule_wrapped ~= true then
-        self._tidy_wx78_popmodule_wrapped = true
-        self.PopModule = function(owner_self, ...)
-            local result = PopModule_base(owner_self, ...)
-            if owner_self.inst ~= nil
-                and owner_self.is_swapping ~= true
-                and owner_self.inst._backupbody_transferring ~= true then
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
-            end
-            return result
-        end
-    end
+  local PopModule_base = self.PopModule
+  if PopModule_base ~= nil and self._tidy_wx78_popmodule_wrapped ~= true then
+      self._tidy_wx78_popmodule_wrapped = true
+      self.PopModule = function(owner_self, ...)
+          local result = PopModule_base(owner_self, ...)
+          if owner_self.inst ~= nil
+              and owner_self.is_swapping ~= true
+              and owner_self.inst._backupbody_transferring ~= true then
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+          end
+          return result
+      end
+  end
 
-    local SwapUpgradeModules_base = self.SwapUpgradeModules
-    if SwapUpgradeModules_base ~= nil and self._tidy_wx78_swapmodules_wrapped ~= true then
-        self._tidy_wx78_swapmodules_wrapped = true
-        self.SwapUpgradeModules = function(owner_self, other_owner, ...)
-            local result = SwapUpgradeModules_base(owner_self, other_owner, ...)
-            if owner_self.inst ~= nil then
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
-            end
-            if other_owner ~= nil and other_owner.inst ~= nil then
-                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0)
-                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0.2)
-            end
-            return result
-        end
-    end
+  local SwapUpgradeModules_base = self.SwapUpgradeModules
+  if SwapUpgradeModules_base ~= nil and self._tidy_wx78_swapmodules_wrapped ~= true then
+      self._tidy_wx78_swapmodules_wrapped = true
+      self.SwapUpgradeModules = function(owner_self, other_owner, ...)
+          local result = SwapUpgradeModules_base(owner_self, other_owner, ...)
+          if owner_self.inst ~= nil then
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+          end
+          if other_owner ~= nil and other_owner.inst ~= nil then
+              ScheduleWX78StacksizeContainerSync(other_owner.inst, 0)
+              ScheduleWX78StacksizeContainerSync(other_owner.inst, 0.2)
+          end
+          return result
+      end
+  end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddComponentPostInit:upgrademoduleowner
 AddComponentPostInit("upgrademoduleowner", function(self)
-    local PushModule_base = self.PushModule
-    if PushModule_base ~= nil and self._tidy_wx78_pushmodule_wrapped ~= true then
-        self._tidy_wx78_pushmodule_wrapped = true
-        self.PushModule = function(owner_self, ...)
-            local result = PushModule_base(owner_self, ...)
-            if owner_self.inst ~= nil
-                and owner_self.is_swapping ~= true
-                and owner_self.inst._backupbody_transferring ~= true then
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
-            end
-            return result
-        end
-    end
+  local PushModule_base = self.PushModule
+  if PushModule_base ~= nil and self._tidy_wx78_pushmodule_wrapped ~= true then
+      self._tidy_wx78_pushmodule_wrapped = true
+      self.PushModule = function(owner_self, ...)
+          local result = PushModule_base(owner_self, ...)
+          if owner_self.inst ~= nil
+              and owner_self.is_swapping ~= true
+              and owner_self.inst._backupbody_transferring ~= true then
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+          end
+          return result
+      end
+  end
 
-    local PopModule_base = self.PopModule
-    if PopModule_base ~= nil and self._tidy_wx78_popmodule_wrapped ~= true then
-        self._tidy_wx78_popmodule_wrapped = true
-        self.PopModule = function(owner_self, ...)
-            local result = PopModule_base(owner_self, ...)
-            if owner_self.inst ~= nil
-                and owner_self.is_swapping ~= true
-                and owner_self.inst._backupbody_transferring ~= true then
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
-            end
-            return result
-        end
-    end
+  local PopModule_base = self.PopModule
+  if PopModule_base ~= nil and self._tidy_wx78_popmodule_wrapped ~= true then
+      self._tidy_wx78_popmodule_wrapped = true
+      self.PopModule = function(owner_self, ...)
+          local result = PopModule_base(owner_self, ...)
+          if owner_self.inst ~= nil
+              and owner_self.is_swapping ~= true
+              and owner_self.inst._backupbody_transferring ~= true then
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+          end
+          return result
+      end
+  end
 
-    local SwapUpgradeModules_base = self.SwapUpgradeModules
-    if SwapUpgradeModules_base ~= nil and self._tidy_wx78_swapmodules_wrapped ~= true then
-        self._tidy_wx78_swapmodules_wrapped = true
-        self.SwapUpgradeModules = function(owner_self, other_owner, ...)
-            local result = SwapUpgradeModules_base(owner_self, other_owner, ...)
-            if owner_self.inst ~= nil then
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
-                ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
-            end
-            if other_owner ~= nil and other_owner.inst ~= nil then
-                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0)
-                ScheduleWX78StacksizeContainerSync(other_owner.inst, 0.2)
-            end
-            return result
-        end
-    end
+  local SwapUpgradeModules_base = self.SwapUpgradeModules
+  if SwapUpgradeModules_base ~= nil and self._tidy_wx78_swapmodules_wrapped ~= true then
+      self._tidy_wx78_swapmodules_wrapped = true
+      self.SwapUpgradeModules = function(owner_self, other_owner, ...)
+          local result = SwapUpgradeModules_base(owner_self, other_owner, ...)
+          if owner_self.inst ~= nil then
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0)
+              ScheduleWX78StacksizeContainerSync(owner_self.inst, 0.2)
+          end
+          if other_owner ~= nil and other_owner.inst ~= nil then
+              ScheduleWX78StacksizeContainerSync(other_owner.inst, 0)
+              ScheduleWX78StacksizeContainerSync(other_owner.inst, 0.2)
+          end
+          return result
+      end
+  end
 end)
 ```
 
 ### 变体演进：Beefalo Storage (Mod 2519350133)
 - **变体场景与切面**：收录来自工坊 Mod 2519350133 (`Beefalo Storage`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- ============================================================================
@@ -781,20 +786,20 @@ local cant_eat =
 }
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
-        for k, v in pairs(GLOBAL.FOODTYPE) do
+      for k, v in pairs(GLOBAL.FOODTYPE) do
 			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
-            end
-        end
+          end
+      end
 		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
 			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
 		end
 		for k, v in pairs(cant_eat) do
 			if not right and inst.prefab == v and target:HasTag("beefalo") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
-            end
-        end
-    end
+          end
+      end
+  end
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:healingsalve
@@ -877,20 +882,20 @@ local cant_eat =
 }
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
-        for k, v in pairs(GLOBAL.FOODTYPE) do
+      for k, v in pairs(GLOBAL.FOODTYPE) do
 			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
-            end
-        end
+          end
+      end
 		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
 			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
 		end
 		for k, v in pairs(cant_eat) do
 			if not right and inst.prefab == v and target:HasTag("beefalo") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
-            end
-        end
-    end
+          end
+      end
+  end
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:mosquitosack
@@ -972,20 +977,20 @@ local cant_eat =
 }
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
-        for k, v in pairs(GLOBAL.FOODTYPE) do
+      for k, v in pairs(GLOBAL.FOODTYPE) do
 			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
-            end
-        end
+          end
+      end
 		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
 			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
 		end
 		for k, v in pairs(cant_eat) do
 			if not right and inst.prefab == v and target:HasTag("beefalo") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
-            end
-        end
-    end
+          end
+      end
+  end
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:spidergland
@@ -1066,31 +1071,30 @@ local cant_eat =
 }
 AddComponentAction("USEITEM", "inventoryitem", function(inst, doer, target, actions, right) -- Add click action if player holding a beefalo foodtype
 	if target.prefab == "beefalo" then
-        for k, v in pairs(GLOBAL.FOODTYPE) do
+      for k, v in pairs(GLOBAL.FOODTYPE) do
 			if right and inst:HasTag("edible_"..v) and target:HasTag(v.."_eater") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- remove store action in right click
-            end
-        end
+          end
+      end
 		if right and inst:HasTag("healer") and target:HasTag("beefalo") then
 			GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.STORE) -- 
 		end
 		for k, v in pairs(cant_eat) do
 			if not right and inst.prefab == v and target:HasTag("beefalo") then
 				GLOBAL.RemoveByValue(actions, GLOBAL.ACTIONS.GIVE) -- remove give action in left click
-            end
-        end
-    end
+          end
+      end
+  end
 end
 end
 end
 end
 ```
 
-
-
 ### 变体演进：Concealed Crown (Mod 2585253003)
 - **变体场景与切面**：收录来自工坊 Mod 2585253003 (`Concealed Crown`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2585253003)
@@ -1122,11 +1126,10 @@ AddPrefabPostInit("inventory_classified", function(inst)
 end)
 ```
 
-
-
 ### 变体演进：Fix Multiplayer (Mod 463718554)
 - **变体场景与切面**：收录来自工坊 Mod 463718554 (`Fix Multiplayer`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 463718554)
@@ -1181,11 +1184,10 @@ AddComponentPostInit("pollinator", function(inst)
 end)
 ```
 
-
-
 ### 变体演进：Casino Mode (Craftable Slot Machines) (Mod 2656551380)
 - **变体场景与切面**：收录来自工坊 Mod 2656551380 (`Casino Mode (Craftable Slot Machines)`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 2656551380)
@@ -1204,7 +1206,6 @@ if _silence == nil then
 	print(_version,modinfo.name) --Show current version of lib
 end
 
-
 --[[
 --  ,  , ,            -.
 if mods.lib then
@@ -1216,8 +1217,8 @@ end
 ,     :
 	1)   .    - .
 	2)  N- .           ,   .
-    old_lib.       .   ,  .
-  ,   ( ) .   .
+  old_lib.       .   ,  .
+,   ( ) .   .
 --]]
 local old_lib = mods.lib or {} -- ,    nil
 
@@ -1240,7 +1241,6 @@ end
 -- 切面钩子：AddPrefabPostInit:forest
 --AddPrefabPostInit("forest",world_init)
 --    , ..   forest .
-
 
 -- .    -  -,   ,    - .
 local EmptyFunction = function() end
@@ -1274,22 +1274,22 @@ AddComponentPostInit("deciduoustreeupdater", DeciduousPoison)
 
 --Werepigs--
 local WerepigDropper = function(inst)
-    local IsWerepig = inst.components.werebeast
-    if IsWerepig then 
-        local onsetwerefn = IsWerepig.onsetwerefn
-        local SetWerePig2 = function(inst)
-            if onsetwerefn then 
+  local IsWerepig = inst.components.werebeast
+  if IsWerepig then 
+      local onsetwerefn = IsWerepig.onsetwerefn
+      local SetWerePig2 = function(inst)
+          if onsetwerefn then 
 				onsetwerefn(inst) 
 			end
-            if inst:HasTag("werepig") and not inst:HasTag("moonbeast") then 
+          if inst:HasTag("werepig") and not inst:HasTag("moonbeast") then 
 				inst.dubchance = MultMobs3
 				inst:AddTag("vanilla_entityDB")
 				--inst:DoTaskInTime(0, DubloonDropRate)	(Since the first function already runs this)
 				inst:DoTaskInTime(0, DubloonDrop)
-            end
-        end
-        IsWerepig:SetOnWereFn(SetWerePig2)
-    end
+          end
+      end
+      IsWerepig:SetOnWereFn(SetWerePig2)
+  end
 end
 
 -- ----------------------------------------------------------------------------
@@ -1305,11 +1305,10 @@ AddPrefabPostInit("bunnyman", function(inst)
 end)
 ```
 
-
-
 ### 变体演进：45 Inventory Slots with Equip Inventory (Mod 3789505149)
 - **变体场景与切面**：收录来自工坊 Mod 3789505149 (`45 Inventory Slots with Equip Inventory`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3789505149)
@@ -1321,64 +1320,63 @@ AddPrefabPostInit("inventory_classified", addItemSlotNetvarsInInventory)
 
 -- Parche para evitar el crash con el ataque del Bishop / IsInsulated
 AddComponentPostInit("inventory", function(self)
-    local old_IsInsulated = self.IsInsulated
-    function self:IsInsulated(...)
-        if self.equipslots then
-            for k, v in pairs(self.equipslots) do
-                if v and v:HasTag("insulated") then
-                    return true
-                end
-            end
-            return false
-        end
-        if old_IsInsulated then
-            return old_IsInsulated(self, ...)
-        end
-        return false
-    end
+  local old_IsInsulated = self.IsInsulated
+  function self:IsInsulated(...)
+      if self.equipslots then
+          for k, v in pairs(self.equipslots) do
+              if v and v:HasTag("insulated") then
+                  return true
+              end
+          end
+          return false
+      end
+      if old_IsInsulated then
+          return old_IsInsulated(self, ...)
+      end
+      return false
+  end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddComponentPostInit:inventory
 AddComponentPostInit("inventory", function(self)
-    local old_IsInsulated = self.IsInsulated
-    function self:IsInsulated(...)
-        if self.equipslots then
-            for k, v in pairs(self.equipslots) do
-                if v and v:HasTag("insulated") then
-                    return true
-                end
-            end
-            return false
-        end
-        if old_IsInsulated then
-            return old_IsInsulated(self, ...)
-        end
-        return false
-    end
+  local old_IsInsulated = self.IsInsulated
+  function self:IsInsulated(...)
+      if self.equipslots then
+          for k, v in pairs(self.equipslots) do
+              if v and v:HasTag("insulated") then
+                  return true
+              end
+          end
+          return false
+      end
+      if old_IsInsulated then
+          return old_IsInsulated(self, ...)
+      end
+      return false
+  end
 end)
 
 -- ----------------------------------------------------------------------------
 -- 切面钩子：AddPrefabPostInit:backpack
 AddPrefabPostInit("backpack",
 function(inst)
-    if ENABLEBACKPACK == true then
-        if inst.components.inventoryitem then
-            inst.components.inventoryitem.cangoincontainer = true
-        end
-    else
-        if inst.components.inventoryitem then
-            inst.components.inventoryitem.cangoincontainer = false
-        end
-    end
+  if ENABLEBACKPACK == true then
+      if inst.components.inventoryitem then
+          inst.components.inventoryitem.cangoincontainer = true
+      end
+  else
+      if inst.components.inventoryitem then
+          inst.components.inventoryitem.cangoincontainer = false
+      end
+  end
 end )
 ```
-
-
 
 ### 变体演进：饿不死群补丁 (Mod 3788479075)
 - **变体场景与切面**：收录来自工坊 Mod 3788479075 (`饿不死群补丁`) 的生产级切面。
 - **核心切面代码**：
+
 ```lua
 -- ============================================================================
 -- 生产级架构复刻切面范式 (提取自 Mod 3788479075)
@@ -1387,15 +1385,16 @@ local GLOBAL = GLOBAL
 
 -- 切面钩子：AddComponentPostInit:container
 AddComponentPostInit("container", function(self)
-    local _GiveItem = self.GiveItem
+  local _GiveItem = self.GiveItem
 
-    function self:GiveItem(item, slot, src_pos, drop_on_fail)
-        if item == nil then
-            return false
-        end
+  function self:GiveItem(item, slot, src_pos, drop_on_fail)
+      if item == nil then
+          return false
+      end
 
-        return _GiveItem(self, item, slot, src_pos, drop_on_fail)
-    end
+      return _GiveItem(self, item, slot, src_pos, drop_on_fail)
+  end
 end)
 ```
+
 

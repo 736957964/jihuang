@@ -29,64 +29,64 @@
 -- ==============================================================================
 
 local states = {
-    State{
-        name = "roar",
-        tags = { "busy", "nosleep", "nofreeze", "epic", "jumping" },
+  State{
+      name = "roar",
+      tags = { "busy", "nosleep", "nofreeze", "epic", "jumping" },
 
-        onenter = function(inst)
-            inst.Physics:Stop()
-            inst.AnimState:PlayAnimation("roar")
-            inst.SoundEmitter:PlaySound("dontstarve/creatures/bearger/taunt")
-            
-            ShakeAllCameras(CAMERASHAKE.FULL, 0.7, 0.02, 0.5, inst, 40)
-        end,
+      onenter = function(inst)
+          inst.Physics:Stop()
+          inst.AnimState:PlayAnimation("roar")
+          inst.SoundEmitter:PlaySound("dontstarve/creatures/bearger/taunt")
+          
+          ShakeAllCameras(CAMERASHAKE.FULL, 0.7, 0.02, 0.5, inst, 40)
+      end,
 
-        timeline = {
-            TimeEvent(10 * FRAMES, function(inst)
-                if inst.DoGroundPound then
-                    inst:DoGroundPound()
-                end
-            end),
-        },
+      timeline = {
+          TimeEvent(10 * FRAMES, function(inst)
+              if inst.DoGroundPound then
+                  inst:DoGroundPound()
+              end
+          end),
+      },
 
-        events = {
-            EventHandler("animover", function(inst)
-                inst.sg:GoToState("idle")
-            end),
-        },
-    },
+      events = {
+          EventHandler("animover", function(inst)
+              inst.sg:GoToState("idle")
+          end),
+      },
+  },
 }
 
 -- ==============================================================================
 -- ==============================================================================
 
 local function OnHealthDelta(inst, data)
-    if not inst.components.health:IsDead() then
-        local percent = data.newpercent
-        if percent < 0.5 and not inst.is_enraged then
-            inst.is_enraged = true
-            inst.sg:GoToState("roar")
-            inst.components.combat:SetDefaultDamage(150)
-            inst.components.combat:SetAttackPeriod(2.0)
-            inst.components.locomotor.runspeed = 10
-        end
-    end
+  if not inst.components.health:IsDead() then
+      local percent = data.newpercent
+      if percent < 0.5 and not inst.is_enraged then
+          inst.is_enraged = true
+          inst.sg:GoToState("roar")
+          inst.components.combat:SetDefaultDamage(150)
+          inst.components.combat:SetAttackPeriod(2.0)
+          inst.components.locomotor.runspeed = 10
+      end
+  end
 end
 
 local function RetargetFn(inst)
-    return FindEntity(
-        inst,
-        15,
-        function(guy)
-            return inst.components.combat:CanTarget(guy) and not guy:HasTag("playerghost")
-        end,
-        { "_combat", "character" },
-        { "INLIMBO", "FX" }
-    )
+  return FindEntity(
+      inst,
+      15,
+      function(guy)
+          return inst.components.combat:CanTarget(guy) and not guy:HasTag("playerghost")
+      end,
+      { "_combat", "character" },
+      { "INLIMBO", "FX" }
+  )
 end
 
 local function KeepTargetFn(inst, target)
-    return inst.components.combat:CanTarget(target) and inst:GetDistanceSqToInst(target) < 900
+  return inst.components.combat:CanTarget(target) and inst:GetDistanceSqToInst(target) < 900
 end
 ```
 

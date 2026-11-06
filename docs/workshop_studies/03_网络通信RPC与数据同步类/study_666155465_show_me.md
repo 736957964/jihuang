@@ -30,15 +30,17 @@
 - 原版饥荒客户端鼠标滑过实体时，由 `widgets/hoverer` 组件调用 `self.text:SetString(str)` 渲染提示。
 - **Show Me 切面**：
   在客户端 Hook `Hoverer.OnUpdate` 或拦截 `self.text.SetString`：
-  ```lua
-  local old_SetString = self.text.SetString
-  self.text.SetString = function(self, str, ...)
-      -- 探测当前是否有待展示的 ShowMe 压缩报文
-      -- 命中时将解码后的属性列表无缝拼接到名字下方
-      local enhanced_str = DecodeAndAppendInfo(str)
-      return old_SetString(self, enhanced_str, ...)
-  end
-  ```
+
+```lua
+local old_SetString = self.text.SetString
+self.text.SetString = function(self, str, ...)
+    -- 探测当前是否有待展示的 ShowMe 压缩报文
+    -- 命中时将解码后的属性列表无缝拼接到名字下方
+    local enhanced_str = DecodeAndAppendInfo(str)
+    return old_SetString(self, enhanced_str, ...)
+end
+```
+
   实现了客户端无论是否安装界面美化 Mod，均能零冲突浮动显示实体数据。
 
 ### 3. 全局生态互斥与智能退让（Mod Conflict Sniffing）

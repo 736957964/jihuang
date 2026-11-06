@@ -14,11 +14,13 @@
 
 ### 1. 纯客户端安全隔离（Client-Only Architecture）
 - **根目录防御**：
-  ```lua
-  client_only_mod = true
-  all_clients_require_mod = false
-  if DST and GLOBAL.TheNet:IsDedicated() then return end
-  ```
+
+```lua
+client_only_mod = true
+all_clients_require_mod = false
+if DST and GLOBAL.TheNet:IsDedicated() then return end
+```
+
   在专用服务端运行时直接返回，杜绝污染服务端实体与状态机。
 - **与服务端权威位置的协调**：
   饥荒联机版的实体建造依赖客户端发送建造 RPC（包含世界坐标点）。`Geometric Placement` 在客户端本地接管了 `Placer:OnUpdate`，将鼠标光标的浮点坐标吸附为计算后的离散几何网格坐标，并将 `self.inst.Transform:SetPosition(pt:Get())`。当玩家点击时，原版 `playercontroller` 从 `Placer` 实体提取的世界坐标本身就已经是吸附后的精确网格点，从而以零网络入侵的方式达成了完美的建造吸附！
@@ -35,11 +37,14 @@ MOD 支持多种几何网格（正方形 Square、菱形 Diamond、平顶六边�
 -- [ col_offset.x   row_offset.x ] [ bgx ] = [ x ]
 -- [ col_offset.z   row_offset.z ] [ bgz ]   [ z ]
 ```
+
 通过乘以旋转矩阵：
+
 ```lua
 [ cos(th) -sin(th) ] [ a b ]   [ a*cos(th) - c*sin(th), b*cos(th) - d*sin(th) ]
 [ sin(th)  cos(th) ] [ c d ] = [ a*sin(th) + c*cos(th), b*sin(th) - d*cos(th) ]
 ```
+
 从而以极低的 CPU 开销，任意在世界中生成 45°、90°、135° 的六边形和菱形对称点阵。
 
 ### 2. 增量网格移动与对象池（Incremental Grid Updates & Entity Pooling）

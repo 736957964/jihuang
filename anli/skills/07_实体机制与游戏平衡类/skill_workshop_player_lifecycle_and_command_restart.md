@@ -13,9 +13,11 @@
 2. **官方安全注销管道（ms_playerdespawnanddelete）**：
    绝不调用裸 `Remove()`，必须将注销委托给世界状态管理器：
    
+
 ```lua
-   TheWorld:PushEvent("ms_playerdespawnanddelete", player)
+ TheWorld:PushEvent("ms_playerdespawnanddelete", player)
 ```
+
    触发官方完整的注销链：卸载容器 -> 触发掉落回执 -> 保存全局元数据 -> 优雅通知客机返回选人界面。
 
 ## 三、标准化生产级代码范式（可直接移植）
@@ -30,39 +32,39 @@ local TheWorld = GLOBAL.TheWorld
 local COMMANDS = {}
 
 function RegisterChatCommand(cmd, handler)
-    COMMANDS[string.lower(cmd)] = handler
+  COMMANDS[string.lower(cmd)] = handler
 end
 
 local Old_Networking_Say = GLOBAL.Networking_Say
 GLOBAL.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
-    if message and (string.sub(message, 1, 1) == "#" or string.sub(message, 1, 1) == "/") then
-        local raw_cmd = string.sub(message, 2)
-        local args = {}
-        for word in string.gmatch(raw_cmd, "%S+") do
-            table.insert(args, word)
-        end
-        local cmd_name = string.lower(args[1] or "")
-        
-        if COMMANDS[cmd_name] then
-            local player = GLOBAL.TheWorld.net and GLOBAL.TheWorld.net:GetPlayerTableByUserId(userid)
-            if player and player.inst then
-                table.remove(args, 1)
-                COMMANDS[cmd_name](player.inst, args)
-                return
-            end
-        end
-    end
-    return Old_Networking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
+  if message and (string.sub(message, 1, 1) == "#" or string.sub(message, 1, 1) == "/") then
+      local raw_cmd = string.sub(message, 2)
+      local args = {}
+      for word in string.gmatch(raw_cmd, "%S+") do
+          table.insert(args, word)
+      end
+      local cmd_name = string.lower(args[1] or "")
+      
+      if COMMANDS[cmd_name] then
+          local player = GLOBAL.TheWorld.net and GLOBAL.TheWorld.net:GetPlayerTableByUserId(userid)
+          if player and player.inst then
+              table.remove(args, 1)
+              COMMANDS[cmd_name](player.inst, args)
+              return
+          end
+      end
+  end
+  return Old_Networking_Say(guid, userid, name, prefab, message, colour, whisper, isemote, user_vanity)
 end
 
 RegisterChatCommand("restart", function(player, args)
-    if not player:IsValid() then return end
-    
-    if player.components.inventory then
-        player.components.inventory:DropEverything(true)
-    end
-    
-    TheWorld:PushEvent("ms_playerdespawnanddelete", player)
+  if not player:IsValid() then return end
+  
+  if player.components.inventory then
+      player.components.inventory:DropEverything(true)
+  end
+  
+  TheWorld:PushEvent("ms_playerdespawnanddelete", player)
 end)
 ```
 

@@ -23142,8 +23142,44 @@
       "category": "02_动作控制与状态机StateGraph类",
       "studied_at": "2026-11-06 16:31:26",
       "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3728947540",
+      "name": "ZC 鞍变背包+特殊鞍具 (zc saddle bag)",
+      "author": "zc (集成 Special Saddles by howieshen/pinkmollies/ryuu)",
+      "version": "3.0.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 16:36:38",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3728574765",
+      "name": "永恒新界经济学模式",
+      "author": "Doughnut",
+      "version": "1.1.32",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 16:39:20",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3728367272",
+      "name": "自用补丁",
+      "author": "Dream丨G",
+      "version": "1.6.68",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 16:41:08",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3728363423",
+      "name": "Mod 3728363423",
+      "author": "Wendigail",
+      "version": "1.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 16:43:03",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-06 16:31:26"
+  "lastUpdated": "2026-11-06 16:43:05"
 }

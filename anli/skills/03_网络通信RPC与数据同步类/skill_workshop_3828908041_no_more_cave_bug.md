@@ -17,25 +17,25 @@
 local GLOBAL = GLOBAL
 
 AddComponentPostInit("playerspawner", function(self, inst)
-    local Shard = _G.getmetatable(_G.TheShard).__index
-    StartMigration = Shard.StartMigration
-    Shard.StartMigration = QueueMigration
+  local Shard = _G.getmetatable(_G.TheShard).__index
+  StartMigration = Shard.StartMigration
+  Shard.StartMigration = QueueMigration
 
-    inst:ListenForEvent("ms_clientauthenticationcomplete", function(world, data)
-        authed[data.userid] = true
-        NotifyArrived(data.userid)
+  inst:ListenForEvent("ms_clientauthenticationcomplete", function(world, data)
+      authed[data.userid] = true
+      NotifyArrived(data.userid)
 end)
 
-    inst:ListenForEvent("ms_clientdisconnected", function(world, data)
-        authed[data.userid] = nil
-        gated[data.userid] = nil
+  inst:ListenForEvent("ms_clientdisconnected", function(world, data)
+      authed[data.userid] = nil
+      gated[data.userid] = nil
 end)
 
-    if _G.Shard_IsMaster() then
-        inst:ListenForEvent("ms_playerjoined", function(world, player)
-            Arrived(player.userid, MASTER, true)
+  if _G.Shard_IsMaster() then
+      inst:ListenForEvent("ms_playerjoined", function(world, player)
+          Arrived(player.userid, MASTER, true)
 end)
-    end
+  end
 end)
 ```
 

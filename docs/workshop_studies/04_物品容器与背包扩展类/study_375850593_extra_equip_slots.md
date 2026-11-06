@@ -23,56 +23,64 @@
 
 ### 1. 全局 `EQUIPSLOTS` 拓扑与 ID 映射数组重构
 - 饥荒底层的网络实体要求每一个装备槽位必须对应一个严格的正整数 ID（1~N）：
-  ```lua
-  GLOBAL.EQUIPSLOTS = {
-      HANDS = "hands",
-      HEAD = "head",
-      BODY = "body",
-      BACK = "back",   -- 新增背包槽
-      NECK = "neck",   -- 新增护符槽
-  }
-  GLOBAL.EQUIPSLOT_IDS = {}
-  local slot = 0
-  for k, v in pairs(GLOBAL.EQUIPSLOTS) do
-      slot = slot + 1
-      GLOBAL.EQUIPSLOT_IDS[v] = slot
-  end
-  ```
+
+```lua
+GLOBAL.EQUIPSLOTS = {
+    HANDS = "hands",
+    HEAD = "head",
+    BODY = "body",
+    BACK = "back",   -- 新增背包槽
+    NECK = "neck",   -- 新增护符槽
+}
+GLOBAL.EQUIPSLOT_IDS = {}
+local slot = 0
+for k, v in pairs(GLOBAL.EQUIPSLOTS) do
+    slot = slot + 1
+    GLOBAL.EQUIPSLOT_IDS[v] = slot
+end
+```
+
   在启动初期即重建 `EQUIPSLOT_IDS` 映射表，使新槽位能够无缝被引擎 C++ 序列化器识别。
 
 ### 2. `inventory_classified` 客户端物品统计与溢出容器穿透（Overflow Injection）
 - **痛点**：玩家打开制作栏（Crafting Menu）制造火把或长矛时，客机需要预先计算身上是否有足够的草和枝条。原版官方只把 `BODY` 槽位判定为背包。
 - **解法**：在 `inventory_classified` 注入自定义溢出容器嗅探：
-  ```lua
-  function GetOverflowContainer(inst)
-      local item = inst.GetEquippedItem(inst, GLOBAL.EQUIPSLOTS.BACK)
-      return item ~= nil and item.replica.container or nil
-  end
-  ```
+
+```lua
+function GetOverflowContainer(inst)
+    local item = inst.GetEquippedItem(inst, GLOBAL.EQUIPSLOTS.BACK)
+    return item ~= nil and item.replica.container or nil
+end
+```
+
   并在 `Has(inst, prefab, amount)` 中显式递归查询 `overflow:Has(prefab, amount)`，保证了客机在背包塞满材料时，制作栏依然能秒亮合成图标，预测零延迟！
 
 ### 3. `widgets/inventorybar` 动态伸缩与自检按钮动态居中
 - 原版物品栏底图（`bg` 与 `bgcover`）是固定宽度的。加入两个新槽位后，必须动态拉伸底板：
-  ```lua
-  self.bg:SetScale(1.35, 1, 1.25)
-  self.bgcover:SetScale(1.35, 1, 1.25)
-  ```
+
+```lua
+self.bg:SetScale(1.35, 1, 1.25)
+self.bgcover:SetScale(1.35, 1, 1.25)
+```
+
   同时动态重算原生自检按钮（Inspect Button）的世界绝对 X 轴偏移，保证在各种分辨率下，自检放大镜精准居于新增槽位的右侧，严丝合缝。
 
 ### 4. 颈部复活护符监听与死亡状态机劫持（Resurrectable Hook）
 - 原版 `resurrectable` 组件在死亡瞬间只检索 `BODY` 槽位是否有重生护符。
 - MOD 在 `resurrectable` 注入代理：
-  ```lua
-  self.CanResurrect = function(self)
-      if IsServer and self.inst.components.inventory then
-          local item = self.inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.NECK)
-          if item and item.prefab == "amulet" then
-              return true
-          end
-      end
-      return original_CanResurrect(self)
-  end
-  ```
+
+```lua
+self.CanResurrect = function(self)
+    if IsServer and self.inst.components.inventory then
+        local item = self.inst.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.NECK)
+        if item and item.prefab == "amulet" then
+            return true
+        end
+    end
+    return original_CanResurrect(self)
+end
+```
+
   并在 `DoResurrect` 中平滑将角色切入 `amulet_rebirth` 状态机，保证了护符从身体槽剥离后，原生重生功能百分百完美保留。
 
 ---

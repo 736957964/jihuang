@@ -26,41 +26,47 @@
 - **痛点**：如果服务端无差别广播全图所有物品的三维属性，会导致带宽剧烈消耗。
 - **神级设计**：
   - 只有当玩家真正把鼠标悬浮（`focus`）在某个物品图标上时，客户端才发送一次 RPC：
-    ```lua
-    SendModRPCToServer(MOD_RPC["FoodValues - ItemTooltips"]["FIU"], self.item, keydown, ctrlkeydown, ...)
-    ```
+
+```lua
+  SendModRPCToServer(MOD_RPC["FoodValues - ItemTooltips"]["FIU"], self.item, keydown, ctrlkeydown, ...)
+```
+
   - 服务端处理完后，推送网络事件回流：
-    ```lua
-    player:ListenForEvent("item_value_updated", function()
-        local str = self:GetDescriptionString()
-        self:SetTooltip(str)
-        -- 针对浸湿物品同步切换潮湿字体颜色
-        if self.item:GetIsWet() then
-            self:SetTooltipColour(GLOBAL.unpack(GLOBAL.WET_TEXT_COLOUR))
-        else
-            self:SetTooltipColour(GLOBAL.unpack(GLOBAL.NORMAL_TEXT_COLOUR))
-        end
-    end)
-    ```
+
+```lua
+  player:ListenForEvent("item_value_updated", function()
+      local str = self:GetDescriptionString()
+      self:SetTooltip(str)
+      -- 针对浸湿物品同步切换潮湿字体颜色
+      if self.item:GetIsWet() then
+          self:SetTooltipColour(GLOBAL.unpack(GLOBAL.WET_TEXT_COLOUR))
+      else
+          self:SetTooltipColour(GLOBAL.unpack(GLOBAL.NORMAL_TEXT_COLOUR))
+      end
+  end)
+```
+
   实现了极低网络开销下的高精度属性查询。
 
 ### 2. `widgets/itemtile` 原语安全注入与百分比标签改写
 - 原版 `ItemTile:SetPercent` 用于显示耐久或新鲜度百分比。
 - MOD 拦截并重新定义了 `SetPercent`：
-  ```lua
-  function ItemTile:SetPercent(percent)
-      if not self.percent then
-          self.percent = self:AddChild(Text(GLOBAL.NUMBERFONT, 42))
-          self.percent:SetPosition(5, -17, 0)
-      end
-      local val = math.floor(percent * 100)
-      self.percent:SetString(string.format("%2.0f%%", val))
-      -- 当处于聚焦状态时，联动刷新提示框
-      if self.focus then
-          self:UpdateTooltip()
-      end
-  end
-  ```
+
+```lua
+function ItemTile:SetPercent(percent)
+    if not self.percent then
+        self.percent = self:AddChild(Text(GLOBAL.NUMBERFONT, 42))
+        self.percent:SetPosition(5, -17, 0)
+    end
+    local val = math.floor(percent * 100)
+    self.percent:SetString(string.format("%2.0f%%", val))
+    -- 当处于聚焦状态时，联动刷新提示框
+    if self.focus then
+        self:UpdateTooltip()
+    end
+end
+```
+
   保证了当箱子内物品新鲜度因时间流逝发生改变时，浮动提示框能够毫秒级实时刷新，不会残留过期数据。
 
 ### 3. 多语言本地化字串字典（DFV_LANG Engine）
@@ -71,9 +77,11 @@
 ### 4. 潮湿状态感知与颜色对齐（Wetness Palette Guard）
 - 原版饥荒如果物品被雨水淋湿，文字会变成浅蓝色（`WET_TEXT_COLOUR`）。
 - MOD 在重写提示框时，调用 `self.item:GetIsWet()` 显式解包官方调色板：
-  ```lua
-  self:SetTooltipColour(GLOBAL.unpack(self.item:GetIsWet() and GLOBAL.WET_TEXT_COLOUR or GLOBAL.NORMAL_TEXT_COLOUR))
-  ```
+
+```lua
+self:SetTooltipColour(GLOBAL.unpack(self.item:GetIsWet() and GLOBAL.WET_TEXT_COLOUR or GLOBAL.NORMAL_TEXT_COLOUR))
+```
+
   在微小细节处保证了与官方原生手感的高度一致，杜绝了突兀感。
 
 ---

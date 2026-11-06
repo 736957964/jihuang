@@ -17,19 +17,19 @@
 local GLOBAL = GLOBAL
 
 AddPrefabPostInit("minerhat", function(inst)
-    if not GLOBAL.TheWorld.ismastersim then
-        return
-    end
+  if not GLOBAL.TheWorld.ismastersim then
+      return
+  end
 
-    local equippable = inst.components.equippable
-    local fueled     = inst.components.fueled
-    local invitem    = inst.components.inventoryitem
+  local equippable = inst.components.equippable
+  local fueled     = inst.components.fueled
+  local invitem    = inst.components.inventoryitem
 
-    if equippable == nil or fueled == nil or invitem == nil then
-        return
-    end
+  if equippable == nil or fueled == nil or invitem == nil then
+      return
+  end
 
-    ------------------------------------------------------------------
+  ------------------------------------------------------------------
 end
 ```
 

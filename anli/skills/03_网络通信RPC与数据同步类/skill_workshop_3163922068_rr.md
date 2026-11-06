@@ -16,12 +16,12 @@
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-    AddPrefabPostInit("world", function(inst)
-        GLOBAL._GLOBALPOSITIONS_TARGET_INDICATOR_ICONS.some_mod_prefab = {
-                atlas = "images/some_mod_prefab.xml",
-                image = nil,
-            }
-        GLOBAL._GLOBALPOSITIONS_MAP_ICONS.some_mod_prefab = "some_mod_prefab.tex"
+  AddPrefabPostInit("world", function(inst)
+      GLOBAL._GLOBALPOSITIONS_TARGET_INDICATOR_ICONS.some_mod_prefab = {
+              atlas = "images/some_mod_prefab.xml",
+              image = nil,
+          }
+      GLOBAL._GLOBALPOSITIONS_MAP_ICONS.some_mod_prefab = "some_mod_prefab.tex"
 end)
 ```
 

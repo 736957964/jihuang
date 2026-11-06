@@ -17,20 +17,20 @@
 local GLOBAL = GLOBAL
 
 AddComponentPostInit("playercontroller", function(self)
-    ThePlayer = GLOBAL.ThePlayer
-    TheWorld = GLOBAL.TheWorld
-    InitializePlacers()
+  ThePlayer = GLOBAL.ThePlayer
+  TheWorld = GLOBAL.TheWorld
+  InitializePlacers()
 
-    local PlayerControllerGetLeftMouseAction = self.GetLeftMouseAction
-    local active_item, force_inspecting, mouse_target
-    local drop_action = BufferedAction(ThePlayer, nil, ACTIONS.DROP)
-    self.GetLeftMouseAction = function(self)
-        local act = PlayerControllerGetLeftMouseAction(self)
-        if force_inspecting then return act end
-        if not act and active_item and mouse_target then
-            act = drop_action
-        end
-        self.LMBaction = act
+  local PlayerControllerGetLeftMouseAction = self.GetLeftMouseAction
+  local active_item, force_inspecting, mouse_target
+  local drop_action = BufferedAction(ThePlayer, nil, ACTIONS.DROP)
+  self.GetLeftMouseAction = function(self)
+      local act = PlayerControllerGetLeftMouseAction(self)
+      if force_inspecting then return act end
+      if not act and active_item and mouse_target then
+          act = drop_action
+      end
+      self.LMBaction = act
 end
 end
 ```

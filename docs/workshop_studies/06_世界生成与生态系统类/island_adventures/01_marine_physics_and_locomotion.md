@@ -30,16 +30,16 @@ IA 采用了**双实体解耦代理模型（Dual-Entity Proxy Decoupling）**：
 ```lua
 -- IA 船舶操控输入转换核心
 function SteeringController:OnControl(control, down)
-    if not self.inst:HasTag("driving") then return end
-    
-    local boat = self.inst.replica.driver:GetBoat()
-    if boat and boat:IsValid() then
-        if control == CONTROL_PRIMARY then
-            -- 映射划桨/开帆状态
-            SendRPCToServer(RPC.IA_RowBoat, boat, down)
-            return true
-        end
-    end
+  if not self.inst:HasTag("driving") then return end
+  
+  local boat = self.inst.replica.driver:GetBoat()
+  if boat and boat:IsValid() then
+      if control == CONTROL_PRIMARY then
+          -- 映射划桨/开帆状态
+          SendRPCToServer(RPC.IA_RowBoat, boat, down)
+          return true
+      end
+  end
 end
 ```
 
@@ -48,12 +48,12 @@ end
 
 ```lua
 local function OnCollide(inst, other)
-    if other and other:HasTag("coast_line") then
-        local vel_x, vel_y, vel_z = inst.Physics:GetVelocity()
-        -- 沿法线方向反弹并损失 70% 动能，防止穿入陆地地块
-        inst.Physics:SetVel(-vel_x * 0.3, 0, -vel_z * 0.3)
-        inst.SoundEmitter:PlaySound("ia/boat/hit_coast")
-    end
+  if other and other:HasTag("coast_line") then
+      local vel_x, vel_y, vel_z = inst.Physics:GetVelocity()
+      -- 沿法线方向反弹并损失 70% 动能，防止穿入陆地地块
+      inst.Physics:SetVel(-vel_x * 0.3, 0, -vel_z * 0.3)
+      inst.SoundEmitter:PlaySound("ia/boat/hit_coast")
+  end
 end
 ```
 
@@ -76,31 +76,31 @@ end
 ```lua
 -- scripts/components/vehicle_driver.lua
 local VehicleDriver = Class(function(self, inst)
-    self.inst = inst
-    self.vehicle = nil
-    self.is_driving = false
+  self.inst = inst
+  self.vehicle = nil
+  self.is_driving = false
 end)
 
 function VehicleDriver:Mount(vehicle)
-    if not vehicle or not vehicle:IsValid() then return false end
-    self.vehicle = vehicle
-    self.is_driving = true
-    self.inst:AddTag("driving_vehicle")
-    -- 禁用玩家自主物理碰撞，跟随载具
-    self.inst.Physics:SetActive(false)
-    self.inst.Transform:SetPosition(vehicle.Transform:GetWorldPosition())
-    return true
+  if not vehicle or not vehicle:IsValid() then return false end
+  self.vehicle = vehicle
+  self.is_driving = true
+  self.inst:AddTag("driving_vehicle")
+  -- 禁用玩家自主物理碰撞，跟随载具
+  self.inst.Physics:SetActive(false)
+  self.inst.Transform:SetPosition(vehicle.Transform:GetWorldPosition())
+  return true
 end
 
 function VehicleDriver:Dismount(target_pos)
-    if not self.is_driving then return end
-    self.is_driving = false
-    self.inst:RemoveTag("driving_vehicle")
-    self.inst.Physics:SetActive(true)
-    if target_pos then
-        self.inst.Transform:SetPosition(target_pos:Get())
-    end
-    self.vehicle = nil
+  if not self.is_driving then return end
+  self.is_driving = false
+  self.inst:RemoveTag("driving_vehicle")
+  self.inst.Physics:SetActive(true)
+  if target_pos then
+      self.inst.Transform:SetPosition(target_pos:Get())
+  end
+  self.vehicle = nil
 end
 
 return VehicleDriver

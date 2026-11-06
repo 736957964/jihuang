@@ -26,20 +26,20 @@
 
 ```lua
 local function OnWaveHit(inst, wave)
-    local wave_heading = wave.Transform:GetRotation()
-    local boat_heading = inst.Transform:GetRotation()
-    local angle_diff = math.abs(anglediff(wave_heading, boat_heading))
-    
-    if angle_diff < 45 then
-        -- 顺浪：获得冲浪加速 (Surf Boost)
-        inst.components.boatphysics:ApplyForce(wave_heading, 8.0)
-        inst.SoundEmitter:PlaySound("ia/wave/surf")
-    elseif angle_diff > 135 then
-        -- 逆浪：迎头撞浪，船体受损并大幅增加湿润度
-        inst.components.health:DoDelta(-15)
-        inst.components.boatphysics:ApplyForce(boat_heading, -4.0)
-        SpawnPrefab("splash_ocean").Transform:SetPosition(inst.Transform:GetWorldPosition())
-    end
+  local wave_heading = wave.Transform:GetRotation()
+  local boat_heading = inst.Transform:GetRotation()
+  local angle_diff = math.abs(anglediff(wave_heading, boat_heading))
+  
+  if angle_diff < 45 then
+      -- 顺浪：获得冲浪加速 (Surf Boost)
+      inst.components.boatphysics:ApplyForce(wave_heading, 8.0)
+      inst.SoundEmitter:PlaySound("ia/wave/surf")
+  elseif angle_diff > 135 then
+      -- 逆浪：迎头撞浪，船体受损并大幅增加湿润度
+      inst.components.health:DoDelta(-15)
+      inst.components.boatphysics:ApplyForce(boat_heading, -4.0)
+      SpawnPrefab("splash_ocean").Transform:SetPosition(inst.Transform:GetWorldPosition())
+  end
 end
 ```
 
@@ -59,24 +59,24 @@ end
 ```lua
 -- scripts/components/wave_interactor.lua
 local WaveInteractor = Class(function(self, inst)
-    self.inst = inst
-    self.inst:ListenForEvent("hit_wave", function(inst, data) self:OnHit(data) end)
+  self.inst = inst
+  self.inst:ListenForEvent("hit_wave", function(inst, data) self:OnHit(data) end)
 end)
 
 function WaveInteractor:OnHit(data)
-    local wave = data and data.wave
-    if not wave or not wave:IsValid() then return end
-    
-    local diff = math.abs(anglediff(wave.Transform:GetRotation(), self.inst.Transform:GetRotation()))
-    if diff <= 60 then
-        -- 顺风/顺浪推力
-        self.inst.Physics:SetMotorVel(12, 0, 0)
-    else
-        -- 破损与减速
-        if self.inst.components.health then
-            self.inst.components.health:DoDelta(-10)
-        end
-    end
+  local wave = data and data.wave
+  if not wave or not wave:IsValid() then return end
+  
+  local diff = math.abs(anglediff(wave.Transform:GetRotation(), self.inst.Transform:GetRotation()))
+  if diff <= 60 then
+      -- 顺风/顺浪推力
+      self.inst.Physics:SetMotorVel(12, 0, 0)
+  else
+      -- 破损与减速
+      if self.inst.components.health then
+          self.inst.components.health:DoDelta(-10)
+      end
+  end
 end
 
 return WaveInteractor

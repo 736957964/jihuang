@@ -7,7 +7,7 @@
 在联机版客机环境开发物品提示或背包增强工具时，无法直接读取服务端的 `components`。最稳健的工业级方案是：
 1. **动作注册静默切面**：拦截 `EntityScript.RegisterComponentActions`，防止临时生成的探针实体污染全局动作池；
 2. **静态沙盒探针**：生成瞬态实体，克隆其关键组件元数据（伤害、护甲、位面属性、保温系数等）存入只读缓存表；
-3. **即时销毁探针**：提取完毕后立即 `Remove()`，后续悬停查询直接走 $O(1)$ 内存缓存。
+3. **即时销毁探针**：提取完毕后立即 `Remove()`，后续悬停查询直接走 `O(1)` 内存缓存。
 
 ```lua
 -- ==============================================================================
@@ -18,59 +18,59 @@ local CACHED_METADATA = {}
 local IS_PROBING = false
 
 AddGlobalClassPostConstruct("entityscript", "EntityScript", function(self)
-    local old_RegisterComponentActions = self.RegisterComponentActions
-    self.RegisterComponentActions = function(inst, name)
-        if not IS_PROBING then
-            return old_RegisterComponentActions(inst, name)
-        end
-    end
+  local old_RegisterComponentActions = self.RegisterComponentActions
+  self.RegisterComponentActions = function(inst, name)
+      if not IS_PROBING then
+          return old_RegisterComponentActions(inst, name)
+      end
+  end
 end)
 
 function ItemMetadataCache.GetMetadata(prefab_name)
-    if not prefab_name or type(prefab_name) ~= "string" then return nil end
-    if CACHED_METADATA[prefab_name] then
-        return CACHED_METADATA[prefab_name]
-    end
+  if not prefab_name or type(prefab_name) ~= "string" then return nil end
+  if CACHED_METADATA[prefab_name] then
+      return CACHED_METADATA[prefab_name]
+  end
 
-    IS_PROBING = true
-    local probe = GLOBAL.SpawnPrefab(prefab_name)
-    IS_PROBING = false
+  IS_PROBING = true
+  local probe = GLOBAL.SpawnPrefab(prefab_name)
+  IS_PROBING = false
 
-    if not probe then return nil end
+  if not probe then return nil end
 
-    local meta = {
-        prefab = prefab_name,
-        damage = 0,
-        planar_damage = 0,
-        absorb_percent = 0,
-        insulation_winter = 0,
-        insulation_summer = 0,
-    }
+  local meta = {
+      prefab = prefab_name,
+      damage = 0,
+      planar_damage = 0,
+      absorb_percent = 0,
+      insulation_winter = 0,
+      insulation_summer = 0,
+  }
 
-    if probe.components.weapon then
-        meta.damage = probe.components.weapon.damage or 0
-    end
-    if probe.components.planardamage then
-        meta.planar_damage = probe.components.planardamage:GetBaseDamage() or 0
-    end
+  if probe.components.weapon then
+      meta.damage = probe.components.weapon.damage or 0
+  end
+  if probe.components.planardamage then
+      meta.planar_damage = probe.components.planardamage:GetBaseDamage() or 0
+  end
 
-    if probe.components.armor then
-        meta.absorb_percent = probe.components.armor.absorb_percent or 0
-    end
+  if probe.components.armor then
+      meta.absorb_percent = probe.components.armor.absorb_percent or 0
+  end
 
-    if probe.components.insulator then
-        local val = probe.components.insulator.insulation or 0
-        if probe.components.insulator.type == GLOBAL.SEASONS.WINTER then
-            meta.insulation_winter = val
-        else
-            meta.insulation_summer = val
-        end
-    end
+  if probe.components.insulator then
+      local val = probe.components.insulator.insulation or 0
+      if probe.components.insulator.type == GLOBAL.SEASONS.WINTER then
+          meta.insulation_winter = val
+      else
+          meta.insulation_summer = val
+      end
+  end
 
-    probe:Remove()
+  probe:Remove()
 
-    CACHED_METADATA[prefab_name] = meta
-    return meta
+  CACHED_METADATA[prefab_name] = meta
+  return meta
 end
 
 return ItemMetadataCache

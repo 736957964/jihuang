@@ -17,9 +17,9 @@
 local GLOBAL = GLOBAL
 
  AddPrefabPostInit("skyshow",function(inst)
-    inst:AddComponent("weapon")
-    inst.components.weapon:SetDamage(SKYSHOW.DAMAGE)
-    inst.components.weapon:SetRange(SKYSHOW.RANGE,SKYSHOW.RANGE)
+  inst:AddComponent("weapon")
+  inst.components.weapon:SetDamage(SKYSHOW.DAMAGE)
+  inst.components.weapon:SetRange(SKYSHOW.RANGE,SKYSHOW.RANGE)
 	if TUNING.XGDUSE > 0 then 
 		inst:AddComponent("finiteuses")
 		inst.components.finiteuses:SetMaxUses(TUNING.XGDUSE)
@@ -38,7 +38,7 @@ local GLOBAL = GLOBAL
 	if SKYSHOW.NET == 1 then inst.components.tool:SetAction(ACTIONS.NET) end
 	if SKYSHOW.HAMMER ~= 0 then inst.components.tool:SetAction(ACTIONS.HAMMER, SKYSHOW.HAMMER) end
 	
-    if inst.components.equippable then inst.components.equippable.walkspeedmult = SKYSHOW.WALKSPEED end
+  if inst.components.equippable then inst.components.equippable.walkspeedmult = SKYSHOW.WALKSPEED end
 	if SKYSHOW.MAGIC == 1 then     --催眠
 		local function HearPanFlute(inst, target, pos)
 			local ents = TheSim:FindEntities(pos.x,pos.y,pos.z, 30)
@@ -497,13 +497,13 @@ local GLOBAL = GLOBAL
 			local TheWorld = GLOBAL.TheWorld  
 			local Sleep = GLOBAL.Sleep
 			local birdspawner = TheWorld.components.birdspawner
-            if birdspawner == nil then
-                return false
-            end
+          if birdspawner == nil then
+              return false
+          end
 			local caster = staff.components.inventoryitem.owner
 			local pt = caster:GetPosition()
 			local ents = TheSim:FindEntities(pt.x, pt.y, pt.z, 10, nil, nil, { "magicalbird" })
-            if #ents > 30 then
+          if #ents > 30 then
 				if caster then 
 					if SKYSHOW.LAN == 1 then
 						caster.components.talker:Say("There are too many f**king birds. I should stop doing it.")
@@ -511,9 +511,9 @@ local GLOBAL = GLOBAL
 						caster.components.talker:Say("这鸟也太几把多了！！别搞了吧！")
 					end	 
 				end
-            else
-                local num = math.random(10, 20)
-                if #ents > 20 then
+          else
+              local num = math.random(10, 20)
+              if #ents > 20 then
 					if caster then 
 						if SKYSHOW.LAN == 1 then
 							caster.components.talker:Say("These birds are too fucking too many!！And they are all asleep？！W T F？")
@@ -521,22 +521,22 @@ local GLOBAL = GLOBAL
 							caster.components.talker:Say("哇！这鸟贼几把多！还都睡着了？！这mod作者搞事情啊？")
 						end	 
 					end
-                else
-                    num = num + 10
-                end
-                caster:StartThread(function()
-                    for k = 1, num do
-                        local pos = birdspawner:GetSpawnPoint(pt)
-                        if pos ~= nil then
-                            local bird = birdspawner:SpawnBird(pos, true)
-                            if bird ~= nil then
-                               bird:AddTag("magicalbird")
-                            end
-                        end
-                        Sleep(math.random(.2, .25))
-                    end
+              else
+                  num = num + 10
+              end
+              caster:StartThread(function()
+                  for k = 1, num do
+                      local pos = birdspawner:GetSpawnPoint(pt)
+                      if pos ~= nil then
+                          local bird = birdspawner:SpawnBird(pos, true)
+                          if bird ~= nil then
+                             bird:AddTag("magicalbird")
+                          end
+                      end
+                      Sleep(math.random(.2, .25))
+                  end
 end)
-            end
+          end
 			if TUNING.XGDUSE > 0 then staff.components.finiteuses:Use(10) end
 			if caster ~= nil and caster.components.sanity ~= nil then
 				caster.components.sanity:DoDelta(-5)
@@ -599,17 +599,17 @@ end)
 				end	 
 			end
 			local x, y, z = caster.Transform:GetWorldPosition()
-            local range = 30
-            local ents = TheSim:FindEntities(x, y, z, range, nil, { "pickable", "stump", "withered", "INLIMBO" })
-            if #ents > 0 then
-                trygrowth(table.remove(ents, math.random(#ents)))
-                if #ents > 0 then
-                    local timevar = 1 - 1 / (#ents + 1)
-                    for i, v in ipairs(ents) do
-                        v:DoTaskInTime(timevar * math.random(), trygrowth)
-                    end
-                end
-            end
+          local range = 30
+          local ents = TheSim:FindEntities(x, y, z, range, nil, { "pickable", "stump", "withered", "INLIMBO" })
+          if #ents > 0 then
+              trygrowth(table.remove(ents, math.random(#ents)))
+              if #ents > 0 then
+                  local timevar = 1 - 1 / (#ents + 1)
+                  for i, v in ipairs(ents) do
+                      v:DoTaskInTime(timevar * math.random(), trygrowth)
+                  end
+              end
+          end
 			if TUNING.XGDUSE > 0 then staff.components.finiteuses:Use(10) end
 			
 			if caster ~= nil and caster.components.sanity ~= nil then

@@ -23,66 +23,66 @@
 -- ==============================================================================
 
 local DynamicWaveSpawner = Class(function(self, inst)
-    self.inst = inst
-    self.interval = 30         -- 生成周期 (秒)
-    self.max_monsters = 8      -- 场上最大并发存活数
-    self.spawn_radius_min = 6
-    self.spawn_radius_max = 14
-    self.monsters = {}
-    self.prefab_pool = { "spider", "spider_warrior" }
-    self.task = nil
+  self.inst = inst
+  self.interval = 30         -- 生成周期 (秒)
+  self.max_monsters = 8      -- 场上最大并发存活数
+  self.spawn_radius_min = 6
+  self.spawn_radius_max = 14
+  self.monsters = {}
+  self.prefab_pool = { "spider", "spider_warrior" }
+  self.task = nil
 end)
 
 function DynamicWaveSpawner:Start()
-    if self.task == nil then
-        self.task = self.inst:DoPeriodicTask(self.interval, function() self:OnSpawnTick() end)
-    end
+  if self.task == nil then
+      self.task = self.inst:DoPeriodicTask(self.interval, function() self:OnSpawnTick() end)
+  end
 end
 
 function DynamicWaveSpawner:OnSpawnTick()
-    for i = #self.monsters, 1, -1 do
-        local m = self.monsters[i]
-        if not (m and m:IsValid()) or (m.components.health and m.components.health:IsDead()) then
-            table.remove(self.monsters, i)
-        end
-    end
+  for i = #self.monsters, 1, -1 do
+      local m = self.monsters[i]
+      if not (m and m:IsValid()) or (m.components.health and m.components.health:IsDead()) then
+          table.remove(self.monsters, i)
+      end
+  end
 
-    if #self.monsters >= self.max_monsters then
-        return
-    end
+  if #self.monsters >= self.max_monsters then
+      return
+  end
 
-    local cx, cy, cz = self.inst.Transform:GetWorldPosition()
-    local angle = math.random() * 2 * PI
-    local radius = math.random(self.spawn_radius_min, self.spawn_radius_max)
-    local sx = cx + radius * math.cos(angle)
-    local sz = cz + radius * math.sin(angle)
+  local cx, cy, cz = self.inst.Transform:GetWorldPosition()
+  local angle = math.random() * 2 * PI
+  local radius = math.random(self.spawn_radius_min, self.spawn_radius_max)
+  local sx = cx + radius * math.cos(angle)
+  local sz = cz + radius * math.sin(angle)
 
-    if TheWorld.Map:IsPassableAtPoint(sx, 0, sz) then
-        local chosen_prefab = self.prefab_pool[math.random(#self.prefab_pool)]
-        local monster = SpawnPrefab(chosen_prefab)
-        if monster then
-            monster.Transform:SetPosition(sx, 0, sz)
-            
-            monster:DoPeriodicTask(15, function(target)
-                if target:IsValid() and (not target.components.combat or target.components.combat.target == nil) then
-                    local nearest_player = FindEntity(target, 30, nil, { "player" }, { "playerghost" })
-                    if nearest_player == nil then
-                        SpawnPrefab("small_puff").Transform:SetPosition(target.Transform:GetWorldPosition())
-                        target:Remove()
-                    end
-                end
+  if TheWorld.Map:IsPassableAtPoint(sx, 0, sz) then
+      local chosen_prefab = self.prefab_pool[math.random(#self.prefab_pool)]
+      local monster = SpawnPrefab(chosen_prefab)
+      if monster then
+          monster.Transform:SetPosition(sx, 0, sz)
+          
+          monster:DoPeriodicTask(15, function(target)
+              if target:IsValid() and (not target.components.combat or target.components.combat.target == nil) then
+                  local nearest_player = FindEntity(target, 30, nil, { "player" }, { "playerghost" })
+                  if nearest_player == nil then
+                      SpawnPrefab("small_puff").Transform:SetPosition(target.Transform:GetWorldPosition())
+                      target:Remove()
+                  end
+              end
 end)
 
-            table.insert(self.monsters, monster)
-        end
-    end
+          table.insert(self.monsters, monster)
+      end
+  end
 end
 
 function DynamicWaveSpawner:OnRemoveFromEntity()
-    if self.task then
-        self.task:Cancel()
-        self.task = nil
-    end
+  if self.task then
+      self.task:Cancel()
+      self.task = nil
+  end
 end
 
 return DynamicWaveSpawner

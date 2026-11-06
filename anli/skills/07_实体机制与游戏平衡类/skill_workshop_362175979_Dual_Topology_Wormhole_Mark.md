@@ -14,25 +14,25 @@
 -- ==============================================================================
 
 local NetworkPairingCounter = Class(function(self, inst)
-    assert(TheWorld.ismastersim, "PairingCounter must be on MasterSim")
-    self.inst = inst
-    self.current_id = 1
+  assert(TheWorld.ismastersim, "PairingCounter must be on MasterSim")
+  self.inst = inst
+  self.current_id = 1
 end)
 
 function NetworkPairingCounter:GetNextId()
-    local id = self.current_id
-    self.current_id = self.current_id + 1
-    return id
+  local id = self.current_id
+  self.current_id = self.current_id + 1
+  return id
 end
 
 function NetworkPairingCounter:OnSave()
-    return { current_id = self.current_id }
+  return { current_id = self.current_id }
 end
 
 function NetworkPairingCounter:OnLoad(data)
-    if data and data.current_id then
-        self.current_id = data.current_id
-    end
+  if data and data.current_id then
+      self.current_id = data.current_id
+  end
 end
 
 return NetworkPairingCounter
@@ -41,50 +41,50 @@ return NetworkPairingCounter
 -- ==============================================================================
 
 local DualMarker = Class(function(self, inst)
-    self.inst = inst
-    self.pair_id = nil
-    self.is_marked = false
+  self.inst = inst
+  self.pair_id = nil
+  self.is_marked = false
 end)
 
 function DualMarker:ApplyMarker(id, draw_over_fog)
-    self.pair_id = id
-    self.is_marked = true
+  self.pair_id = id
+  self.is_marked = true
 
-    if self.inst.MiniMapEntity == nil then
-        self.inst.entity:AddMiniMapEntity()
-    end
+  if self.inst.MiniMapEntity == nil then
+      self.inst.entity:AddMiniMapEntity()
+  end
 
-    self.inst.MiniMapEntity:SetIcon("mark_" .. tostring(id) .. ".tex")
-    if draw_over_fog then
-        self.inst.MiniMapEntity:SetDrawOverFogOfWar(true)
-    end
+  self.inst.MiniMapEntity:SetIcon("mark_" .. tostring(id) .. ".tex")
+  if draw_over_fog then
+      self.inst.MiniMapEntity:SetDrawOverFogOfWar(true)
+  end
 end
 
 function DualMarker:TriggerDualMark(draw_over_fog)
-    if self.is_marked then return end
+  if self.is_marked then return end
 
-    local counter = TheWorld.components.network_pairing_counter
-    if not counter then return end
+  local counter = TheWorld.components.network_pairing_counter
+  if not counter then return end
 
-    local next_id = counter:GetNextId()
-    self:ApplyMarker(next_id, draw_over_fog)
+  local next_id = counter:GetNextId()
+  self:ApplyMarker(next_id, draw_over_fog)
 
-    if self.inst.components.teleporter then
-        local remote = self.inst.components.teleporter.targetTeleporter
-        if remote and remote:IsValid() and remote.components.dual_marker then
-            remote.components.dual_marker:ApplyMarker(next_id, draw_over_fog)
-        end
-    end
+  if self.inst.components.teleporter then
+      local remote = self.inst.components.teleporter.targetTeleporter
+      if remote and remote:IsValid() and remote.components.dual_marker then
+          remote.components.dual_marker:ApplyMarker(next_id, draw_over_fog)
+      end
+  end
 end
 
 function DualMarker:OnSave()
-    return { pair_id = self.pair_id, is_marked = self.is_marked }
+  return { pair_id = self.pair_id, is_marked = self.is_marked }
 end
 
 function DualMarker:OnLoad(data)
-    if data and data.is_marked and data.pair_id then
-        self:ApplyMarker(data.pair_id, true)
-    end
+  if data and data.is_marked and data.pair_id then
+      self:ApplyMarker(data.pair_id, true)
+  end
 end
 
 return DualMarker

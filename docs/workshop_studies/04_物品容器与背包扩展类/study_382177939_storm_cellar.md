@@ -24,47 +24,53 @@
 ### 1. `containers.MAXITEMSLOTS` 拓扑动态扩容
 - **痛点**：客机在接收容器网络同步时，底层依赖 `containers.MAXITEMSLOTS` 来初始化网络插槽数组。若不修改该值，超过原版最大槽位（原版为 20~25）时，客机会抛出 `index out of range` 导致客户端断开连接。
 - **解法**：在加载容器参数前，动态拉升全局槽位上限：
-  ```lua
-  local containers = _G.require "containers"
-  containers.MAXITEMSLOTS = math.max(
-      containers.MAXITEMSLOTS,
-      params.cellar.widget.slotpos ~= nil and #params.cellar.widget.slotpos or 0
-  )
-  ```
+
+```lua
+local containers = _G.require "containers"
+containers.MAXITEMSLOTS = math.max(
+    containers.MAXITEMSLOTS,
+    params.cellar.widget.slotpos ~= nil and #params.cellar.widget.slotpos or 0
+)
+```
+
   保证了客户端底层能容纳高达 80 个同步实体槽位。
 
 ### 2. 多重排布矩阵算法（5x16 与 8x10 动态算式）
 为了兼顾不同显示器宽高比与玩家视觉偏好，MOD 实现了两种经典排布矩阵：
 - **8 行 10 列模式（8x10）**：
-  ```lua
-  for y = 6.5, -0.5, -1 do
-      for x = 0, 9 do
-          table.insert(params.cellar.widget.slotpos, _G.Vector3(75 * x - 75 * 12 + 75, 75 * y - 75 * 6 + 75, 0))
-      end
-  end
-  ```
+
+```lua
+for y = 6.5, -0.5, -1 do
+    for x = 0, 9 do
+        table.insert(params.cellar.widget.slotpos, _G.Vector3(75 * x - 75 * 12 + 75, 75 * y - 75 * 6 + 75, 0))
+    end
+end
+```
+
 - **5 行 16 列横向模式（5x16）**：
   通过以 75 像素为步长的网格偏移公式，将 80 个槽位均匀收拢在屏幕中央，完全不遮挡角色底部的快捷物品栏。
 
 ### 3. `containers.widgetsetup` 代理拦截模式（Proxy Interception）
 - 不盲目修改官方 `containers.lua` 文件源码，而是代理 `containers.widgetsetup`：
-  ```lua
-  local old_widgetsetup = containers.widgetsetup
-  function containers.widgetsetup(container, prefab, data)
-      local pref = prefab or container.inst.prefab
-      if pref == "cellar" then
-          local t = params[pref]
-          if t ~= nil then
-              for k, v in pairs(t) do
-                  container[k] = v
-              end
-              container:SetNumSlots(#container.widget.slotpos)
-          end
-      else
-          return old_widgetsetup(container, prefab, data)
-      end
-  end
-  ```
+
+```lua
+local old_widgetsetup = containers.widgetsetup
+function containers.widgetsetup(container, prefab, data)
+    local pref = prefab or container.inst.prefab
+    if pref == "cellar" then
+        local t = params[pref]
+        if t ~= nil then
+            for k, v in pairs(t) do
+                container[k] = v
+            end
+            container:SetNumSlots(#container.widget.slotpos)
+        end
+    else
+        return old_widgetsetup(container, prefab, data)
+    end
+end
+```
+
   精准命中自家建筑才做配置覆盖，其他官方或第三方容器原封不动回退给 `old_widgetsetup`，实现极致兼容。
 
 ### 4. 动态冰箱保鲜标签注入（`fridge` 机制）

@@ -28,9 +28,11 @@
 ### 1. 跨端复制组件标准设计（Replicable Component Pattern）
 - **痛点**：客机需要知道路标的所有者权限以及当前交互者，但不能直接读取服务端组件。
 - **解法**：在 `modmain.lua` 注册官方级复制组件：
-  ```lua
-  AddReplicableComponent("travelable")
-  ```
+
+```lua
+AddReplicableComponent("travelable")
+```
+
   配合伴生的 `travelable_replica.lua` 与 `travelable_classified.lua`：
   - 构造时打上 `_travelable` 占位标签；
   - 服务端实例化后解除占位，正式生成权威 `travelable`，并将当前使用者（`traveller`）通过 `net_entity` 广播至客机；
@@ -39,13 +41,15 @@
 ### 2. 纯客户端非侵入 UI 视窗挂载（`OpenScreenUnderPause`）
 - 很多开发者弹出界面时直接调用 `TheFrontEnd:PushScreen`，导致在联机模式下手柄或聊天键焦点锁死。
 - MOD 拦截 `screens/playerhud`：
-  ```lua
-  self.ShowTravelScreen = function(_, attach)
-      self.travelscreen = TravelScreen(self.owner, attach)
-      self:OpenScreenUnderPause(self.travelscreen)
-      return self.travelscreen
-  end
-  ```
+
+```lua
+self.ShowTravelScreen = function(_, attach)
+    self.travelscreen = TravelScreen(self.owner, attach)
+    self:OpenScreenUnderPause(self.travelscreen)
+    return self.travelscreen
+end
+```
+
   使用 HUD 的 `OpenScreenUnderPause` 挂载，既允许在单机房间暂停背景，又能在联机服作为普通非模态覆盖层运行，支持 ESC 键毫秒级关闭。
 
 ### 3. 全局路标拓扑与字母排序拓扑网（Topological Destination Discovery）

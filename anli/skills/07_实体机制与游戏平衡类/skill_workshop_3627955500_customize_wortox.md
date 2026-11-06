@@ -16,21 +16,21 @@
 -- ============================================================================
 local GLOBAL = GLOBAL
 
-    if start_souls ~= nil then
-        api.AddPrefabPostInit("wortox", function(inst)
-            if not G.TheWorld.ismastersim or inst.starting_inventory == nil then
-                return
-            end
-            local items = {}
-            for _, item in G.ipairs(inst.starting_inventory) do
-                if item ~= "wortox_soul" then
-                    items[#items + 1] = item
-                end
-            end
-            for _ = 1, start_souls do
-                items[#items + 1] = "wortox_soul"
-            end
-            inst.starting_inventory = items
+  if start_souls ~= nil then
+      api.AddPrefabPostInit("wortox", function(inst)
+          if not G.TheWorld.ismastersim or inst.starting_inventory == nil then
+              return
+          end
+          local items = {}
+          for _, item in G.ipairs(inst.starting_inventory) do
+              if item ~= "wortox_soul" then
+                  items[#items + 1] = item
+              end
+          end
+          for _ = 1, start_souls do
+              items[#items + 1] = "wortox_soul"
+          end
+          inst.starting_inventory = items
 end)
 end
 ```

@@ -17,90 +17,90 @@
 local GLOBAL = GLOBAL
 
 AddPrefabPostInit("world", function(world)
-    if not world.ismastersim then return end
+  if not world.ismastersim then return end
 
-    local b_objects_spawned = false
+  local b_objects_spawned = false
 
-    local function TryPrefab(pref, chance, x, z)
-        if math.random()*100 <= chance then
-            local prefab = g.SpawnPrefab(pref)
-            prefab.Transform:SetPosition(x, 0, z)
-            ReadTypes(prefab)
-        end
-    end
+  local function TryPrefab(pref, chance, x, z)
+      if math.random()*100 <= chance then
+          local prefab = g.SpawnPrefab(pref)
+          prefab.Transform:SetPosition(x, 0, z)
+          ReadTypes(prefab)
+      end
+  end
 
-    local function SpawnPrefs(x, z)
-        local function getcoords()
-            local x,y,z = g.TheWorld.Map:GetTileCenterPoint(x, z)
+  local function SpawnPrefs(x, z)
+      local function getcoords()
+          local x,y,z = g.TheWorld.Map:GetTileCenterPoint(x, z)
 
-            return 
-            x + math.random(-200, 200) / 100,
-            z + math.random(-200, 200) / 100
-        end
-        
-        TryPrefab("grass", 2.7, getcoords())
-        TryPrefab("marsh_bush", 1.9, getcoords())
-        TryPrefab("sapling", .15, getcoords())
-        TryPrefab("berrybush2", 1.5, getcoords())
-        TryPrefab("halloweenpotion_sanity_small", .25, getcoords())
-        TryPrefab("halloweenpotion_sanity_large", .1, getcoords())
-        TryPrefab("seastack", .25, getcoords())
-        TryPrefab("marsh_tree", 2.4, getcoords())
-        TryPrefab("flower_evil", .5, getcoords())
-        TryPrefab("bgroundrock", 2.8, getcoords())
-        TryPrefab("pond", .5, getcoords())
-        TryPrefab("marblepillar", .11, getcoords())
-        TryPrefab("wall_scrap", .14, getcoords())
-        TryPrefab("rock2", .15, getcoords())
-        TryPrefab("rock1", .18, getcoords())
-        TryPrefab("moonglass", .3, getcoords())
-        TryPrefab("dropperweb", .07, getcoords())
-        TryPrefab("pigtorch", .04, getcoords())
-        TryPrefab("wood_chair", .02, getcoords())
-        TryPrefab("wood_table_square", .02, getcoords())
-        TryPrefab("bmaneken", .01, getcoords())
-        TryPrefab("archive_centipede", .015, getcoords())
-        TryPrefab("houndmound", .012, getcoords())
-        TryPrefab("catcoonden", .016, getcoords())
-        TryPrefab("deer_fire_circle", .013, getcoords())
-    end
+          return 
+          x + math.random(-200, 200) / 100,
+          z + math.random(-200, 200) / 100
+      end
+      
+      TryPrefab("grass", 2.7, getcoords())
+      TryPrefab("marsh_bush", 1.9, getcoords())
+      TryPrefab("sapling", .15, getcoords())
+      TryPrefab("berrybush2", 1.5, getcoords())
+      TryPrefab("halloweenpotion_sanity_small", .25, getcoords())
+      TryPrefab("halloweenpotion_sanity_large", .1, getcoords())
+      TryPrefab("seastack", .25, getcoords())
+      TryPrefab("marsh_tree", 2.4, getcoords())
+      TryPrefab("flower_evil", .5, getcoords())
+      TryPrefab("bgroundrock", 2.8, getcoords())
+      TryPrefab("pond", .5, getcoords())
+      TryPrefab("marblepillar", .11, getcoords())
+      TryPrefab("wall_scrap", .14, getcoords())
+      TryPrefab("rock2", .15, getcoords())
+      TryPrefab("rock1", .18, getcoords())
+      TryPrefab("moonglass", .3, getcoords())
+      TryPrefab("dropperweb", .07, getcoords())
+      TryPrefab("pigtorch", .04, getcoords())
+      TryPrefab("wood_chair", .02, getcoords())
+      TryPrefab("wood_table_square", .02, getcoords())
+      TryPrefab("bmaneken", .01, getcoords())
+      TryPrefab("archive_centipede", .015, getcoords())
+      TryPrefab("houndmound", .012, getcoords())
+      TryPrefab("catcoonden", .016, getcoords())
+      TryPrefab("deer_fire_circle", .013, getcoords())
+  end
 
-    world:DoTaskInTime(.1, function()
-        if not b_objects_spawned then
-            local map = world.Map
-            local width, height = map:GetSize()
+  world:DoTaskInTime(.1, function()
+      if not b_objects_spawned then
+          local map = world.Map
+          local width, height = map:GetSize()
 
-            GenerateBioms(TryPrefab)
+          GenerateBioms(TryPrefab)
 
-            for x = 0, width - 1 do
-                for y = 0, height - 1 do
-                    if map:GetTile(x, y) == 11 then
-                        SpawnPrefs(x, y)
-                    end
+          for x = 0, width - 1 do
+              for y = 0, height - 1 do
+                  if map:GetTile(x, y) == 11 then
+                      SpawnPrefs(x, y)
+                  end
 
-                    if map:GetTile(x, y) ~= 1 then
-                        TryPrefab("blight", 8, getcoords2(x, y))
-                    end
-                end
-            end
+                  if map:GetTile(x, y) ~= 1 then
+                      TryPrefab("blight", 8, getcoords2(x, y))
+                  end
+              end
+          end
 
-            b_objects_spawned = true
-        end
+          b_objects_spawned = true
+      end
 end)
 
-    local OldOnSave = world.OnSave
-    world.OnSave = function(src, data)
-        if OldOnSave then OldOnSave(src, data) end
-        data.b_objects_spawned = b_objects_spawned
-    end
+  local OldOnSave = world.OnSave
+  world.OnSave = function(src, data)
+      if OldOnSave then OldOnSave(src, data) end
+      data.b_objects_spawned = b_objects_spawned
+  end
 
-    local OldOnLoad = world.OnLoad
-    world.OnLoad = function(src, data)
-        if OldOnLoad then OldOnLoad(src, data) end
-        if data and data.b_objects_spawned ~= nil then
-            b_objects_spawned = data.b_objects_spawned
-        end
-    end
+  local OldOnLoad = world.OnLoad
+  world.OnLoad = function(src, data)
+      if OldOnLoad then OldOnLoad(src, data) end
+      if data and data.b_objects_spawned ~= nil then
+          b_objects_spawned = data.b_objects_spawned
+      end
+  end
 end)
 ```
 

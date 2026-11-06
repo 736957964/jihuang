@@ -27,6 +27,7 @@
 5. `STACK_SIZE_PELLET`：球团颗粒类（原版默认 120）
 
 MOD 在启动阶段优先重写 `TUNING` 常量表：
+
 ```lua
 TUNING.STACK_SIZE_LARGEITEM = NEW_STACK_VALUES[1]
 TUNING.STACK_SIZE_MEDITEM   = NEW_STACK_VALUES[2]
@@ -34,40 +35,47 @@ TUNING.STACK_SIZE_SMALLITEM = NEW_STACK_VALUES[3]
 TUNING.STACK_SIZE_TINYITEM  = NEW_STACK_VALUES[4]
 TUNING.STACK_SIZE_PELLET    = NEW_STACK_VALUES[5]
 ```
+
 这种方式是**最高效、侵入性最低的**，凡是按照官方规范在 Prefab 中书写 `inst.components.stackable.maxsize = TUNING.STACK_SIZE_MEDITEM` 的物品，在初始化时自动吃到新配置，无需额外的运行时 Hook 开销！
 
 ### 2. `AddPrefabPostInitAny` 与非标物品区间逼近算法（Interval Approximation）
 - **痛点**：大量第三方 Mod 开发者没有使用 `TUNING` 常量，而是在自己的 Prefab 里硬编码写死了 `inst.components.stackable.maxsize = 20` 或 `50`。
 - **解法**：开启 `FORCE_STACKSIZES` 后，MOD 注册了 `AddPrefabPostInitAny`：
-  ```lua
-  AddPrefabPostInitAny(function(inst)
-      if not GLOBAL.TheWorld.ismastersim then return end
-      local s = inst.components.stackable
-      if s == nil then return end
-      -- 智能映射算法
-      local newSize = getNewStackSize(currentSize, currentStackValues)
-      if newSize and newSize ~= currentSize then
-          s.maxsize = newSize
-      end
-  end)
-  ```
+
+```lua
+AddPrefabPostInitAny(function(inst)
+    if not GLOBAL.TheWorld.ismastersim then return end
+    local s = inst.components.stackable
+    if s == nil then return end
+    -- 智能映射算法
+    local newSize = getNewStackSize(currentSize, currentStackValues)
+    if newSize and newSize ~= currentSize then
+        s.maxsize = newSize
+    end
+end)
+```
+
   在 `getNewStackSize` 中：
   - 若刚好等于旧版某个档位（10/20/40/60/120），精准替换为对应新档位；
   - 若为非标数字，采用区间单调逼近（`if size <= v then return v end`），将其平滑映射到最贴合的容量区间，避免极端畸变。
 
 ### 3. 主客机环境隔离（Master Sim Guard）
 - 修改组件的 `maxsize` 属于世界权威状态（Authoritative State）。在 `AddPrefabPostInitAny` 第一行必须严格校验：
-  ```lua
-  if not GLOBAL.TheWorld.ismastersim then return end
-  ```
+
+```lua
+if not GLOBAL.TheWorld.ismastersim then return end
+```
+
   客机只需要通过 `replica.stackable` 接收网络同步的堆叠数与槽位显示，绝对禁止在客机重复执行修改。
 
 ### 4. 配置健壮性断言防御（Config Assertion）
 在从用户配置获取输入时，MOD 加入了严密的断言：
+
 ```lua
 assert(type(v) == "number", "Stack config value is not a number")
 assert(v >= 1, "Stack config value must be >= 1")
 ```
+
 防止玩家误填非数字或小于 1 的数值导致引擎除以零崩溃。
 
 ---
