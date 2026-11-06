@@ -22926,8 +22926,215 @@
       "category": "06_世界生成与生态系统类",
       "studied_at": "2026-11-06 15:38:17",
       "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3735445674",
+      "name": "DSA SERVER MOD 13",
+      "author": "DSA",
+      "version": "1.1.4",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 15:40:34",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3735486091",
+      "name": "LOL Lifecycle Fix",
+      "author": "server_admin",
+      "version": "9.0.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 15:40:34",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3735253013",
+      "name": "饥荒：无尽异变 Roguelike Mutation",
+      "author": "ChatGPT for 阿瑾",
+      "version": "0.1.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 15:42:22",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3734503549",
+      "name": "身在福中不知福",
+      "author": "硅合金、鑫、北甍、阿哲、御坂十七号",
+      "version": "1.3.4",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 15:45:46",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3734624613",
+      "name": "防卡两招_超强清理",
+      "author": "五档电风扇",
+      "version": "2.0.1",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 15:45:46",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3734691725",
+      "name": "Beagle",
+      "author": "Beagle",
+      "version": "0.4.0",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 15:45:46",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3734184406",
+      "name": "冰凉武器包",
+      "author": "1",
+      "version": "未声明",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 15:48:42",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3734203197",
+      "name": "wx78 drone delivery Allplays",
+      "author": "steam:ligtdot",
+      "version": "2026.6.7.10",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 15:48:43",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3733368608",
+      "name": "Everfresh Seed Pack",
+      "author": "level",
+      "version": "0.3.11",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 15:52:41",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3732181175",
+      "name": "Wurt Merm Command",
+      "author": "Wurt",
+      "version": "1.4.2",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 15:57:29",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3731764676",
+      "name": "zx_items_language",
+      "author": "橙子|浮生|羊羊",
+      "version": "未声明",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 16:01:05",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3731765930",
+      "name": "新增月黑魔典",
+      "author": "zk",
+      "version": "1.7.0",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 16:01:05",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3731885818",
+      "name": "火腿棒 16000 伤害",
+      "author": "ChatGPT",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 16:01:06",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3731481913",
+      "name": "Woodnitrix",
+      "author": "BoElroy",
+      "version": "1.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 16:03:55",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3730564863",
+      "name": "Co-op Teleport Ring | （伴侣瞬移）传送戒指",
+      "author": "申杰铖",
+      "version": "1.1.1",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 16:08:33",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3730638122",
+      "name": "附身（新）",
+      "author": "莫非则",
+      "version": "1.3.5.3",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 16:08:34",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3730216221",
+      "name": "Wolfgang Reborn",
+      "author": "xxxyn",
+      "version": "0.0.3",
+      "category": "02_动作控制与状态机StateGraph类",
+      "studied_at": "2026-11-06 16:10:34",
+      "skill_path": "anli/skills/02_动作控制与状态机StateGraph类/skill_workshop_1608191708_Client_Action_Queue_Scheduler.md"
+    },
+    {
+      "id": "3730470619",
+      "name": "Happy Announcements",
+      "author": "hoahoa",
+      "version": "1.0.6",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 16:10:34",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3730000496",
+      "name": "统帅头盔满血自动修复",
+      "author": "OpenAI",
+      "version": "1.0.0",
+      "category": "07_实体机制与游戏平衡类",
+      "studied_at": "2026-11-06 16:12:48",
+      "skill_path": "anli/skills/07_实体机制与游戏平衡类/skill_workshop_1530801499_Replicable_Component_Topology.md"
+    },
+    {
+      "id": "3730192332",
+      "name": "鹿-武林地图",
+      "author": "你的鹿",
+      "version": "1.0.4",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 16:12:48",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
+    },
+    {
+      "id": "3729674753",
+      "name": "wx78_promax",
+      "author": "白深、鑫、咩月、Guto",
+      "version": "0.0.5",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 16:15:55",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3729685975",
+      "name": "Finder Redux",
+      "author": "Cunning fox",
+      "version": "1.1",
+      "category": "03_网络通信RPC与数据同步类",
+      "studied_at": "2026-11-06 16:15:55",
+      "skill_path": "anli/skills/03_网络通信RPC与数据同步类/skill_workshop_2281925291_mod_2281925291.md"
+    },
+    {
+      "id": "3729627552",
+      "name": "雾天",
+      "author": "mxzy",
+      "version": "0.11",
+      "category": "06_世界生成与生态系统类",
+      "studied_at": "2026-11-06 16:19:02",
+      "skill_path": "anli/skills/06_世界生成与生态系统类/skill_workshop_1467214795_Upvalue_Hacker_And_Arrive_Dist.md"
     }
   ],
   "description": "饥荒创意工坊权威 MOD 研读与总结权威全库账本",
-  "lastUpdated": "2026-11-06 15:38:17"
+  "lastUpdated": "2026-11-06 16:19:02"
 }
