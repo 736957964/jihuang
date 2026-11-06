@@ -76,6 +76,9 @@
 * [🌟 核心架构决策与源码哲学](01-core/architecture_philosophy.md)
 * 前言
   * [Mod相关信息](README.md)
+* 00 Tools 工具与测试
+  * [资源解包归档工具](00-tools/asset_archive_tool.md)
+  * [专用服务器离线测试指南](00-tools/dedicated_server_testing.md)
 * 01 核心系统
   * [01-core 总览](01-core/index.md)
   * [EntityScript 实体脚本](01-core/entity.md)
@@ -187,6 +190,7 @@
 * 11 Modding Mod开发
   * [11-modding 总览](11-modding/index.md)
   * [Mod开发工程核心规范](11-modding/engineering_rules.md)
+  * [标准手持武器 Prefab 模版](11-modding/weapon_prefab_template.md)
 * 12 Cooking 烹饪
   * [12-cooking 总览](12-cooking/index.md)
 * 13 World 世界
